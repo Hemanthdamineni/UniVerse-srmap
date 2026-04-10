@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: university-erp-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - REDIS_URL=redis://redis:6379
+      - SESSION_STORE_DRIVER=auto
+      - ERP_CACHE_DRIVER=auto
+      - FEATURE_ERP_V2_API=1
+      - FEATURE_ERP_CACHED_FIRST=1
+      - FEATURE_AUTH_COOKIE_MODE=1
+      - CONTENT_DB_PATH=/app/data/content.sqlite
+      - EXTERNAL_DB_PATH=/app/data/external-pages.sqlite
+      - EVENTS_DB_PATH=/app/data/events.sqlite
+      - EVENTS_DATA_DIR=/app/data/events
+      - DUMP_SNAPSHOT_DIR=/app/data/erp-dump/2026-02-24T15-58-26-664Z
+      - DUMP_SUMMARY_FILE=/app/data/erp-dump/2026-02-24T15-58-26-664Z/summary.json
+    volumes:
+      - ./Backend/data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: university-erp-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:

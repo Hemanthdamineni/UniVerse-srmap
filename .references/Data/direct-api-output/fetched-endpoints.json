@@ -1,0 +1,2652 @@
+{
+  "generatedAt": "2026-02-20T09:50:18.792Z",
+  "discoveryFile": "/home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP-(In-Development)/Backend/scripts/endpoint-discovery.json",
+  "requestBase": "https://student.srmap.edu.in/srmapstudentcorner/",
+  "totalDiscoveredItems": 36,
+  "totalInternalItems": 32,
+  "successCount": 32,
+  "failureCount": 0,
+  "results": [
+    {
+      "index": 1,
+      "dropdown": "Academic",
+      "subitem": "Student Wise Subjects",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "2"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/01-academic-student-wise-subjects.html",
+      "parsed": {
+        "pageHeading": "STUDENT WISE SUBJECTS",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Semester",
+              "Code",
+              "Description",
+              "Credit",
+              "Group"
+            ],
+            "rowCount": 9,
+            "sampleRows": [
+              {
+                "Semester": "5",
+                "Code": "CSE 309",
+                "Description": "ADVANCED JAVA PROGRAMMING",
+                "Credit": "4",
+                "Group": ""
+              },
+              {
+                "Semester": "6",
+                "Code": "CSE 304",
+                "Description": "AUTOMATA AND COMPILER DESIGN",
+                "Credit": "3",
+                "Group": ""
+              },
+              {
+                "Semester": "6",
+                "Code": "CSE 306",
+                "Description": "SOFTWARE ENGINEERING AND PROJECT MANAGEMENT",
+                "Credit": "4",
+                "Group": ""
+              }
+            ]
+          }
+        ],
+        "textPreview": "STUDENT WISE SUBJECTS Semester Code Description Credit Group 5 CSE 309 ADVANCED JAVA PROGRAMMING 4 6 CSE 304 AUTOMATA AND COMPILER DESIGN 3 6 CSE 306 SOFTWARE ENGINEERING AND PROJECT MANAGEMENT 4 6 CSE 455 ARTIFICIAL INTELLIGENCE 4 6 CSE 456 DIGITAL IMAGE PROCESSING 4 6 CSE 423 NATURAL LANGUAGE PROCESSING 3 6 VAC 108V CO-CURRICULAR - SMART TECH 2 6 SEC 176 GENERATIVE AI - II 3 6 MCE 244 DYNAMICS AND CONTROL 3 View earlier semester subjects"
+      },
+      "error": null
+    },
+    {
+      "index": 2,
+      "dropdown": "Academic",
+      "subitem": "Time Table",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "10"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/02-academic-time-table.html",
+      "parsed": {
+        "pageHeading": "TIME TABLE",
+        "tableCount": 2,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ],
+            "rowCount": 8,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "4": "4",
+                "5": "5",
+                "6": "6",
+                "7": "7",
+                "8": "8",
+                "col1": ""
+              },
+              {
+                "1": "09:00 To 09:50",
+                "2": "10:00 To 10:50",
+                "3": "11:00 To 11:50",
+                "4": "12:00 To 12:50",
+                "5": "01:00 To 01:50",
+                "6": "02:00 To 02:50",
+                "7": "03:00 To 03:50",
+                "8": "04:00 To 05:30",
+                "col1": ""
+              },
+              {
+                "1": "MCE 244(C 705)",
+                "2": "",
+                "3": "CSE 306(V 403)",
+                "4": "CSE 306(V 403)",
+                "5": "",
+                "6": "CSE 455(C 705)",
+                "7": "CSE 455(C 705)",
+                "8": "CSE 423(C 609)",
+                "col1": "Monday"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Subjects Description",
+              "L-T-P-C",
+              "Faculty Name",
+              "Class Room Name"
+            ],
+            "rowCount": 8,
+            "sampleRows": [
+              {
+                "Subjects Description": "Subjects Description",
+                "L-T-P-C": "L-T-P-C",
+                "Faculty Name": "Faculty Name",
+                "Class Room Name": "Class Room Name"
+              },
+              {
+                "Subjects Description": "CSE 304",
+                "L-T-P-C": "AUTOMATA AND COMPILER DESIGN",
+                "Faculty Name": "3-0-0-3",
+                "Class Room Name": "Mr. Awadhesh Dixit ( 24129 )",
+                "col5": "(C 705)"
+              },
+              {
+                "Subjects Description": "CSE 306",
+                "L-T-P-C": "SOFTWARE ENGINEERING AND PROJECT MANAGEMENT",
+                "Faculty Name": "3-0-1-4",
+                "Class Room Name": "Mr. Pamula Udayaraju ( 24120 ), Ms. Thangellamudi Anitha Kumari ( 25136 )",
+                "col5": "(C 703),(C 705),(V 403)"
+              }
+            ]
+          }
+        ],
+        "textPreview": "TIME TABLE 1 2 3 4 5 6 7 8 09:00 To 09:50 10:00 To 10:50 11:00 To 11:50 12:00 To 12:50 01:00 To 01:50 02:00 To 02:50 03:00 To 03:50 04:00 To 05:30 Monday MCE 244(C 705) CSE 306(V 403) CSE 306(V 403) CSE 455(C 705) CSE 455(C 705) CSE 423(C 609) Tuesday MCE 244(C 705) SEC 176(C 705) SEC 176(C 705) SEC 176(C 705) CSE 456(C 1006) CSE 306(C 703) CSE 423(C 609) Wednesday MCE 244(C 705) CSE 455(C 705) CSE 456(C 705) CSE 456(C 705) Thursday CSE 306(C 705) CSE 306(C 705) CSE 304(C 705) CSE 455(V 403) CSE 455(V 403) Friday CSE 456(V 403) CSE 456(V 403) CSE 304(C 705) CSE 304(C 705) Saturday Subjects Description L-T-P-C Faculty Name Class Room Name CSE 304 AUTOMATA AND COMPILER DESIGN 3-0-0-3 Mr. Awadhesh Dixit ( 24129 ) (C 705) CSE 306 SOFTWARE ENGINEERING AND PROJECT MANAGEMENT 3-0-1-4 Mr. Pamula Udayaraju ( 24120 ), Ms. Thangellamudi Anitha Kumari ( 25136 ) (C 703),(C 705),(V 403) CSE 423 NATURAL LANGUAGE PROCESSING 3-0-0-3 Dr. Abhaya Kumar Pradhan ( 25217 ) (C 609) CSE 455 ARTIFICIAL INTELLIGENCE 3-0-1-4 Dr. Priya K V ( 25197 ), Dr. Sarvani Anandarao ( 24110 ) (C 705),(V 403) CSE 456 DIGITAL IMAGE PROCESSING 3-0-1-4 Dr. Raushan Kumar Singh ( 25349 ), Mr. Piyush Kumar ( 25177 ) (C 1006),(C"
+      },
+      "error": null
+    },
+    {
+      "index": 3,
+      "dropdown": "Academic",
+      "subitem": "Attendance Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "3"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/03-academic-attendance-details.html",
+      "parsed": {
+        "pageHeading": "ATTENDANCE DETAILS",
+        "tableCount": 2,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "During the Period : 05/Jan/2026 To 19/Feb/2026"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "During the Period : 05/Jan/2026 To 19/Feb/2026": "During the Period : 05/Jan/2026 To 19/Feb/2026"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Subject Code",
+              "Subject Description",
+              "ClassesConducted",
+              "Attendance Entered (Slots)",
+              "OD/ML Taken",
+              "Present % P / (P+A+OD)",
+              "OD ML % approved",
+              "Attendance %"
+            ],
+            "rowCount": 16,
+            "sampleRows": [
+              {
+                "Subject Code": "Subject Code",
+                "Subject Description": "Subject Description",
+                "ClassesConducted": "ClassesConducted",
+                "Attendance Entered (Slots)": "Attendance Entered (Slots)",
+                "OD/ML Taken": "OD/ML Taken",
+                "Present % P / (P+A+OD)": "Present % P / (P+A+OD)",
+                "OD ML % approved": "OD ML % approved",
+                "Attendance %": "Attendance %"
+              },
+              {
+                "Subject Code": "Present(P)",
+                "Subject Description": "Absent(A)"
+              },
+              {
+                "Subject Code": "CSE 304",
+                "Subject Description": "AUTOMATA AND COMPILER DESIGN",
+                "ClassesConducted": "16",
+                "Attendance Entered (Slots)": "13",
+                "OD/ML Taken": "2",
+                "Present % P / (P+A+OD)": "1",
+                "OD ML % approved": "81.25",
+                "Attendance %": "3.00",
+                "col9": "84.25"
+              }
+            ]
+          }
+        ],
+        "textPreview": "ATTENDANCE DETAILS During the Period : 05/Jan/2026 To 19/Feb/2026 Subject Code Subject Description ClassesConducted Attendance Entered (Slots) OD/ML Taken Present % P / (P+A+OD) OD ML % approved Attendance % Present(P) Absent(A) CSE 304 AUTOMATA AND COMPILER DESIGN 16 13 2 1 81.25 3.00 84.25 CSE 306 SOFTWARE ENGINEERING AND PROJECT MANAGEMENT 31 22 7 2 70.97 3.00 73.97 CSE 423 NATURAL LANGUAGE PROCESSING 13 9 4 0 69.23 0.00 69.23 CSE 455 ARTIFICIAL INTELLIGENCE 30 24 4 2 80.00 3.00 83.00 CSE 456 DIGITAL IMAGE PROCESSING 29 20 9 0 68.97 0.00 68.97 MCE 244 DYNAMICS AND CONTROL 19 11 8 0 57.89 0.00 57.89 SEC 176 GENERATIVE AI - II 18 15 3 0 83.33 0.00 83.33 For any discrepancy in attendance/not entered attendance please contact the course teacher. Attendance Percentage Calculation: Attendance Percentage(%)=Student Present Slots/Faculty Attendance Entered Slots × 100 OD/ML Calculation: 1. OD/ML is allowed for a maximum of 15% of the scheduled Slots in a given course. 2. To consider OD/ML student should maintain a minimum of 60% attendance in a given course OD/ML Percentage(%) per course = OD/ML Submitted/Total Slots scheduled for the course for entire semester×100"
+      },
+      "error": null
+    },
+    {
+      "index": 4,
+      "dropdown": "Academic",
+      "subitem": "OD/ML Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "53"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/04-academic-od-ml-details.html",
+      "parsed": {
+        "pageHeading": "OD / ML DETAILS",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "From Date",
+              "To Date",
+              "Activity Type",
+              "No.of Days",
+              "Description"
+            ],
+            "rowCount": 2,
+            "sampleRows": [
+              {
+                "From Date": "From Date",
+                "To Date": "To Date",
+                "Activity Type": "Activity Type",
+                "No.of Days": "No.of Days",
+                "Description": "Description"
+              },
+              {
+                "From Date": "29-01-2026",
+                "To Date": "29-01-2026",
+                "Activity Type": "OD with Present",
+                "No.of Days": "1",
+                "Description": "VRAI Workshop Organising"
+              }
+            ]
+          }
+        ],
+        "textPreview": "OD / ML DETAILS From Date To Date Activity Type No.of Days Description 29-01-2026 29-01-2026 OD with Present 1 VRAI Workshop Organising"
+      },
+      "error": null
+    },
+    {
+      "index": 5,
+      "dropdown": "Academic",
+      "subitem": "Student Attendance",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/studentattendance.jsp",
+        "params": {
+          "ids": "33",
+          "stuId": "14688"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/05-academic-student-attendance.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "Current Attendance Day Order Friday Attendance Code (First Alphabet and next Six Numbers) Submit Online Attendance CSE 456 - Attendance code accepted on 20-02-2026 12:26:04 Today Attendance Date Day Order Hour Subject Status 20-02-2026 Friday 4 CSE 456 DIGITAL IMAGE PROCESSING P 20-02-2026 Friday 3 CSE 456 DIGITAL IMAGE PROCESSING P"
+      },
+      "error": null
+    },
+    {
+      "index": 6,
+      "dropdown": "Academic",
+      "subitem": "Course Registration",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationinstruction2022.jsp",
+        "params": {
+          "ids": "39"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/06-academic-course-registration.html",
+      "parsed": {
+        "pageHeading": "COURSE REGISTRATION",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Sl.No.",
+              "Semester",
+              "Subject Part",
+              "Subject Code",
+              "Subject Desc",
+              "Credit",
+              "Group"
+            ],
+            "rowCount": 8,
+            "sampleRows": [
+              {
+                "Sl.No.": "1",
+                "Semester": "6",
+                "Subject Part": "Core Course",
+                "Subject Code": "CSE 304",
+                "Subject Desc": "AUTOMATA AND COMPILER DESIGN",
+                "Credit": "3",
+                "Group": ""
+              },
+              {
+                "Sl.No.": "2",
+                "Semester": "6",
+                "Subject Part": "Core Course",
+                "Subject Code": "CSE 306",
+                "Subject Desc": "SOFTWARE ENGINEERING AND PROJECT MANAGEMENT",
+                "Credit": "4",
+                "Group": ""
+              },
+              {
+                "Sl.No.": "3",
+                "Semester": "6",
+                "Subject Part": "Core Elective Courses",
+                "Subject Code": "CSE 423",
+                "Subject Desc": "NATURAL LANGUAGE PROCESSING",
+                "Credit": "3",
+                "Group": "Group 5"
+              }
+            ]
+          }
+        ],
+        "textPreview": "COURSE REGISTRATION Course Registered successfully Sl.No. Semester Subject Part Subject Code Subject Desc Credit Group 1 6 Core Course CSE 304 AUTOMATA AND COMPILER DESIGN 3 2 6 Core Course CSE 306 SOFTWARE ENGINEERING AND PROJECT MANAGEMENT 4 3 6 Core Elective Courses CSE 423 NATURAL LANGUAGE PROCESSING 3 Group 5 4 6 Open Elective MCE 244 DYNAMICS AND CONTROL 3 Group 2 5 6 Skill Enhanced Courses SEC 176 GENERATIVE AI - II 3 Group 4 6 6 Stream Elective CSE 455 ARTIFICIAL INTELLIGENCE 4 Group 1 7 6 Stream Elective CSE 456 DIGITAL IMAGE PROCESSING 4 Group 1 8 6 Value Added Courses VAC 108V CO-CURRICULAR - SMART TECH 2 Group 1"
+      },
+      "error": null
+    },
+    {
+      "index": 7,
+      "dropdown": "Academic",
+      "subitem": "Course Registration Cancellation",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationcurrentsemesterinstruction.jsp",
+        "params": {
+          "ids": "42"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/07-academic-course-registration-cancellation.html",
+      "parsed": {
+        "pageHeading": "COURSE REGISTRATION",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Registration closed"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Registration closed": "Registration closed"
+              }
+            ]
+          }
+        ],
+        "textPreview": "COURSE REGISTRATION Registration closed"
+      },
+      "error": null
+    },
+    {
+      "index": 8,
+      "dropdown": "Academic",
+      "subitem": "Minor Program Registration",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/minorregistrationinstruction.jsp",
+        "params": {
+          "ids": "152"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/08-academic-minor-program-registration.html",
+      "parsed": {
+        "pageHeading": "MINOR PROGRAM REGISTRATION",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Minor Course registration is not applicable to you"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Minor Course registration is not applicable to you": "Minor Course registration is not applicable to you"
+              }
+            ]
+          }
+        ],
+        "textPreview": "MINOR PROGRAM REGISTRATION Minor Course registration is not applicable to you"
+      },
+      "error": null
+    },
+    {
+      "index": 9,
+      "dropdown": "Events",
+      "subitem": "Event Attendance",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/eventattendance.jsp",
+        "params": {
+          "ids": "1"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/09-events-event-attendance.html",
+      "parsed": {
+        "pageHeading": "Events",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "Events No Events found"
+      },
+      "error": null
+    },
+    {
+      "index": 10,
+      "dropdown": "SAP",
+      "subitem": "SAP Process",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/sapregistrationinstruction.jsp",
+        "params": {
+          "ids": "43"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/10-sap-sap-process.html",
+      "parsed": {
+        "pageHeading": "SAP REGISTRATION",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "Note: Students will be allowed to register one time, hence, please select carefully. SAP REGISTRATION Registration closed"
+      },
+      "error": null
+    },
+    {
+      "index": 11,
+      "dropdown": "SAP",
+      "subitem": "Withdraw",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/sapwithdraw.jsp",
+        "params": {
+          "ids": "46"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/11-sap-withdraw.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "SAP WITHDRAW You are not registered with SAP."
+      },
+      "error": null
+    },
+    {
+      "index": 12,
+      "dropdown": "SAP",
+      "subitem": "Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "47"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/12-sap-details.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "SAP DETAILS Application history You are not registered with SAP."
+      },
+      "error": null
+    },
+    {
+      "index": 13,
+      "dropdown": "SAP",
+      "subitem": "Attachments",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/sapattachfiles.jsp",
+        "params": {
+          "ids": "48"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/13-sap-attachments.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "SAP ATTACHMENTS You are not registered with SAP."
+      },
+      "error": null
+    },
+    {
+      "index": 14,
+      "dropdown": "SAP",
+      "subitem": "Feedback",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/sapfeedback.jsp",
+        "params": {
+          "ids": "49"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/14-sap-feedback.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "SAP FEEDBACK"
+      },
+      "error": null
+    },
+    {
+      "index": 15,
+      "dropdown": "Finance",
+      "subitem": "Fee Paid Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "7"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/15-finance-fee-paid-details.html",
+      "parsed": {
+        "pageHeading": "FEE PAID DETAILS",
+        "tableCount": 2,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Fixed/Advances",
+              "Receipts/Payments",
+              "Due"
+            ],
+            "rowCount": 16,
+            "sampleRows": [
+              {
+                "Fixed/Advances": "Fixed/Advances",
+                "Receipts/Payments": "Receipts/Payments",
+                "Due": "Due"
+              },
+              {
+                "Fixed/Advances": "Term",
+                "Receipts/Payments": "Fee Type",
+                "Due": "Due Date",
+                "col4": "Amount",
+                "col5": "Receipt Date",
+                "col6": "Mode",
+                "col7": "Number",
+                "col8": "Amount"
+              },
+              {
+                "Fixed/Advances": "2023-2024",
+                "Receipts/Payments": "Admission Fees, General Fees, Tuition Fees",
+                "Due": "23/05/2023",
+                "col4": "350000.00",
+                "col5": "23/07/2023, 26/05/2023",
+                "col6": "Adj-Journal, Online-RAZOR",
+                "col7": "SEAS/23-24/18338, SEAS/23-24/6898, SEAS/23-24/7459",
+                "col8": "350000.00",
+                "col9": "0.0"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Amount Refunded",
+              "Amount Refunded Against Collected"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Amount Refunded": "Amount Refunded",
+                "Amount Refunded Against Collected": "Amount Refunded Against Collected"
+              }
+            ]
+          }
+        ],
+        "textPreview": "FEE PAID DETAILS Fixed/Advances Receipts/Payments Due Term Fee Type Due Date Amount Receipt Date Mode Number Amount 2023-2024 Admission Fees, General Fees, Tuition Fees 23/05/2023 350000.00 23/07/2023, 26/05/2023 Adj-Journal, Online-RAZOR SEAS/23-24/18338, SEAS/23-24/6898, SEAS/23-24/7459 350000.00 0.0 2023-2024 Bus Fees 07/08/2023 65000.00 07/08/2023 Online-EAZY PAY SEAS/23-24/27219 65000.00 0.0 2023-2024 Insurance Fees 31/10/2023 450.00 01/01/2024 Online-PAYU SEAS/23-24/42006 450.00 0.0 2023-2024 Exam Fees 17/11/2023 2600.00 20/11/2023 Online-PAYU SEAS/23-24/38003 2600.00 0.0 2023-2024 General Fees 14/02/2024 100.00 14/02/2024 Online-PAYU SEAS/23-24/43965 100.00 0.0 2023-2024 Exam Fees 02/05/2024 2100.00 04/05/2024 Online-PAYU SEAS/24-25/02571 2100.00 0.0 2024-2025 Insurance Fees, Tuition Fees 27/05/2024 335700.00 20/07/2024 Online-EAZY PAY, Online-PAYU SEAS/24-25/28913, SEAS/24-25/29157 335700.00 0.0 2024-2025 General Fees 14/10/2024 400.00 17/10/2024 Online-PAYU SEAS/24-25/43914 400.00 0.0 2024-2025 Exam Fees 05/11/2024 3600.00 07/11/2024 Online-PAYU SEAS/24-25/49938 3600.00 0.0 2024-2025 Exam Fees 04/04/2025 2600.00 06/04/2025 Online-EAZY PAY SEAS/25-26/02052 2600.00 0.0 2025-"
+      },
+      "error": null
+    },
+    {
+      "index": 16,
+      "dropdown": "Finance",
+      "subitem": "Fee Due Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/feeduegroups.jsp",
+        "params": {
+          "ids": "8"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/16-finance-fee-due-details.html",
+      "parsed": {
+        "pageHeading": "DUES",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Sl.No.",
+              "Fee Category",
+              "Fee Head",
+              "Due Amount (INR)",
+              "Collected (INR)",
+              "To be Paid Amount (INR)"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Sl.No.": "No fee dues"
+              }
+            ]
+          }
+        ],
+        "textPreview": "DUES Sl.No. Fee Category Fee Head Due Amount (INR) Collected (INR) To be Paid Amount (INR) No fee dues SELECT FEE CATEGORY TO PAY Note : You will be allowed to make the Tuition Fees payment once the other old dues are cleared Note:To verify the current status of your online Payment Gateway transaction, where the status was not updated and amount was deducted from you bank account, please go through the navigation : Student Portal>>Finance>>Online Payment Verification to verify the current status. If there will be a change, the status gets updated accordingly"
+      },
+      "error": null
+    },
+    {
+      "index": 17,
+      "dropdown": "Finance",
+      "subitem": "Online Payment Verification",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/onlinepayments/onlinepaymentreconcilation.jsp",
+        "params": {
+          "ids": "26",
+          "stuId": "14688"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/17-finance-online-payment-verification.html",
+      "parsed": {
+        "pageHeading": "ONLINE PAYMENT VERIFICATION",
+        "tableCount": 2,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Sl.No.",
+              "Transaction Date",
+              "Transaction No.",
+              "Reference No.",
+              "Fee Type",
+              "Amount",
+              "Payment Channel",
+              "Payment Status",
+              "Actions"
+            ],
+            "rowCount": 2,
+            "sampleRows": [
+              {
+                "Sl.No.": "Please Click on the Verify button if the amount is deducted from your bank account. Drop transaction should be chosen only when the amount is not deducted from your account. Please click on the \"Drop\" button if you wish to drop the \"Third-party EMI option\" and you would like to payment with online modes."
+              },
+              {
+                "Sl.No.": "No transaction available for verification !"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Sl.No.",
+              "Received Date",
+              "Transaction No.",
+              "Reference No.",
+              "Fee Type",
+              "Amount",
+              "Payment Channel",
+              "Payment Status"
+            ],
+            "rowCount": 25,
+            "sampleRows": [
+              {
+                "Sl.No.": "1",
+                "Received Date": "20-01-2026 21:42:24",
+                "Transaction No.": "561593",
+                "Reference No.": "26936470043",
+                "Fee Type": "Revaluation Fees",
+                "Amount": "1000.00",
+                "Payment Channel": "Payu Biz",
+                "Payment Status": "captured No Error"
+              },
+              {
+                "Sl.No.": "2",
+                "Received Date": "02-11-2025 22:14:32",
+                "Transaction No.": "542639",
+                "Reference No.": "25859858400",
+                "Fee Type": "Exam Fees",
+                "Amount": "4100.00",
+                "Payment Channel": "Payu Biz",
+                "Payment Status": "captured NO ERROR"
+              },
+              {
+                "Sl.No.": "3",
+                "Received Date": "02-11-2025 22:05:41",
+                "Transaction No.": "542632",
+                "Reference No.": "25859821627",
+                "Fee Type": "Exam Fees",
+                "Amount": "4100.00",
+                "Payment Channel": "Payu Biz",
+                "Payment Status": "userCancelled Transaction cancelled by customer"
+              }
+            ]
+          }
+        ],
+        "textPreview": "ONLINE PAYMENT VERIFICATION Sl.No. Transaction Date Transaction No. Reference No. Fee Type Amount Payment Channel Payment Status Actions Please Click on the Verify button if the amount is deducted from your bank account. Drop transaction should be chosen only when the amount is not deducted from your account. Please click on the \"Drop\" button if you wish to drop the \"Third-party EMI option\" and you would like to payment with online modes. No transaction available for verification ! ONLINE PAYMENT HISTORY Sl.No. Received Date Transaction No. Reference No. Fee Type Amount Payment Channel Payment Status 1 20-01-2026 21:42:24 561593 26936470043 Revaluation Fees 1000.00 Payu Biz captured No Error 2 02-11-2025 22:14:32 542639 25859858400 Exam Fees 4100.00 Payu Biz captured NO ERROR 3 02-11-2025 22:05:41 542632 25859821627 Exam Fees 4100.00 Payu Biz userCancelled Transaction cancelled by customer 4 08-07-2025 22:56:35 491287 24207831743 Tuition Fees 335000.00 Payu Biz captured No Error 5 08-07-2025 22:52:34 491232 24207430511 Tuition Fees 335000.00 Payu Biz bounced NO ERROR 6 08-07-2025 22:15:24 491231 NA Tuition Fees 335000.00 Razor Pay HDFC User Cancelled 7 08-07-2025 22:14:28 491230 24"
+      },
+      "error": null
+    },
+    {
+      "index": 18,
+      "dropdown": "Finance",
+      "subitem": "Payment Acknowledgment",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/receiptgeneration.jsp",
+        "params": {
+          "ids": "27",
+          "stuId": "14688"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/18-finance-payment-acknowledgment.html",
+      "parsed": {
+        "pageHeading": "PAYMENT RECEIPTS",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Sl.No.",
+              "Receipt Date",
+              "Receipt No.",
+              "Particulars",
+              "Amount",
+              ""
+            ],
+            "rowCount": 16,
+            "sampleRows": [
+              {
+                "Sl.No.": "1",
+                "Receipt Date": "20-01-2026",
+                "Receipt No.": "SEAS/124327/25-26",
+                "Particulars": "Revaluation Fee",
+                "Amount": "1000.00",
+                "col6": "Print"
+              },
+              {
+                "Sl.No.": "2",
+                "Receipt Date": "02-11-2025",
+                "Receipt No.": "SEAS/110958/25-26",
+                "Particulars": "Examination Fees",
+                "Amount": "4100.00",
+                "col6": "Print"
+              },
+              {
+                "Sl.No.": "3",
+                "Receipt Date": "08-07-2025",
+                "Receipt No.": "SEAS/87270/25-26",
+                "Particulars": "Student Insurance Fees",
+                "Amount": "700.00",
+                "col6": "Print"
+              }
+            ]
+          }
+        ],
+        "textPreview": "PAYMENT RECEIPTS Sl.No. Receipt Date Receipt No. Particulars Amount 1 20-01-2026 SEAS/124327/25-26 Revaluation Fee 1000.00 Print 2 02-11-2025 SEAS/110958/25-26 Examination Fees 4100.00 Print 3 08-07-2025 SEAS/87270/25-26 Student Insurance Fees 700.00 Print 4 08-07-2025 SEAS/87328/25-26 Tuition Fees 335000.00 Print 5 08-06-2025 SEAS/64493/25-26 Revaluation Fee 1000.00 Print 6 06-04-2025 SEAS/02052/25-26 Examination Fees 2600.00 Print 7 07-11-2024 SEAS/49938/24-25 Examination Fees 3600.00 Print 8 17-10-2024 SEAS/43914/24-25 Student ID Card 400.00 Print 9 20-07-2024 SEAS/28913/24-25 Student Insurance Fees 700.00 Print 10 20-07-2024 SEAS/29157/24-25 Tuition Fees 335000.00 Print 11 04-05-2024 SEAS/02571/24-25 Examination Fees 2100.00 Print 12 14-02-2024 SEAS/43965/23-24 Student ID Card Tag 100.00 Print 13 01-01-2024 SEAS/42006/23-24 Student Insurance Fees 450.00 Print 14 20-11-2023 SEAS/38003/23-24 Examination Fees 2600.00 Print 15 07-08-2023 SEAS/27219/23-24 Transport Fees 65000.00 Print 16 23-07-2023 SEAS/18338/23-24 Academic Caution Deposit 5000.00 Print"
+      },
+      "error": null
+    },
+    {
+      "index": 19,
+      "dropdown": "Finance",
+      "subitem": "Bank Account Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/studentbankdetails.jsp",
+        "params": {
+          "ids": "54"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/19-finance-bank-account-details.html",
+      "parsed": {
+        "pageHeading": "Bank Details",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request"
+            ],
+            "rowCount": 10,
+            "sampleRows": [
+              {
+                "Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request": "Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request"
+              },
+              {
+                "Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request": "Beneficiary Name*",
+                "col2": ""
+              },
+              {
+                "Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request": "Beneficiary Account Number*",
+                "col2": ""
+              }
+            ]
+          }
+        ],
+        "textPreview": "Bank Details Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request Beneficiary Name* Beneficiary Account Number* Bank Name* Bank Branch name* IFSC Code* Account owner relationship* Self Father Mother Guardian Account owner Contact number* Cancelled Cheque/First page of Passbook* Click to attach a File Save"
+      },
+      "error": null
+    },
+    {
+      "index": 20,
+      "dropdown": "Examination",
+      "subitem": "Internal Mark Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "5"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/20-examination-internal-mark-details.html",
+      "parsed": {
+        "pageHeading": "INTERNAL MARK DETAILS",
+        "tableCount": 7,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Subject Code",
+              "Subject Description",
+              "Marks Obtained",
+              "Max.Marks"
+            ],
+            "rowCount": 46,
+            "sampleRows": [
+              {
+                "Subject Code": "CSE 304",
+                "Subject Description": "AUTOMATA AND COMPILER DESIGN",
+                "Marks Obtained": "0.00",
+                "Max.Marks": "50"
+              },
+              {
+                "Subject Code": "Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I CLA 1 CLA 2 CLA 3",
+                "Subject Description": "Name",
+                "Marks Obtained": "Mark Secured(Conducted)",
+                "Max.Marks": "Mark Secured(Converted)",
+                "col5": "Mid Semester Exam I",
+                "col6": "",
+                "col7": "",
+                "col8": "CLA 1",
+                "col9": "",
+                "col10": "",
+                "col11": "CLA 2",
+                "col12": "",
+                "col13": "",
+                "col14": "CLA 3",
+                "col15": "",
+                "col16": ""
+              },
+              {
+                "Subject Code": "Name",
+                "Subject Description": "Mark Secured(Conducted)",
+                "Marks Obtained": "Mark Secured(Converted)"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 5,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "CLA 1",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 7,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "Lab Performance",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 5,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "CLA 1",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 6,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "CLA 1",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          },
+          {
+            "index": 5,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 6,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "Lab Performance",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          },
+          {
+            "index": 6,
+            "headers": [
+              "Name",
+              "Mark Secured(Conducted)",
+              "Mark Secured(Converted)"
+            ],
+            "rowCount": 5,
+            "sampleRows": [
+              {
+                "Name": "Name",
+                "Mark Secured(Conducted)": "Mark Secured(Conducted)",
+                "Mark Secured(Converted)": "Mark Secured(Converted)"
+              },
+              {
+                "Name": "Mid Semester Exam I",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              },
+              {
+                "Name": "CLA 1",
+                "Mark Secured(Conducted)": "",
+                "Mark Secured(Converted)": ""
+              }
+            ]
+          }
+        ],
+        "textPreview": "INTERNAL MARK DETAILS Subject Code Subject Description Marks Obtained Max.Marks CSE 304 AUTOMATA AND COMPILER DESIGN 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I CLA 1 CLA 2 CLA 3 CSE 306 SOFTWARE ENGINEERING AND PROJECT MANAGEMENT 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I Lab Performance CLA 1 CLA 2 Lab Record CLA 3 CSE 423 NATURAL LANGUAGE PROCESSING 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I CLA 1 CLA 2 CLA 3 CSE 455 ARTIFICIAL INTELLIGENCE 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I CLA 1 CLA 2 CLA 3 Lab Cotinuous Evaluation CSE 456 DIGITAL IMAGE PROCESSING 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I Lab Performance CLA 1 CLA 2 CLA 3 SEC 176 GENERATIVE AI - II 0.00 50 Name Mark Secured(Conducted) Mark Secured(Converted) Mid Semester Exam I CLA 1 CLA 2 CLA 3 function funShowHideDetails(argId) { //$(\".clsdivbkde\").css(\"display\",\"none\"); arg = \"subject\" + argId; if (document.getElementById(arg).style.display == 'none') { document.getElementById(arg).style.display = 'block'; } else { document.getEl"
+      },
+      "error": null
+    },
+    {
+      "index": 21,
+      "dropdown": "Examination",
+      "subitem": "Earlier Internal Marks",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "22"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/21-examination-earlier-internal-marks.html",
+      "parsed": {
+        "pageHeading": "EARLIER INTERNAL MARK DETAILS",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "EARLIER INTERNAL MARK DETAILS Semester 1 Semester 2 Semester 3 Semester 4 Semester 5"
+      },
+      "error": null
+    },
+    {
+      "index": 22,
+      "dropdown": "Examination",
+      "subitem": "Current Semester Results",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "15"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/22-examination-current-semester-results.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Semester",
+              "Subject Code",
+              "Subject Description",
+              "Credit",
+              "Grade",
+              "Result"
+            ],
+            "rowCount": 11,
+            "sampleRows": [
+              {
+                "Semester": "5",
+                "Subject Code": "CSE 301",
+                "Subject Description": "COMPUTER NETWORKS",
+                "Credit": "4",
+                "Grade": "O",
+                "Result": "PASS"
+              },
+              {
+                "Semester": "5",
+                "Subject Code": "CSE 302",
+                "Subject Description": "OPERATING SYSTEMS",
+                "Credit": "4",
+                "Grade": "O",
+                "Result": "PASS"
+              },
+              {
+                "Semester": "5",
+                "Subject Code": "CSE 303",
+                "Subject Description": "MACHINE LEARNING",
+                "Credit": "4",
+                "Grade": "O",
+                "Result": "PASS"
+              }
+            ]
+          }
+        ],
+        "textPreview": "UNIVERSITY EXAMINATION RESULTS - DECEMBER 2025 Semester Subject Code Subject Description Credit Grade Result 5 CSE 301 COMPUTER NETWORKS 4 O PASS 5 CSE 302 OPERATING SYSTEMS 4 O PASS 5 CSE 303 MACHINE LEARNING 4 O PASS 5 CSE 305 COMPUTER ORGANIZATION AND ARCHITECTURE 4 A+ PASS 5 CSE 308 SUMMER INTERNSHIP 4 O PASS 5 MCE 243 AI FOR ROBOTICS 3 O PASS 5 SEC 162 GENERATIVE AI - I 3 O PASS 5 VAC 105V CO-CURRICULAR - SMART TECH C PASS 5 VAC 107 COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY C PASS S.G.P.A 9.846 Disclaimer:The Examination Results published in this WebSite is only for the immediate Information to the Examinees and does not constitute to be a Legal Document. While all efforts have been made to make the Information available on this WebSite as Authentic as possible, We are not responsible for any InAdvertent Error that may have crept in the Examination Results being published in this WebSite and for any loss to anybody or anything caused by any ShortComing, Defect or InAccuracy of the Information on this WebSite."
+      },
+      "error": null
+    },
+    {
+      "index": 23,
+      "dropdown": "Examination",
+      "subitem": "Exam Mark Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "6"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/23-examination-exam-mark-details.html",
+      "parsed": {
+        "pageHeading": "EXAM MARK DETAILS",
+        "tableCount": 41,
+        "tables": [
+          {
+            "index": 1,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "AEC 101",
+              "ART OF LISTENING, SPEAKING AND READING SKILLS",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "DEC 2023": "DEC 2023",
+                "AEC 101": "AEC 101",
+                "ART OF LISTENING, SPEAKING AND READING SKILLS": "ART OF LISTENING, SPEAKING AND READING SKILLS",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "CSE 101",
+              "FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "DEC 2023": "DEC 2023",
+                "CSE 101": "CSE 101",
+                "FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C": "FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "FIC 101",
+              "EMERGING TECHNOLOGIES",
+              "2",
+              "B+",
+              "7.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "DEC 2023": "DEC 2023",
+                "FIC 101": "FIC 101",
+                "EMERGING TECHNOLOGIES": "EMERGING TECHNOLOGIES",
+                "B+": "B+",
+                "7.00": "7.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "FIC 103",
+              "CALCULUS FOR ENGINEERS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2023": "DEC 2023",
+                "FIC 103": "FIC 103",
+                "CALCULUS FOR ENGINEERS": "CALCULUS FOR ENGINEERS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 5,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "FIC 105",
+              "PRINCIPLES OF ECONOMICS AND MANAGEMENT",
+              "3",
+              "A",
+              "8.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2023": "DEC 2023",
+                "FIC 105": "FIC 105",
+                "PRINCIPLES OF ECONOMICS AND MANAGEMENT": "PRINCIPLES OF ECONOMICS AND MANAGEMENT",
+                "A": "A",
+                "8.00": "8.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 6,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "SEC 101",
+              "ANALYTICAL REASONING AND APTITUDE SKILLS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2023": "DEC 2023",
+                "SEC 101": "SEC 101",
+                "ANALYTICAL REASONING AND APTITUDE SKILLS": "ANALYTICAL REASONING AND APTITUDE SKILLS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 7,
+            "headers": [
+              "1",
+              "DEC 2023",
+              "VAC 101",
+              "ENVIRONMENTAL SCIENCE",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "DEC 2023": "DEC 2023",
+                "VAC 101": "VAC 101",
+                "ENVIRONMENTAL SCIENCE": "ENVIRONMENTAL SCIENCE",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 8,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "AEC 107",
+              "EFFECTIVE WRITING AND PRESENTATION SKILLS",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "MAY 2024": "MAY 2024",
+                "AEC 107": "AEC 107",
+                "EFFECTIVE WRITING AND PRESENTATION SKILLS": "EFFECTIVE WRITING AND PRESENTATION SKILLS",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 9,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "CSE 102",
+              "DATA STRUCTURES",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "4": "4",
+                "MAY 2024": "MAY 2024",
+                "CSE 102": "CSE 102",
+                "DATA STRUCTURES": "DATA STRUCTURES",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 10,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "FIC 102",
+              "ENGINEERING PHYSICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "MAY 2024": "MAY 2024",
+                "FIC 102": "FIC 102",
+                "ENGINEERING PHYSICS": "ENGINEERING PHYSICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 11,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "FIC 117",
+              "LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "MAY 2024": "MAY 2024",
+                "FIC 117": "FIC 117",
+                "LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS": "LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 12,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "FIC 120",
+              "FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "MAY 2024": "MAY 2024",
+                "FIC 120": "FIC 120",
+                "FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING": "FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 13,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "SEC 103",
+              "ENTREPRENEURIAL MINDSET",
+              "2",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "MAY 2024": "MAY 2024",
+                "SEC 103": "SEC 103",
+                "ENTREPRENEURIAL MINDSET": "ENTREPRENEURIAL MINDSET",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 14,
+            "headers": [
+              "2",
+              "MAY 2024",
+              "VAC 102",
+              "UNIVERSAL HUMAN VALUES AND ETHICS",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "MAY 2024": "MAY 2024",
+                "VAC 102": "VAC 102",
+                "UNIVERSAL HUMAN VALUES AND ETHICS": "UNIVERSAL HUMAN VALUES AND ETHICS",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 15,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "AEC 108",
+              "PROBLEM SOLVING SKILLS",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "AEC 108": "AEC 108",
+                "PROBLEM SOLVING SKILLS": "PROBLEM SOLVING SKILLS",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 16,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "CSE 201",
+              "CODING SKILLS-I",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "CSE 201": "CSE 201",
+                "CODING SKILLS-I": "CODING SKILLS-I",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 17,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "CSE 202",
+              "OOPS WITH C++",
+              "4",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "4": "4",
+                "DEC 2024": "DEC 2024",
+                "CSE 202": "CSE 202",
+                "OOPS WITH C++": "OOPS WITH C++",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 18,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "CSE 203",
+              "DISCRETE MATHEMATICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "CSE 203": "CSE 203",
+                "DISCRETE MATHEMATICS": "DISCRETE MATHEMATICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 19,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "CSE 204",
+              "DESIGN AND ANALYSIS OF ALGORITHMS",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "4": "4",
+                "DEC 2024": "DEC 2024",
+                "CSE 204": "CSE 204",
+                "DESIGN AND ANALYSIS OF ALGORITHMS": "DESIGN AND ANALYSIS OF ALGORITHMS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 20,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "CSE 207",
+              "DIGITAL ELECTRONICS",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "4": "4",
+                "DEC 2024": "DEC 2024",
+                "CSE 207": "CSE 207",
+                "DIGITAL ELECTRONICS": "DIGITAL ELECTRONICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 21,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "MCE 259",
+              "INTRODUCTION TO ROBOTICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "MCE 259": "MCE 259",
+                "INTRODUCTION TO ROBOTICS": "INTRODUCTION TO ROBOTICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 22,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "VAC 103",
+              "CO-CURRICULAR ACTIVITIES",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "VAC 103": "VAC 103",
+                "CO-CURRICULAR ACTIVITIES": "CO-CURRICULAR ACTIVITIES",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 23,
+            "headers": [
+              "3",
+              "DEC 2024",
+              "VAC 104",
+              "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "DEC 2024": "DEC 2024",
+                "VAC 104": "VAC 104",
+                "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY": "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 24,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "AEC 104",
+              "CREATIVITY AND CRITICAL THINKING SKILLS",
+              "2",
+              "A+",
+              "9.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "AEC 104": "AEC 104",
+                "CREATIVITY AND CRITICAL THINKING SKILLS": "CREATIVITY AND CRITICAL THINKING SKILLS",
+                "A+": "A+",
+                "9.00": "9.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 25,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "CSE 205",
+              "HANDS-ON WITH PYTHON",
+              "2",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "CSE 205": "CSE 205",
+                "HANDS-ON WITH PYTHON": "HANDS-ON WITH PYTHON",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 26,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "CSE 206",
+              "CODING SKILLS - II",
+              "2",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "2": "2",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "CSE 206": "CSE 206",
+                "CODING SKILLS - II": "CODING SKILLS - II",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 27,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "CSE 208",
+              "PROBABILITY AND STATISTICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "CSE 208": "CSE 208",
+                "PROBABILITY AND STATISTICS": "PROBABILITY AND STATISTICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 28,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "CSE 209",
+              "DATABASE MANAGEMENT SYSTEMS",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "CSE 209": "CSE 209",
+                "DATABASE MANAGEMENT SYSTEMS": "DATABASE MANAGEMENT SYSTEMS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 29,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "CSE 210",
+              "WEB TECHNOLOGY",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "CSE 210": "CSE 210",
+                "WEB TECHNOLOGY": "WEB TECHNOLOGY",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 30,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "MCE 242",
+              "MECHATRONICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "MCE 242": "MCE 242",
+                "MECHATRONICS": "MECHATRONICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 31,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "VAC 103V",
+              "CO-CURRICULAR - SMART TECH",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "VAC 103V": "VAC 103V",
+                "CO-CURRICULAR - SMART TECH": "CO-CURRICULAR - SMART TECH",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 32,
+            "headers": [
+              "4",
+              "MAY 2025",
+              "VAC 106",
+              "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "MAY 2025": "MAY 2025",
+                "VAC 106": "VAC 106",
+                "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY": "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 33,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "CSE 301",
+              "COMPUTER NETWORKS",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "CSE 301": "CSE 301",
+                "COMPUTER NETWORKS": "COMPUTER NETWORKS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 34,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "CSE 302",
+              "OPERATING SYSTEMS",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "CSE 302": "CSE 302",
+                "OPERATING SYSTEMS": "OPERATING SYSTEMS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 35,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "CSE 303",
+              "MACHINE LEARNING",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "CSE 303": "CSE 303",
+                "MACHINE LEARNING": "MACHINE LEARNING",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 36,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "CSE 305",
+              "COMPUTER ORGANIZATION AND ARCHITECTURE",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "CSE 305": "CSE 305",
+                "COMPUTER ORGANIZATION AND ARCHITECTURE": "COMPUTER ORGANIZATION AND ARCHITECTURE",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 37,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "CSE 308",
+              "SUMMER INTERNSHIP",
+              "4",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "4": "4",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "CSE 308": "CSE 308",
+                "SUMMER INTERNSHIP": "SUMMER INTERNSHIP",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 38,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "MCE 243",
+              "AI FOR ROBOTICS",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "MCE 243": "MCE 243",
+                "AI FOR ROBOTICS": "AI FOR ROBOTICS",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 39,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "SEC 162",
+              "GENERATIVE AI - I",
+              "3",
+              "O",
+              "10.00",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "3": "3",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "SEC 162": "SEC 162",
+                "GENERATIVE AI - I": "GENERATIVE AI - I",
+                "O": "O",
+                "10.00": "10.00",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 40,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "VAC 105V",
+              "CO-CURRICULAR - SMART TECH",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "VAC 105V": "VAC 105V",
+                "CO-CURRICULAR - SMART TECH": "CO-CURRICULAR - SMART TECH",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          },
+          {
+            "index": 41,
+            "headers": [
+              "5",
+              "DEC 2025",
+              "VAC 107",
+              "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+              "-",
+              "-",
+              "-",
+              "PASS",
+              "1"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "1": "1",
+                "5": "5",
+                "DEC 2025": "DEC 2025",
+                "VAC 107": "VAC 107",
+                "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY": "COMMUNITY SERVICE AND SOCIAL RESPONSIBILITY",
+                "-": "-",
+                "PASS": "PASS"
+              }
+            ]
+          }
+        ],
+        "textPreview": "EXAM MARK DETAILS Semester Month & Year Subject Code Subject Description Credit Grade Grade Points Result Attempt 1 DEC 2023 AEC 101 ART OF LISTENING, SPEAKING AND READING SKILLS 2 A+ 9.00 PASS 1 1 DEC 2023 CSE 101 FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C 4 O 10.00 PASS 1 1 DEC 2023 FIC 101 EMERGING TECHNOLOGIES 2 B+ 7.00 PASS 1 1 DEC 2023 FIC 103 CALCULUS FOR ENGINEERS 3 O 10.00 PASS 1 1 DEC 2023 FIC 105 PRINCIPLES OF ECONOMICS AND MANAGEMENT 3 A 8.00 PASS 1 1 DEC 2023 SEC 101 ANALYTICAL REASONING AND APTITUDE SKILLS 3 O 10.00 PASS 1 1 DEC 2023 VAC 101 ENVIRONMENTAL SCIENCE 2 A+ 9.00 PASS 1 2 MAY 2024 AEC 107 EFFECTIVE WRITING AND PRESENTATION SKILLS 2 A+ 9.00 PASS 1 2 MAY 2024 CSE 102 DATA STRUCTURES 4 O 10.00 PASS 1 2 MAY 2024 FIC 102 ENGINEERING PHYSICS 3 O 10.00 PASS 1 2 MAY 2024 FIC 117 LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS 3 O 10.00 PASS 1 2 MAY 2024 FIC 120 FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING 3 O 10.00 PASS 1 2 MAY 2024 SEC 103 ENTREPRENEURIAL MINDSET 2 O 10.00 PASS 1 2 MAY 2024 VAC 102 UNIVERSAL HUMAN VALUES AND ETHICS 2 A+ 9.00 PASS 1 3 DEC 2024 AEC 108 PROBLEM SOLVING SKILLS 2 A+ 9.00 PASS 1 3 DEC 2024 CSE 201 CODING SKILLS-I 2 A+ 9.00 PASS 1 "
+      },
+      "error": null
+    },
+    {
+      "index": 24,
+      "dropdown": "Examination",
+      "subitem": "Exam Registration",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/semesterexamapplicationinstruction.jsp",
+        "params": {
+          "ids": "13"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/24-examination-exam-registration.html",
+      "parsed": {
+        "pageHeading": "UNIVERSITY EXAM APPLICATION REGISTRATION - DECEMBER 2025",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "UNIVERSITY EXAM APPLICATION REGISTRATION - DECEMBER 2025 UNIVERSITY EXAM REGISTRATION IS ALLOWED ONLY BETWEEN 30-10-2025 03:00 PM AND 12-11-2025 11:58 PM. You will be allowed to do the Exam Registration after completing your End Term feedback"
+      },
+      "error": null
+    },
+    {
+      "index": 25,
+      "dropdown": "Examination",
+      "subitem": "Exam Registration Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/examaplicationreport.jsp",
+        "params": {
+          "ids": "159"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/25-examination-exam-registration-details.html",
+      "parsed": {
+        "pageHeading": "Exam Application Details",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Exam Month And Year",
+              "[Select Exam Month And Year] DECEMBER 2023 MAY 2024 DECEMBER 2024 MAY 2025 DECEMBER 2025"
+            ],
+            "rowCount": 2,
+            "sampleRows": [
+              {
+                "Exam Month And Year": "Exam Month And Year",
+                "[Select Exam Month And Year] DECEMBER 2023 MAY 2024 DECEMBER 2024 MAY 2025 DECEMBER 2025": "[Select Exam Month And Year] DECEMBER 2023 MAY 2024 DECEMBER 2024 MAY 2025 DECEMBER 2025"
+              },
+              {
+                "Exam Month And Year": "Print"
+              }
+            ]
+          }
+        ],
+        "textPreview": "Exam Application Details Exam Month And Year [Select Exam Month And Year] DECEMBER 2023 MAY 2024 DECEMBER 2024 MAY 2025 DECEMBER 2025 Print"
+      },
+      "error": null
+    },
+    {
+      "index": 26,
+      "dropdown": "Hostel",
+      "subitem": "Hostel Booking for Full Year",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/hostelregistrationinstruction.jsp",
+        "params": {
+          "ids": "31"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/26-hostel-hostel-booking-for-full-year.html",
+      "parsed": {
+        "pageHeading": "HOSTEL REGISTRATION 2025",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Students who are staying within the limit of 90KM (that is Vijayawada, Guntur, and Tenali) will be restricted from booking hostel beds."
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Students who are staying within the limit of 90KM (that is Vijayawada, Guntur, and Tenali) will be restricted from booking hostel beds.": "Students who are staying within the limit of 90KM (that is Vijayawada, Guntur, and Tenali) will be restricted from booking hostel beds."
+              }
+            ]
+          }
+        ],
+        "textPreview": "Note: Students will be allowed to register for one facility only- either Hostel or Transport, hence, please select carefully. HOSTEL REGISTRATION 2025 Students who are staying within the limit of 90KM (that is Vijayawada, Guntur, and Tenali) will be restricted from booking hostel beds."
+      },
+      "error": null
+    },
+    {
+      "index": 27,
+      "dropdown": "Hostel",
+      "subitem": "Room Details",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "params": {
+          "ids": "21"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/27-hostel-room-details.html",
+      "parsed": {
+        "pageHeading": "",
+        "tableCount": 2,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Hostel Status"
+            ],
+            "rowCount": 2,
+            "sampleRows": [
+              {
+                "Hostel Status": "Hostel Status"
+              },
+              {
+                "Hostel Status": "Not Registered"
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "headers": [
+              "Previous Year Hostel Status"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Previous Year Hostel Status": "You do not stay in a hostel in previous Academic Years."
+              }
+            ]
+          }
+        ],
+        "textPreview": "Hostel Status Not Registered Previous Year Hostel Status Academic Year Alloted Date Block Tower Room Name Room Type You do not stay in a hostel in previous Academic Years."
+      },
+      "error": null
+    },
+    {
+      "index": 28,
+      "dropdown": "Transport",
+      "subitem": "Transport Registration",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/registrations/transportregistrationinstructions.jsp",
+        "params": {
+          "ids": "51"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/28-transport-transport-registration.html",
+      "parsed": {
+        "pageHeading": "TRANSPORT REGISTRATION 2025",
+        "tableCount": 1,
+        "tables": [
+          {
+            "index": 0,
+            "headers": [
+              "Please note that the Transport booking will be open soon"
+            ],
+            "rowCount": 1,
+            "sampleRows": [
+              {
+                "Please note that the Transport booking will be open soon": "Please note that the Transport booking will be open soon"
+              }
+            ]
+          }
+        ],
+        "textPreview": "Note: Students will be allowed to register for one facility only- either Hostel or Transport, hence, please select carefully. TRANSPORT REGISTRATION 2025 Please note that the Transport booking will be open soon"
+      },
+      "error": null
+    },
+    {
+      "index": 29,
+      "dropdown": "Transport",
+      "subitem": "Registration Acknowledgment",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/transportconfirmationprint.jsp",
+        "params": {
+          "ids": "52"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/29-transport-registration-acknowledgment.html",
+      "parsed": {
+        "pageHeading": "You are not registered to Transport",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "School of Engineering and Sciences Neerukonda, Mangalagiri Mandal, Guntur District, Mangalagiri Andhra Pradesh 522502. You are not registered to Transport"
+      },
+      "error": null
+    },
+    {
+      "index": 30,
+      "dropdown": "Feedback",
+      "subitem": "End Semester Feedback",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/subjectwisefeedback.jsp",
+        "params": {
+          "ids": "9"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/30-feedback-end-semester-feedback.html",
+      "parsed": {
+        "pageHeading": "SUBJECT WISE FEEDBACK - END SEMESTER",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "SUBJECT WISE FEEDBACK - END SEMESTER FEEDBACK NOT ENABLED BY ADMINISTRATOR"
+      },
+      "error": null
+    },
+    {
+      "index": 31,
+      "dropdown": "Announcements",
+      "subitem": "Announcements",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/announcements.jsp",
+        "params": {
+          "ids": "107",
+          "stuId": "14688"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/31-announcements-announcements.html",
+      "parsed": {
+        "pageHeading": "Announcements",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "Announcements Announcement Date Announcement Name Enclosure No Announcements found"
+      },
+      "error": null
+    },
+    {
+      "index": 32,
+      "dropdown": "Verification",
+      "subitem": "Mobile No Verification",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/mobilenumberverification.jsp",
+        "params": {
+          "ids": "1"
+        }
+      },
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html;charset=UTF-8",
+      "rawFile": "raw/32-verification-mobile-no-verification.html",
+      "parsed": {
+        "pageHeading": "Mobile Number Verification",
+        "tableCount": 0,
+        "tables": [],
+        "textPreview": "Mobile Number Verification Please note that all communication sent on mobile number will be triggered only on registered mobile number. Edit / verify your Mobile Number : Send OTP Return to Login"
+      },
+      "error": null
+    }
+  ]
+}

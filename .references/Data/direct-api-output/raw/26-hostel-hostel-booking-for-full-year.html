@@ -1,0 +1,92 @@
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Hostel Room Request</title>
+        <script>
+            var url = "students/registrations/hostelregistrationresources.jsp";
+            $(function () {
+                if (0 > 0) {
+                    debugger;
+                    funLoadDues();
+                }
+            });
+
+            function funLoadDues() {
+                var feetypeid = 4;
+                $.post("students/onlinepayments/onlinepaymentstatusverification.jsp", {filter: feetypeid}, function (data) {
+                    $("#divContent").html(data);
+                }, "html").fail(function (jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR.responseText);
+                });
+            }
+
+            function redirectHostelRegistration() {
+                funLoadDetails(11);
+            }
+
+            function redirectPaymentHostelRegistration() {
+                funLoadDetails(8);
+            }
+
+        </script>
+    </head>
+    <body>
+        <br> <br>
+        <div>&nbsp;</div>
+        <div class="container-fluid">
+            <div class="panel panel-info">
+                <div class="panel-info"><h5><b>Note:</b> Students will be allowed to register for one facility only- either Hostel or Transport, hence, please select carefully.</h5> </div>
+                <div class="panel-heading panel-info"><h2> HOSTEL REGISTRATION 2025</h2> </div>
+                <div class="panel-body">
+                    
+                    
+                        <table class="table" style="color: #006633;font-size: x-large;width: 100%">
+                            <tr>
+                                <td colspan="2" style="color: #990000;font-size: x-large"> 
+                                    Students who are staying within the limit of 90KM (that is Vijayawada, Guntur, and Tenali) will be restricted from booking hostel beds.
+                                </td>
+                            </tr>
+                        </table>
+                    
+
+                    
+                    
+                    
+
+                    
+                     
+
+                    
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

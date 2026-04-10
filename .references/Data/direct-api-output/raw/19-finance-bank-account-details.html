@@ -1,0 +1,241 @@
+
+
+
+<!DOCTYPE html>
+
+
+
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Student Bank Details</title>
+        <script src="/srmapstudentcorner/resources/js/jquery.validationEngine-en.js" type="text/javascript"></script>
+        <script src="/srmapstudentcorner/resources/js/jquery.validationEngine.js" type="text/javascript"></script>
+        <link type="text/css" href="/srmapstudentcorner/resources/css/validationEngine.jquery.css" rel="stylesheet"/>
+        <style>
+            input,select{
+                height: 30px;
+            }
+        </style>
+        <script>
+            var url = "students/transaction/studentbankdetailsresource.jsp";
+            $(function () {
+                $("#frmPalack").validationEngine('attach');
+                $("button").button().click(function (event) {
+                    event.preventDefault();
+                });
+
+                $("button").on('click', function (e) {
+                    e.preventDefault();
+                });
+
+                $(".btnSave").on("click", funSave);
+
+            });
+
+            function funSave() {
+                if ($("#txtBeneficiaryname").val() == "") {
+                    alert(" Give Beneficiary Name");
+                    $("#txtBeneficiaryname").focus();
+                    return false;
+                }
+                if ($("#txtBeneficiaryacno").val() == "") {
+                    alert(" Give Beneficiary Account Number");
+                    $("#txtBeneficiaryacno").focus();
+                    return false;
+                }
+                if ($("#txtBankname").val() == "") {
+                    alert(" Give Bank Name");
+                    $("#txtBankname").focus();
+                    return false;
+                }
+                if ($("#txtBranchname").val() == "") {
+                    alert(" Give Branch Name");
+                    $("#txtBranchname").focus();
+                    return false;
+                }
+                if ($("#txtIfsc").val() == "") {
+                    alert(" Give IFSC Code");
+                    $("#txtIfsc").focus();
+                    return false;
+                }
+                if ($("#txtIfsc").val().length < 11)
+                {
+                    alert(" Give Valid IFSC Code");
+                    $("#txtIfsc").focus();
+                    return false;
+                }
+                if ($("#txtAccountOwnerContactNumber").val() == "") {
+                    alert(" Give account owner contact number");
+                    $("#txtAccountOwnerContactNumber").focus();
+                    return false;
+                }
+                if ($("#cmbAccountownerrelationship").val() < 1) {
+                    alert("Select ");
+                    $("#txtAccountOwnerContactNumber").focus();
+                    return false;
+                }
+                var attachmentIds = $('.clsFileId').map(function () {
+                    return this.value;
+                }).get();
+                if (attachmentIds == "")
+                {
+                    alert("Give Attachment");
+                    return false;
+                }
+//                if (!$("#chkAC").is(":checked"))
+//                {
+//                    alert("Kindly agree the terms and conditions");
+//                    return false;
+//                }
+                if (!($('#frmPalack').validationEngine('validate', {autoHidePrompt: true})))
+                    return;
+                var applnparameter = $("#frmPalack").serializeArray();
+                applnparameter.push({name: "ids", value: "2"});
+                $.post(url, applnparameter, function (data) {
+                    alert(data.result);
+                    if (data.resultstatus == 1) {
+                        funLoadDetails(54);
+                    }
+                }, "json");
+            }
+            function funDownload()
+            {
+                document.getElementById('frmReportPrint').submit();
+            }
+            function fileUpload() {
+                var fileid = $("#studentId").val();
+                var currentTime = new Date();
+                var str_currentdate = currentTime.getFullYear() + "_" + parseInt(currentTime.getMonth() + 1) + "_" + currentTime.getDate();
+                str_currentdate += "_" + currentTime.getHours() + "_" + currentTime.getMinutes() + "_" + currentTime.getMilliseconds();
+                var fileName = "Cheque_" + fileid + "_" + str_currentdate;
+                $("#hdnAttachedFileNames").val(fileName);
+                var url = "/srmapstudentcorner/students/enrollment/bankdetailsattachment.jsp?filename=" + fileName + "&fileid=" + fileid + "&typeid=90";
+                divObject = document.getElementById('divAttachFile');
+                var appendStr = "<iframe id='iframe1' style='border:none;height:50px;width:100%' src='" + url + "' ></iframe>";
+                divObject.innerHTML = appendStr;
+                divObject.style.display = "block";
+            }
+            function funFileUploadClose() {
+                document.getElementById('divAttachFile').innerHTML = "Attach Another File";
+            }
+            function addTableRow(jQtable, rowdata) {
+                $(jQtable).each(function () {
+                    if ($('tbody', this).length > 0) {
+                        $('tbody', this).append(rowdata);
+                    } else {
+                        $(this).append(rowdata);
+                    }
+                });
+            }
+            function funRemoveAttachment(rowId) {
+                if (!confirm('Wish to remove attachment?'))
+                    return;
+                tr = document.getElementById(rowId);
+                tr.parentNode.removeChild(tr);
+            }
+
+            function funViewAttachmentFile(rowId, argExtension) {
+                var applnparameter = [];
+                applnparameter.push({name: "ids", value: "3"});
+                applnparameter.push({name: "filter", value: rowId});
+                applnparameter.push({name: "ActualName", value: rowId});
+                applnparameter.push({name: "fileextension", value: argExtension});
+                $.post("/srmapstudentcorner/students/transaction/studentbankdetailsresource.jsp", applnparameter, function (data) {
+                    var filename = $.trim(data).replace("%20", "");
+                    var win2 = window.open('/srmapstudentcorner/resources/temp/' + filename, "Attachments", "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=yes,width=800,height=900,left=100,top=100");
+                    win2.focus();
+                }, "html").error(function (jqXHR, textStatus, errorThrown) {
+                    alert("errpr" + textStatus + "--" + jqXHR.responseText + " " + errorThrown);
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <br> <br>
+        <div>&nbsp;</div> 
+        <div class="container-fluid">
+            <div class="panel panel-info">
+                <div class="panel-heading panel-info"><h2>Bank Details</h2></div>
+                <div class="panel-body">
+                    <form id="frmPalack" method="POST" autocomplete="off">
+                                                     
+                        
+                            
+                             
+                            
+                                <table class="table table-bordered table-striped success" style="color: #000"> 
+                                    <tr>
+                                        <td colspan="2"> Please enter your Bank Details which would be used by the Institute to return the money in case of any refund request</td>
+                                    </tr>
+                                    <tr> 
+                                        <td width="25%">Beneficiary Name<sup style="color: red;">*</sup></td> 
+                                        <td><input type="text"  name="txtBeneficiaryname" id="txtBeneficiaryname"  style="width: 45%" maxlength="80"></td> 
+                                    </tr>
+                                    <tr> 
+                                        <td>Beneficiary Account Number<sup style="color: red;">*</sup></td> 
+                                        <td><input type="text"  name="txtBeneficiaryacno" id="txtBeneficiaryacno"  style="width: 45%" maxlength="20"></td> 
+                                    </tr>
+                                    <tr> 
+                                        <td>Bank Name<sup style="color: red;">*</sup></td>
+                                        <td><input type="text"  name="txtBankname" id="txtBankname" style="width: 45%" maxlength="50"></td> 
+                                    </tr>   
+                                    <tr> 
+                                        <td>Bank Branch name<sup style="color: red;">*</sup></td>
+                                        <td><input type="text"  name="txtBranchname" id="txtBranchname" style="width: 45%" maxlength="70"></td> 
+                                    </tr>   
+                                    <tr> 
+                                        <td>IFSC Code<sup style="color: red;">*</sup></td> 
+                                        <td><input type="text"  name="txtIfsc" id="txtIfsc"  style="width: 45%" maxlength="11" ></td> 
+                                    </tr>
+                                    <tr> 
+                                        <td>Account owner relationship<sup style="color: red;">*</sup></td> 
+                                        <td>
+                                            <select name="cmbAccountownerrelationship" id="cmbAccountownerrelationship">
+                                                <option value="1">Self</option>
+                                                <option value="2">Father</option>
+                                                <option value="3">Mother</option>
+                                                <option value="4">Guardian </option>
+                                            </select>
+                                        </td> 
+                                    </tr>
+                                    <tr> 
+                                        <td>Account owner Contact number<sup style="color: red;">*</sup></td> 
+                                        <td><input type="text"  name="txtAccountOwnerContactNumber" id="txtAccountOwnerContactNumber"  style="width: 45%" maxlength="11" onkeypress='return event.charCode >= 48 && event.charCode <= 57'></td> 
+                                    </tr>
+                                    <tr>
+                                        <td>Cancelled Cheque/First page of Passbook<sup style="color: red;">*</sup></td>
+                                        <td>
+                                            <table id="FileAttachmentTable"></table>
+                                            <DIV class="attach" id="divAttachFile" style="cursor:pointer;" onclick="fileUpload()">Click to attach a File</div>
+                                            <input type='hidden' id='hdnAttachedFileNames' name='hdnAttachedFileNames'  class="validate[required] clshdncom">    
+                                        </td>
+                                    </tr>
+<!--                                    <tr>
+                                        <td colspan="2"><input type="checkbox" id="chkAC"  style="margin:-2px 4px 0 0;vertical-align:middle;"> 
+                                            I agree to the eligibility criteria of the course and would comply with the Terms and Conditions mentioned in the PAL
+                                        </td>
+                                    </tr>-->
+                                    <tr>
+                                        <td colspan="2" style="text-align: center">
+                                            <button id="btnSave" class="btn btn-info btnSave"> Save </button>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            
+                            
+                         
+
+                        <div id="divDialog" name="divDialog" style="display:none;"></div>
+                    </form>
+                    <form name="frmReportPrint" id="frmReportPrint" method="POST" action="/srmapstudentcorner/applicant/transaction/documentprint.jsp" target="_blank">
+                        <input type="hidden" name="studentId" id="studentId" value="14688">
+                        <input type="hidden" name="reportId" id="reportId" value="0">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
