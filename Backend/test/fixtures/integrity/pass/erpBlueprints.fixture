@@ -1,0 +1,12 @@
+export const PAGE_BLUEPRINTS = {
+  "/academic/timetable": {
+    route: "/academic/timetable",
+    fetchKeys: ["academic/time-table"],
+    sourceMode: "erp",
+  },
+  "/external/demo": {
+    route: "/external/demo",
+    fetchKeys: ["external/demo"],
+    sourceMode: "external",
+  },
+};

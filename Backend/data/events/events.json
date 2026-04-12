@@ -1,0 +1,56 @@
+[
+  {
+    "id": "29f31a29-a049-460f-845e-1384ad5b41dd",
+    "title": "adckla",
+    "description": "lwdvknwl",
+    "startAt": "2025-12-31T23:26:00.000Z",
+    "endAt": "2026-01-06T22:15:00.000Z",
+    "location": {
+      "physical": "fghj",
+      "virtual": "ghjk",
+      "mapUrl": ""
+    },
+    "organizer": "vdwnlk",
+    "department": "General",
+    "category": "General",
+    "tags": [],
+    "maxCapacity": 100,
+    "registrationDeadline": "2026-01-04T23:26:00.000Z",
+    "cancellationDeadline": "2026-01-04T23:26:00.000Z",
+    "visibility": "public",
+    "featured": false,
+    "coverImageUrl": "",
+    "attachments": [],
+    "agenda": [],
+    "speakers": [],
+    "registrationFormFields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true
+      }
+    ],
+    "status": "published",
+    "approvalStatus": "not-required",
+    "approvalNotes": "",
+    "approvedByUserId": null,
+    "approvedAt": null,
+    "recurring": false,
+    "recurrence": {
+      "type": "none"
+    },
+    "parentEventId": null,
+    "recurrenceIndex": 0,
+    "createdByUserId": "local-user",
+    "createdByRole": "student",
+    "createdAt": "2026-03-04T09:17:44.976Z",
+    "updatedAt": "2026-03-04T09:17:44.976Z"
+  }
+]

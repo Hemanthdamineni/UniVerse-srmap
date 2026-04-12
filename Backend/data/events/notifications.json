@@ -1,0 +1,44 @@
+[
+  {
+    "id": "b3b30197-0a12-407f-b633-73bc6645e560",
+    "userId": "admin-user",
+    "type": "event_approval_pending",
+    "title": "Event approval required",
+    "message": "dfgh needs approval before publish.",
+    "eventId": "f548785e-ce27-44c4-9713-24952dbe2dac",
+    "channel": [
+      "in-app",
+      "email"
+    ],
+    "readAt": null,
+    "createdAt": "2026-03-03T16:23:42.042Z"
+  },
+  {
+    "id": "3173bbb0-e064-4ee0-ba93-08cdb4c9c085",
+    "userId": "coordinator-user",
+    "type": "event_approval_pending",
+    "title": "Event approval required",
+    "message": "dfgh needs approval before publish.",
+    "eventId": "f548785e-ce27-44c4-9713-24952dbe2dac",
+    "channel": [
+      "in-app",
+      "email"
+    ],
+    "readAt": null,
+    "createdAt": "2026-03-03T16:23:42.042Z"
+  },
+  {
+    "id": "f42acf1e-84fe-4b0a-9c27-35de50301917",
+    "userId": "hod-user",
+    "type": "event_approval_pending",
+    "title": "Event approval required",
+    "message": "dfgh needs approval before publish.",
+    "eventId": "f548785e-ce27-44c4-9713-24952dbe2dac",
+    "channel": [
+      "in-app",
+      "email"
+    ],
+    "readAt": null,
+    "createdAt": "2026-03-03T16:23:42.042Z"
+  }
+]

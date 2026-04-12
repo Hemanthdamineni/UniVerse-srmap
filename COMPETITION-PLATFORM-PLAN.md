@@ -34,14 +34,16 @@ Backend/data/submissions/{eventId}/{roundId}/{userId}/
 - Max file size: **25MB per submission**
 - Allowed MIME types (validated server-side via `multer` fileFilter, not just extension):
 
-| Extension | MIME Type |
-|-----------|-----------|
-| `.pdf` | `application/pdf` |
-| `.zip` | `application/zip` |
-| `.docx` | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
-| `.pptx` | `application/vnd.openxmlformats-officedocument.presentationml.presentation` |
-| `.txt` | `text/plain` |
-| `.md` | `text/markdown`, `text/plain` |
+
+| Extension | MIME Type                                                                   |
+| --------- | --------------------------------------------------------------------------- |
+| `.pdf`    | `application/pdf`                                                           |
+| `.zip`    | `application/zip`                                                           |
+| `.docx`   | `application/vnd.openxmlformats-officedocument.wordprocessingml.document`   |
+| `.pptx`   | `application/vnd.openxmlformats-officedocument.presentationml.presentation` |
+| `.txt`    | `text/plain`                                                                |
+| `.md`     | `text/markdown`, `text/plain`                                               |
+
 
 - On resubmission: previous file is retained on disk (not deleted). New file becomes active. History is preserved.
 - `multer` is the only new backend dependency.
@@ -85,11 +87,13 @@ Each round has a `resultsPublished: boolean` field (default `false`).
 
 The complete visibility matrix — enforced at the **API level** (the `GET /my-submission` endpoint strips fields based on `resultsPublished`, not left to frontend judgment):
 
-| Participant State | Score | Rank | Criteria Breakdown | Shortlisted | Decision | Remarks |
-|---|---|---|---|---|---|---|
-| Submitted / Under Review | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Evaluated (not published) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Results Published | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+| Participant State         | Score | Rank | Criteria Breakdown | Shortlisted | Decision | Remarks |
+| ------------------------- | ----- | ---- | ------------------ | ----------- | -------- | ------- |
+| Submitted / Under Review  | ❌     | ❌    | ❌                  | ❌           | ❌        | ❌       |
+| Evaluated (not published) | ❌     | ❌    | ❌                  | ❌           | ❌        | ❌       |
+| Results Published         | ✅     | ✅    | ✅                  | ✅           | ✅        | ✅       |
+
 
 No partial reveals. `resultsPublished` is the single gate for everything. The API strips all evaluation fields from the response payload when `resultsPublished === false`.
 
@@ -235,6 +239,7 @@ Submitted
 ```
 
 Special state for unevaluated after publish:
+
 ```
 → Not Evaluated     (round published but this submission was never scored)
 ```
@@ -254,6 +259,7 @@ Extended filters on `GET /api/events`:
 - Sort by: Deadline nearest, Recently added, Prize pool
 
 Event cards gain:
+
 - Competition badge (if `isCompetition: true`)
 - Deadline countdown
 - Round count indicator ("3 Rounds")
@@ -265,16 +271,18 @@ Event cards gain:
 
 For competitions, the event detail page gains structured sections:
 
-| Section | Content | Storage |
-|---------|---------|---------|
-| Overview | Description, poster, organizer info | Existing event fields |
-| Rounds | Each round: type, deadline, instructions | `competitionConfig.rounds` |
-| Prizes | Prize pool description | New `prizes` text field on event |
-| Rules | Competition rules | New `rules` text field on event |
-| Timeline | Key dates table | Derived from round deadlines |
-| Eligibility | Who can participate | New `eligibility` text field on event |
-| Resources | Attached files | Existing content resources system |
-| FAQ | Accordion of Q&A pairs | New `faq` JSON field on event |
+
+| Section     | Content                                  | Storage                               |
+| ----------- | ---------------------------------------- | ------------------------------------- |
+| Overview    | Description, poster, organizer info      | Existing event fields                 |
+| Rounds      | Each round: type, deadline, instructions | `competitionConfig.rounds`            |
+| Prizes      | Prize pool description                   | New `prizes` text field on event      |
+| Rules       | Competition rules                        | New `rules` text field on event       |
+| Timeline    | Key dates table                          | Derived from round deadlines          |
+| Eligibility | Who can participate                      | New `eligibility` text field on event |
+| Resources   | Attached files                           | Existing content resources system     |
+| FAQ         | Accordion of Q&A pairs                   | New `faq` JSON field on event         |
+
 
 Non-competition events see only Overview and Resources.
 
@@ -285,6 +293,7 @@ Non-competition events see only Overview and Resources.
 Registration works exactly as today. No changes to registration logic.
 
 Added to the participant's event view post-registration:
+
 - Current active round and its deadline
 - Submission status badge for each round
 - CTA: "Submit Work" / "Edit Submission" / "Submission Closed"
@@ -297,6 +306,7 @@ Added to the participant's event view post-registration:
 **Participant experience:**
 
 The submission page shows:
+
 - Round title and instructions
 - Evaluation criteria table (label + max score) — participants know how they are judged before submitting
 - Deadline with live countdown
@@ -310,15 +320,17 @@ The submission page shows:
 
 **API enforcement (all server-side, not frontend-only):**
 
-| Check | Response if failed |
-|-------|--------------------|
-| `now > round.submissionDeadline` | `403` — Submission deadline has passed |
-| User not registered for event | `403` — You are not registered for this event |
+
+| Check                                                              | Response if failed                                      |
+| ------------------------------------------------------------------ | ------------------------------------------------------- |
+| `now > round.submissionDeadline`                                   | `403` — Submission deadline has passed                  |
+| User not registered for event                                      | `403` — You are not registered for this event           |
 | Round requires shortlist from previous round, user not shortlisted | `403` — You were not shortlisted for the previous round |
-| Resubmission count >= maxResubmissions | `429` — Resubmission limit reached |
-| File MIME type not in allowed list | `400` — File type not allowed |
-| File size > maxFileSizeMb | `400` — File exceeds size limit |
-| User is evaluating own submission | `403` — Conflict of interest |
+| Resubmission count >= maxResubmissions                             | `429` — Resubmission limit reached                      |
+| File MIME type not in allowed list                                 | `400` — File type not allowed                           |
+| File size > maxFileSizeMb                                          | `400` — File exceeds size limit                         |
+| User is evaluating own submission                                  | `403` — Conflict of interest                            |
+
 
 ---
 
@@ -329,6 +341,7 @@ The submission page shows:
 Route: `/events/:eventId/manage/rounds/:roundId/submissions`
 
 Table columns:
+
 - Register number
 - Submitted at
 - Resubmission count
@@ -338,6 +351,7 @@ Table columns:
 - Quick-score badge (shows total score if evaluated)
 
 Summary bar at top:
+
 ```
 42 submissions total  |  30 evaluated  |  12 pending  |  2 flagged
 ```
@@ -349,6 +363,7 @@ Warning if attempting to shortlist with pending submissions — shown inline, no
 Route: `/events/:eventId/manage/rounds/:roundId/submissions/:id/evaluate`
 
 Layout:
+
 - Left panel: submission viewer (PDF embed for PDFs, link opener for links, file download for others)
 - Right panel: evaluation form
   - Per-criteria score inputs (label shown, max score shown, numeric input)
@@ -369,6 +384,7 @@ Navigation: Previous / Next submission buttons so the organizer can move through
 Route: `/events/:eventId/manage/rounds/:roundId/shortlist`
 
 Displays:
+
 - All **evaluated** submissions ranked by `totalScore` descending, tie-broken by `submittedAt` ascending
 - Clear count: "Showing 30 evaluated submissions. 12 unevaluated submissions are excluded."
 - Shortlist mode selector:
@@ -387,6 +403,7 @@ Displays:
 **After publishing:**
 
 Participants receive notification:
+
 - Shortlisted: "You have been shortlisted for [Round Title] of [Event Name]. View your results."
 - Not selected: "Results for [Round Title] of [Event Name] have been published."
 - Not evaluated: "Results for [Round Title] have been published. Your submission was not evaluated."
@@ -398,6 +415,7 @@ Participants receive notification:
 Route: `/events/:eventId/manage`
 
 **Overview cards:**
+
 - Total registrations
 - Submissions received (current round) vs. total registrants
 - Evaluations complete vs. total submissions
@@ -407,23 +425,28 @@ Route: `/events/:eventId/manage`
 
 Each round shown as a status card:
 
-| Round State | Displayed Status | Available Actions |
-|-------------|-----------------|-------------------|
-| Before start time | Upcoming | Edit config |
-| Between start and deadline | Accepting Submissions | View submissions |
-| After deadline, not all evaluated | Evaluation In Progress | Evaluate, view list |
-| All evaluated, not published | Ready to Publish | Open shortlist tool |
-| Published | Results Published | View results, export |
+
+| Round State                       | Displayed Status       | Available Actions    |
+| --------------------------------- | ---------------------- | -------------------- |
+| Before start time                 | Upcoming               | Edit config          |
+| Between start and deadline        | Accepting Submissions  | View submissions     |
+| After deadline, not all evaluated | Evaluation In Progress | Evaluate, view list  |
+| All evaluated, not published      | Ready to Publish       | Open shortlist tool  |
+| Published                         | Results Published      | View results, export |
+
 
 **Participant table:**
+
 - All registrants with submission status per round (✅ submitted / ⏳ pending / ❌ not submitted)
 - Export CSV (reuses existing `attendees.csv` pattern, extended with submission status columns)
 
 **Announcements panel:**
+
 - Compose a message broadcast to all registrants
 - Reuses existing bulk messaging capability in `eventsStore.js`
 
 **Active competition limit indicator:**
+
 - Shows: "You have 3 active competitions (limit: 3)" if at limit
 - Prevents creation of additional competitions from this panel
 
@@ -433,14 +456,16 @@ Each round shown as a status card:
 
 All of the following reuse existing `eventsStore.js` capabilities with new trigger points only:
 
-| Trigger | Notification |
-|---------|-------------|
-| Submission confirmed | "Your submission for [Round] has been received." |
-| 24h before deadline | "Reminder: [Round] submission deadline is tomorrow." |
-| 1h before deadline | "Final reminder: [Round] closes in 1 hour." |
-| Results published (shortlisted) | "You have been shortlisted for [Round]." |
-| Results published (not selected) | "Results for [Round] have been published." |
-| Round 2 opens (shortlisted users) | "Round 2 is now open for submission." |
+
+| Trigger                           | Notification                                         |
+| --------------------------------- | ---------------------------------------------------- |
+| Submission confirmed              | "Your submission for [Round] has been received."     |
+| 24h before deadline               | "Reminder: [Round] submission deadline is tomorrow." |
+| 1h before deadline                | "Final reminder: [Round] closes in 1 hour."          |
+| Results published (shortlisted)   | "You have been shortlisted for [Round]."             |
+| Results published (not selected)  | "Results for [Round] have been published."           |
+| Round 2 opens (shortlisted users) | "Round 2 is now open for submission."                |
+
 
 Deadline reminders require a background job (simple `setInterval` or cron-like check on startup). This is a lightweight addition — the notification system itself already exists.
 
@@ -522,17 +547,19 @@ checkActiveCompetitionCount(userId)                     // enforce max 3 active
 
 Mounted at `/api/competitions` in `app.js`.
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `POST` | `/api/competitions/:eventId/rounds/:roundId/submit` | Participant | Submit (file or link) |
-| `GET` | `/api/competitions/:eventId/rounds/:roundId/my-submission` | Participant | Get own submission (fields stripped if unpublished) |
-| `GET` | `/api/competitions/:eventId/rounds/:roundId/my-result` | Participant | Get own result (only after publish) |
-| `GET` | `/api/competitions/:eventId/rounds/:roundId/submissions` | Organizer | List all submissions |
-| `PUT` | `/api/competitions/:eventId/rounds/:roundId/submissions/:id/evaluate` | Organizer | Save evaluation |
-| `PUT` | `/api/competitions/:eventId/rounds/:roundId/submissions/:id/flag` | Organizer | Flag / unflag |
-| `POST` | `/api/competitions/:eventId/rounds/:roundId/shortlist` | Organizer | Apply shortlist |
-| `POST` | `/api/competitions/:eventId/rounds/:roundId/publish` | Organizer | Publish results + fire notifications |
-| `GET` | `/api/competitions/:eventId/config` | Any | Get competition config (round metadata, no scores) |
+
+| Method | Path                                                                  | Auth        | Purpose                                             |
+| ------ | --------------------------------------------------------------------- | ----------- | --------------------------------------------------- |
+| `POST` | `/api/competitions/:eventId/rounds/:roundId/submit`                   | Participant | Submit (file or link)                               |
+| `GET`  | `/api/competitions/:eventId/rounds/:roundId/my-submission`            | Participant | Get own submission (fields stripped if unpublished) |
+| `GET`  | `/api/competitions/:eventId/rounds/:roundId/my-result`                | Participant | Get own result (only after publish)                 |
+| `GET`  | `/api/competitions/:eventId/rounds/:roundId/submissions`              | Organizer   | List all submissions                                |
+| `PUT`  | `/api/competitions/:eventId/rounds/:roundId/submissions/:id/evaluate` | Organizer   | Save evaluation                                     |
+| `PUT`  | `/api/competitions/:eventId/rounds/:roundId/submissions/:id/flag`     | Organizer   | Flag / unflag                                       |
+| `POST` | `/api/competitions/:eventId/rounds/:roundId/shortlist`                | Organizer   | Apply shortlist                                     |
+| `POST` | `/api/competitions/:eventId/rounds/:roundId/publish`                  | Organizer   | Publish results + fire notifications                |
+| `GET`  | `/api/competitions/:eventId/config`                                   | Any         | Get competition config (round metadata, no scores)  |
+
 
 ### Modified: `Backend/src/server.js`
 
@@ -553,17 +580,19 @@ app.use('/api', createCompetitionRoutes({ competitionStore, sessionStore }));
 
 Explicitly out of scope. Do not work on these:
 
-| Item | Reason |
-|------|--------|
-| Online quiz / assessment engine | Separate subsystem requiring question bank, timer, auto-grading |
-| Real-time leaderboard during submission phase | Reveals competitive positioning before evaluation |
-| Code execution / competitive programming judge | Entirely separate infrastructure |
-| Plagiarism detection | Flagging exists; detection is a different product |
-| Team formation and invitations | Phase 3 with proper design |
-| Panel judging / multi-evaluator | Phase 4 |
-| Payment gateway | Out of scope for university-internal platform |
-| AI recommendations | Not defined concretely enough to build |
-| Admin approval for organizer creation | Rate limiting + traceability is sufficient for internal use |
+
+| Item                                           | Reason                                                          |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| Online quiz / assessment engine                | Separate subsystem requiring question bank, timer, auto-grading |
+| Real-time leaderboard during submission phase  | Reveals competitive positioning before evaluation               |
+| Code execution / competitive programming judge | Entirely separate infrastructure                                |
+| Plagiarism detection                           | Flagging exists; detection is a different product               |
+| Team formation and invitations                 | Phase 3 with proper design                                      |
+| Panel judging / multi-evaluator                | Phase 4                                                         |
+| Payment gateway                                | Out of scope for university-internal platform                   |
+| AI recommendations                             | Not defined concretely enough to build                          |
+| Admin approval for organizer creation          | Rate limiting + traceability is sufficient for internal use     |
+
 
 ---
 
@@ -574,6 +603,7 @@ Explicitly out of scope. Do not work on these:
 **Goal:** One complete end-to-end cycle: single round, individual submission, single evaluator, manually published results.
 
 **Deliverables:**
+
 - `competitionConfig` JSON on events (set during event creation / edit)
 - `visibility` field on events with `creator-only` / `public` toggle
 - Active competition limit (max 3) enforced at API
@@ -600,6 +630,7 @@ Explicitly out of scope. Do not work on these:
 **Goal:** Multi-round competitions work end-to-end. Organizer has a proper control center.
 
 **Deliverables:**
+
 - Round access control: `requiresShortlistFromRound` enforced at submission endpoint
 - Round progression: shortlisted users automatically notified when next round opens
 - `OrganizerDashboard.tsx` with overview cards and round status cards
@@ -615,6 +646,7 @@ Explicitly out of scope. Do not work on these:
 **Goal:** Hackathons and team-based contests natively supported.
 
 **New schema:**
+
 ```sql
 CREATE TABLE teams (
   id       TEXT PRIMARY KEY,
@@ -628,6 +660,7 @@ CREATE TABLE teams (
 ```
 
 **Deliverables:**
+
 - Team creation by any registered participant
 - Member invitation by register number (accepted in-platform)
 - Submission linked to `teamId` instead of individual `userId`
@@ -643,6 +676,7 @@ CREATE TABLE teams (
 **Goal:** Platform feels complete and high-quality.
 
 **Deliverables:**
+
 - Deadline reminder notifications (24h before, 1h before) via background job
 - Leaderboard page per round (visible only after `resultsPublished = true`)
 - Analytics: submission rate, evaluation completion %, average time-to-evaluate
@@ -654,19 +688,22 @@ CREATE TABLE teams (
 
 ## 9. Decision Log
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Organizer identity | Any authenticated student | Platform is internal; accounts are traceable |
-| Spam prevention | Max 3 active competitions + visibility gate | Simple, enforceable, no approval workflow needed |
-| File storage | `Backend/data/submissions/` filesystem | Mirrors existing events gallery; no new infrastructure |
-| MIME validation | Server-side via `multer` fileFilter | Extension-only validation is trivially bypassed |
-| Submission scope | Individual only (Phase 1 & 2) | Teams are a full subsystem; keeping Phase 1 shippable |
-| Evaluation model | Single evaluator, criteria scores as JSON | Flexible breakdown without new table; total stored for fast sorting |
-| Conflict of interest | API-level 403 if evaluator = submitter | Cannot be enforced frontend-only |
-| Result visibility | Manual publish gate, API strips fields | Single authoritative gate; frontend cannot be trusted |
-| Tie-breaking | Earlier submission time wins | Deterministic; no manual decisions |
-| Unevaluated in shortlist | Excluded, shown as warning | Organizer must be aware; not silently dropped |
-| Round access control | Server-side shortlist check | Critical for multi-round integrity |
-| Resubmission limit | Configurable per round, default 5 | Prevents spam; organizer can adjust |
-| Config storage | JSON column on events (Phase 1 & 2) | Fast to implement; normalize in Phase 3 |
-| New dependency | `multer` only | Minimal footprint |
+
+| Decision                 | Choice                                      | Rationale                                                           |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------------------- |
+| Organizer identity       | Any authenticated student                   | Platform is internal; accounts are traceable                        |
+| Spam prevention          | Max 3 active competitions + visibility gate | Simple, enforceable, no approval workflow needed                    |
+| File storage             | `Backend/data/submissions/` filesystem      | Mirrors existing events gallery; no new infrastructure              |
+| MIME validation          | Server-side via `multer` fileFilter         | Extension-only validation is trivially bypassed                     |
+| Submission scope         | Individual only (Phase 1 & 2)               | Teams are a full subsystem; keeping Phase 1 shippable               |
+| Evaluation model         | Single evaluator, criteria scores as JSON   | Flexible breakdown without new table; total stored for fast sorting |
+| Conflict of interest     | API-level 403 if evaluator = submitter      | Cannot be enforced frontend-only                                    |
+| Result visibility        | Manual publish gate, API strips fields      | Single authoritative gate; frontend cannot be trusted               |
+| Tie-breaking             | Earlier submission time wins                | Deterministic; no manual decisions                                  |
+| Unevaluated in shortlist | Excluded, shown as warning                  | Organizer must be aware; not silently dropped                       |
+| Round access control     | Server-side shortlist check                 | Critical for multi-round integrity                                  |
+| Resubmission limit       | Configurable per round, default 5           | Prevents spam; organizer can adjust                                 |
+| Config storage           | JSON column on events (Phase 1 & 2)         | Fast to implement; normalize in Phase 3                             |
+| New dependency           | `multer` only                               | Minimal footprint                                                   |
+
+

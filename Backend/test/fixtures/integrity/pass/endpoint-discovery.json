@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-03-30T10:00:00.000Z",
+  "resolvedItems": [
+    {
+      "dropdown": "Academic",
+      "subitem": "Time Table",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        }
+      }
+    }
+  ]
+}

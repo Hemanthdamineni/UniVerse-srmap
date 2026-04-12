@@ -1,6 +1,7 @@
 # Refined Metadata Plan for ERP + LMS + Career + Campus
 
 ## Summary
+
 - Keep the current routes, components, and sidebar UI unchanged in this phase.
 - Make metadata the source of truth so future pillar-based navigation can be added without refactoring.
 - Separate concerns cleanly:
@@ -9,6 +10,7 @@
   - `integrationState`: integration maturity
 
 ## Interface Changes
+
 - Add `type Domain = "erp" | "lms" | "career" | "campus"`.
 - Add `type PageSourceMode = "erp" | "internal" | "external"`.
 - Add `type IntegrationState = "native" | "adapter" | "summary" | "placeholder"`.
@@ -21,6 +23,7 @@
   - `SidebarItem.domain: Domain | "mixed"` for top-level items only.
 
 ## Invariants / Rules
+
 - Each page belongs to exactly one domain.
 - Domain must be explicitly defined and not inferred from route or sidebar grouping.
 - Non-placeholder pages must define `sourceMode`.
@@ -35,6 +38,7 @@
 - All external integrations must go through backend adapters; frontend pages may only call internal `/api/*` contracts.
 
 ## Domain Rules
+
 - `erp`: dashboard, profile, academics, exams/results, finance, ERP registrations, course feedback, and ERP event attendance.
 - `campus`: platform events, helpdesk, transport/hostel, and campus-service feedback.
 - `lms`: learning materials, advanced access, academic tracker, and future learning workflows.
@@ -44,6 +48,7 @@
   - Platform event flows stay `domain: "campus"`.
 
 ## Initial Classification Pass
+
 - Reclassify Learning Materials and Advanced Access as `lms + internal + native` as long as they use platform-owned `/api/resources/*`.
 - Keep LMS pages eligible to move later to `lms + external + adapter` without route or component changes.
 - Keep academic tracker as `lms + external + summary` until it becomes a real internal module.
@@ -51,6 +56,7 @@
 - Mark only mixed top-level groups such as `Registration`, `Events`, and `Feedback` as `domain: "mixed"` if their children span domains.
 
 ## Test Plan
+
 - Type checks fail if any page lacks `domain` or `integrationState`.
 - Type checks fail if a non-placeholder page omits `sourceMode`.
 - Type checks fail if a placeholder page defines `sourceMode` or non-empty `fetchKeys`.
@@ -61,6 +67,7 @@
 - Existing routes and sidebar rendering remain unchanged after metadata migration.
 
 ## Assumptions
+
 - `domain: "mixed"` is a temporary container-only exception.
 - External content links are still allowed as user-facing resources; the adapter rule applies to system integrations, not outbound links.
 - No UI regrouping or route renaming is part of this phase.

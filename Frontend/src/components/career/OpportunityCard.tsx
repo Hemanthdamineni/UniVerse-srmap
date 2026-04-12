@@ -1,0 +1,115 @@
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../card';
+import type { CareerOpportunity } from '../../lib/careerApi';
+import TypeBadge from './TypeBadge';
+import DeadlineCountdown from './DeadlineCountdown';
+import StipendChip from './StipendChip';
+import ModeChip from './ModeChip';
+import SourceBadge from './SourceBadge';
+import { Bookmark, ExternalLink, Zap } from 'lucide-react';
+import { Button } from '../button';
+import { Link } from 'react-router-dom';
+
+interface OpportunityCardProps {
+  opportunity: CareerOpportunity;
+  onBookmarkToggle?: (id: string) => void;
+}
+
+const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookmarkToggle }) => {
+  const {
+    id, title, company, organizer, shortDescription, type, deadline,
+    stipend, prize, isFree, mode, source, isBookmarked, skills,
+    personalizedScore, skillMatch
+  } = opportunity;
+
+  return (
+    <Card className="h-full flex flex-col hover:shadow-md transition-shadow relative overflow-hidden">
+      {personalizedScore !== undefined && personalizedScore >= 70 && (
+        <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg flex items-center gap-1 z-10">
+          <Zap className="h-3 w-3 fill-current" /> {personalizedScore}% Match
+        </div>
+      )}
+      
+      <CardHeader className="flex-row justify-between items-start pb-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <TypeBadge type={type} />
+            <SourceBadge source={source} />
+          </div>
+          <Link to={`/career/opportunities/${id}`}>
+            <CardTitle className="text-lg hover:text-blue-600 transition-colors line-clamp-2">
+              {title}
+            </CardTitle>
+          </Link>
+          <CardDescription className="font-medium text-gray-700">
+            {company || organizer || 'University Opportunity'}
+          </CardDescription>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={isBookmarked ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}
+          onClick={() => onBookmarkToggle?.(id)}
+        >
+          <Bookmark className="h-5 w-5" />
+        </Button>
+      </CardHeader>
+
+      <CardContent className="flex-1 pb-2">
+        <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+          {shortDescription || 'No description provided.'}
+        </p>
+        
+        <div className="flex flex-wrap gap-2 mb-3">
+          {skills.slice(0, 3).map(skill => {
+            const isMatched = skillMatch?.matched.some(s => s.toLowerCase() === skill.toLowerCase());
+            return (
+              <span 
+                key={skill} 
+                className={`px-1.5 py-0.5 text-[10px] rounded border ${
+                  isMatched 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100 font-medium' 
+                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                }`}
+              >
+                {skill}
+              </span>
+            );
+          })}
+          {skills.length > 3 && (
+            <span className="text-[10px] text-gray-400 self-center">
+              +{skills.length - 3} more
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <DeadlineCountdown deadline={deadline} />
+          <ModeChip mode={mode} />
+          <StipendChip stipend={stipend} prize={prize} isFree={isFree} />
+        </div>
+      </CardContent>
+
+      <CardFooter className="pt-2 border-t mt-auto flex justify-between gap-2">
+        <Link to={`/career/opportunities/${id}`} className="flex-1">
+          <Button variant="outline" className="w-full h-8 text-xs">
+            Details
+          </Button>
+        </Link>
+        <a 
+          href={opportunity.applyUrl} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="flex-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700">
+            Apply <ExternalLink className="ml-1 h-3 w-3" />
+          </Button>
+        </a>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default OpportunityCard;

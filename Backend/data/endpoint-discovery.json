@@ -1,0 +1,1911 @@
+{
+  "generatedAt": "2026-02-20T09:49:46.494Z",
+  "baseOrigin": "https://student.srmap.edu.in",
+  "basePath": "/srmapstudentcorner",
+  "loginUrl": "https://student.srmap.edu.in/srmapstudentcorner/StudentLoginPage",
+  "counts": {
+    "menuItems": 36,
+    "mappedFunLoadDetailsIds": 66,
+    "helperFunctionsMapped": 3,
+    "resolvedItems": 36,
+    "unresolvedItems": 0
+  },
+  "functionMappings": {
+    "funLoadDetailsById": {
+      "1": {
+        "argId": 1,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "2": {
+        "argId": 2,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "3": {
+        "argId": 3,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "4": {
+        "argId": 4,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "5": {
+        "argId": 5,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "6": {
+        "argId": 6,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "7": {
+        "argId": 7,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "8": {
+        "argId": 8,
+        "method": "POST",
+        "url": "students/transaction/feeduegroups.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 8"
+      },
+      "9": {
+        "argId": 9,
+        "method": "POST",
+        "url": "students/transaction/subjectwisefeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 9"
+      },
+      "10": {
+        "argId": 10,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "11": {
+        "argId": 11,
+        "method": "POST",
+        "url": "students/registrations/hostelregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 11"
+      },
+      "12": {
+        "argId": 12,
+        "method": "POST",
+        "url": "students/registrations/transportregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 12"
+      },
+      "13": {
+        "argId": 13,
+        "method": "POST",
+        "url": "students/transaction/semesterexamapplicationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 13"
+      },
+      "14": {
+        "argId": 14,
+        "method": "POST",
+        "url": "students/transaction/applyrevaluation.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 14"
+      },
+      "15": {
+        "argId": 15,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "16": {
+        "argId": 16,
+        "method": "POST",
+        "url": "students/registrations/studentsCourseRegistration2022.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 16"
+      },
+      "17": {
+        "argId": 17,
+        "method": "POST",
+        "url": "students/transaction/changepassoword.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 17"
+      },
+      "18": {
+        "argId": 18,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "19": {
+        "argId": 19,
+        "method": "POST",
+        "url": "students/transaction/hostelroomrequest.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 19"
+      },
+      "20": {
+        "argId": 20,
+        "method": "POST",
+        "url": "students/transaction/studentsonlinepaymentresponse.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "txnid": "",
+          "msgs": ""
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 20"
+      },
+      "21": {
+        "argId": 21,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "22": {
+        "argId": 22,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "24": {
+        "argId": 24,
+        "method": "POST",
+        "url": "students/transaction/semesterexamapplication.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 24"
+      },
+      "25": {
+        "argId": 25,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "26": {
+        "argId": 26,
+        "method": "POST",
+        "url": "students/onlinepayments/onlinepaymentreconcilation.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 26"
+      },
+      "27": {
+        "argId": 27,
+        "method": "POST",
+        "url": "students/report/receiptgeneration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 27"
+      },
+      "29": {
+        "argId": 29,
+        "method": "POST",
+        "url": "students/transaction/subjectwisefeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 29"
+      },
+      "30": {
+        "argId": 30,
+        "method": "POST",
+        "url": "students/transaction/preenrollement.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 30"
+      },
+      "31": {
+        "argId": 31,
+        "method": "POST",
+        "url": "students/registrations/hostelregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 31"
+      },
+      "32": {
+        "argId": 32,
+        "method": "POST",
+        "url": "students/transaction/hostelroomtransfer.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 32"
+      },
+      "33": {
+        "argId": 33,
+        "method": "POST",
+        "url": "students/transaction/studentattendance.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 33"
+      },
+      "34": {
+        "argId": 34,
+        "method": "POST",
+        "url": "students/report/studentexamhallticket.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 34"
+      },
+      "35": {
+        "argId": 35,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "36": {
+        "argId": 36,
+        "method": "POST",
+        "url": "students/transaction/mentorchangerequest.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 36"
+      },
+      "37": {
+        "argId": 37,
+        "method": "POST",
+        "url": "students/registrations/arrearexamapplicationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 37"
+      },
+      "38": {
+        "argId": 38,
+        "method": "POST",
+        "url": "students/registrations/arrearexamregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 38"
+      },
+      "39": {
+        "argId": 39,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationinstruction2022.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 39"
+      },
+      "40": {
+        "argId": 40,
+        "method": "POST",
+        "url": "students/registrations/studentElectiveCourseRegistrationInstruction2024.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 40"
+      },
+      "41": {
+        "argId": 41,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationcurrentsemester.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 41"
+      },
+      "42": {
+        "argId": 42,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationcurrentsemesterinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 42"
+      },
+      "43": {
+        "argId": 43,
+        "method": "POST",
+        "url": "students/registrations/sapregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 43"
+      },
+      "44": {
+        "argId": 44,
+        "method": "POST",
+        "url": "students/registrations/sapregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 44"
+      },
+      "45": {
+        "argId": 45,
+        "method": "POST",
+        "url": "students/registrations/sapregistrationedit.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 45"
+      },
+      "46": {
+        "argId": 46,
+        "method": "POST",
+        "url": "students/registrations/sapwithdraw.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 46"
+      },
+      "47": {
+        "argId": 47,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "48": {
+        "argId": 48,
+        "method": "POST",
+        "url": "students/registrations/sapattachfiles.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 48"
+      },
+      "49": {
+        "argId": 49,
+        "method": "POST",
+        "url": "students/registrations/sapfeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 49"
+      },
+      "51": {
+        "argId": 51,
+        "method": "POST",
+        "url": "students/registrations/transportregistrationinstructions.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 51"
+      },
+      "52": {
+        "argId": 52,
+        "method": "POST",
+        "url": "students/report/transportconfirmationprint.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 52"
+      },
+      "53": {
+        "argId": 53,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "54": {
+        "argId": 54,
+        "method": "POST",
+        "url": "students/transaction/studentbankdetails.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 54"
+      },
+      "55": {
+        "argId": 55,
+        "method": "POST",
+        "url": "students/report/phdstudentsbiometricdetails.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 55"
+      },
+      "107": {
+        "argId": 107,
+        "method": "POST",
+        "url": "students/report/announcements.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 107"
+      },
+      "150": {
+        "argId": 150,
+        "method": "POST",
+        "url": "students/registrations/convocationregistrationinstructions.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 150"
+      },
+      "151": {
+        "argId": 151,
+        "method": "POST",
+        "url": "students/registrations/convocationregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 151"
+      },
+      "152": {
+        "argId": 152,
+        "method": "POST",
+        "url": "students/registrations/minorregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 152"
+      },
+      "153": {
+        "argId": 153,
+        "method": "POST",
+        "url": "students/registrations/minorregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 153"
+      },
+      "154": {
+        "argId": 154,
+        "method": "POST",
+        "url": "students/registrations/summertermregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 154"
+      },
+      "155": {
+        "argId": 155,
+        "method": "POST",
+        "url": "students/registrations/summertermregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 155"
+      },
+      "156": {
+        "argId": 156,
+        "method": "POST",
+        "url": "students/registrations/adhochostelregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 156"
+      },
+      "157": {
+        "argId": 157,
+        "method": "POST",
+        "url": "students/registrations/adhochostelregistration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 157"
+      },
+      "158": {
+        "argId": 158,
+        "method": "POST",
+        "url": "students/transaction/adhochostelroomrequest.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 158"
+      },
+      "159": {
+        "argId": 159,
+        "method": "POST",
+        "url": "students/report/examaplicationreport.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 159"
+      },
+      "160": {
+        "argId": 160,
+        "method": "POST",
+        "url": "students/transaction/studentpersonaldetailsupdate.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 160"
+      },
+      "161": {
+        "argId": 161,
+        "method": "POST",
+        "url": "students/registrations/studentspecializationwillingness.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 161"
+      },
+      "162": {
+        "argId": 162,
+        "method": "POST",
+        "url": "students/transaction/studentsubfieldsupdate.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 162"
+      }
+    },
+    "helperFunctions": {
+      "funMobileVerification": {
+        "method": "POST",
+        "url": "students/transaction/mobilenumberverification.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funMobileVerification"
+      },
+      "funEventAttendance": {
+        "method": "POST",
+        "url": "students/transaction/eventattendance.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funEventAttendance"
+      },
+      "funEarlierInternalMarks": {
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "23",
+          "filter": "{{argId}}"
+        },
+        "sourceFunction": "funEarlierInternalMarks"
+      }
+    }
+  },
+  "menuItems": [
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Wise Subjects",
+      "href": "javascript:funLoadDetails(2);",
+      "target": "",
+      "rawText": "Student Wise Subjects"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Time Table",
+      "href": "javascript:funLoadDetails(10);",
+      "target": "",
+      "rawText": "Time Table"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Attendance Details",
+      "href": "javascript:funLoadDetails(3);",
+      "target": "",
+      "rawText": "Attendance Details"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "OD/ML Details",
+      "href": "javascript:funLoadDetails(53);",
+      "target": "",
+      "rawText": "OD/ML Details"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Attendance",
+      "href": "javascript:funLoadDetails(33);",
+      "target": "",
+      "rawText": "Student AttendanceNew"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration",
+      "href": "javascript:funLoadDetails(39);",
+      "target": "",
+      "rawText": "Course Registration"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration Cancellation",
+      "href": "javascript:funLoadDetails(42);",
+      "target": "",
+      "rawText": "Course Registration Cancellation"
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Minor Program Registration",
+      "href": "javascript:funLoadDetails(152);",
+      "target": "",
+      "rawText": "Minor Program Registration"
+    },
+    {
+      "dropdown": "Events",
+      "subitem": "Event Attendance",
+      "href": "javascript:funEventAttendance();",
+      "target": "",
+      "rawText": "Event Attendance"
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "SAP Process",
+      "href": "javascript:funLoadDetails(43);",
+      "target": "",
+      "rawText": "SAP Process"
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Withdraw",
+      "href": "javascript:funLoadDetails(46);",
+      "target": "",
+      "rawText": "Withdraw"
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Details",
+      "href": "javascript:funLoadDetails(47);",
+      "target": "",
+      "rawText": "Details"
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Attachments",
+      "href": "javascript:funLoadDetails(48);",
+      "target": "",
+      "rawText": "Attachments"
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Feedback",
+      "href": "javascript:funLoadDetails(49);",
+      "target": "",
+      "rawText": "Feedback"
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Paid Details",
+      "href": "javascript:funLoadDetails(7);",
+      "target": "",
+      "rawText": "Fee Paid Details"
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Due Details",
+      "href": "javascript:funLoadDetails(8);",
+      "target": "",
+      "rawText": "Fee Due Details"
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Online Payment Verification",
+      "href": "javascript:funLoadDetails(26);",
+      "target": "",
+      "rawText": "Online Payment Verification"
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Payment Acknowledgment",
+      "href": "javascript:funLoadDetails(27);",
+      "target": "",
+      "rawText": "Payment Acknowledgment"
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Bank Account Details",
+      "href": "javascript:funLoadDetails(54);",
+      "target": "",
+      "rawText": "Bank Account Details"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Internal Mark Details",
+      "href": "javascript:funLoadDetails(5);",
+      "target": "",
+      "rawText": "Internal Mark Details"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Earlier Internal Marks",
+      "href": "javascript:funLoadDetails(22);",
+      "target": "",
+      "rawText": "Earlier Internal Marks"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Current Semester Results",
+      "href": "javascript:funLoadDetails(15);",
+      "target": "",
+      "rawText": "Current Semester Results"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Mark Details",
+      "href": "javascript:funLoadDetails(6);",
+      "target": "",
+      "rawText": "Exam Mark Details"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration",
+      "href": "javascript:funLoadDetails(13);",
+      "target": "",
+      "rawText": "Exam Registration"
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration Details",
+      "href": "javascript:funLoadDetails(159);",
+      "target": "",
+      "rawText": "Exam Registration Details"
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Booking for Full Year",
+      "href": "javascript:funLoadDetails(31);",
+      "target": "",
+      "rawText": "Hostel Booking for Full Year"
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Room Details",
+      "href": "javascript:funLoadDetails(21);",
+      "target": "",
+      "rawText": "Room Details"
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Layout & FAQs",
+      "href": "https://srmap.edu.in/hostel/layout/",
+      "target": "_blank",
+      "rawText": "Hostel Layout & FAQs"
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Refund Policy",
+      "href": "https://srmap.edu.in/hostel/",
+      "target": "_blank",
+      "rawText": "Hostel Refund Policy"
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Registration",
+      "href": "javascript:funLoadDetails(51);",
+      "target": "",
+      "rawText": "Transport Registration"
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Registration Acknowledgment",
+      "href": "javascript:funLoadDetails(52);",
+      "target": "",
+      "rawText": "Registration Acknowledgment"
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport & FAQs",
+      "href": "//www.srmap.edu.in/transport",
+      "target": "_blank",
+      "rawText": "Transport & FAQs"
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Refund Policy",
+      "href": "https://srmap.edu.in/wp-content/uploads/2022/07/Transportation-Fee-Refund-Policy.pdf?x95317",
+      "target": "_blank",
+      "rawText": "Transport Refund Policy"
+    },
+    {
+      "dropdown": "Feedback",
+      "subitem": "End Semester Feedback",
+      "href": "javascript:funLoadDetails(9);",
+      "target": "",
+      "rawText": "End Semester Feedback"
+    },
+    {
+      "dropdown": "Announcements",
+      "subitem": "Announcements",
+      "href": "javascript:funLoadDetails(107);",
+      "target": "",
+      "rawText": "Announcements"
+    },
+    {
+      "dropdown": "Verification",
+      "subitem": "Mobile No Verification",
+      "href": "javascript:funMobileVerification();",
+      "target": "",
+      "rawText": "Mobile No Verification"
+    }
+  ],
+  "resolvedItems": [
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Wise Subjects",
+      "href": "javascript:funLoadDetails(2);",
+      "target": "",
+      "rawText": "Student Wise Subjects",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "2",
+        "argId": 2
+      },
+      "endpoint": {
+        "argId": 2,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Time Table",
+      "href": "javascript:funLoadDetails(10);",
+      "target": "",
+      "rawText": "Time Table",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "10",
+        "argId": 10
+      },
+      "endpoint": {
+        "argId": 10,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Attendance Details",
+      "href": "javascript:funLoadDetails(3);",
+      "target": "",
+      "rawText": "Attendance Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "3",
+        "argId": 3
+      },
+      "endpoint": {
+        "argId": 3,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "OD/ML Details",
+      "href": "javascript:funLoadDetails(53);",
+      "target": "",
+      "rawText": "OD/ML Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "53",
+        "argId": 53
+      },
+      "endpoint": {
+        "argId": 53,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Attendance",
+      "href": "javascript:funLoadDetails(33);",
+      "target": "",
+      "rawText": "Student AttendanceNew",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "33",
+        "argId": 33
+      },
+      "endpoint": {
+        "argId": 33,
+        "method": "POST",
+        "url": "students/transaction/studentattendance.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 33"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration",
+      "href": "javascript:funLoadDetails(39);",
+      "target": "",
+      "rawText": "Course Registration",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "39",
+        "argId": 39
+      },
+      "endpoint": {
+        "argId": 39,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationinstruction2022.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 39"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration Cancellation",
+      "href": "javascript:funLoadDetails(42);",
+      "target": "",
+      "rawText": "Course Registration Cancellation",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "42",
+        "argId": 42
+      },
+      "endpoint": {
+        "argId": 42,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationcurrentsemesterinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 42"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Minor Program Registration",
+      "href": "javascript:funLoadDetails(152);",
+      "target": "",
+      "rawText": "Minor Program Registration",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "152",
+        "argId": 152
+      },
+      "endpoint": {
+        "argId": 152,
+        "method": "POST",
+        "url": "students/registrations/minorregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 152"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Events",
+      "subitem": "Event Attendance",
+      "href": "javascript:funEventAttendance();",
+      "target": "",
+      "rawText": "Event Attendance",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funEventAttendance",
+        "rawArgs": "",
+        "argId": null
+      },
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/eventattendance.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funEventAttendance"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "SAP Process",
+      "href": "javascript:funLoadDetails(43);",
+      "target": "",
+      "rawText": "SAP Process",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "43",
+        "argId": 43
+      },
+      "endpoint": {
+        "argId": 43,
+        "method": "POST",
+        "url": "students/registrations/sapregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 43"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Withdraw",
+      "href": "javascript:funLoadDetails(46);",
+      "target": "",
+      "rawText": "Withdraw",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "46",
+        "argId": 46
+      },
+      "endpoint": {
+        "argId": 46,
+        "method": "POST",
+        "url": "students/registrations/sapwithdraw.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 46"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Details",
+      "href": "javascript:funLoadDetails(47);",
+      "target": "",
+      "rawText": "Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "47",
+        "argId": 47
+      },
+      "endpoint": {
+        "argId": 47,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Attachments",
+      "href": "javascript:funLoadDetails(48);",
+      "target": "",
+      "rawText": "Attachments",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "48",
+        "argId": 48
+      },
+      "endpoint": {
+        "argId": 48,
+        "method": "POST",
+        "url": "students/registrations/sapattachfiles.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 48"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Feedback",
+      "href": "javascript:funLoadDetails(49);",
+      "target": "",
+      "rawText": "Feedback",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "49",
+        "argId": 49
+      },
+      "endpoint": {
+        "argId": 49,
+        "method": "POST",
+        "url": "students/registrations/sapfeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 49"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Paid Details",
+      "href": "javascript:funLoadDetails(7);",
+      "target": "",
+      "rawText": "Fee Paid Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "7",
+        "argId": 7
+      },
+      "endpoint": {
+        "argId": 7,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Due Details",
+      "href": "javascript:funLoadDetails(8);",
+      "target": "",
+      "rawText": "Fee Due Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "8",
+        "argId": 8
+      },
+      "endpoint": {
+        "argId": 8,
+        "method": "POST",
+        "url": "students/transaction/feeduegroups.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 8"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Online Payment Verification",
+      "href": "javascript:funLoadDetails(26);",
+      "target": "",
+      "rawText": "Online Payment Verification",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "26",
+        "argId": 26
+      },
+      "endpoint": {
+        "argId": 26,
+        "method": "POST",
+        "url": "students/onlinepayments/onlinepaymentreconcilation.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 26"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Payment Acknowledgment",
+      "href": "javascript:funLoadDetails(27);",
+      "target": "",
+      "rawText": "Payment Acknowledgment",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "27",
+        "argId": 27
+      },
+      "endpoint": {
+        "argId": 27,
+        "method": "POST",
+        "url": "students/report/receiptgeneration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 27"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Bank Account Details",
+      "href": "javascript:funLoadDetails(54);",
+      "target": "",
+      "rawText": "Bank Account Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "54",
+        "argId": 54
+      },
+      "endpoint": {
+        "argId": 54,
+        "method": "POST",
+        "url": "students/transaction/studentbankdetails.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 54"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Internal Mark Details",
+      "href": "javascript:funLoadDetails(5);",
+      "target": "",
+      "rawText": "Internal Mark Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "5",
+        "argId": 5
+      },
+      "endpoint": {
+        "argId": 5,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Earlier Internal Marks",
+      "href": "javascript:funLoadDetails(22);",
+      "target": "",
+      "rawText": "Earlier Internal Marks",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "22",
+        "argId": 22
+      },
+      "endpoint": {
+        "argId": 22,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Current Semester Results",
+      "href": "javascript:funLoadDetails(15);",
+      "target": "",
+      "rawText": "Current Semester Results",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "15",
+        "argId": 15
+      },
+      "endpoint": {
+        "argId": 15,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Mark Details",
+      "href": "javascript:funLoadDetails(6);",
+      "target": "",
+      "rawText": "Exam Mark Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "6",
+        "argId": 6
+      },
+      "endpoint": {
+        "argId": 6,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration",
+      "href": "javascript:funLoadDetails(13);",
+      "target": "",
+      "rawText": "Exam Registration",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "13",
+        "argId": 13
+      },
+      "endpoint": {
+        "argId": 13,
+        "method": "POST",
+        "url": "students/transaction/semesterexamapplicationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 13"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration Details",
+      "href": "javascript:funLoadDetails(159);",
+      "target": "",
+      "rawText": "Exam Registration Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "159",
+        "argId": 159
+      },
+      "endpoint": {
+        "argId": 159,
+        "method": "POST",
+        "url": "students/report/examaplicationreport.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 159"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Booking for Full Year",
+      "href": "javascript:funLoadDetails(31);",
+      "target": "",
+      "rawText": "Hostel Booking for Full Year",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "31",
+        "argId": 31
+      },
+      "endpoint": {
+        "argId": 31,
+        "method": "POST",
+        "url": "students/registrations/hostelregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 31"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Room Details",
+      "href": "javascript:funLoadDetails(21);",
+      "target": "",
+      "rawText": "Room Details",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "21",
+        "argId": 21
+      },
+      "endpoint": {
+        "argId": 21,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Layout & FAQs",
+      "href": "https://srmap.edu.in/hostel/layout/",
+      "target": "_blank",
+      "rawText": "Hostel Layout & FAQs",
+      "action": {
+        "type": "external_url",
+        "url": "https://srmap.edu.in/hostel/layout/"
+      },
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/hostel/layout/",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Refund Policy",
+      "href": "https://srmap.edu.in/hostel/",
+      "target": "_blank",
+      "rawText": "Hostel Refund Policy",
+      "action": {
+        "type": "external_url",
+        "url": "https://srmap.edu.in/hostel/"
+      },
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/hostel/",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Registration",
+      "href": "javascript:funLoadDetails(51);",
+      "target": "",
+      "rawText": "Transport Registration",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "51",
+        "argId": 51
+      },
+      "endpoint": {
+        "argId": 51,
+        "method": "POST",
+        "url": "students/registrations/transportregistrationinstructions.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 51"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Registration Acknowledgment",
+      "href": "javascript:funLoadDetails(52);",
+      "target": "",
+      "rawText": "Registration Acknowledgment",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "52",
+        "argId": 52
+      },
+      "endpoint": {
+        "argId": 52,
+        "method": "POST",
+        "url": "students/report/transportconfirmationprint.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 52"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport & FAQs",
+      "href": "//www.srmap.edu.in/transport",
+      "target": "_blank",
+      "rawText": "Transport & FAQs",
+      "action": {
+        "type": "external_url",
+        "url": "//www.srmap.edu.in/transport"
+      },
+      "endpoint": {
+        "method": "GET",
+        "url": "//www.srmap.edu.in/transport",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Refund Policy",
+      "href": "https://srmap.edu.in/wp-content/uploads/2022/07/Transportation-Fee-Refund-Policy.pdf?x95317",
+      "target": "_blank",
+      "rawText": "Transport Refund Policy",
+      "action": {
+        "type": "external_url",
+        "url": "https://srmap.edu.in/wp-content/uploads/2022/07/Transportation-Fee-Refund-Policy.pdf?x95317"
+      },
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/wp-content/uploads/2022/07/Transportation-Fee-Refund-Policy.pdf?x95317",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Feedback",
+      "subitem": "End Semester Feedback",
+      "href": "javascript:funLoadDetails(9);",
+      "target": "",
+      "rawText": "End Semester Feedback",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "9",
+        "argId": 9
+      },
+      "endpoint": {
+        "argId": 9,
+        "method": "POST",
+        "url": "students/transaction/subjectwisefeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 9"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Announcements",
+      "subitem": "Announcements",
+      "href": "javascript:funLoadDetails(107);",
+      "target": "",
+      "rawText": "Announcements",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funLoadDetails",
+        "rawArgs": "107",
+        "argId": 107
+      },
+      "endpoint": {
+        "argId": 107,
+        "method": "POST",
+        "url": "students/report/announcements.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 107"
+      },
+      "resolved": true
+    },
+    {
+      "dropdown": "Verification",
+      "subitem": "Mobile No Verification",
+      "href": "javascript:funMobileVerification();",
+      "target": "",
+      "rawText": "Mobile No Verification",
+      "action": {
+        "type": "javascript_function",
+        "functionName": "funMobileVerification",
+        "rawArgs": "",
+        "argId": null
+      },
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/mobilenumberverification.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funMobileVerification"
+      },
+      "resolved": true
+    }
+  ],
+  "unresolvedItems": []
+}

@@ -1,0 +1,33 @@
+{
+  "defaultMode": "cached-first",
+  "cachedFirstPrefixes": [
+    "dashboard",
+    "academic/attendance-details",
+    "academic/time-table",
+    "academic/timetable",
+    "examination/current-semester-results",
+    "examination/earlier-internal-marks",
+    "examination/exam-mark-details"
+  ],
+  "liveFirstPrefixes": [
+    "finance/payment-acknowledgment",
+    "finance/online-payment-verification",
+    "examination/exam-registration",
+    "examination/exam-registration-details",
+    "academic/course-registration",
+    "academic/course-registration-cancellation"
+  ],
+  "overrides": {
+    "finance/fee-paid-details": "live-first",
+    "finance/fee-paid": "live-first",
+    "finance/fee-dues": "cached-first",
+    "finance/fee-due-details": "cached-first",
+    "academic/student-attendance": "cached-first",
+    "academic/attendance-details": "cached-first",
+    "academic/time-table": "cached-first",
+    "academic/timetable": "cached-first",
+    "examination/current-semester-results": "cached-first",
+    "examination/earlier-internal-marks": "cached-first",
+    "examination/exam-mark-details": "cached-first"
+  }
+}

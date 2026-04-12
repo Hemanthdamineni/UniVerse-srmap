@@ -1,1 +1,13 @@
 .config/
+.cursor/
+.kiro/
+.references/
+Data/
+.vscode/
+infra/
+node_modules/
+logs/
+.vite/
+coverage/
+public/
+dist/

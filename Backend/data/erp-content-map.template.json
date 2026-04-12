@@ -1,0 +1,1300 @@
+{
+  "generatedAt": "2026-02-24T15:54:30.859Z",
+  "discovery": {
+    "loaded": true,
+    "discoveryFile": "Backend/data/endpoint-discovery.json",
+    "resolvedItemCount": 36
+  },
+  "pages": {
+    "academic/attendance-details": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Attendance Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/course-registration": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Course Registration"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/course-registration-cancellation": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Course Registration Cancellation"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/minor-program-registration": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Minor Program Registration"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/od-ml-details": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "OD/ML Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/student-attendancenew": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Student AttendanceNew"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/student-wise-subjects": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Student Wise Subjects"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/time-table": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Time Table"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "academic/timetable": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Time Table"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "announcements": {
+      "targets": [
+        {
+          "dropdown": "Announcements",
+          "subitem": ""
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "dashboard": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Time Table"
+        },
+        {
+          "dropdown": "Academic",
+          "subitem": "Attendance Details"
+        },
+        {
+          "dropdown": "Examination",
+          "subitem": "Internal Mark Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "events/event-attendance": {
+      "targets": [
+        {
+          "dropdown": "Events",
+          "subitem": "Event Attendance"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/current-semester-results": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Current Semester Results"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/earlier-internal-marks": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Earlier Internal Marks"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/exam-mark-details": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Exam Mark Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/exam-registration": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Exam Registration"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/exam-registration-details": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Exam Registration Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "examination/internal-mark-details": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Internal Mark Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "exams/current-semester-results": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Current Semester Results"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "exams/earlier-semester-results": {
+      "targets": [
+        {
+          "dropdown": "Examination",
+          "subitem": "Exam Mark Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "feedback/course-feedback": {
+      "targets": [
+        {
+          "dropdown": "Feedback",
+          "subitem": "End Semester Feedback"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "feedback/end-semester-feedback": {
+      "targets": [
+        {
+          "dropdown": "Feedback",
+          "subitem": "End Semester Feedback"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/bank-account-details": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Bank Account Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/fee-due-details": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Fee Due Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/fee-dues": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Fee Due Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/fee-paid": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Fee Paid Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/fee-paid-details": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Fee Paid Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/online-payment-verification": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Online Payment Verification"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/payment-acknowledgment": {
+      "targets": [
+        {
+          "dropdown": "Finance",
+          "subitem": "Payment Acknowledgment"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "finance/sap-scholarships": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "SAP Process"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "hostel/hostel-booking-for-full-year": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Hostel Booking for Full Year"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "hostel/hostel-layout-&-faqs": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Hostel Layout & FAQs"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "hostel/hostel-refund-policy": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Hostel Refund Policy"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "hostel/room-details": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Room Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "logout": {
+      "targets": [],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "profile": {
+      "targets": [
+        {
+          "dropdown": "Academic",
+          "subitem": "Student Wise Subjects"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "sap/attachments": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "Attachments"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "sap/details": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "sap/feedback": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "Feedback"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "sap/sap-process": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "SAP Process"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "sap/withdraw": {
+      "targets": [
+        {
+          "dropdown": "SAP",
+          "subitem": "Withdraw"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "settings": {
+      "targets": [],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport-hostel/faqs": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Hostel Layout & FAQs"
+        },
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport & FAQs"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport-hostel/refund-change-requests": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Hostel Refund Policy"
+        },
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport Refund Policy"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport-hostel/room-details": {
+      "targets": [
+        {
+          "dropdown": "Hostel",
+          "subitem": "Room Details"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport-hostel/route-details": {
+      "targets": [
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport Registration"
+        },
+        {
+          "dropdown": "Transport",
+          "subitem": "Registration Acknowledgment"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport/registration-acknowledgment": {
+      "targets": [
+        {
+          "dropdown": "Transport",
+          "subitem": "Registration Acknowledgment"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport/transport-&-faqs": {
+      "targets": [
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport & FAQs"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport/transport-refund-policy": {
+      "targets": [
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport Refund Policy"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "transport/transport-registration": {
+      "targets": [
+        {
+          "dropdown": "Transport",
+          "subitem": "Transport Registration"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    "verification/mobile-no-verification": {
+      "targets": [
+        {
+          "dropdown": "Verification",
+          "subitem": "Mobile No Verification"
+        }
+      ],
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    }
+  },
+  "menuItems": [
+    {
+      "dropdown": "Academic",
+      "subitem": "Attendance Details",
+      "endpoint": {
+        "argId": 3,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration",
+      "endpoint": {
+        "argId": 39,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationinstruction2022.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 39"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Course Registration Cancellation",
+      "endpoint": {
+        "argId": 42,
+        "method": "POST",
+        "url": "students/registrations/studentscourseregistrationcurrentsemesterinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 42"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Minor Program Registration",
+      "endpoint": {
+        "argId": 152,
+        "method": "POST",
+        "url": "students/registrations/minorregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 152"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "OD/ML Details",
+      "endpoint": {
+        "argId": 53,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Attendance",
+      "endpoint": {
+        "argId": 33,
+        "method": "POST",
+        "url": "students/transaction/studentattendance.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 33"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Student Wise Subjects",
+      "endpoint": {
+        "argId": 2,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Academic",
+      "subitem": "Time Table",
+      "endpoint": {
+        "argId": 10,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Announcements",
+      "subitem": "Announcements",
+      "endpoint": {
+        "argId": 107,
+        "method": "POST",
+        "url": "students/report/announcements.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 107"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Events",
+      "subitem": "Event Attendance",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/eventattendance.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funEventAttendance"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Current Semester Results",
+      "endpoint": {
+        "argId": 15,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Earlier Internal Marks",
+      "endpoint": {
+        "argId": 22,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Mark Details",
+      "endpoint": {
+        "argId": 6,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration",
+      "endpoint": {
+        "argId": 13,
+        "method": "POST",
+        "url": "students/transaction/semesterexamapplicationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 13"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Exam Registration Details",
+      "endpoint": {
+        "argId": 159,
+        "method": "POST",
+        "url": "students/report/examaplicationreport.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 159"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Examination",
+      "subitem": "Internal Mark Details",
+      "endpoint": {
+        "argId": 5,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Feedback",
+      "subitem": "End Semester Feedback",
+      "endpoint": {
+        "argId": 9,
+        "method": "POST",
+        "url": "students/transaction/subjectwisefeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 9"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Bank Account Details",
+      "endpoint": {
+        "argId": 54,
+        "method": "POST",
+        "url": "students/transaction/studentbankdetails.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 54"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Due Details",
+      "endpoint": {
+        "argId": 8,
+        "method": "POST",
+        "url": "students/transaction/feeduegroups.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 8"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Fee Paid Details",
+      "endpoint": {
+        "argId": 7,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Online Payment Verification",
+      "endpoint": {
+        "argId": 26,
+        "method": "POST",
+        "url": "students/onlinepayments/onlinepaymentreconcilation.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 26"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Finance",
+      "subitem": "Payment Acknowledgment",
+      "endpoint": {
+        "argId": 27,
+        "method": "POST",
+        "url": "students/report/receiptgeneration.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}",
+          "stuId": "14688"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 27"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Booking for Full Year",
+      "endpoint": {
+        "argId": 31,
+        "method": "POST",
+        "url": "students/registrations/hostelregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 31"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Layout & FAQs",
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/hostel/layout/",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Hostel Refund Policy",
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/hostel/",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Hostel",
+      "subitem": "Room Details",
+      "endpoint": {
+        "argId": 21,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Attachments",
+      "endpoint": {
+        "argId": 48,
+        "method": "POST",
+        "url": "students/registrations/sapattachfiles.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 48"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Details",
+      "endpoint": {
+        "argId": 47,
+        "method": "POST",
+        "url": "students/report/studentreportresources.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId < 8 || argId == 10 || argId == 15 || argId == 18 || argId == 21 || argId == 22 || argId == 25 || argId == 35 || argId == 47 || argId == 53"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Feedback",
+      "endpoint": {
+        "argId": 49,
+        "method": "POST",
+        "url": "students/registrations/sapfeedback.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 49"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "SAP Process",
+      "endpoint": {
+        "argId": 43,
+        "method": "POST",
+        "url": "students/registrations/sapregistrationinstruction.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 43"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "SAP",
+      "subitem": "Withdraw",
+      "endpoint": {
+        "argId": 46,
+        "method": "POST",
+        "url": "students/registrations/sapwithdraw.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 46"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Registration Acknowledgment",
+      "endpoint": {
+        "argId": 52,
+        "method": "POST",
+        "url": "students/report/transportconfirmationprint.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 52"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport & FAQs",
+      "endpoint": {
+        "method": "GET",
+        "url": "//www.srmap.edu.in/transport",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Refund Policy",
+      "endpoint": {
+        "method": "GET",
+        "url": "https://srmap.edu.in/wp-content/uploads/2022/07/Transportation-Fee-Refund-Policy.pdf?x95317",
+        "paramsTemplate": {},
+        "sourceFunction": "direct_url",
+        "external": true
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Transport",
+      "subitem": "Transport Registration",
+      "endpoint": {
+        "argId": 51,
+        "method": "POST",
+        "url": "students/registrations/transportregistrationinstructions.jsp",
+        "paramsTemplate": {
+          "ids": "{{argId}}"
+        },
+        "opensNewTab": false,
+        "sourceFunction": "funLoadDetails",
+        "sourceCondition": "argId == 51"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    },
+    {
+      "dropdown": "Verification",
+      "subitem": "Mobile No Verification",
+      "endpoint": {
+        "method": "POST",
+        "url": "students/transaction/mobilenumberverification.jsp",
+        "paramsTemplate": {
+          "ids": "1"
+        },
+        "sourceFunction": "funMobileVerification"
+      },
+      "mapToMyErp": {
+        "resource": null,
+        "notes": ""
+      }
+    }
+  ]
+}
