@@ -1,6 +1,9 @@
+// Dashboard widget: StatCard summary row + existing chart/course grid; pipeline unchanged.
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useMemo, useState } from "react";
 import { executePipeline, type InternalMarksModel, type InternalMarkSubject } from "../../lib/erpTransformers";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { StatCard } from "../../components/ui/StatCard";
 
 function InternalMarks({ marksData }: { marksData?: any }) {
   const [selectedCourse, setSelectedCourse] = useState<InternalMarkSubject | null>(null);
@@ -39,8 +42,7 @@ function InternalMarks({ marksData }: { marksData?: any }) {
   if (!processedData) {
     return (
       <div className="h-full p-4 flex flex-col justify-center items-center text-center">
-        <h2 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1">Internal Marks</h2>
-        <p className="text-xs text-[var(--text-secondary)] font-medium">No internal marks data available for this semester.</p>
+        <EmptyState title="Internal Marks" description="No internal marks data available for this semester." />
       </div>
     );
   }
@@ -58,13 +60,20 @@ function InternalMarks({ marksData }: { marksData?: any }) {
 
   return (
     <div className="h-full flex flex-col p-4">
-      <header className="shrink-0 mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2">
-          Internal Marks
-        </h2>
+      <header className="mb-3 flex shrink-0 items-center justify-between">
+        <h2 className="card-title flex items-center gap-2 font-bold">Internal Marks</h2>
       </header>
 
-      <div className="flex-1 min-h-0 flex gap-4">
+      <div className="mb-3 grid shrink-0 grid-cols-2 gap-2">
+        <StatCard label="Average %" value={`${averagePercentage.toFixed(1)}%`} />
+        <StatCard
+          label="Below 60%"
+          value={String(atRiskCount)}
+          delta={{ value: "courses", trend: atRiskCount > 0 ? "down" : "neutral" }}
+        />
+      </div>
+
+      <div className="flex min-h-0 flex-1 gap-4">
         {/* Left Area: 1. Donut Chart & 2. Legend */}
         <div className="w-[140px] shrink-0 flex flex-col h-full">
           <div className="relative aspect-square max-h-[140px] flex items-center justify-center">
@@ -89,20 +98,20 @@ function InternalMarks({ marksData }: { marksData?: any }) {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-bold text-[var(--text-primary)] leading-tight">{averagePercentage.toFixed(0)}%</span>
-                  <span className="text-[7px] font-medium text-[var(--text-secondary)]">average</span>
+                  <span className="text-lg font-bold leading-tight" style={{ color: 'var(--comp-text-primary)' }}>{averagePercentage.toFixed(0)}%</span>
+                  <span className="text-[7px] font-medium" style={{ color: 'var(--comp-text-secondary)' }}>average</span>
                 </div>
               </>
             )}
           </div>
 
           <div className="shrink-0 flex flex-col gap-1 mt-auto">
-            <div className="flex items-center justify-between rounded bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_40%,transparent)] px-2 py-1">
+            <div className="flex items-center justify-between rounded px-2 py-1" style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', border: '1px solid var(--comp-border)' }}>
               <div className="flex items-center gap-1.5 overflow-hidden">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-[var(--error)]" />
-                <span className="text-[9px] font-medium text-[var(--text-secondary)] truncate">Needs Improvement (&lt;60%)</span>
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: 'var(--error)' }} />
+                <span className="text-[9px] font-medium truncate" style={{ color: 'var(--comp-text-secondary)' }}>Needs Improvement (&lt;60%)</span>
               </div>
-              <span className="text-[10px] font-bold text-[var(--text-primary)] ml-1">{atRiskCount}</span>
+              <span className="text-[10px] font-bold ml-1" style={{ color: 'var(--comp-text-primary)' }}>{atRiskCount}</span>
             </div>
           </div>
         </div>
@@ -110,13 +119,13 @@ function InternalMarks({ marksData }: { marksData?: any }) {
         {/* Right Area: 3. Dynamic Grid of Course Cards (or Details) */}
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {selectedCourse ? (
-            <div className="flex flex-col h-full bg-[color-mix(in_srgb,var(--surface)_30%,transparent)] border border-[color-mix(in_srgb,var(--border)_80%,transparent)] rounded-xl p-3 shadow-sm">
+            <div className="flex flex-col h-full rounded-xl p-3 shadow-sm" style={{ background: 'color-mix(in srgb, var(--comp-surface) 30%, transparent)', border: '1px solid var(--comp-border)' }}>
               <div className="flex items-center justify-between shrink-0 mb-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)]">Course Details</h3>
+                <h3 className="label-text">Course Details</h3>
                 <button
                   type="button"
                   onClick={() => setSelectedCourse(null)}
-                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 text-[9px] font-bold text-[var(--text-primary)] hover:opacity-70 transition-opacity"
+                  className="btn-secondary min-h-0 px-2 py-0.5 text-[9px] font-bold"
                 >
                   Back
                 </button>
@@ -124,8 +133,8 @@ function InternalMarks({ marksData }: { marksData?: any }) {
 
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1">
                 <div className="mb-3 text-center">
-                  <p className="text-sm font-bold text-[var(--text-primary)] leading-snug">{selectedCourse.code}</p>
-                  <p className="text-[10px] text-[var(--text-secondary)] leading-tight">{selectedCourse.description}</p>
+                  <p className="text-sm font-bold leading-snug" style={{ color: 'var(--comp-text-primary)' }}>{selectedCourse.code}</p>
+                  <p className="text-[10px] leading-tight" style={{ color: 'var(--comp-text-secondary)' }}>{selectedCourse.description}</p>
                 </div>
                 
                 {/* 4. Details displayed generically from tables instead of hardcoded mid/cla1/etc */}
@@ -143,10 +152,11 @@ function InternalMarks({ marksData }: { marksData?: any }) {
                     return (
                       <div
                         key={`${label}-${idx}`}
-                        className="flex items-center justify-between rounded bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_40%,transparent)] px-2.5 py-2 flex-1 min-h-[28px]"
+                        className="flex items-center justify-between rounded px-2.5 py-2 flex-1 min-h-[28px]"
+                        style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', border: '1px solid var(--comp-border)' }}
                       >
-                        <span className="text-[10px] font-medium text-[var(--text-secondary)] truncate mr-2">{label}</span>
-                        <span className={`text-[11px] font-bold truncate ${isMissing ? "text-[color-mix(in_srgb,var(--text-secondary)_60%,transparent)] italic" : "text-[var(--text-primary)]"}`}>
+                        <span className="text-[10px] font-medium truncate mr-2" style={{ color: 'var(--comp-text-secondary)' }}>{label}</span>
+                        <span className={`text-[11px] font-bold truncate ${isMissing ? "italic" : ""}`} style={{ color: isMissing ? 'var(--comp-text-muted)' : 'var(--comp-text-primary)' }}>
                           {isMissing ? "N/A" : value}
                         </span>
                       </div>
@@ -164,22 +174,27 @@ function InternalMarks({ marksData }: { marksData?: any }) {
                     type="button"
                     key={`${subject.code}-${index}`}
                     onClick={() => setSelectedCourse(subject)}
-                    className="flex flex-col bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_50%,transparent)] rounded-lg p-2.5 text-left hover:border-[var(--text-secondary)] transition-colors w-full group"
+                    className="flex flex-col rounded-lg p-2.5 text-left w-full group"
+                    style={{
+                      background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)',
+                      border: '1px solid var(--comp-border)',
+                      transition: `all var(--transition-fast)`,
+                    }}
                   >
-                    <span className="truncate text-xs font-bold text-[var(--text-primary)] mb-1">
+                    <span className="truncate text-xs font-bold mb-1" style={{ color: 'var(--comp-text-primary)' }}>
                       {subject.code}
                     </span>
                     
                     <div className="flex items-end justify-between w-full mb-1">
-                      <span className="text-[10px] font-bold text-[var(--text-primary)]">
-                        {subject.marksObtained}<span className="text-[8px] text-[var(--text-secondary)]">/{subject.maxMarks}</span>
+                      <span className="text-[10px] font-bold" style={{ color: 'var(--comp-text-primary)' }}>
+                        {subject.marksObtained}<span className="text-[8px]" style={{ color: 'var(--comp-text-secondary)' }}>/{subject.maxMarks}</span>
                       </span>
                       <span className="text-[10px] font-bold shrink-0" style={{ color: getStatusColor(subject.status) }}>
                         {subject.percentage.toFixed(1)}%
                       </span>
                     </div>
                     
-                    <div className="h-1.5 w-full rounded-full bg-[color-mix(in_srgb,var(--border)_80%,transparent)] overflow-hidden">
+                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--comp-border)' }}>
                       <div
                         className="h-full rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
                         style={{ width: `${Math.max(0, Math.min(100, subject.percentage))}%`, backgroundColor: getStatusColor(subject.status) }}

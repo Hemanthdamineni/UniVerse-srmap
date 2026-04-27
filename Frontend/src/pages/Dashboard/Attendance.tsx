@@ -1,8 +1,9 @@
 import { ChartContainer, ChartTooltip } from "../../components/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { executePipeline, type AttendanceModel } from "../../lib/erpTransformers";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { StatCard } from "../../components/ui/StatCard";
 
 function Attendance({ attendanceData }: { attendanceData?: any }) {
   const processedData = useMemo(() => {
@@ -52,30 +53,25 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
   if (!processedData) {
     return (
       <div className="p-4 h-full flex flex-col">
-        <h2 className="font-bold text-lg mb-4">Attendance</h2>
+        <h2 className="card-title font-bold mb-4">Attendance</h2>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500 text-center">No attendance data available</p>
+          <EmptyState title="No attendance data" description="Attendance data is not available for this semester." />
         </div>
       </div>
     );
   }
 
-  const { subjects, criticalSubjects } = processedData;
+  const { subjects, averageAttendance, criticalSubjects } = processedData;
 
   return (
-    <div className="p-4 h-full flex flex-col space-y-3">
-      <div className="space-y-2">
-        <h2 className="font-bold text-lg">Attendance</h2>
-        <div className="flex text-sm">
-          {criticalSubjects > 0 && (
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
-              <span className="text-red-600">
-                {criticalSubjects} below 75%
-              </span>
-            </div>
-          )}
-        </div>
+    <div className="p-4 h-full flex flex-col space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Avg Attendance" value={`${averageAttendance.toFixed(1)}%`} />
+        <StatCard 
+          label="Critical Subjects" 
+          value={criticalSubjects.toString()} 
+          delta={{ value: "below 75%", trend: criticalSubjects > 0 ? "down" : "neutral" }} 
+        />
       </div>
 
       <div className="flex-1 min-h-0">
@@ -109,9 +105,9 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-white p-3 border rounded-lg shadow-lg">
-                      <p className="font-medium text-gray-900">{data.fullSubject}</p>
-                      <p className={`text-sm ${data.attendance >= 75 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="p-3 border rounded-lg shadow-lg" style={{ background: 'var(--comp-surface)', borderColor: 'var(--comp-border)' }}>
+                      <p className="font-medium" style={{ color: 'var(--comp-text-primary)' }}>{data.fullSubject}</p>
+                      <p className="text-sm" style={{ color: data.attendance >= 75 ? 'var(--success)' : 'var(--error)' }}>
                         {data.attendance.toFixed(1)}% attendance
                       </p>
                     </div>
@@ -122,7 +118,7 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
             />
             <ReferenceLine
               y={75}
-              stroke="#ef4444"
+              stroke="var(--error)"
               strokeDasharray="5 5"
               strokeWidth={1}
             />
@@ -135,19 +131,6 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
           </BarChart>
         </ChartContainer>
       </div>
-
-      {/* <div className="grid gap-2">
-        {subjects.slice(0, 3).map((subject) => (
-          <Link
-            key={subject.fullSubject}
-            to={`/resources/browse?subjectCode=${encodeURIComponent(subject.fullSubject)}`}
-            className="dashboard-subcard flex items-center justify-between rounded-xl px-3 py-2 transition hover:shadow-md"
-          >
-            <span className="text-sm font-medium text-[#0A3035]">{subject.fullSubject}</span>
-            <span className="text-xs font-semibold text-[#34AEBE]">LMS</span>
-          </Link>
-        ))}
-      </div> */}
     </div>
   );
 }

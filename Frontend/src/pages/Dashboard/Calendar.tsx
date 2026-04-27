@@ -62,21 +62,21 @@ function Calendar({ onDateSelect }: { onDateSelect?: (date: Date) => void }) {
   const days = getDaysInMonth(currentDate);
 
   return (
-    <div className="bg-white col-span-3 row-span-1 rounded-xl p-4">
+    <div className="col-span-3 row-span-1 rounded-xl p-4" style={{ background: 'var(--comp-surface)' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => navigateMonth(-1)}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="btn-ghost min-h-0 p-1 rounded"
         >
           ←
         </button>
-        <h2 className="font-bold text-lg">
+        <h2 className="card-title font-bold">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h2>
         <button
           onClick={() => navigateMonth(1)}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="btn-ghost min-h-0 p-1 rounded"
         >
           →
         </button>
@@ -85,7 +85,7 @@ function Calendar({ onDateSelect }: { onDateSelect?: (date: Date) => void }) {
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((day, index) => (
-          <div key={index} className="text-center text-xs font-medium text-gray-500 p-1">
+          <div key={index} className="text-center label-text p-1" style={{ textTransform: 'none', letterSpacing: 'normal' }}>
             {day}
           </div>
         ))}
@@ -98,12 +98,18 @@ function Calendar({ onDateSelect }: { onDateSelect?: (date: Date) => void }) {
             {date && (
               <button
                 onClick={() => handleDateClick(date)}
-                className={`w-full h-full text-xs rounded-lg flex flex-col items-center justify-center transition-colors ${isToday(date)
-                  ? 'bg-[#0A3035] text-white font-bold ring-2 ring-[#F8F8F8]'
+                className={`w-full h-full text-xs rounded-lg flex flex-col items-center justify-center ${isToday(date)
+                  ? 'font-bold ring-2'
                   : isSelected(date) && !isToday(date)
-                    ? 'bg-green-500 text-white font-medium'
-                    : 'hover:bg-gray-100 cursor-pointer text-gray-700'
+                    ? 'font-medium'
+                    : 'cursor-pointer'
                   }`}
+                style={{
+                  background: isToday(date) ? 'var(--comp-accent)' : isSelected(date) ? 'var(--success)' : undefined,
+                  color: (isToday(date) || isSelected(date)) ? '#fff' : 'var(--comp-text-primary)',
+                  ringColor: isToday(date) ? 'var(--comp-surface)' : undefined,
+                  transition: `all var(--transition-fast)`,
+                }}
               >
                 <span className="text-[10px] leading-none mb-0.5">
                   {dayNames[date.getDay()]}

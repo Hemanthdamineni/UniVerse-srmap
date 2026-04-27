@@ -1,3 +1,4 @@
+// Dashboard grid unchanged; widgets use SectionCard/SkeletonCard/InlineError from shared UI.
 import { useEffect, useRef, useState } from "react";
 import BasicInfo from "./BasicInfo";
 import Schedule from "./Schedule";
@@ -11,6 +12,9 @@ import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, getSessionId } from "../../lib/session";
 import { getErpBatch } from "../../lib/erpApi";
 import { getEndSemesterFeedbackStatus } from "../../lib/studentToolsApi";
+import { InlineError } from "../../components/ui/InlineError";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
 
 function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -72,67 +76,88 @@ function Dashboard() {
 
   if (loading || profileLoading) {
     return (
-      <div className="flex items-center gap-2">
-        <div className="animate-spin h-4 w-4 border-b-2 border-[#0A3035] rounded-full" />
-        <span>Loading dashboard...</span>
+      <div className="grid grid-cols-12 gap-4 p-4 h-screen">
+        {/* Welcome skeleton */}
+        <div className="col-span-9"><SkeletonCard className="h-48" /></div>
+        <div className="col-span-3"><SkeletonCard className="h-48" /></div>
+        {/* Basic info skeleton */}
+        <div className="col-span-9"><SkeletonCard className="h-[180px]" /></div>
+        {/* Schedule skeleton */}
+        <div className="col-span-3 row-span-2"><SkeletonCard className="h-[400px]" /></div>
+        {/* Bottom cards */}
+        <div className="col-span-2"><SkeletonCard className="h-[200px]" /></div>
+        <div className="col-span-4"><SkeletonCard className="h-[200px]" /></div>
+        <div className="col-span-3"><SkeletonCard className="h-[200px]" /></div>
+        <div className="col-span-9"><SkeletonCard className="h-[200px]" /></div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return (
+      <div className="p-6">
+        <InlineError message={error} />
+      </div>
+    );
   }
 
   if (profileError) {
-    return <div className="text-red-500">Profile Error: {profileError}</div>;
+    return (
+      <div className="p-6">
+        <InlineError message={`Profile Error: ${profileError}`} />
+      </div>
+    );
   }
 
   if (!profileData) {
-    return <div className="text-red-500">Profile Error: No profile data available for the current session.</div>;
+    return (
+      <div className="p-6">
+        <InlineError message="Profile Error: No profile data available for the current session." />
+      </div>
+    );
   }
 
   return (
     <div ref={dashboardRef} className="grid-rows-12 grid grid-cols-12 p-4 gap-4 h-screen">
       {/* Welcome Card - 1 row */}
-      <div data-page-contrast="true" className="page-contrast-fg bg-transparent col-span-9 row-span-1 rounded-xl p-4">
+      <SectionCard data-page-contrast="true" className="page-contrast-fg bg-transparent col-span-9 row-span-1 p-0 border-0 shadow-none">
         <WelcomeCard />
-      </div>
+      </SectionCard>
 
       {/* Weekly Calendar - 2 rows 3 columns */}
-      <div className="dashboard-card col-span-3 row-span-2 p-4">
+      <SectionCard interactive className="col-span-3 row-span-2 p-0 overflow-hidden">
         <WeekCalendar onDateSelect={setSelectedDate} />
-      </div>
+      </SectionCard>
 
       {/* Basic Info - 3 rows 9 columns*/}
-      <div className="dashboard-card grid grid-rows-4 grid-cols-12 grid-flow-row-dense gap-2 p-4 col-span-9 row-span-3">
-        <h1 className="row-span-1 col-span-12 font-bold text-lg">Basic Info</h1>
+      <SectionCard interactive title="Basic Info" className="col-span-9 row-span-3 overflow-hidden">
         <BasicInfo profileData={profileData} />
-      </div>
+      </SectionCard>
 
       {/* Schedule - 10 rows 3 columns */}
-      <div className="dashboard-card col-span-3 row-span-10">
+      <SectionCard interactive className="col-span-3 row-span-10 p-0 overflow-hidden">
         <Schedule scheduleData={timetableData || data} selectedDate={selectedDate} />
-      </div>
+      </SectionCard>
 
       {/* Quick Links - 4 rows */}
-      <div className="dashboard-card col-span-2 row-span-4 overflow-hidden">
+      <SectionCard interactive className="col-span-2 row-span-4 p-0 overflow-hidden">
         <QuickLinks feedbackPendingCount={feedbackPendingCount} />
-      </div>
+      </SectionCard>
 
       {/* Internal Marks - 4 rows */}
-      <div className="dashboard-card col-span-4 row-span-4 overflow-hidden">
+      <SectionCard interactive className="col-span-4 row-span-4 p-0 overflow-hidden">
         <InternalMarks marksData={data} />
-      </div>
+      </SectionCard>
 
       {/* Attendance - 4 rows */}
-      <div className="dashboard-card col-span-3 row-span-4 overflow-y-auto">
+      <SectionCard interactive className="col-span-3 row-span-4 p-0 overflow-hidden">
         <Attendance attendanceData={data} />
-      </div>
+      </SectionCard>
 
       {/* ToDo - 4 rows */}
-      <div className="dashboard-card col-span-9 row-span-4 overflow-y-auto">
+      <SectionCard interactive className="col-span-9 row-span-4 p-0 overflow-hidden">
         <ToDo selectedDate={selectedDate} profileData={profileData} />
-      </div>
+      </SectionCard>
     </div>
   );
 }

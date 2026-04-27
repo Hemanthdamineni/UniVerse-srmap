@@ -67,16 +67,16 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => navigateWeek(-1)}
-          className="hover:bg-gray-100 rounded-lg transition-colors"
+          className="btn-ghost min-h-0 p-1 rounded-lg"
         >
           ←
         </button>
-        <h2 className="font-bold text-lg">
+        <h2 className="card-title font-bold">
           {monthNames[midWeek.getMonth()]} {midWeek.getFullYear()}
         </h2>
         <button
           onClick={() => navigateWeek(1)}
-          className="hover:bg-gray-100 rounded-lg transition-colors"
+          className="btn-ghost min-h-0 p-1 rounded-lg"
         >
           →
         </button>
@@ -87,19 +87,24 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
         {weekDays.map((date, index) => (
           <div key={index} className="flex flex-col items-center space-y-1">
             {/* Day name */}
-            <div className="text-xs font-medium text-gray-500 h-4">
+            <div className="label-text h-4" style={{ textTransform: 'none', letterSpacing: 'normal' }}>
               {dayNames[index]}
             </div>
 
             {/* Date button */}
             <button
               onClick={() => handleDateClick(date)}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors text-sm font-medium ${isToday(date)
-                ? 'bg-[#0A3035] text-white'
+              className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${isToday(date)
+                ? 'text-white'
                 : isSelected(date) && !isToday(date)
-                  ? 'bg-green-500 text-white'
-                  : 'hover:bg-gray-100 text-gray-700'
+                  ? 'text-white'
+                  : ''
                 }`}
+              style={{
+                background: isToday(date) ? 'var(--comp-accent)' : isSelected(date) ? 'var(--success)' : undefined,
+                color: isToday(date) || isSelected(date) ? '#fff' : 'var(--comp-text-primary)',
+                transition: `all var(--transition-fast)`,
+              }}
             >
               {date.getDate()}
             </button>

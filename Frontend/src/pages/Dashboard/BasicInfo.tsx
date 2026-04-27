@@ -1,22 +1,24 @@
+// BasicInfo grid: label-text + card-title tokens only.
 import { sanitizeVisibleText } from "../../components/erp/ErpPrimitives";
 import { executePipeline, type StudentProfile } from "../../lib/erpTransformers";
+import { EmptyState } from "../../components/ui/EmptyState";
 
 function BasicInfo({ profileData }: { profileData: any }) {
   // Check if we have the expected SAP data structure
   if (!profileData) {
-    return <div>No profile data available</div>;
+    return <EmptyState title="No profile data" description="Profile data is not available." />;
   }
 
   // Check if we have TableContent (actual scraped structure)
   if (!profileData?.TableContent) {
     console.log('TableContent not found, available keys:', Object.keys(profileData));
-    return <div>Loading profile data...</div>;
+    return <EmptyState title="Loading profile data..." description="Table content is being fetched." />;
   }
 
   // Pipeline execute and validation
   const pipelineResult = executePipeline("profile", profileData.TableContent);
   if (!pipelineResult?.isValid || !pipelineResult.data) {
-     return <div>No valid profile data found.</div>;
+     return <EmptyState title="No valid profile data" description="The profile pipeline returned no valid data." />;
   }
   
   const profileModel = pipelineResult.data as StudentProfile;
@@ -49,8 +51,8 @@ function BasicInfo({ profileData }: { profileData: any }) {
         { label: "Email", value: profileModel.email, span: 4 },
       ].map(({ label, value, span }, idx) => (
         <div key={`${label}-${idx}`} className={`row-span-1 ${getColSpanClass(span)}`}>
-          <p className="text-gray-600 align-text-top text-xs">{label}</p>
-          <h3 className="font-medium text-sm">{sanitizeVisibleText(value || "N/A")}</h3>
+          <p className="label-text">{label}</p>
+          <h3 className="card-title font-semibold">{sanitizeVisibleText(value || "N/A")}</h3>
         </div>
       ))}
     </>

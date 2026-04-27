@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { sanitizeVisibleText } from "../../components/erp/ErpPrimitives";
 import { executePipeline, type TimetableModel } from "../../lib/erpTransformers";
+import { StatusBadge } from "../../components/ui/StatusBadge";
 
 const TIME_SLOTS = [
   { slot: "1", time: "9:00 am" },
@@ -63,7 +64,7 @@ function extractCourseInfo(rawValue: string) {
   const compact = trimmed.replace(/\s+/g, " ").trim();
   const bracketMatch = compact.match(/\[([^\]]+)\]/);
   const token = bracketMatch ? bracketMatch[1] : compact;
-  const match = token.match(/^([A-Z]{2,}\s*\d{2,4}(?:\s*[A-Z])?)\s*(?:\(|-)?\s*([^()-]+?)?\s*(?:\)|-)?$/i);
+  const match = token.match(/^([A-Z]{2,}\s*\d{2,4}(?:\s*[A-Z])?)\s*(?:\(|-)??\s*([^()-]+?)?\s*(?:\)|-)?$/i);
 
   if (match) {
     const courseCode = sanitizeVisibleText(match[1].replace(/\s+/g, " "));
@@ -104,13 +105,6 @@ function deriveSlotStatus(targetDate: Date, slotIndex: number) {
   if (now < start) return "Upcoming";
   if (now > end) return "Completed";
   return "Live";
-}
-
-function statusClassName(status: string) {
-  if (status === "Live") return "bg-emerald-600 text-white";
-  if (status === "Completed") return "bg-slate-200 text-slate-700";
-  if (status === "Upcoming" || status === "Scheduled") return "bg-sky-100 text-sky-700";
-  return "bg-amber-500 text-white";
 }
 
 function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; selectedDate?: Date }) {
@@ -167,38 +161,36 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
     <div className="grid grid-rows-17 grid-cols-12 grid-flow-row-dense p-2 h-full overflow-y-auto">
       {/* Header */}
       <div className="row-span-1 col-span-12 m-2">
-        <h1 className="font-bold text-xl">Schedule</h1>
+        <h1 className="section-title font-bold">Schedule</h1>
       </div>
 
       {/* Schedule Entries */}
       {scheduleEntries.map((entry, index) => (
         <div key={index} className="row-span-2 col-span-12 grid grid-cols-12 mt-2">
           <div className="col-span-2 items-start">
-            <p className="text-gray-600 align-text-top text-[12px]">{entry.time}</p>
+            <p className="label-text" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '12px' }}>{entry.time}</p>
           </div>
           {entry.isEmpty ? (
             <div className="col-span-10 dashboard-subcard p-2 flex items-center justify-center">
-              <p className="text-gray-500 text-sm italic">Free Period</p>
+              <p className="body-text text-sm italic">Free Period</p>
             </div>
           ) : (
             <div className="col-span-10 dashboard-subcard p-2">
               <div className="flex flex-col h-full justify-between">
-                <p className="text-[14px] leading-none capitalize truncate">
+                <p className="text-[14px] leading-none capitalize truncate" style={{ color: 'var(--comp-text-primary)' }}>
                   {entry.coursename}
                 </p>
                 <div className="flex justify-between items-center mt-1">
-                  <p className="text-[12px] leading-none flex-1 truncate">{entry.professor}</p>
-                  <p className="text-gray-600 text-[10px] leading-none ml-2">
+                  <p className="text-[12px] leading-none flex-1 truncate" style={{ color: 'var(--comp-text-primary)' }}>{entry.professor}</p>
+                  <p className="text-[10px] leading-none ml-2" style={{ color: 'var(--comp-text-muted)' }}>
                     [{entry.courseid}]
                   </p>
                 </div>
                 <div className="flex justify-between items-center mt-1">
-                  <p className="text-gray-600 text-[10px] leading-none">
+                  <p className="text-[10px] leading-none" style={{ color: 'var(--comp-text-muted)' }}>
                     {entry.type} - {entry.room}
                   </p>
-                  <p className={`text-[10px] rounded-3xl text-center leading-none px-2 py-0.5 ml-2 ${statusClassName(entry.status)}`}>
-                    {entry.status}
-                  </p>
+                  <StatusBadge status={entry.status} className="text-[10px] ml-2" />
                 </div>
               </div>
             </div>
@@ -208,7 +200,7 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
 
       {/* Footer */}
       <div className="row-span-1 col-span-12">
-        <h1 className="text-gray-600 text-[12px]">5:30 pm</h1>
+        <h1 className="text-[12px]" style={{ color: 'var(--comp-text-muted)' }}>5:30 pm</h1>
       </div>
     </div>
   );
