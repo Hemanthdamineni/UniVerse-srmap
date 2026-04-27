@@ -16,7 +16,7 @@ export default function AnnotationPanel({
   return (
     <section className="dashboard-card space-y-3 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-[#0A3035]">Private notes</h3>
+        <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">Private notes</h3>
         {annotations[0] ? (
           <button
             className="text-xs font-medium text-rose-600"
@@ -36,13 +36,13 @@ export default function AnnotationPanel({
         ) : null}
       </div>
       <textarea
-        className="min-h-32 w-full rounded-2xl border border-[#0A3035]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#34AEBE]"
+        className="min-h-32 w-full rounded-2xl border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--info)]"
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder="Write your personal notes here..."
       />
       <button
-        className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white"
+        className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
         onClick={async () => {
           setBusy(true);
           try {

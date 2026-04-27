@@ -14,8 +14,8 @@ const CATEGORIES: TicketCategory[] = ["IT Support", "Academic", "Hostel", "Finan
 const PRIORITIES: TicketPriority[] = ["low", "medium", "high", "urgent"];
 
 const PRIORITY_COLORS: Record<TicketPriority, string> = {
-  low: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  medium: "border-amber-200 bg-amber-50 text-amber-800",
+  low: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
+  medium: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   high: "border-orange-200 bg-orange-50 text-orange-800",
   urgent: "border-rose-200 bg-rose-50 text-rose-800",
 };
@@ -87,7 +87,7 @@ export default function RaiseTicket() {
               id="ticket-category"
               value={category}
               onChange={(event) => setCategory(event.target.value as TicketCategory)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             >
               {CATEGORIES.map((item) => (
                 <option key={item} value={item}>
@@ -104,7 +104,7 @@ export default function RaiseTicket() {
               id="ticket-priority"
               value={priority}
               onChange={(event) => setPriority(event.target.value as TicketPriority)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             >
               {PRIORITIES.map((item) => (
                 <option key={item} value={item}>
@@ -123,7 +123,7 @@ export default function RaiseTicket() {
               onChange={(event) => setSubject(event.target.value)}
               placeholder="Brief summary of the issue"
               required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
           </div>
           <div className="md:col-span-2">
@@ -137,13 +137,13 @@ export default function RaiseTicket() {
               placeholder="Explain the issue, affected page, timings, and any steps already tried."
               rows={5}
               required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
           </div>
           <div className="md:col-span-2">
             <button
               type="submit"
-              className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+              className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
             >
               Submit Ticket
             </button>
@@ -169,11 +169,11 @@ export default function RaiseTicket() {
                       >
                         {ticket.priority}
                       </span>
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                      <span className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2.5 py-0.5 text-xs font-bold text-[var(--comp-text-secondary)]">
                         {ticket.status}
                       </span>
                     </div>
-                    <h3 className="mt-1 text-base font-semibold text-[#0A3035]">{ticket.subject}</h3>
+                    <h3 className="mt-1 text-base font-semibold text-[var(--comp-text-primary)]">{ticket.subject}</h3>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
                       {ticket.description}
                     </p>

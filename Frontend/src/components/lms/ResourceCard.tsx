@@ -15,7 +15,7 @@ export default function ResourceCard({
   return (
     <article className="dashboard-card flex h-full flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#0A3035]/8 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#0A3035]">
+        <span className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--comp-text-primary)]">
           {resource.type}
         </span>
         <ReadingTimeChip minutes={resource.estimatedMinutes ?? undefined} />
@@ -25,7 +25,7 @@ export default function ResourceCard({
       <div className="space-y-1">
         <Link
           to={`/resources/${resource.id}`}
-          className="text-lg font-semibold text-[#0A3035] transition hover:text-[#34AEBE]"
+          className="text-lg font-semibold text-[var(--comp-text-primary)] transition hover:text-[var(--info)]"
         >
           {resource.title}
         </Link>

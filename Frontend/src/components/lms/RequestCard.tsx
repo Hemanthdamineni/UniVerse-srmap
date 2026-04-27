@@ -10,7 +10,7 @@ export default function RequestCard({
   return (
     <article className="dashboard-card flex items-start justify-between gap-4 p-4">
       <div className="space-y-1">
-        <h3 className="text-base font-semibold text-[#0A3035]">{request.title}</h3>
+        <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{request.title}</h3>
         <p className="text-sm text-[var(--text-secondary)]">
           {request.subjectCode} • {request.semester}
         </p>
@@ -19,7 +19,7 @@ export default function RequestCard({
         ) : null}
       </div>
       <button
-        className="rounded-full bg-[#0A3035] px-3 py-1.5 text-xs font-semibold text-white"
+        className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white"
         onClick={() => onUpvote?.(request.id)}
       >
         {request.upvotes} upvotes

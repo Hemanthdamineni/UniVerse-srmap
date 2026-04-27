@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+// ErpPageShell section-card; curriculum table columns unchanged.
 import { getErpBatch } from "../../lib/erpApi";
 import { executePipeline, type CurriculumModel } from "../../lib/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { InlineError } from "../../components/ui/InlineError";
 
 interface CurriculumPageProps {
   blueprint: PageBlueprint;
@@ -48,16 +50,17 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
   }, [blueprint.fetchKeys, blueprint, refreshTrigger]);
 
   return (
-    <ErpPageShell 
+    <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
+      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       <div className="flex flex-col gap-6">
         {error && (
-          <div className="rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+          <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
         )}
         
         {model && (
@@ -66,11 +69,11 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
               <table className="erp-table w-full table-fixed text-left">
                 <thead className="erp-table-head">
                   <tr>
-                    <th className="erp-table-head-cell erp-table-align-center w-[72px]">Sem</th>
-                    <th className="erp-table-head-cell w-[124px]">Code</th>
-                    <th className="erp-table-head-cell">Description</th>
-                    <th className="erp-table-head-cell erp-table-align-center w-[88px]">Credit</th>
-                    <th className="erp-table-head-cell w-[140px]">Group</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center w-[72px]">Sem</th>
+                    <th className="erp-table-head-cell label-text w-[124px]">Code</th>
+                    <th className="erp-table-head-cell label-text">Description</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center w-[88px]">Credit</th>
+                    <th className="erp-table-head-cell label-text w-[140px]">Group</th>
                   </tr>
                 </thead>
                 <tbody className="erp-table-body">
@@ -88,7 +91,7 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
                   ))}
                   {model.subjects.length === 0 && (
                     <tr className="erp-table-row">
-                      <td colSpan={5} className="erp-table-cell py-12 text-center text-sm text-[var(--text-secondary)] italic">
+                      <td colSpan={5} className="erp-table-cell py-12 text-center text-sm italic" style={{ color: 'var(--comp-text-muted)' }}>
                         No subjects listed in curriculum for the current enrollment.
                       </td>
                     </tr>

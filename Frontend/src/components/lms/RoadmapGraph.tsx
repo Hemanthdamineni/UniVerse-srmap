@@ -17,7 +17,7 @@ export default function RoadmapGraph({
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
               {node.nodeType}
             </p>
-            <h3 className="text-base font-semibold text-[#0A3035]">{node.title}</h3>
+            <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{node.title}</h3>
             {node.description ? (
               <p className="text-sm text-[var(--text-secondary)]">{node.description}</p>
             ) : null}
@@ -26,8 +26,8 @@ export default function RoadmapGraph({
             <button
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                 completed.has(node.id)
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-[#0A3035] text-white"
+                  ? "bg-emerald-100 text-[var(--success)]"
+                  : "bg-[var(--comp-accent)] text-white"
               }`}
               onClick={() => onComplete(node.id)}
             >

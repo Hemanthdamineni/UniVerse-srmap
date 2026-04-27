@@ -81,7 +81,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
           <button
             type="button"
             onClick={toggleRawMode}
-            className="rounded-full border border-[#0A3035]/20 bg-white px-4 py-2 text-sm font-medium text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+            className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] bg-white px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
           >
             Back To Feedback Assistant
           </button>
@@ -159,15 +159,15 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
               <p className="text-sm text-[var(--text-secondary)]">Pending Subjects</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">{status?.totalPending ?? 0}</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.totalPending ?? 0}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
               <p className="text-sm text-[var(--text-secondary)]">Default Rating</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">{status?.defaultOption ?? 5}</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.defaultOption ?? 5}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
               <p className="text-sm text-[var(--text-secondary)]">Template Ready</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
                 {status?.templateAvailable ? "Yes" : "No"}
               </p>
             </div>
@@ -176,7 +176,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
           <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-[#0A3035]">Pending Subject List</p>
+                <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Pending Subject List</p>
                 <p className="text-sm text-[var(--text-secondary)]">
                   Review which subjects will be included before you submit the batch.
                 </p>
@@ -184,7 +184,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
               <button
                 type="button"
                 onClick={toggleRawMode}
-                className="rounded-full border border-[#0A3035]/20 px-4 py-2 text-sm font-medium text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
               >
                 Open Raw ERP Page
               </button>
@@ -195,7 +195,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
                 {pendingSubjects.map((subject) => (
                   <span
                     key={subject.id || subject.name}
-                    className="rounded-full bg-[#0A3035]/8 px-3 py-2 text-sm font-medium text-[#0A3035]"
+                    className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-3 py-2 text-sm font-medium text-[var(--comp-text-primary)]"
                   >
                     {subject.name}
                   </span>
@@ -222,7 +222,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
                 value={optionNo}
                 onChange={(event) => setOptionNo(Number(event.target.value))}
                 disabled={disabled || submitting}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 <option value={5}>5 - Strongly Agree</option>
                 <option value={4}>4 - Somewhat Agree</option>
@@ -241,7 +241,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
                   type="button"
                   onClick={() => void fetchTemplate(true)}
                   disabled={templateLoading || submitting}
-                  className="rounded-full border border-[#0A3035]/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                  className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
                 >
                   {templateLoading ? "Refreshing..." : "Refresh Template"}
                 </button>
@@ -252,7 +252,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
                 disabled={disabled || submitting}
-                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 outline-none focus:border-[#0A3035]"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 outline-none focus:border-[var(--comp-accent)]"
                 placeholder="Write a clear and constructive course feedback comment."
               />
               <div className="mt-2 flex items-center justify-between text-xs">
@@ -267,7 +267,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
               type="button"
               onClick={() => void handleSubmit()}
               disabled={disabled || submitting || Boolean(commentError) || !pendingSubjects.length}
-              className="w-full rounded-2xl bg-[#0A3035] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#124850] disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="w-full rounded-2xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               {submitting ? "Submitting Feedback..." : `Submit For ${pendingSubjects.length || 0} Subject${pendingSubjects.length === 1 ? "" : "s"}`}
             </button>
@@ -283,13 +283,13 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
       {submitResult ? (
         <SectionCard title="Latest Batch Result">
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-              <p className="text-sm text-emerald-700">Submitted</p>
-              <p className="mt-2 text-3xl font-semibold text-emerald-800">{submitResult.counts.submitted}</p>
+            <div className="rounded-2xl border border-emerald-100 bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-4">
+              <p className="text-sm text-[var(--success)]">Submitted</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--success)]">{submitResult.counts.submitted}</p>
             </div>
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
-              <p className="text-sm text-amber-700">Skipped</p>
-              <p className="mt-2 text-3xl font-semibold text-amber-800">{submitResult.counts.skipped}</p>
+            <div className="rounded-2xl border border-amber-100 bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] p-4">
+              <p className="text-sm text-[var(--warning)]">Skipped</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--warning)]">{submitResult.counts.skipped}</p>
             </div>
             <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
               <p className="text-sm text-rose-700">Failed</p>
@@ -301,9 +301,9 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
             <table className="erp-table text-left">
               <thead className="erp-table-head">
                 <tr>
-                  <th className="erp-table-head-cell">Subject</th>
-                  <th className="erp-table-head-cell">Status</th>
-                  <th className="erp-table-head-cell">Message</th>
+                  <th className="erp-table-head-cell label-text">Subject</th>
+                  <th className="erp-table-head-cell label-text">Status</th>
+                  <th className="erp-table-head-cell label-text">Message</th>
                 </tr>
               </thead>
               <tbody className="erp-table-body">
@@ -334,7 +334,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
 
       <p className="text-sm text-[var(--text-secondary)]">
         Need the raw fallback instead? Use the button above, or open{" "}
-        <Link className="font-semibold text-[#0A3035]" to={`${blueprint.route}?mode=raw`}>
+        <Link className="font-semibold text-[var(--comp-text-primary)]" to={`${blueprint.route}?mode=raw`}>
           the direct ERP page
         </Link>
         .

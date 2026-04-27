@@ -1,6 +1,9 @@
+// Competition submissions list: Breadcrumb + InlineError; fetch getCompetitionSubmissions unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
+import { Breadcrumb } from "../../components/ui/Breadcrumb";
+import { InlineError } from "../../components/ui/InlineError";
 import { getCompetitionSubmissions } from "../../lib/campusApi";
 
 export default function SubmissionListPage() {
@@ -40,7 +43,26 @@ export default function SubmissionListPage() {
 
   return (
     <ErpPageShell title="Submissions" source="Internal API" isLoading={loading} loadingMessage="Loading submissions...">
-      {error ? <StatusBanner message={{ id: "submissions-error", tone: "warning", text: error }} /> : null}
+      <Breadcrumb
+        className="mb-4"
+        items={[
+          { label: "Manage", href: `/events/${encodeURIComponent(eventId)}/manage` },
+          { label: "Submissions" },
+        ]}
+      />
+      {error ? (
+        <InlineError
+          message={error}
+          onRetry={() => {
+            setLoading(true);
+            setError("");
+            void getCompetitionSubmissions(eventId, roundId)
+              .then(setRows)
+              .catch((err) => setError(err instanceof Error ? err.message : "Failed to load submissions."))
+              .finally(() => setLoading(false));
+          }}
+        />
+      ) : null}
       <SectionCard title="Summary">
         <p className="text-sm">
           {summary.total} submissions total | {summary.evaluated} evaluated | {summary.pending} pending | {summary.flagged} flagged
@@ -65,7 +87,7 @@ export default function SubmissionListPage() {
                 <span>{typeof row.totalScore === "number" ? `Score ${row.totalScore}` : "Pending"}</span>
                 <Link
                   to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(roundId)}/submissions/${encodeURIComponent(row.id)}/evaluate`}
-                  className="rounded-full border border-[#0A3035]/20 px-3 py-1 text-xs font-semibold text-[#0A3035]"
+                  className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-primary)]"
                 >
                   Evaluate
                 </Link>

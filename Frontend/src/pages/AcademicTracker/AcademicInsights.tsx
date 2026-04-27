@@ -3,16 +3,16 @@ import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/Er
 import { getLmsAcademicInsights } from "../../lib/lmsApi";
 
 const RECOMMENDATION_STYLES: Record<string, string> = {
-  improvement: "border-amber-200 bg-amber-50",
-  positive: "border-emerald-200 bg-emerald-50",
-  suggestion: "border-blue-200 bg-blue-50",
+  improvement: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]",
+  positive: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]",
+  suggestion: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]",
   warning: "border-rose-200 bg-rose-50",
 };
 
 const RECOMMENDATION_LABELS: Record<string, string> = {
-  improvement: "text-amber-800",
-  positive: "text-emerald-800",
-  suggestion: "text-blue-800",
+  improvement: "text-[var(--warning)]",
+  positive: "text-[var(--success)]",
+  suggestion: "text-[var(--info)]",
   warning: "text-rose-800",
 };
 
@@ -25,7 +25,7 @@ function GpaTrendBar({ semester, sgpa }: { semester: string; sgpa: number }) {
       <div className="flex-1">
         <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="flex h-full items-center justify-end rounded-full bg-[#0A3035] px-2 text-xs font-bold text-white transition-all"
+            className="flex h-full items-center justify-end rounded-full bg-[var(--comp-accent)] px-2 text-xs font-bold text-white transition-all"
             style={{ width: `${widthPercent}%` }}
           >
             {sgpa.toFixed(2)}
@@ -90,16 +90,16 @@ export default function AcademicInsights() {
                     className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4"
                   >
                     <div>
-                      <h3 className="text-sm font-semibold text-[#0A3035]">{category.category}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{category.category}</h3>
                       <p className="text-xs text-[var(--text-secondary)]">{category.subjects} subjects</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-center">
-                        <p className="text-lg font-bold text-[#0A3035]">{category.avgGrade}</p>
+                        <p className="text-lg font-bold text-[var(--comp-text-primary)]">{category.avgGrade}</p>
                         <p className="text-xs text-[var(--text-secondary)]">Snapshot Grade</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-bold text-[#0A3035]">{category.avgGpa.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-[var(--comp-text-primary)]">{category.avgGpa.toFixed(2)}</p>
                         <p className="text-xs text-[var(--text-secondary)]">Avg GPA</p>
                       </div>
                     </div>
@@ -113,7 +113,7 @@ export default function AcademicInsights() {
                 {insights.highlights.map((item) => (
                   <div key={item.label} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                     <p className="text-sm text-[var(--text-secondary)]">{item.label}</p>
-                    <p className="mt-1 text-lg font-semibold text-[#0A3035]">{item.value}</p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{item.value}</p>
                   </div>
                 ))}
               </div>

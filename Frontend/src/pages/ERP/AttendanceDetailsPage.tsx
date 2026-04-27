@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+// Wrapped in ErpPageShell contentLayout section-card; table styling via shared ERP CSS tokens.
 import { getErpBatch } from "../../lib/erpApi";
 import { executePipeline } from "../../lib/erpTransformers";
 import type { AttendanceModel } from "../../lib/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { InlineError } from "../../components/ui/InlineError";
 
 interface AttendanceDetailsPageProps {
   blueprint: PageBlueprint;
@@ -53,12 +55,13 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
+      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       {error && (
-        <div className="rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
       )}
 
       {model && (
@@ -67,21 +70,21 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
             <table className="erp-table table-fixed">
               <thead className="erp-table-head">
                 <tr>
-                  <th className="erp-table-head-cell">Subject Code</th>
-                  <th className="erp-table-head-cell">Subject</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Conducted</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Entered</th>
-                  <th className="erp-table-head-cell erp-table-align-right">OD/ML</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Present</th>
-                  <th className="erp-table-head-cell erp-table-align-right">OD/ML %</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Attendance %</th>
-                  <th className="erp-table-head-cell">LMS</th>
+                  <th className="erp-table-head-cell label-text">Subject Code</th>
+                  <th className="erp-table-head-cell label-text">Subject</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Conducted</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Entered</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">OD/ML</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Present</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">OD/ML %</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Attendance %</th>
+                  <th className="erp-table-head-cell label-text">LMS</th>
                 </tr>
               </thead>
               <tbody className="erp-table-body">
                 {model.records.length === 0 ? (
                   <tr className="erp-table-row">
-                    <td colSpan={9} className="erp-table-cell py-8 text-center text-sm italic text-slate-500">
+                    <td colSpan={9} className="erp-table-cell py-8 text-center text-sm italic" style={{ color: 'var(--comp-text-muted)' }}>
                       No attendance records for this semester.
                     </td>
                   </tr>
@@ -95,13 +98,13 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                       <td className="erp-table-cell erp-table-align-right">{rec.odMlTaken}</td>
                       <td className="erp-table-cell erp-table-align-right">{rec.present}</td>
                       <td className="erp-table-cell erp-table-align-right">{rec.odMlApprovedPct.toFixed(2)}%</td>
-                      <td className={`erp-table-cell erp-table-align-right font-semibold ${rec.attendancePct < 75 ? "text-red-600" : "text-emerald-600"}`}>
+                      <td className="erp-table-cell erp-table-align-right font-semibold" style={{ color: rec.attendancePct < 75 ? 'var(--error)' : 'var(--success)' }}>
                         {rec.attendancePct.toFixed(2)}%
                       </td>
                       <td className="erp-table-cell">
                         <Link
                           to={`/resources/browse?subjectCode=${encodeURIComponent(rec.subjectCode)}`}
-                          className="inline-flex rounded-full bg-[#0A3035]/10 px-3 py-1 text-xs font-semibold text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                          className="comp-btn-ghost min-h-0 rounded-full px-3 py-1 text-xs font-semibold"
                         >
                           Resources
                         </Link>
@@ -115,11 +118,11 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
 
           {model.notes.length > 0 && (
             <section className="dashboard-card p-4">
-              <h2 className="mb-2 text-sm font-semibold text-[#0A3035]">Notes</h2>
-              <ul className="space-y-1 text-sm text-slate-600">
+              <h2 className="mb-2 text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Notes</h2>
+              <ul className="space-y-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
                 {model.notes.map((note, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="shrink-0 text-slate-400">•</span>
+                    <span className="shrink-0" style={{ color: 'var(--comp-text-muted)' }}>•</span>
                     <span>{note}</span>
                   </li>
                 ))}

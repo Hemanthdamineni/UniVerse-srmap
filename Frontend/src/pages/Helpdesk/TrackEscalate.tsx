@@ -18,10 +18,10 @@ import {
 type TicketStatus = "all" | "open" | "in-progress" | "escalated" | "resolved";
 
 const STATUS_COLORS: Record<string, string> = {
-  open: "border-amber-200 bg-amber-50 text-amber-800",
-  "in-progress": "border-blue-200 bg-blue-50 text-blue-800",
+  open: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
+  "in-progress": "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
   escalated: "border-rose-200 bg-rose-50 text-rose-800",
-  resolved: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  resolved: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
 };
 
 export default function TrackEscalate({ adminMode = false }: { adminMode?: boolean }) {
@@ -106,8 +106,8 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
               onClick={() => setFilterStatus(status)}
               className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                 filterStatus === status
-                  ? "border-[#0A3035] bg-[#0A3035] text-white"
-                  : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[#0A3035] hover:text-[#0A3035]"
+                  ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
+                  : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
               }`}
             >
               {status}
@@ -127,12 +127,12 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">{ticket.id}</span>
                       <span
                         className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
-                          STATUS_COLORS[ticket.status] || "border-slate-200 bg-slate-50 text-slate-700"
+                          STATUS_COLORS[ticket.status] || "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"
                         }`}
                       >
                         {ticket.status}
                       </span>
-                      <span className="rounded-full bg-[#0A3035]/8 px-2.5 py-0.5 text-xs font-semibold text-[#0A3035]">
+                      <span className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]">
                         {ticket.priority}
                       </span>
                       {ticket.slaBreached ? (
@@ -141,7 +141,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                         </span>
                       ) : null}
                     </div>
-                    <h3 className="mt-1.5 text-base font-semibold text-[#0A3035]">{ticket.subject}</h3>
+                    <h3 className="mt-1.5 text-base font-semibold text-[var(--comp-text-primary)]">{ticket.subject}</h3>
                     <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{ticket.description}</p>
                     <div className="mt-2 grid gap-1 text-xs text-[var(--text-secondary)] md:grid-cols-3">
                       <div>Category: {ticket.category}</div>
@@ -150,7 +150,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                     </div>
 
                     {ticket.replies?.length ? (
-                      <div className="mt-3 rounded-2xl border border-[var(--border)] bg-slate-50 p-3">
+                      <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--comp-surface-hover)] p-3">
                         <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
                           Conversation
                         </h4>
@@ -208,7 +208,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                                   `Ticket ${ticket.id} moved to ${status}.`
                                 )
                               }
-                              className="rounded-full border border-blue-300 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                              className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                             >
                               Mark {status}
                             </button>
@@ -220,7 +220,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             setReplyDrafts((prev) => ({ ...prev, [ticket.id]: event.target.value }))
                           }
                           placeholder="Add admin reply or resolution note"
-                          className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[#0A3035]"
+                          className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
                         />
                         <button
                           type="button"
@@ -241,7 +241,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               }))
                             )
                           }
-                          className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850] disabled:opacity-50"
+                          className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
                         >
                           Send Reply
                         </button>

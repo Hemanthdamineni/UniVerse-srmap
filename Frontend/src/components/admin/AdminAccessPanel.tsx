@@ -25,7 +25,7 @@ export function AdminAccessPanel({
     <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-[#0A3035]">{label}</h3>
+          <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{label}</h3>
           <p className="text-xs text-[var(--text-secondary)]">
             {unlocked
               ? "Admin controls are unlocked for this tab."
@@ -50,13 +50,13 @@ export function AdminAccessPanel({
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
             placeholder="Enter admin password"
-            className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[#0A3035]"
+            className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
           />
           <button
             type="button"
             onClick={onUnlock}
             disabled={busy || !password.trim()}
-            className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850] disabled:opacity-50"
+            className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
           >
             {busy ? "Unlocking..." : "Unlock Admin"}
           </button>

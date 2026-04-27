@@ -45,7 +45,7 @@ export default function HomePage() {
     return (
       <div className="flex min-h-[calc(100vh-128px)] items-center justify-center bg-[color-mix(in_srgb,var(--surface)_55%,transparent)] px-4 py-8">
         <div className="w-full max-w-3xl rounded-[32px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
-          <span className="rounded-full bg-[#0A3035] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+          <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
             Session Active
           </span>
           <h1 className="mt-6 text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
@@ -60,13 +60,13 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/dashboard"
-              className="rounded-xl bg-[#0A3035] px-5 py-3 text-sm font-semibold text-white no-underline transition hover:opacity-95"
+              className="rounded-xl bg-[var(--comp-accent)] px-5 py-3 text-sm font-semibold text-white no-underline transition hover:opacity-95"
             >
               Open Dashboard
             </Link>
             <Link
               to="/profile"
-              className="rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--text-primary)] no-underline transition hover:border-[#0A3035]"
+              className="rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--text-primary)] no-underline transition hover:border-[var(--comp-accent)]"
             >
               Review Profile
             </Link>
@@ -81,8 +81,8 @@ export default function HomePage() {
       <div className="mx-auto grid min-h-[calc(100vh-160px)] w-full max-w-6xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-[32px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[#0A3035] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
-              University ERP
+            <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+              UniVerse — SRMAP Edition
             </span>
             <span className="text-sm text-[var(--text-secondary)]">
               Cleaner sessions, safer auth, and normalized academic data.
@@ -100,13 +100,13 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/login"
-              className="rounded-xl bg-[#0A3035] px-5 py-3 text-sm font-semibold text-white no-underline transition hover:opacity-95"
+              className="rounded-xl bg-[var(--comp-accent)] px-5 py-3 text-sm font-semibold text-white no-underline transition hover:opacity-95"
             >
               Log In to ERP
             </Link>
             <Link
               to="/forgot-password"
-              className="rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--text-primary)] no-underline transition hover:border-[#0A3035]"
+              className="rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--text-primary)] no-underline transition hover:border-[var(--comp-accent)]"
             >
               Reset Password
             </Link>
@@ -125,7 +125,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="flex flex-col justify-between rounded-[32px] bg-[#0A3035] p-8 text-white shadow-[0_24px_80px_rgba(10,38,42,0.16)]">
+        <section className="flex flex-col justify-between rounded-[32px] bg-[var(--comp-accent)] p-8 text-white shadow-[0_24px_80px_rgba(10,38,42,0.16)]">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-white/75">What Changed</p>
             <div className="mt-6 space-y-5">

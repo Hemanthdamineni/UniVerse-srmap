@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { executePipeline, type FeeDuesModel } from "../../lib/erpTransformers";
+// ErpPageShell section-card; fee table structure unchanged.
 import { getErpBatch } from "../../lib/erpApi";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { InlineError } from "../../components/ui/InlineError";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -78,12 +79,13 @@ export default function FeeDuesPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
+      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage || "Loading fee dues..."}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       {error && (
-        <div className="rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
       )}
 
       {data && (
@@ -91,11 +93,11 @@ export default function FeeDuesPage({ blueprint }: Props) {
 
           {data.noDues ? (
             <div className="space-y-4">
-              <div className="flex min-h-40 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 text-center">
+              <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--success)', background: 'color-mix(in srgb, var(--success) 10%, transparent)' }}>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Status</p>
-                  <p className="text-3xl font-black text-emerald-800">No fee dues.</p>
-                  <p className="mx-auto max-w-2xl text-sm leading-6 text-emerald-700/90">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--success)' }}>Status</p>
+                  <p className="text-3xl font-black" style={{ color: 'var(--comp-text-primary)' }}>No fee dues.</p>
+                  <p className="mx-auto max-w-2xl text-sm leading-6" style={{ color: 'var(--comp-text-secondary)' }}>
                     Your current finance ledger does not show any outstanding dues.
                   </p>
                 </div>
@@ -120,11 +122,11 @@ export default function FeeDuesPage({ blueprint }: Props) {
               <table className="erp-table text-left">
                 <thead className="erp-table-head">
                   <tr>
-                    <th className="erp-table-head-cell">Fee Category</th>
-                    <th className="erp-table-head-cell">Fee Head</th>
-                    <th className="erp-table-head-cell erp-table-align-right">Due Amount (INR)</th>
-                    <th className="erp-table-head-cell erp-table-align-right">Collected (INR)</th>
-                    <th className="erp-table-head-cell erp-table-align-right">To be Paid (INR)</th>
+                    <th className="erp-table-head-cell label-text">Fee Category</th>
+                    <th className="erp-table-head-cell label-text">Fee Head</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-right">Due Amount (INR)</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-right">Collected (INR)</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-right">To be Paid (INR)</th>
                   </tr>
                 </thead>
                 <tbody className="erp-table-body">
@@ -132,9 +134,9 @@ export default function FeeDuesPage({ blueprint }: Props) {
                     <tr key={i} className="erp-table-row">
                       <td className="erp-table-cell erp-table-cell-strong">{r.category}</td>
                       <td className="erp-table-cell">{r.head}</td>
-                      <td className="erp-table-cell erp-table-align-right font-medium text-slate-800">{r.dueAmount}</td>
-                      <td className="erp-table-cell erp-table-align-right font-medium text-slate-800">{r.collectedAmount}</td>
-                      <td className="erp-table-cell erp-table-align-right font-bold text-emerald-700">{r.toBePaidAmount}</td>
+                      <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: 'var(--comp-text-primary)' }}>{r.dueAmount}</td>
+                      <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: 'var(--comp-text-primary)' }}>{r.collectedAmount}</td>
+                      <td className="erp-table-cell erp-table-align-right font-bold" style={{ color: 'var(--success)' }}>{r.toBePaidAmount}</td>
                     </tr>
                   ))}
                 </tbody>

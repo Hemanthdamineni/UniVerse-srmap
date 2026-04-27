@@ -21,8 +21,8 @@ function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
     tone === "success"
       ? "border-green-200 bg-green-50 text-green-700"
       : tone === "error"
-        ? "border-red-200 bg-red-50 text-red-700"
-        : "border-slate-200 bg-slate-50 text-slate-700";
+        ? "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
+        : "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]";
 
   return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClasses}`}>{message}</div>;
 }
@@ -223,7 +223,7 @@ export default function ForgotPasswordPage() {
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[#0A3035] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+            <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
               Password Recovery
             </span>
             <span className="text-sm text-[var(--text-secondary)]">
@@ -266,7 +266,7 @@ export default function ForgotPasswordPage() {
         </section>
 
         <section className="rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--surface)] p-6 shadow-[0_24px_70px_rgba(10,38,42,0.1)]">
-          <div className="mb-5 rounded-2xl bg-[#0A3035] px-5 py-4 text-white">
+          <div className="mb-5 rounded-2xl bg-[var(--comp-accent)] px-5 py-4 text-white">
             <p className="text-lg font-semibold">
               {step === "initiate" ? "Request OTP" : step === "change" ? "Verify OTP" : "Password Updated"}
             </p>
@@ -294,7 +294,7 @@ export default function ForgotPasswordPage() {
                     value={form.username}
                     onChange={handleChange}
                     placeholder="AP24110000000"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[#0A3035]"
+                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="username"
                   />
                   {form.username && usernameError ? (
@@ -312,7 +312,7 @@ export default function ForgotPasswordPage() {
                       onClick={() => {
                         void fetchCaptcha("Captcha refreshed.");
                       }}
-                      className="text-xs font-semibold text-[#0A3035] underline-offset-4 hover:underline"
+                      className="text-xs font-semibold text-[var(--comp-text-primary)] underline-offset-4 hover:underline"
                       disabled={captchaLoading}
                     >
                       {captchaLoading ? "Refreshing..." : "Refresh"}
@@ -351,7 +351,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={submitting || captchaLoading}
-                  className="w-full rounded-xl bg-[#0A3035] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Requesting OTP..." : "Send OTP"}
                 </button>
@@ -384,7 +384,7 @@ export default function ForgotPasswordPage() {
                     value={form.otp}
                     onChange={handleChange}
                     placeholder="Enter the OTP"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[#0A3035]"
+                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="one-time-code"
                   />
                 </div>
@@ -400,7 +400,7 @@ export default function ForgotPasswordPage() {
                     value={form.newPassword}
                     onChange={handleChange}
                     placeholder="Create a stronger password"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[#0A3035]"
+                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="new-password"
                   />
                   {form.newPassword && passwordError ? (
@@ -419,7 +419,7 @@ export default function ForgotPasswordPage() {
                     value={form.confirmPassword}
                     onChange={handleChange}
                     placeholder="Re-enter the new password"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[#0A3035]"
+                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="new-password"
                   />
                   {confirmPasswordError ? (
@@ -434,14 +434,14 @@ export default function ForgotPasswordPage() {
                       setStep("initiate");
                       void fetchCaptcha("You can request a fresh OTP if needed.");
                     }}
-                    className="flex-1 rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[#0A3035]"
+                    className="flex-1 rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)]"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 rounded-xl bg-[#0A3035] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitting ? "Saving..." : "Update Password"}
                   </button>
@@ -455,7 +455,7 @@ export default function ForgotPasswordPage() {
                 <p>You’ll be sent back to the login page in a moment.</p>
                 <Link
                   to="/login"
-                  className="inline-flex rounded-lg bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white no-underline"
+                  className="inline-flex rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white no-underline"
                 >
                   Go to login
                 </Link>
@@ -463,7 +463,7 @@ export default function ForgotPasswordPage() {
             ) : null}
 
             <div className="border-t border-[color-mix(in_srgb,var(--border)_70%,transparent)] pt-4 text-sm text-[var(--text-secondary)]">
-              <Link to="/login" className="font-semibold text-[#0A3035] no-underline hover:underline">
+              <Link to="/login" className="font-semibold text-[var(--comp-text-primary)] no-underline hover:underline">
                 Back to login
               </Link>
             </div>

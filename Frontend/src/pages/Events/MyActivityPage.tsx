@@ -1,29 +1,26 @@
-/**
- * MyActivityPage.tsx — /events/my-activity
- * 3 tabs: Registered Events | My Submissions | My Results
- * Tab state via URL ?tab= param
- */
+// My Activity: ui Tabs, SkeletonCard loading, ui EmptyState + InlineError; listEvents unchanged.
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { listEvents } from "../../lib/campusApi";
+import { Tabs } from "../../components/ui/Tabs";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { InlineError } from "../../components/ui/InlineError";
+import type { EventSummary } from "../../lib/campusApi";
 
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { ErpPageShell } from '../../components/erp/ErpPrimitives';
-import { listEvents } from '../../lib/campusApi';
-import { EmptyState } from '../../components/competition/EmptyState';
-import { SkeletonTable } from '../../components/competition/Skeletons';
-import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import type { EventSummary } from '../../lib/campusApi';
-
-const TABS = [
-  { key: 'registered', label: 'Registered Events' },
-  { key: 'submissions', label: 'My Submissions' },
-  { key: 'results', label: 'My Results' },
+const TAB_DEFS = [
+  { id: "registered", label: "Registered Events" },
+  { id: "submissions", label: "My Submissions" },
+  { id: "results", label: "My Results" },
 ] as const;
 
-type TabKey = typeof TABS[number]['key'];
+type TabKey = (typeof TAB_DEFS)[number]["id"];
 
 export default function MyActivityPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') ?? 'registered') as TabKey;
+  const rawTab = searchParams.get("tab") ?? "registered";
+  const activeTab = TAB_DEFS.some((t) => t.id === rawTab) ? (rawTab as TabKey) : "registered";
 
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,106 +29,86 @@ export default function MyActivityPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    listEvents({ myRegistrations: 'true' })
+    listEvents({ myRegistrations: "true" })
       .then(setEvents)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load events.'))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load events."))
       .finally(() => setLoading(false));
   }, []);
 
   function setTab(tab: TabKey) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      next.set('tab', tab);
+      next.set("tab", tab);
       return next;
     });
   }
 
   return (
     <ErpPageShell title="My Activity" source="Internal API" isLoading={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+      <div className="flex flex-col gap-6">
+        <Tabs tabs={[...TAB_DEFS]} activeTab={activeTab} onChange={(id) => setTab(id as TabKey)} />
 
-        {/* Tab bar */}
-        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--comp-border)', paddingBottom: 0, marginBottom: 4 }}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setTab(tab.key)}
-              aria-selected={activeTab === tab.key}
-              role="tab"
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                background: 'none',
-                color: activeTab === tab.key ? 'var(--comp-accent)' : 'var(--comp-text-secondary)',
-                fontWeight: activeTab === tab.key ? 700 : 400,
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                borderBottom: `2px solid ${activeTab === tab.key ? 'var(--comp-accent)' : 'transparent'}`,
-                transition: 'all 0.15s',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {error ? (
+          <InlineError
+            message={error}
+            onRetry={() => {
+              setLoading(true);
+              setError(null);
+              listEvents({ myRegistrations: "true" })
+                .then(setEvents)
+                .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load events."))
+                .finally(() => setLoading(false));
+            }}
+          />
+        ) : null}
 
-        {/* Error */}
-        {error && <ErrorMessage message={error} onRetry={() => void listEvents({ myRegistrations: 'true' }).then(setEvents)} />}
-
-        {/* Tab content */}
         {loading ? (
-          <SkeletonTable rows={5} columns={4} />
-        ) : activeTab === 'registered' ? (
+          <div className="grid gap-3">
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} className="h-28" />
+            ))}
+          </div>
+        ) : activeTab === "registered" ? (
           events.length === 0 ? (
             <EmptyState
-              icon="📋"
               title="No registered events"
               description="You haven't registered for any events yet."
-              action={{ label: 'Explore Events', onClick: () => window.location.href = '/events' }}
+              action={
+                <Link to="/events" className="btn-primary inline-flex rounded-lg px-4 py-2 text-sm no-underline">
+                  Explore events
+                </Link>
+              }
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <div className="flex flex-col gap-3">
               {events.map((event) => (
                 <div
                   key={event.id}
-                  style={{
-                    background: 'var(--comp-surface)',
-                    border: '1px solid var(--comp-border)',
-                    borderRadius: 10,
-                    padding: 'var(--space-md)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 'var(--space-md)',
-                    flexWrap: 'wrap',
-                  }}
+                  className="interactive-card flex flex-wrap items-center justify-between gap-3 p-4"
                 >
                   <div>
-                    <p className="comp-heading-md" style={{ margin: 0 }}>{event.title ?? 'Untitled Event'}</p>
-                    <p className="comp-body" style={{ margin: 0 }}>
-                      {event.department ?? ''} · {event.category ?? 'General'}
+                    <p className="card-title mb-0">{event.title ?? "Untitled Event"}</p>
+                    <p className="body-text mb-0 text-sm">
+                      {event.department ?? ""} · {event.category ?? "General"}
                     </p>
                   </div>
                   <Link
                     to={`/events/${encodeURIComponent(event.id)}`}
-                    className="comp-btn-ghost"
-                    style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+                    className="btn-secondary shrink-0 rounded-lg px-3 py-2 text-sm no-underline"
                   >
-                    Open →
+                    Open
                   </Link>
                 </div>
               ))}
             </div>
           )
-        ) : activeTab === 'submissions' ? (
+        ) : activeTab === "submissions" ? (
           <EmptyState
-            icon="📤"
             title="Submissions appear here"
             description="Once you submit work in a competition round, it will be listed here."
           />
         ) : (
           <EmptyState
-            icon="📊"
             title="Results appear here"
             description="Published results from your competition rounds will be shown here."
           />

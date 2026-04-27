@@ -413,7 +413,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
       <SectionCard title="Recommend a Resource">
         <form onSubmit={handleRecommendationSubmit} className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-[#0A3035]">Resource Title</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Resource Title</label>
             <input
               required
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
@@ -423,7 +423,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-[#0A3035]">Description</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Description</label>
             <textarea
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
               value={recommendationForm.description}
@@ -435,7 +435,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#0A3035]">Resource URL</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Resource URL</label>
             <input
               required
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
@@ -454,7 +454,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
             ) : null}
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#0A3035]">Kind</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Kind</label>
             <select
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
               value={recommendationForm.kind}
@@ -467,7 +467,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#0A3035]">Group</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Group</label>
             <select
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
               value={recommendationForm.resourceGroup}
@@ -485,7 +485,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
           <div className="md:col-span-2">
             <button
               type="submit"
-              className="rounded-xl bg-[#0A3035] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#124850]"
+              className="rounded-xl bg-[var(--comp-accent)] px-6 py-3 text-sm font-bold text-white transition hover:bg-[var(--comp-accent-hover)]"
             >
               Submit Recommendation
             </button>
@@ -510,7 +510,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                     void loadCatalog(nextYear);
                   }
                 }}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {(catalog?.years || []).map((year) => (
                   <option key={year} value={year}>
@@ -528,7 +528,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 id="resource-course"
                 value={selectedCourseCode}
                 onChange={(event) => setSelectedCourseCode(event.target.value)}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {coursesForYear.map((course) => (
                   <option key={course.courseCode} value={course.courseCode}>
@@ -546,7 +546,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 id="resource-subject"
                 value={selectedSubjectCode}
                 onChange={(event) => setSelectedSubjectCode(event.target.value)}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {(subjects?.subjects || []).map((subject) => (
                   <option key={subject.subjectCode} value={subject.subjectCode}>
@@ -566,7 +566,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search by title, description, or tag"
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
                 />
               </div>
             ) : null}
@@ -590,7 +590,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
         <SectionCard title={editingId ? "Edit Resource" : "Publish Resource"}>
           <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Resource Title</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Resource Title</label>
               <input
                 required
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
@@ -600,7 +600,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Description</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Description</label>
               <textarea
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
                 value={form.description}
@@ -610,7 +610,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Resource URL</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Resource URL</label>
               <input
                 required
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
@@ -629,7 +629,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               ) : null}
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Kind</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Kind</label>
               <select
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
                 value={form.kind}
@@ -642,7 +642,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               </select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Group</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Group</label>
               <select
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
                 value={form.resourceGroup}
@@ -656,7 +656,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               </select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Visibility</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Visibility</label>
               <select
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
                 value={form.visibility}
@@ -667,7 +667,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-[#0A3035]">Tags</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--comp-text-primary)]">Tags</label>
               <input
                 className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm"
                 value={form.tags}
@@ -690,7 +690,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
             <div className="md:col-span-2 flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-xl bg-[#0A3035] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#124850]"
+                className="rounded-xl bg-[var(--comp-accent)] px-6 py-3 text-sm font-bold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 {editingId ? "Update Resource" : "Publish Resource"}
               </button>
@@ -710,7 +710,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                       tags: "",
                     });
                   }}
-                  className="rounded-xl border border-[var(--border)] px-6 py-3 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[#0A3035] hover:text-[#0A3035]"
+                  className="rounded-xl border border-[var(--border)] px-6 py-3 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -733,16 +733,16 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               <div key={group.group} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-[#0A3035]">{group.label}</h3>
+                    <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{group.label}</h3>
                     <p className="text-xs text-[var(--text-secondary)]">{group.items.length} item(s)</p>
                   </div>
                 </div>
                 <div className="space-y-3">
                   {group.items.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-slate-50 p-4">
+                    <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface-hover)] p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h4 className="text-sm font-semibold text-[#0A3035]">{item.title}</h4>
+                          <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h4>
                           <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                             {item.description || "No description provided."}
                           </p>
@@ -751,7 +751,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                               {item.metadata.tags.map((tag) => (
                                 <span
                                   key={String(tag)}
-                                  className="rounded-full bg-[#0A3035]/8 px-2.5 py-0.5 text-xs font-semibold text-[#0A3035]"
+                                  className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]"
                                 >
                                   {String(tag)}
                                 </span>
@@ -760,7 +760,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                           ) : null}
                         </div>
                         {item.metadata?.featured ? (
-                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                          <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--warning)]">
                             Featured
                           </span>
                         ) : null}
@@ -772,7 +772,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                             href={resource.urlOrPath}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[#0A3035] transition hover:border-[#0A3035]"
+                            className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)]"
                           >
                             Open {resource.kind.toUpperCase()}
                           </a>
@@ -796,7 +796,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-[#0A3035]">{item.title}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h3>
                       <p className="mt-1 text-sm text-[var(--text-secondary)]">{item.description}</p>
                       <p className="mt-2 text-xs text-[var(--text-secondary)]">
                         Group: {String(item.metadata?.resourceGroup || "links")} · Visibility:{" "}
@@ -819,7 +819,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                             tags: Array.isArray(item.metadata?.tags) ? item.metadata.tags.join(", ") : "",
                           });
                         }}
-                        className="rounded-full border border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                       >
                         Edit
                       </button>
@@ -860,7 +860,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                               })
                             )
                         }
-                        className="rounded-full border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
                       >
                         {String(item.metadata?.visibility || "visible") === "hidden" ? "Unhide" : "Hide"}
                       </button>
@@ -905,7 +905,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-[#0A3035]">{item.title}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h3>
                       <p className="mt-1 text-sm text-[var(--text-secondary)]">{item.description}</p>
                       <p className="mt-2 text-xs text-[var(--text-secondary)]">
                         Status: {String(item.metadata?.status || "pending")} · Suggested by{" "}
@@ -932,7 +932,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                               })
                             )
                         }
-                        className="rounded-full border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--success)] transition hover:bg-[color-mix(in_srgb,var(--success)_10%,transparent)]"
                       >
                         Approve
                       </button>

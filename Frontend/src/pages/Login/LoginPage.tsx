@@ -20,8 +20,8 @@ function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
     tone === "success"
       ? "border-green-200 bg-green-50 text-green-700"
       : tone === "error"
-        ? "border-red-200 bg-red-50 text-red-700"
-        : "border-slate-200 bg-slate-50 text-slate-700";
+        ? "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
+        : "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]";
 
   return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClasses}`}>{message}</div>;
 }
@@ -183,7 +183,7 @@ export default function LoginPage() {
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="rounded-[30px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[#0A3035] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+            <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
               Login
             </span>
             <span className="text-sm text-[var(--text-secondary)]">
@@ -226,7 +226,7 @@ export default function LoginPage() {
         </section>
 
         <section className="rounded-[30px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--surface)] p-6 shadow-[0_24px_70px_rgba(10,38,42,0.1)]">
-          <div className="mb-5 rounded-2xl bg-[#0A3035] px-5 py-4 text-white">
+          <div className="mb-5 rounded-2xl bg-[var(--comp-accent)] px-5 py-4 text-white">
             <p className="text-lg font-semibold">Welcome back</p>
             <p className="mt-1 text-sm text-white/80">
               Manual captcha remains required for compliance.
@@ -246,7 +246,7 @@ export default function LoginPage() {
                 value={form.username}
                 onChange={handleChange}
                 placeholder="AP24110000000"
-                className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                 autoComplete="username"
               />
               {form.username && usernameError ? (
@@ -274,7 +274,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#0A3035]"
+                  className="px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--comp-text-primary)]"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -291,7 +291,7 @@ export default function LoginPage() {
                   onClick={() => {
                     void fetchCaptcha("Captcha refreshed.");
                   }}
-                  className="text-xs font-semibold text-[#0A3035] underline-offset-4 hover:underline"
+                  className="text-xs font-semibold text-[var(--comp-text-primary)] underline-offset-4 hover:underline"
                   disabled={captchaLoading}
                 >
                   {captchaLoading ? "Refreshing..." : "Refresh"}
@@ -331,7 +331,7 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-[var(--text-secondary)]">Session-backed login. Nothing is stored as a fake token.</span>
-              <Link to="/forgot-password" className="font-semibold text-[#0A3035] no-underline hover:underline">
+              <Link to="/forgot-password" className="font-semibold text-[var(--comp-text-primary)] no-underline hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -339,7 +339,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full rounded-xl bg-[#0A3035] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Logging in..." : "Log In"}
             </button>

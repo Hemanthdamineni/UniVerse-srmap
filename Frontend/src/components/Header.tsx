@@ -1,3 +1,4 @@
+// Header bar uses --comp-accent instead of hardcoded hex for theme parity.
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { hasSessionAuth } from "../lib/session";
@@ -7,7 +8,7 @@ function Logo() {
         <Link to="/" className="inline-flex items-center">
             <img
                 src="src/assets/FullSrmLogo.png"
-                alt="Logo of SRM University Ap"
+                alt="Logo of UniVerse — SRMAP Edition"
                 className="w-[120px] h-[60px] m-[2px]"
             />
         </Link>
@@ -22,7 +23,7 @@ function HeaderButton(props: { label: string; to: string; primary?: boolean }) {
             to={to}
             className={
                 primary
-                    ? "rounded-lg border border-white px-3 py-1.5 text-sm font-medium text-white no-underline transition hover:bg-white hover:text-[#0A3035]"
+                    ? "rounded-lg border border-white px-3 py-1.5 text-sm font-medium text-white no-underline transition hover:bg-white hover:text-[var(--comp-text-primary)]"
                     : "text-sm font-medium text-white/90 no-underline transition hover:text-white"
             }
         >
@@ -46,7 +47,10 @@ function Header() {
         ];
 
     return (
-        <header className="bg-primary flex items-center pr-4 justify-between rounded-b-lg" style={{ backgroundColor: "#0A3035" }}>
+        <header
+            className="flex items-center justify-between rounded-b-lg pr-4"
+            style={{ backgroundColor: "var(--comp-accent)", color: "var(--comp-surface)" }}
+        >
             <div className="flex items-center">
                 <Logo />
             </div>

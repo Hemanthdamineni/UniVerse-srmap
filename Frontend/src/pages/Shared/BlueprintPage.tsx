@@ -42,7 +42,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
                 key={link.route}
                 type="button"
                 onClick={() => navigate(link.route)}
-                className="dashboard-subcard rounded-lg border border-[#0A3035]/20 px-3 py-3 text-left text-sm font-medium text-[#0A3035] transition hover:bg-[#FFFFFF] hover:shadow-sm"
+                className="dashboard-subcard rounded-lg border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-3 text-left text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
               >
                 {link.label}
               </button>
@@ -58,7 +58,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
       {state.sections.map((section, sectionIndex) => (
         <SectionCard key={`${section.title}-${sectionIndex}`} title={section.title}>
           {section.summary ? (
-            <p className="text-sm leading-6 text-slate-700">{section.summary}</p>
+            <p className="text-sm leading-6 text-[var(--comp-text-secondary)]">{section.summary}</p>
           ) : null}
 
           {section.tables.map((table, tableIndex) => (

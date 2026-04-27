@@ -24,7 +24,7 @@ const FEEDBACK_STORE = "transport-feedback";
 function StarRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-white px-4 py-3">
-      <span className="text-sm font-medium text-[#0A3035]">{label}</span>
+      <span className="text-sm font-medium text-[var(--comp-text-primary)]">{label}</span>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button key={star} type="button" onClick={() => onChange(star)}
@@ -103,15 +103,15 @@ export default function TransportFeedback() {
       {message && (
         <div className={`rounded-xl border px-3 py-2 text-sm font-medium ${
           message.includes("success") || message.includes("added")
-            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-            : "border-amber-200 bg-amber-50 text-amber-800"
+            ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+            : "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]"
         }`}>{message}</div>
       )}
 
       <div className="flex justify-end">
         <button type="button" onClick={() => setShowAdmin((v) => !v)}
           className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
-            showAdmin ? "border-[#0A3035] bg-[#0A3035] text-white" : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[#0A3035]"
+            showAdmin ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white" : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)]"
           }`}>
           {showAdmin ? "Hide Admin" : "⚙ Admin: Manage Routes"}
         </button>
@@ -121,15 +121,15 @@ export default function TransportFeedback() {
         <SectionCard title="Add Transport Route">
           <form onSubmit={handleAddRoute} className="flex gap-2">
             <input value={newRouteName} onChange={(e) => setNewRouteName(e.target.value)} placeholder="Route name (e.g. Route 1 — Campus to City Center)" required
-              className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
-            <button type="submit" className="shrink-0 rounded-full bg-[#0A3035] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#124850]">
+              className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
+            <button type="submit" className="shrink-0 rounded-full bg-[var(--comp-accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]">
               Add Route
             </button>
           </form>
           {routeOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {routeOptions.map((r) => (
-                <span key={r.id} className="rounded-full bg-[#0A3035]/8 px-3 py-1 text-xs font-semibold text-[#0A3035]">{r.name}</span>
+                <span key={r.id} className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-primary)]">{r.name}</span>
               ))}
             </div>
           )}
@@ -144,7 +144,7 @@ export default function TransportFeedback() {
             <div>
               <label htmlFor="transport-route" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Select Route</label>
               <select id="transport-route" value={selectedRoute} onChange={(e) => setSelectedRoute(e.target.value)}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]">
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]">
                 <option value="">— Select a route —</option>
                 {routeOptions.map((route) => <option key={route.id} value={route.name}>{route.name}</option>)}
               </select>
@@ -155,10 +155,10 @@ export default function TransportFeedback() {
             <div className="pt-2">
               <label htmlFor="transport-comment" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Additional Comments (optional)</label>
               <textarea id="transport-comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Any specific feedback about the transport service..." rows={3}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
             </div>
             <div>
-              <button type="submit" className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]">Submit Feedback</button>
+              <button type="submit" className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]">Submit Feedback</button>
             </div>
           </form>
         )}
@@ -175,9 +175,9 @@ export default function TransportFeedback() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">{entry.id}</span>
-                      <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-800">Avg: {averageRating(entry.ratings)} ★</span>
+                      <span className="rounded-full bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--warning)]">Avg: {averageRating(entry.ratings)} ★</span>
                     </div>
-                    <h3 className="mt-1 text-sm font-semibold text-[#0A3035]">{entry.route}</h3>
+                    <h3 className="mt-1 text-sm font-semibold text-[var(--comp-text-primary)]">{entry.route}</h3>
                     <div className="mt-2 grid gap-1 text-xs text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-3">
                       {CATEGORIES.map((cat) => (
                         <div key={cat}>{cat}: {"★".repeat(entry.ratings[cat])}{"☆".repeat(5 - entry.ratings[cat])}</div>

@@ -91,7 +91,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by question, answer, or category..."
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
         />
       </SectionCard>
 
@@ -106,7 +106,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                 id="faq-category"
                 value={form.category}
                 onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {FAQ_CATEGORIES.map((item) => (
                   <option key={item} value={item}>
@@ -124,7 +124,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                 value={form.question}
                 onChange={(event) => setForm((prev) => ({ ...prev, question: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -137,13 +137,13 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                 onChange={(event) => setForm((prev) => ({ ...prev, answer: event.target.value }))}
                 rows={4}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-full bg-[#0A3035] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                className="rounded-full bg-[var(--comp-accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 {editingFaqId ? "Update FAQ" : "Create FAQ"}
               </button>
@@ -154,7 +154,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                     setEditingFaqId("");
                     setForm({ question: "", answer: "", category: FAQ_CATEGORIES[0] });
                   }}
-                  className="rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[#0A3035] hover:text-[#0A3035]"
+                  className="rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -186,9 +186,9 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                           return next;
                         })
                       }
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-slate-50"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--comp-surface-hover)]"
                     >
-                      <span className="text-sm font-semibold text-[#0A3035]">{item.question}</span>
+                      <span className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.question}</span>
                       <span className="shrink-0 text-lg text-[var(--text-secondary)]">{isOpen ? "-" : "+"}</span>
                     </button>
                     {isOpen ? (
@@ -206,7 +206,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                                   category: item.category,
                                 });
                               }}
-                              className="rounded-full border border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                              className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                             >
                               Edit
                             </button>

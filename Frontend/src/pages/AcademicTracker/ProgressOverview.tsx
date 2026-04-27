@@ -56,12 +56,12 @@ export default function ProgressOverview() {
           <SectionCard title="Degree Completion">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-[#0A3035]">Overall Progress</span>
-                <span className="font-semibold text-[#0A3035]">{overview.progressPercent}%</span>
+                <span className="font-medium text-[var(--comp-text-primary)]">Overall Progress</span>
+                <span className="font-semibold text-[var(--comp-text-primary)]">{overview.progressPercent}%</span>
               </div>
               <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-[#0A3035] transition-all"
+                  className="h-full rounded-full bg-[var(--comp-accent)] transition-all"
                   style={{ width: `${overview.progressPercent}%` }}
                 />
               </div>
@@ -80,25 +80,25 @@ export default function ProgressOverview() {
                   className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A3035]/8">
-                      <span className="text-sm font-bold text-[#0A3035]">{semester.semester}</span>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)]">
+                      <span className="text-sm font-bold text-[var(--comp-text-primary)]">{semester.semester}</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-[#0A3035]">{semester.label}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{semester.label}</h3>
                       <p className="text-xs text-[var(--text-secondary)]">{semester.credits} credits</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-lg font-bold text-[#0A3035]">{semester.sgpa}</p>
+                      <p className="text-lg font-bold text-[var(--comp-text-primary)]">{semester.sgpa}</p>
                       <p className="text-xs text-[var(--text-secondary)]">SGPA</p>
                     </div>
                     <span
                       className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
                         semester.status === "Completed"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                          : "border-blue-200 bg-blue-50 text-blue-800"
+                          ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+                          : "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]"
                       }`}
                     >
                       {semester.status}
@@ -113,7 +113,7 @@ export default function ProgressOverview() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Overall Attendance</p>
-                <p className="mt-2 text-3xl font-semibold text-[#0A3035]">{overview.attendancePct}%</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{overview.attendancePct}%</p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Subjects at Risk</p>
@@ -121,7 +121,7 @@ export default function ProgressOverview() {
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Tracker Source</p>
-                <p className="mt-2 text-base font-semibold text-[#0A3035]">ERP-derived LMS model</p>
+                <p className="mt-2 text-base font-semibold text-[var(--comp-text-primary)]">ERP-derived LMS model</p>
               </div>
             </div>
           </SectionCard>

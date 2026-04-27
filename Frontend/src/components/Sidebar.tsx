@@ -160,7 +160,7 @@ export default function Sidebar() {
       <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
           <div className="text-[1.15rem] font-bold tracking-[0.01em]">
-            <SidebarContrastText text="SRM University AP" className="sidebar-item" />
+            <SidebarContrastText text="UniVerse — SRMAP Edition" className="sidebar-item" />
           </div>
         ) : null}
         <button
@@ -369,7 +369,7 @@ export default function Sidebar() {
       {!sidebarClosed && admin.potentialAdmin ? (
         <div className="px-3 pb-2">
           {admin.isAdmin ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+            <div className="rounded-lg border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--success)]">
               Admin Mode Enabled
             </div>
           ) : (

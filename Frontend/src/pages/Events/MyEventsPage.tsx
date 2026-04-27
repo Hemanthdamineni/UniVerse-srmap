@@ -52,7 +52,7 @@ export default function MyEventsPage() {
   return (
     <ErpPageShell title="My Events" source="Internal API" isLoading={loading} loadingMessage="Loading your events...">
       {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">{error}</div>
+        <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2 text-sm font-medium text-[var(--warning)]">{error}</div>
       )}
 
       <SectionCard title="Events You Created">
@@ -63,24 +63,24 @@ export default function MyEventsPage() {
             {events.map((event) => (
               <div key={event.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A3035]/8">
-                    <span className="text-sm font-bold text-[#0A3035]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)]">
+                    <span className="text-sm font-bold text-[var(--comp-text-primary)]">
                       {(event.title || "E")[0].toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#0A3035]">{event.title || "Untitled Event"}</h3>
+                    <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{event.title || "Untitled Event"}</h3>
                     <p className="text-xs text-[var(--text-secondary)]">{formatDate(event.startAt)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
-                    event.status === "upcoming" ? "border-blue-200 bg-blue-50 text-blue-800"
-                      : event.status === "ongoing" ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border-slate-200 bg-slate-50 text-slate-700"
+                    event.status === "upcoming" ? "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]"
+                      : event.status === "ongoing" ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+                      : "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"
                   }`}>{event.status || "unknown"}</span>
                   <Link to={`/events/listings/${encodeURIComponent(event.id)}`}
-                    className="rounded-full border border-[#0A3035]/20 px-3 py-1.5 text-xs font-semibold text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white">
+                    className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white">
                     Open
                   </Link>
                 </div>

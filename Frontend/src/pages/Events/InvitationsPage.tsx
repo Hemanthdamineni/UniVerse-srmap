@@ -47,7 +47,7 @@ export default function InvitationsPage() {
                         .then(() => setMessage({ tone: "success", text: "Invitation accepted." }))
                         .then(() => load())
                     }
-                    className="rounded-full border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-700"
+                    className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--success)]"
                   >
                     Accept
                   </button>

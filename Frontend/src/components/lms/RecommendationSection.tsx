@@ -11,7 +11,7 @@ export default function RecommendationSection({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-[#0A3035]">{title}</h2>
+        <h2 className="text-xl font-semibold text-[var(--comp-text-primary)]">{title}</h2>
         <span className="text-sm text-[var(--text-secondary)]">{items.length} items</span>
       </div>
       <ResourceGrid items={items} />

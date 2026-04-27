@@ -18,7 +18,7 @@ export default function AdminAccessPrompt() {
             type="password"
             value={admin.promptPassword}
             onChange={(event) => admin.setPromptPassword(event.target.value)}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[#0A3035]"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
             placeholder="Enter admin password"
           />
           {admin.error ? <p className="mt-1 text-xs text-[var(--error)]">{admin.error}</p> : null}
@@ -35,7 +35,7 @@ export default function AdminAccessPrompt() {
             type="button"
             disabled={admin.busy}
             onClick={() => void admin.unlock()}
-            className="rounded-xl bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-xl bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {admin.busy ? "Unlocking..." : "Unlock Admin"}
           </button>

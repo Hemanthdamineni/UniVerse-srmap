@@ -1,86 +1,143 @@
-import { useEffect, useState } from "react";
-import LoadingSpinner from "../../components/LoadingSpinner";
+// Profile UI: PageHeader, SectionCard groups, StatusBadge; executePipeline call unchanged.
+import { useEffect, useMemo, useState } from "react";
 import { fetchSessionProfile } from "../../lib/session";
 import { executePipeline, type StudentProfile } from "../../lib/erpTransformers";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { InlineError } from "../../components/ui/InlineError";
+import { StatusBadge } from "../../components/ui/StatusBadge";
 
 function ProfilePage() {
-    const [profileData, setProfileData] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchProfileData();
-    }, []);
+  useEffect(() => {
+    void fetchProfileData();
+  }, []);
 
-    const fetchProfileData = async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const data = await fetchSessionProfile();
-            if (data) {
-                setProfileData(data);
-            } else {
-                setError('No profile data available');
-            }
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch profile data');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchProfileData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchSessionProfile();
+      if (data) setProfileData(data);
+      else setError("No profile data available");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch profile data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div style={{ padding: 24 }} className="min-h-screen">
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Profile Information</h2>
-            {loading && <LoadingSpinner message="Loading profile information..." />}
-            {error && <p className="text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_20%,transparent)] p-4 rounded-xl border border-[color-mix(in_srgb,var(--error)_40%,transparent)]">Error: {error}</p>}
-            {profileData && profileData.TableContent && (() => {
-                const pipelineResult = executePipeline("profile", profileData.TableContent);
-                if (!pipelineResult?.isValid || !pipelineResult.data) {
-                    return <p className="text-[var(--error)]">Failed to validate profile data.</p>;
-                }
-                const pData = pipelineResult.data as StudentProfile;
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Object.entries({
-                            "Student Name": pData.studentName,
-                            "Register No": pData.registerNo,
-                            "DOB": pData.dob,
-                            "Gender": pData.gender,
-                            "Academic Year": pData.academicYear,
-                            "Program": pData.program,
-                            "Specialization": pData.specialization,
-                            "Section": pData.section,
-                            "Current Semester": pData.currentSemester,
-                            "Father Name": pData.fatherName,
-                            "Mother Name": pData.motherName,
-                            "Contact Number": pData.contactNumber,
-                            "Email": pData.email
-                        }).map(([key, value]) => {
-                            if (!value || typeof value !== 'string' || value.trim() === '-' || value.trim() === '' || value === "N/A") return null;
-                            
-                            return (
-                                <div key={key} className="bg-[color-mix(in_srgb,var(--surface)_30%,transparent)] rounded-2xl border border-[color-mix(in_srgb,var(--border)_50%,transparent)] p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">{key}</h3>
-                                    <p className="text-lg font-semibold text-[var(--text-primary)]">{value}</p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                );
-            })()}
-            
-            {profileData && !profileData.TableContent && (
-                <div className="bg-[color-mix(in_srgb,var(--surface)_30%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] p-6 shadow-sm">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Raw Profile Dump</h3>
-                    <pre className="text-xs text-[var(--text-secondary)] overflow-x-auto whitespace-pre-wrap">
-                        {JSON.stringify(profileData, null, 2)}
-                    </pre>
-                </div>
-            )}
+  const pData: StudentProfile | null = useMemo(() => {
+    if (!profileData?.TableContent) return null;
+    const r = executePipeline("profile", profileData.TableContent);
+    if (!r?.isValid || !r.data) return null;
+    return r.data as StudentProfile;
+  }, [profileData]);
+
+  const headerTitle = pData?.studentName?.trim() || "Profile";
+  const headerSubtitle =
+    pData?.registerNo && pData.registerNo.trim() && pData.registerNo !== "-"
+      ? `Register No. ${pData.registerNo}`
+      : undefined;
+
+  return (
+    <div style={{ padding: "var(--space-lg)" }} className="min-h-screen">
+      <PageHeader title={headerTitle} subtitle={headerSubtitle} />
+
+      {loading && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
-    );
+      )}
+
+      {error && <InlineError message={error} onRetry={fetchProfileData} className="mb-6" />}
+
+      {profileData && profileData.TableContent && !loading && !pData && (
+        <InlineError message="Failed to validate profile data." onRetry={fetchProfileData} />
+      )}
+
+      {pData && !loading ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <SectionCard title="Personal" className="md:col-span-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                ["Student Name", pData.studentName],
+                ["DOB", pData.dob],
+                ["Gender", pData.gender],
+                ["Father Name", pData.fatherName],
+                ["Mother Name", pData.motherName],
+              ].map(([key, value]) =>
+                value && String(value).trim() && String(value).trim() !== "-" ? (
+                  <div key={key}>
+                    <p className="label-text mb-1">{key}</p>
+                    <p className="card-title font-semibold">
+                      {String(value)}
+                    </p>
+                  </div>
+                ) : null
+              )}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Academic">
+            <div className="grid grid-cols-1 gap-4">
+              {[
+                ["Register No", pData.registerNo],
+                ["Academic Year", pData.academicYear],
+                ["Program", pData.program],
+                ["Specialization", pData.specialization],
+                ["Section", pData.section],
+                ["Current Semester", pData.currentSemester],
+              ].map(([key, value]) =>
+                value && String(value).trim() && String(value).trim() !== "-" ? (
+                  <div key={key}>
+                    <p className="label-text mb-1">{key}</p>
+                    <p className="card-title font-semibold">{String(value)}</p>
+                  </div>
+                ) : null
+              )}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <StatusBadge status="active" label="Enrolled" />
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Contact">
+            <div className="grid grid-cols-1 gap-4">
+              {[
+                ["Contact Number", pData.contactNumber],
+                ["Email", pData.email],
+              ].map(([key, value]) =>
+                value && String(value).trim() && String(value).trim() !== "-" ? (
+                  <div key={key}>
+                    <p className="label-text mb-1">{key}</p>
+                    <p className="card-title font-semibold break-all">{String(value)}</p>
+                  </div>
+                ) : null
+              )}
+            </div>
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {profileData && !profileData.TableContent && !loading ? (
+        <SectionCard title="Raw Profile Dump">
+          <pre
+            className="body-text max-h-[320px] overflow-x-auto whitespace-pre-wrap text-xs"
+            style={{ color: "var(--comp-text-secondary)" }}
+          >
+            {JSON.stringify(profileData, null, 2)}
+          </pre>
+        </SectionCard>
+      ) : null}
+    </div>
+  );
 }
 
 export default ProfilePage;

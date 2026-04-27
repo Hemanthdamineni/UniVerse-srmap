@@ -50,15 +50,15 @@ export default function MyRegistrationsPage() {
   }, []);
 
   const STATUS_COLORS: Record<string, string> = {
-    registered: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    pending: "border-amber-200 bg-amber-50 text-amber-800",
+    registered: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
+    pending: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
     cancelled: "border-rose-200 bg-rose-50 text-rose-800",
   };
 
   return (
     <ErpPageShell title="My Event Registrations" source="Internal API" isLoading={loading} loadingMessage="Loading registrations...">
       {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">{error}</div>
+        <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2 text-sm font-medium text-[var(--warning)]">{error}</div>
       )}
 
       <SectionCard title="Registered Events">
@@ -73,23 +73,23 @@ export default function MyRegistrationsPage() {
                 <div key={`${eventId || "reg"}-${index}`}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A3035]/8">
-                      <span className="text-sm font-bold text-[#0A3035]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)]">
+                      <span className="text-sm font-bold text-[var(--comp-text-primary)]">
                         {(item.eventTitle || "E")[0].toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-[#0A3035]">{item.eventTitle || "Event"}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.eventTitle || "Event"}</h3>
                       <p className="text-xs text-[var(--text-secondary)]">{formatDate(item.createdAt)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[status] || "border-slate-200 bg-slate-50 text-slate-700"}`}>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[status] || "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"}`}>
                       {status}
                     </span>
                     {eventId && (
                       <Link to={`/events/listings/${encodeURIComponent(eventId)}`}
-                        className="rounded-full border border-[#0A3035]/20 px-3 py-1.5 text-xs font-semibold text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white">
+                        className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white">
                         Open
                       </Link>
                     )}

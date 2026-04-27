@@ -79,10 +79,10 @@ export default function TeamManagementPage() {
         <SectionCard title="Create Team">
           <div className="space-y-3">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Team name" className="w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm" />
-            <button type="button" onClick={() => void onCreateTeam()} className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white">
+            <button type="button" onClick={() => void onCreateTeam()} className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white">
               Create Team
             </button>
-            <Link to={`/events/${encodeURIComponent(eventId)}/invitations`} className="inline-block text-xs text-[#0A3035] underline">
+            <Link to={`/events/${encodeURIComponent(eventId)}/invitations`} className="inline-block text-xs text-[var(--comp-text-primary)] underline">
               View my invitations
             </Link>
           </div>
@@ -127,7 +127,7 @@ export default function TeamManagementPage() {
               >
                 Transfer Leadership
               </button>
-              <button type="button" onClick={() => void leaveTeam(eventId, team.id).then(() => load())} className="rounded-full border border-amber-300 px-4 py-2 text-sm text-amber-700">
+              <button type="button" onClick={() => void leaveTeam(eventId, team.id).then(() => load())} className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-4 py-2 text-sm text-[var(--warning)]">
                 Leave Team
               </button>
               <button type="button" onClick={() => void deleteTeam(eventId, team.id).then(() => load())} className="rounded-full border border-rose-300 px-4 py-2 text-sm text-rose-700">

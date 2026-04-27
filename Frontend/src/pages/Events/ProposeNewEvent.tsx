@@ -192,61 +192,61 @@ export default function ProposeNewEvent() {
           <div className="md:col-span-2">
             <label htmlFor="prop-title" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Title</label>
             <input id="prop-title" value={form.title} onChange={(e) => up("title", e.target.value)} required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label htmlFor="prop-desc" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Description</label>
             <textarea id="prop-desc" value={form.description} onChange={(e) => up("description", e.target.value)} rows={4} required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div>
             <label htmlFor="prop-start" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Start Time</label>
             <input id="prop-start" type="datetime-local" value={form.startAt} onChange={(e) => up("startAt", e.target.value)} required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div>
             <label htmlFor="prop-end" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">End Time</label>
             <input id="prop-end" type="datetime-local" value={form.endAt} onChange={(e) => up("endAt", e.target.value)} required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div>
             <label htmlFor="prop-dept" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Department</label>
             <select id="prop-dept" value={form.department} onChange={(e) => up("department", e.target.value)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]">
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]">
               {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div>
             <label htmlFor="prop-cat" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Category</label>
             <select id="prop-cat" value={form.category} onChange={(e) => up("category", e.target.value)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]">
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="md:col-span-2">
             <label htmlFor="prop-loc" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Location / Venue</label>
             <input id="prop-loc" value={form.location} onChange={(e) => up("location", e.target.value)} required
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Prizes</label>
             <textarea value={form.prizes} onChange={(e) => up("prizes", e.target.value)} rows={2}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Rules</label>
             <textarea value={form.rules} onChange={(e) => up("rules", e.target.value)} rows={3}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Eligibility</label>
             <textarea value={form.eligibility} onChange={(e) => up("eligibility", e.target.value)} rows={2}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">FAQ (one line per item)</label>
             <textarea value={form.faq} onChange={(e) => up("faq", e.target.value)} rows={3}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]" />
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]" />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Co-organizers</label>
@@ -254,7 +254,7 @@ export default function ProposeNewEvent() {
               value={form.coOrganizers}
               onChange={(e) => up("coOrganizers", e.target.value)}
               placeholder="Comma-separated register numbers"
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
           </div>
           <div className="md:col-span-2">
@@ -274,7 +274,7 @@ export default function ProposeNewEvent() {
           {form.isCompetition ? (
             <>
               <div className="md:col-span-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[#0A3035]">Rounds Configuration</h3>
+                <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Rounds Configuration</h3>
                 <button type="button" onClick={addRound} className="rounded-full border border-[var(--border)] px-4 py-1.5 text-xs font-semibold">
                   Add Round
                 </button>
@@ -282,7 +282,7 @@ export default function ProposeNewEvent() {
               {rounds.map((round, index) => (
                 <div key={`${round.roundId}-${index}`} className="md:col-span-2 rounded-xl border border-[var(--border)] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-[#0A3035]">Round {index + 1}</p>
+                    <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Round {index + 1}</p>
                     <button type="button" onClick={() => removeRound(index)} className="text-xs text-rose-700 disabled:opacity-50" disabled={rounds.length === 1}>
                       Remove
                     </button>
@@ -323,7 +323,7 @@ export default function ProposeNewEvent() {
           ) : null}
           <div className="md:col-span-2">
             <button type="submit" disabled={submitting}
-              className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850] disabled:opacity-50">
+              className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50">
               {submitting ? "Submitting..." : "Submit Proposal"}
             </button>
           </div>

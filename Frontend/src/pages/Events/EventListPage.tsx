@@ -1,12 +1,11 @@
+// Event listings: FilterBar (ui), StatCard KPIs, Tag/Status styling tokens; fetch logic unchanged.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  EmptyStateCard,
-  ErpPageShell,
-  KpiGrid,
-  SectionCard,
-  StatusBanner,
-} from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import { FilterBar } from "../../components/ui/FilterBar";
+import { StatCard } from "../../components/ui/StatCard";
+import { Tag } from "../../components/ui/Tag";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   createEvent,
@@ -269,7 +268,11 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
         />
       ) : null}
 
-      <KpiGrid items={kpis} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((item) => (
+          <StatCard key={item.label} label={item.label} value={item.value} />
+        ))}
+      </div>
 
       {adminMode && admin.unlocked ? (
         <SectionCard title="Create Managed Event">
@@ -283,7 +286,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2">
@@ -296,7 +299,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
                 rows={3}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -309,7 +312,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 value={form.startAt}
                 onChange={(event) => setForm((prev) => ({ ...prev, startAt: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -322,7 +325,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 value={form.endAt}
                 onChange={(event) => setForm((prev) => ({ ...prev, endAt: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -333,7 +336,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 id="evt-category"
                 value={form.category}
                 onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {CATEGORIES.map((item) => (
                   <option key={item} value={item}>
@@ -350,7 +353,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 id="evt-department"
                 value={form.department}
                 onChange={(event) => setForm((prev) => ({ ...prev, department: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {DEPARTMENTS.map((item) => (
                   <option key={item} value={item}>
@@ -368,7 +371,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 value={form.location}
                 onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -383,7 +386,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, maxCapacity: Number(event.target.value || 1) }))
                 }
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -395,7 +398,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 value={form.coverImageUrl}
                 onChange={(event) => setForm((prev) => ({ ...prev, coverImageUrl: event.target.value }))}
                 placeholder="https://.../banner.jpg"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
               <label className="mt-2 block text-xs text-[var(--text-secondary)]">Or upload banner image</label>
               <input
@@ -416,7 +419,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                 onChange={(event) => setForm((prev) => ({ ...prev, attachments: event.target.value }))}
                 rows={3}
                 placeholder="https://.../brochure.pdf&#10;https://.../rules.docx"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
               <label className="mt-2 block text-xs text-[var(--text-secondary)]">
                 Or upload files (URLs will be auto-added)
@@ -434,7 +437,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
             <div className="md:col-span-2">
               <button
                 type="submit"
-                className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 Publish Event
               </button>
@@ -444,63 +447,66 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
       ) : null}
 
       <SectionCard title="Browse Events">
-        <div className="grid gap-3 md:grid-cols-2">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by title, description, category, or status..."
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
-          />
-          <div className="flex flex-wrap gap-2">
-            {categories.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setCategoryFilter(item)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  categoryFilter === item
-                    ? "border-[#0A3035] bg-[#0A3035] text-white"
-                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[#0A3035] hover:text-[#0A3035]"
-                }`}
+        <FilterBar
+          searchValue={query}
+          onSearchChange={setQuery}
+          searchPlaceholder="Search by title, description, category, or status..."
+          filters={
+            <>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setCategoryFilter(item)}
+                    className={`min-h-11 rounded-full border px-3 py-1.5 text-xs font-semibold transition md:min-h-9 ${
+                      categoryFilter === item
+                        ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-[var(--comp-surface)]"
+                        : "border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] px-4 py-2 text-sm md:min-h-9">
+                <input
+                  type="checkbox"
+                  checked={competitionOnly}
+                  onChange={(event) => setCompetitionOnly(event.target.checked)}
+                />
+                Competition only
+              </label>
+            </>
+          }
+          sortSlot={
+            <div className="grid w-full gap-3 sm:grid-cols-2">
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="min-h-11 w-full rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] px-4 py-2 text-sm md:min-h-9"
               >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
-          >
-            <option value="all">All status</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            value={modeFilter}
-            onChange={(event) => setModeFilter(event.target.value)}
-            className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
-          >
-            <option value="all">All type</option>
-            <option value="event">Regular Event</option>
-            <option value="competition">Competition</option>
-          </select>
-          <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm">
-            <input
-              type="checkbox"
-              checked={competitionOnly}
-              onChange={(event) => setCompetitionOnly(event.target.checked)}
-            />
-            Competition only
-          </label>
-        </div>
+                <option value="all">All status</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+              <select
+                value={modeFilter}
+                onChange={(event) => setModeFilter(event.target.value)}
+                className="min-h-11 w-full rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] px-4 py-2 text-sm md:min-h-9"
+              >
+                <option value="all">All type</option>
+                <option value="event">Regular Event</option>
+                <option value="competition">Competition</option>
+              </select>
+            </div>
+          }
+        />
       </SectionCard>
 
       {filtered.length === 0 ? (
-        <EmptyStateCard message="No events match the current filters." />
+        <EmptyState title="No matches" description="No events match the current filters." />
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {filtered.map((event) => {
@@ -509,33 +515,32 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
             const rounds = Array.isArray(competition?.rounds) ? competition.rounds : [];
             const activeRound = rounds.find((round: any) => !round.resultsPublished) || rounds[0];
             return (
-              <article key={event.id} className="dashboard-card flex flex-col justify-between p-4 md:p-5">
+              <article
+                key={event.id}
+                className="interactive-card flex flex-col justify-between p-4 md:p-5"
+              >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#0A3035]/8 px-2.5 py-0.5 text-xs font-semibold text-[#0A3035]">
+                    <span className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]">
                       {event.category || "Event"}
                     </span>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                    <span className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2.5 py-0.5 text-xs font-bold text-[var(--comp-text-secondary)]">
                       {event.status}
                     </span>
                     {event.approvalStatus ? (
-                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                      <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--warning)]">
                         Approval: {event.approvalStatus}
                       </span>
                     ) : null}
-                    <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-800">
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--info)]">
                       {lifecycle}
                     </span>
-                    {competition ? (
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-800">
-                        Competition
-                      </span>
-                    ) : null}
+                    {competition ? <Tag variant="info">Competition</Tag> : null}
                   </div>
-                  <h3 className="mt-2 text-base font-semibold text-[#0A3035]">
+                  <h3 className="card-title mt-2">
                     {event.title || "Untitled Event"}
                   </h3>
-                  <p className="mt-1 line-clamp-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  <p className="body-text mt-1 line-clamp-3">
                     {event.description || "No description provided."}
                   </p>
                   <div className="mt-3 grid gap-1 text-xs text-[var(--text-secondary)]">
@@ -554,7 +559,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                         ? `/admin/events-management/${encodeURIComponent(event.id)}`
                         : `/events/listings/${encodeURIComponent(event.id)}`
                     }
-                    className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                    className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
                   >
                     View Details
                   </Link>
@@ -576,7 +581,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                                 `Approved "${event.title}".`
                               )
                             }
-                            className="rounded-full border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                            className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--success)] transition hover:bg-[color-mix(in_srgb,var(--success)_10%,transparent)]"
                           >
                             Approve
                           </button>
@@ -593,7 +598,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                                 `Rejected "${event.title}".`
                               )
                             }
-                            className="rounded-full border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+                            className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
                           >
                             Reject
                           </button>
@@ -615,7 +620,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                               : `Published "${event.title}".`
                           )
                         }
-                        className="rounded-full border border-blue-300 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                       >
                         {event.status === "published" ? "Archive" : "Publish"}
                       </button>
@@ -627,7 +632,7 @@ export default function EventListPage({ adminMode = false }: { adminMode?: boole
                             `Deleted "${event.title}".`
                           )
                         }
-                        className="rounded-full border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                        className="btn-danger rounded-full px-3 py-2 text-xs"
                       >
                         Delete
                       </button>

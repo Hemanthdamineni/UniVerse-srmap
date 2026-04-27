@@ -1,3 +1,4 @@
+// ErpPageShell section-card; earlier results tables unchanged.
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erpApi";
@@ -5,6 +6,7 @@ import { extractApiErrorMessage } from "../../lib/auth";
 import { getSessionId, handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/session";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { InlineError } from "../../components/ui/InlineError";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -330,22 +332,21 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
+      contentLayout="section-card"
       isLoading={loading}
       loadingMessage="Loading earlier semester results..."
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       <div className="space-y-6 animate-fade-in">
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-          </div>
+          <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
         )}
 
         <section className="dashboard-card p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-[#0A3035]">Earlier Internal Mark Details</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Earlier Internal Mark Details</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
                 Pick a semester to load the detailed internal assessment breakdown.
               </p>
             </div>
@@ -358,11 +359,12 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
                     key={semester}
                     type="button"
                     onClick={() => setSelectedSemester(semester)}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                      selected
-                        ? "bg-[#0A3035] text-white"
-                        : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                    style={{
+                      background: selected ? 'var(--comp-accent)' : 'var(--comp-surface)',
+                      color: selected ? '#fff' : 'var(--comp-text-primary)',
+                      border: selected ? 'none' : '1px solid var(--comp-border)',
+                    }}
                   >
                     Semester {semester}
                   </button>
@@ -374,20 +376,18 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
           {internalLoading ? (
             <LoadingSpinner message={`Loading semester ${selectedSemester} internal marks...`} />
           ) : internalError ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              {internalError}
-            </div>
+            <InlineError message={internalError} />
           ) : (
             <div className="erp-table-shell">
               <table className="erp-table w-full text-left">
                 <thead className="erp-table-head">
                   <tr>
-                    <th className="erp-table-head-cell">Semester</th>
-                    <th className="erp-table-head-cell">Code</th>
-                    <th className="erp-table-head-cell">Description</th>
-                    <th className="erp-table-head-cell">Subject Type</th>
-                    <th className="erp-table-head-cell erp-table-align-right">Mark Obtained</th>
-                    <th className="erp-table-head-cell erp-table-align-right">Max Mark</th>
+                    <th className="erp-table-head-cell label-text">Semester</th>
+                    <th className="erp-table-head-cell label-text">Code</th>
+                    <th className="erp-table-head-cell label-text">Description</th>
+                    <th className="erp-table-head-cell label-text">Subject Type</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-right">Mark Obtained</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-right">Max Mark</th>
                   </tr>
                 </thead>
                 <tbody className="erp-table-body">
@@ -403,7 +403,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
                   ))}
                   {internalMarks.length === 0 ? (
                     <tr className="erp-table-row">
-                      <td colSpan={6} className="erp-table-cell py-8 text-center text-slate-500 italic">
+                      <td colSpan={6} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
                         No internal mark details were found for semester {selectedSemester}.
                       </td>
                     </tr>
@@ -417,13 +417,13 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
         <section className="dashboard-card p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-[#0A3035]">Exam Mark Details</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Exam Mark Details</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
                 Published result history across your completed semesters.
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <span className="font-semibold text-slate-900">{historicalMarks.length}</span> historical records
+            <div className="rounded-xl border border-[var(--border)] px-4 py-3 text-sm" style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', color: 'var(--comp-text-secondary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{historicalMarks.length}</span> historical records
             </div>
           </div>
 
@@ -431,15 +431,15 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
             <table className="erp-table w-full text-left">
               <thead className="erp-table-head">
                 <tr>
-                  <th className="erp-table-head-cell">Semester</th>
-                  <th className="erp-table-head-cell">Month &amp; Year</th>
-                  <th className="erp-table-head-cell">Subject Code</th>
-                  <th className="erp-table-head-cell">Subject Description</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Credit</th>
-                  <th className="erp-table-head-cell erp-table-align-center">Grade</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Grade Point</th>
-                  <th className="erp-table-head-cell erp-table-align-center">Result</th>
-                  <th className="erp-table-head-cell erp-table-align-right">Attempt</th>
+                  <th className="erp-table-head-cell label-text">Semester</th>
+                  <th className="erp-table-head-cell label-text">Month &amp; Year</th>
+                  <th className="erp-table-head-cell label-text">Subject Code</th>
+                  <th className="erp-table-head-cell label-text">Subject Description</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Credit</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-center">Grade</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Grade Point</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-center">Result</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-right">Attempt</th>
                 </tr>
               </thead>
               <tbody className="erp-table-body">
@@ -451,7 +451,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
                     <td className="erp-table-cell">{row.subjectDescription}</td>
                     <td className="erp-table-cell erp-table-align-right">{row.credit}</td>
                     <td className="erp-table-cell erp-table-align-center">
-                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-slate-800">
+                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
                         {row.grade}
                       </span>
                     </td>
@@ -472,7 +472,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
                 ))}
                 {historicalMarks.length === 0 ? (
                   <tr className="erp-table-row">
-                    <td colSpan={9} className="erp-table-cell py-8 text-center text-slate-500 italic">
+                    <td colSpan={9} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
                       No historical exam marks were found.
                     </td>
                   </tr>

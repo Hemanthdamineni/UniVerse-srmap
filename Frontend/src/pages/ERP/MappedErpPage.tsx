@@ -1,3 +1,4 @@
+// Mapped ERP: section-card shell; document/renderer logic unchanged. Inline loader → SkeletonBlock.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,6 +19,7 @@ import {
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, getSessionId, readStoredProfileData } from "../../lib/session";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
 import ErpDocumentRenderer from "../../components/erp/ErpDocumentRenderer";
 
 type Props = {
@@ -1216,19 +1218,19 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
           const isBusy = pendingActionId === action.id;
 
           return (
-            <div key={action.id} className="rounded-md border border-gray-200 p-3 bg-white">
+            <div key={action.id} className="rounded-md p-3" style={{ border: '1px solid var(--comp-border)', background: 'var(--comp-surface)' }}>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleAction(sectionHint, sectionData, action)}
                   disabled={isBusy || action.enabled === false}
-                  className="rounded bg-[#0A3035] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="comp-btn-primary min-h-0 rounded px-3 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {isBusy ? "Processing..." : displayText(action.label, "Run Action")}
                 </button>
 
                 {action.enabled === false && (
-                  <span className="text-xs text-red-700">{displayText(action.disabledReason, "Disabled")}</span>
+                  <span className="text-xs text-[var(--error)]">{displayText(action.disabledReason, "Disabled")}</span>
                 )}
               </div>
 
@@ -1244,7 +1246,8 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                           <select
                             value={value}
                             onChange={(e) => updateActionField(action.id, field.key, e.target.value)}
-                            className="rounded border border-gray-300 px-2 py-2"
+                            className="rounded border px-2 py-2"
+                            style={{ borderColor: 'var(--comp-border)' }}
                           >
                             <option value="">Select</option>
                             {(field.options || []).map((option) => (
@@ -1253,7 +1256,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                               </option>
                             ))}
                           </select>
-                          {field.helperText && <span className="text-xs text-gray-500">{field.helperText}</span>}
+                          {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{field.helperText}</span>}
                         </label>
                       );
                     }
@@ -1266,9 +1269,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                           onChange={(e) => updateActionField(action.id, field.key, e.target.value)}
                           placeholder={field.placeholder}
                           maxLength={field.maxLength}
-                          className="rounded border border-gray-300 px-2 py-2"
+                          className="rounded border px-2 py-2"
+                          style={{ borderColor: 'var(--comp-border)' }}
                         />
-                        {field.helperText && <span className="text-xs text-gray-500">{field.helperText}</span>}
+                        {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{field.helperText}</span>}
                       </label>
                     );
                   })}
@@ -1292,8 +1296,8 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
           const formKey = cleanText(form.id || form.name || `form-${formIndex}`);
 
           return (
-            <div key={formKey} className="rounded-md border border-gray-200 bg-white p-4">
-              <div className="mb-2 text-sm font-semibold text-gray-700">
+            <div key={formKey} className="rounded-md p-4" style={{ border: '1px solid var(--comp-border)', background: 'var(--comp-surface)' }}>
+              <div className="mb-2 text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>
                 {displayText(form.name || form.id, `Form ${formIndex + 1}`)}
               </div>
 
@@ -1321,7 +1325,8 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                             value={value}
                             onChange={(e) => updateFormField(sectionHint, fieldKey, e.target.value)}
                             disabled={Boolean(field.disabled || field.readOnly)}
-                            className="rounded border border-gray-300 px-2 py-2"
+                            className="rounded border px-2 py-2"
+                            style={{ borderColor: 'var(--comp-border)' }}
                           >
                             <option value="">Select</option>
                             {field.options.map((option) => (
@@ -1330,7 +1335,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                               </option>
                             ))}
                           </select>
-                          {field.helperText && <span className="text-xs text-gray-500">{displayText(field.helperText)}</span>}
+                          {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{displayText(field.helperText)}</span>}
                         </label>
                       );
                     }
@@ -1346,9 +1351,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                           disabled={Boolean(field.disabled)}
                           readOnly={Boolean(field.readOnly)}
                           maxLength={typeof field.maxLength === "number" ? field.maxLength : undefined}
-                          className="rounded border border-gray-300 px-2 py-2"
+                          className="rounded border px-2 py-2"
+                          style={{ borderColor: 'var(--comp-border)' }}
                         />
-                        {field.helperText && <span className="text-xs text-gray-500">{displayText(field.helperText)}</span>}
+                        {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{displayText(field.helperText)}</span>}
                       </label>
                     );
                   })}
@@ -1363,7 +1369,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
   const renderTables = (sectionData: SectionData | null, actions: ErpAction[]) => {
     const tables = extractTables(sectionData?.payload);
-    if (!tables.length) return <div className="text-sm text-gray-500">No table data available.</div>;
+    if (!tables.length) return <div className="text-sm" style={{ color: 'var(--comp-text-muted)' }}>No table data available.</div>;
 
     return (
       <div className="space-y-4">
@@ -1489,12 +1495,12 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                 <thead className="erp-table-head">
                   <tr>
                     {tableView.headers.map((header) => (
-                      <th key={header} className="erp-table-head-cell break-words">
+                      <th key={header} className="erp-table-head-cell label-text break-words">
                         {displayText(header, "-").toUpperCase()}
                       </th>
                     ))}
                     {actions.some((action) => typeof action.tableRowIndex === "number") && (
-                      <th className="erp-table-head-cell">Actions</th>
+                      <th className="erp-table-head-cell label-text">Actions</th>
                     )}
                   </tr>
                 </thead>
@@ -1518,14 +1524,14 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                                     type="button"
                                     onClick={() => handleAction(findUiSectionForData(sectionData), sectionData, action)}
                                     disabled={pendingActionId === action.id || action.enabled === false}
-                                    className="rounded bg-[#0A3035] px-2 py-1 text-xs text-white disabled:opacity-50"
+                                    className="comp-btn-primary min-h-0 rounded px-2 py-1 text-xs disabled:opacity-50"
                                   >
                                     {pendingActionId === action.id ? "..." : displayText(action.label, "Run")}
                                   </button>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <span style={{ color: 'var(--comp-text-muted)' }}>-</span>
                             )}
                           </td>
                         )}
@@ -1582,11 +1588,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
   if (loading) {
     return (
-      <div ref={pageRef} className="min-h-screen p-6 pb-10">
-        <div className="flex items-center gap-3 text-gray-600">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0A3035] border-b-transparent" />
-          <span>Loading {toPageTitle(primaryPageKey, title)}...</span>
-        </div>
+      <div ref={pageRef} className="min-h-screen p-6 pb-10 space-y-4">
+        <SkeletonBlock height={14} className="max-w-xs rounded-full" />
+        <SkeletonBlock height={200} className="w-full max-w-3xl rounded-xl" />
+        <p className="body-text">Loading {toPageTitle(primaryPageKey, title)}...</p>
       </div>
     );
   }
@@ -1603,7 +1608,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
     return (
       <div ref={pageRef} className="min-h-screen p-6 pb-10">
-        <div className="rounded border border-red-300 bg-red-50 p-4 text-red-700 space-y-3">
+        <div className="rounded p-4 space-y-3" style={{ background: 'color-mix(in srgb, var(--error) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--error) 30%, transparent)', color: 'var(--error)' }}>
           <div className="font-semibold">
             {isAuthError
               ? "ERP session expired."
@@ -1617,14 +1622,15 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
               isAuthError ? "Redirecting to sign in..." : "Failed to load ERP page"
             )}
           </div>
-          <div className="text-xs text-red-800">
+          <div className="text-xs" style={{ color: 'color-mix(in srgb, var(--error) 80%, black)' }}>
             Code: {displayText(loadError.code, "UNKNOWN")} | Status: {Number(loadError.status || 500)}
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => loadPage(true)}
-              className="rounded border border-red-400 bg-white px-3 py-2 text-sm font-medium text-red-700"
+              className="rounded px-3 py-2 text-sm font-medium"
+              style={{ background: 'var(--comp-surface)', border: '1px solid color-mix(in srgb, var(--error) 40%, transparent)', color: 'var(--error)' }}
             >
               Retry
             </button>
@@ -1632,7 +1638,8 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="rounded border border-red-400 bg-white px-3 py-2 text-sm font-medium text-red-700"
+                className="rounded px-3 py-2 text-sm font-medium"
+                style={{ background: 'var(--comp-surface)', border: '1px solid color-mix(in srgb, var(--error) 40%, transparent)', color: 'var(--error)' }}
               >
                 Sign In Again
               </button>
@@ -1649,6 +1656,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
         title={toPageTitle(primaryPageKey, title)}
         source={metaSource as any}
         updatedAt={metaFetchedAt}
+        contentLayout="section-card"
         isLoading={loading}
         onRefresh={() => loadPage(true)}
       >
@@ -1657,10 +1665,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
           {message && (
             <div
               className={`rounded p-3 text-sm ${message.type === "error"
-                  ? "border border-red-300 bg-red-50 text-red-700"
+                  ? "border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
                   : message.type === "success"
                     ? "border border-green-300 bg-green-50 text-green-700"
-                    : "border border-blue-300 bg-blue-50 text-blue-700"
+                    : "border border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]"
                 }`}
             >
               {displayText(message.text)}
@@ -1669,16 +1677,16 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
         {keyDiagnostics.length > 0 && (
           <div className="hidden">
-            <div className="rounded border border-gray-200 bg-white p-3 text-xs text-gray-700">
+            <div className="rounded p-3 text-xs" style={{ border: '1px solid var(--comp-border)', background: 'var(--comp-surface)', color: 'var(--comp-text-secondary)' }}>
               <div className="font-semibold">Fetch Diagnostics</div>
               <div className="erp-table-shell mt-2 shadow-none">
                 <table className="erp-table text-left">
                   <thead className="erp-table-head">
                     <tr>
-                      <th className="erp-table-head-cell">Key</th>
-                      <th className="erp-table-head-cell">Source</th>
-                      <th className="erp-table-head-cell">Code</th>
-                      <th className="erp-table-head-cell">Fetched</th>
+                      <th className="erp-table-head-cell label-text">Key</th>
+                      <th className="erp-table-head-cell label-text">Source</th>
+                      <th className="erp-table-head-cell label-text">Code</th>
+                      <th className="erp-table-head-cell label-text">Fetched</th>
                     </tr>
                   </thead>
                   <tbody className="erp-table-body">

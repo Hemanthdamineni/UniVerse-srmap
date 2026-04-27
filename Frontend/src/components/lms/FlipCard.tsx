@@ -16,7 +16,7 @@ export default function FlipCard({
       <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
         {flipped ? "Back" : "Front"}
       </div>
-      <p className="text-lg font-semibold text-[#0A3035]">{flipped ? back : front}</p>
+      <p className="text-lg font-semibold text-[var(--comp-text-primary)]">{flipped ? back : front}</p>
     </button>
   );
 }

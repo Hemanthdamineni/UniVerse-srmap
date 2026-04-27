@@ -1,3 +1,4 @@
+// ErpPageShell section-card; current results / planner structure unchanged.
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import { getErpBatch } from "../../lib/erpApi";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
+import { InlineError } from "../../components/ui/InlineError";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -272,12 +274,13 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
+      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage || "Loading results..."}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       {error && (
-        <div className="rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
       )}
 
       {data && (
@@ -291,17 +294,17 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
           {/* <div className="grid gap-4 lg:grid-cols-3">
             <div className="dashboard-card p-5">
               <p className="text-sm text-[var(--text-secondary)]">Current SGPA</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">{data.sgpa || "Not available"}</p>
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{data.sgpa || "Not available"}</p>
             </div>
             <div className="dashboard-card p-5">
               <p className="text-sm text-[var(--text-secondary)]">Current CGPA</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
                 {cgpaSummary.currentCgpa || "Unavailable"}
               </p>
             </div>
             <div className="dashboard-card p-5">
               <p className="text-sm text-[var(--text-secondary)]">Semester</p>
-              <p className="mt-2 text-3xl font-semibold text-[#0A3035]">
+              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
                 {cgpaSummary.semesterLabel || (cgpaSummary.semesterNumber ? `Semester ${cgpaSummary.semesterNumber}` : "Unavailable")}
               </p>
             </div>
@@ -309,18 +312,18 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
 
           <section className="dashboard-card p-0">
             <div className="border-b border-[var(--border)] px-5 py-4">
-              <h3 className="font-semibold text-[#0A3035]">Subject Results</h3>
+              <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Subject Results</h3>
             </div>
             <div className="erp-table-shell rounded-none border-0">
               <table className="erp-table text-left">
                 <thead className="erp-table-head">
                   <tr>
-                    <th className="erp-table-head-cell">Code</th>
-                    <th className="erp-table-head-cell">Description</th>
-                    <th className="erp-table-head-cell erp-table-align-center">Semester</th>
-                    <th className="erp-table-head-cell erp-table-align-center">Credits</th>
-                    <th className="erp-table-head-cell erp-table-align-center">Grade</th>
-                    <th className="erp-table-head-cell erp-table-align-center">Result</th>
+                    <th className="erp-table-head-cell label-text">Code</th>
+                    <th className="erp-table-head-cell label-text">Description</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Semester</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Credits</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Grade</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Result</th>
                   </tr>
                 </thead>
                 <tbody className="erp-table-body">
@@ -329,9 +332,9 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                       <td className="erp-table-cell erp-table-cell-strong">{subject.subjectCode}</td>
                       <td className="erp-table-cell">{subject.subjectDescription}</td>
                       <td className="erp-table-cell erp-table-align-center">{subject.semester}</td>
-                      <td className="erp-table-cell erp-table-align-center font-medium text-slate-700">{subject.credit}</td>
+                      <td className="erp-table-cell erp-table-align-center font-medium text-[var(--comp-text-secondary)]">{subject.credit}</td>
                       <td className="erp-table-cell erp-table-align-center">
-                        <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-slate-800">
+                        <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
                           {subject.grade}
                         </span>
                       </td>
@@ -350,7 +353,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                   ))}
                   {data.subjects.length === 0 && (
                     <tr className="erp-table-row">
-                      <td colSpan={6} className="erp-table-cell py-8 text-center italic text-[var(--text-secondary)]">
+                      <td colSpan={6} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
                         No subject results found.
                       </td>
                     </tr>
@@ -366,7 +369,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                 <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-[#0A3035]">{isManualMode ? "Manual Mode" : "Auto Mode"}</p>
+                      <p className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{isManualMode ? "Manual Mode" : "Auto Mode"}</p>
                         <p className="mt-1 text-sm text-[var(--text-secondary)]">
                           {isManualMode
                             ? "Add custom subjects and credits for planning."
@@ -382,7 +385,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                           return nextManualMode;
                         });
                       }}
-                      className="rounded-full border border-[#0A3035]/20 px-4 py-2 text-sm font-medium text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                      className="comp-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm font-medium"
                     >
                       {isManualMode ? "Switch To Auto" : "Switch To Manual"}
                     </button>
@@ -390,13 +393,13 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <div className="rounded-2xl border border-[var(--border)] bg-[#0A3035] p-4 text-white">
+                  <div className="rounded-2xl p-4 text-white" style={{ background: 'var(--comp-accent)', border: '1px solid var(--comp-border)' }}>
                     <p className="text-sm text-white/75">Projected SGPA</p>
                     <p className="mt-2 text-3xl font-semibold">{computedSgpa}</p>
                   </div>
-                  <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-                    <p className="text-sm text-[var(--text-secondary)]">Projected CGPA</p>
-                    <p className="mt-2 text-3xl font-semibold text-[#0A3035]">{projectedCgpa}</p>
+                  <div className="rounded-2xl p-4" style={{ background: 'var(--comp-surface)', border: '1px solid var(--comp-border)' }}>
+                    <p className="text-sm" style={{ color: 'var(--comp-text-secondary)' }}>Projected CGPA</p>
+                    <p className="mt-2 text-3xl font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{projectedCgpa}</p>
                     {!cgpaSummary.currentCgpa ? (
                       <p className="mt-2 text-xs text-[var(--text-secondary)]">
                         Current CGPA could not be extracted, so the projection falls back to the SGPA estimate.
@@ -409,7 +412,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-[#0A3035]">Planner Subjects</p>
+                    <p className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Planner Subjects</p>
                     <p className="text-sm text-[var(--text-secondary)]">
                       Update grades and credits to see the projection refresh immediately.
                     </p>
@@ -419,7 +422,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                       <button
                         type="button"
                         onClick={addManualSubject}
-                        className="rounded-full border border-[#0A3035]/20 px-4 py-2 text-sm font-medium text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                        className="comp-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm font-medium"
                       >
                         Add Subject
                       </button>
@@ -427,7 +430,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                     <button
                       type="button"
                       onClick={resetPlanner}
-                      className="rounded-full border border-[#0A3035]/20 px-4 py-2 text-sm font-medium text-[#0A3035] transition hover:bg-[#0A3035] hover:text-white"
+                      className="comp-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm font-medium"
                     >
                       Reset
                     </button>
@@ -437,16 +440,16 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                 <div className="space-y-3">
                   {plannerSubjects.length ? (
                     plannerSubjects.map((subject) => (
-                      <div key={subject.id} className="grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 md:grid-cols-[1fr_100px_140px_72px]">
+                      <div key={subject.id} className="grid gap-3 rounded-2xl p-3 md:grid-cols-[1fr_100px_140px_72px]" style={{ background: 'var(--comp-surface)', border: '1px solid var(--comp-border)' }}>
                         {isManualMode ? (
                           <input
                             value={subject.name}
                             onChange={(event) => updatePlannerSubject(subject.id, "name", event.target.value)}
                             placeholder="Subject name"
-                            className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3035]"
+                            className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                           />
                         ) : (
-                          <div className="flex items-center rounded-xl bg-white px-3 py-2 text-sm font-medium text-[#0A3035]">
+                          <div className="flex items-center rounded-xl px-3 py-2 text-sm font-medium" style={{ background: 'color-mix(in srgb, var(--comp-surface) 40%, transparent)', color: 'var(--comp-text-primary)' }}>
                             {subject.name}
                           </div>
                         )}
@@ -458,13 +461,13 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                           onChange={(event) =>
                             updatePlannerSubject(subject.id, "credits", Number(event.target.value || 0))
                           }
-                          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3035]"
+                          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                         />
 
                         <select
                           value={subject.grade}
                           onChange={(event) => updatePlannerSubject(subject.id, "grade", event.target.value)}
-                          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[#0A3035]"
+                          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                         >
                           {GRADE_OPTIONS.map((grade) => (
                             <option key={grade || "empty"} value={grade}>
@@ -484,7 +487,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                             Remove
                           </button>
                         ) : (
-                          <div className="flex items-center justify-center rounded-xl bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                          <div className="flex items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em]" style={{ background: 'color-mix(in srgb, var(--comp-surface) 40%, transparent)', color: 'var(--comp-text-muted)' }}>
                             Auto
                           </div>
                         )}
@@ -501,8 +504,8 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
           </SectionCard>
 
           {data.disclaimer && (
-            <aside className="rounded-xl border border-orange-100 bg-orange-50 p-4">
-              <p className="text-xs italic leading-relaxed text-orange-800">{data.disclaimer}</p>
+            <aside className="rounded-xl p-4" style={{ background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--warning) 30%, transparent)' }}>
+              <p className="text-xs italic leading-relaxed" style={{ color: 'var(--warning)' }}>{data.disclaimer}</p>
             </aside>
           )}
         </>

@@ -15,19 +15,19 @@ export default function ResourceFilterPanel({
   return (
     <section className="dashboard-card grid gap-3 p-4 md:grid-cols-4">
       <input
-        className="rounded-xl border border-[#0A3035]/10 bg-white px-3 py-2 text-sm outline-none focus:border-[#34AEBE]"
+        className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--info)]"
         placeholder="Search"
         value={filters.query || ""}
         onChange={(event) => onChange({ ...filters, query: event.target.value })}
       />
       <input
-        className="rounded-xl border border-[#0A3035]/10 bg-white px-3 py-2 text-sm outline-none focus:border-[#34AEBE]"
+        className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--info)]"
         placeholder="Subject code"
         value={filters.subjectCode || ""}
         onChange={(event) => onChange({ ...filters, subjectCode: event.target.value })}
       />
       <select
-        className="rounded-xl border border-[#0A3035]/10 bg-white px-3 py-2 text-sm outline-none focus:border-[#34AEBE]"
+        className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--info)]"
         value={filters.type || ""}
         onChange={(event) => onChange({ ...filters, type: event.target.value })}
       >
@@ -40,7 +40,7 @@ export default function ResourceFilterPanel({
         <option value="pyq">PYQ</option>
       </select>
       <select
-        className="rounded-xl border border-[#0A3035]/10 bg-white px-3 py-2 text-sm outline-none focus:border-[#34AEBE]"
+        className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--info)]"
         value={filters.difficulty || ""}
         onChange={(event) => onChange({ ...filters, difficulty: event.target.value })}
       >
