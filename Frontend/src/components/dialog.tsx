@@ -27,7 +27,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     data-slot="dialog-overlay"
-    className={cn("fixed inset-0 z-50 bg-[#0A262A]/45 backdrop-blur-[2px]", className)}
+    className={cn("fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--surface)_45%,transparent)] backdrop-blur-[2px]", className)}
     {...props}
   />
 ))
@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close
-        className="absolute right-3 top-3 rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:bg-white/80 hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A3035]"
+        className="absolute right-3 top-3 rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:bg-[color-mix(in_srgb,var(--comp-surface)_88%,var(--comp-accent))] hover:text-[var(--text-primary)]"
         aria-label="Close"
       >
         <XIcon className="size-4" />
