@@ -1,5 +1,5 @@
 {
-  "name": "university-erp-v2-backend",
+  "name": "universe-srmap-backend",
   "version": "2.0.0",
   "description": "Clean backend API for University ERP frontend",
   "main": "server.js",

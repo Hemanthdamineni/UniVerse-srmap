@@ -3,7 +3,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
-    container_name: university-erp-backend
+    container_name: universe-srmap-backend
     ports:
       - "5000:5000"
     environment:
@@ -29,7 +29,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: university-erp-redis
+    container_name: universe-srmap-redis
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]

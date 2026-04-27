@@ -1389,9 +1389,9 @@ class EventsStore {
     const lines = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//University ERP//Events//EN",
+      "PRODID:-//UniVerse - SRMAP Edition//Events//EN",
       "BEGIN:VEVENT",
-      `UID:${event.id}@university-erp.local`,
+      `UID:${event.id}@universe-srmap.local`,
       `DTSTAMP:${this._icsDate(nowIso())}`,
       `DTSTART:${this._icsDate(event.startAt)}`,
       `DTEND:${this._icsDate(event.endAt)}`,
