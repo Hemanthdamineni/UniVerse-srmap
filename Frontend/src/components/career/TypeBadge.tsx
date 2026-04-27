@@ -7,7 +7,7 @@ interface TypeBadgeProps {
 }
 
 const typeStyles = {
-  job: 'bg-blue-100 text-blue-800 border-blue-200',
+  job: 'bg-blue-100 text-[var(--info)] border-[color-mix(in_srgb,var(--info)_30%,transparent)]',
   internship: 'bg-green-100 text-green-800 border-green-200',
   hackathon: 'bg-purple-100 text-purple-800 border-purple-200',
   competition: 'bg-orange-100 text-orange-800 border-orange-200',

@@ -20,10 +20,10 @@ import {
 const ALL_TYPES = ["Internship", "Hackathon", "Research", "Workshop", "Scholarship"] as const;
 
 const TYPE_COLORS: Record<string, string> = {
-  Internship: "border-blue-200 bg-blue-50 text-blue-800",
+  Internship: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
   Hackathon: "border-purple-200 bg-purple-50 text-purple-800",
-  Research: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  Workshop: "border-amber-200 bg-amber-50 text-amber-800",
+  Research: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
+  Workshop: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   Scholarship: "border-rose-200 bg-rose-50 text-rose-800",
 };
 
@@ -143,7 +143,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -154,7 +154,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 id="opp-type"
                 value={form.type}
                 onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {ALL_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -171,7 +171,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 id="opp-status"
                 value={form.status}
                 onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
@@ -187,7 +187,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.organization}
                 onChange={(event) => setForm((prev) => ({ ...prev, organization: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -200,7 +200,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.deadline}
                 onChange={(event) => setForm((prev) => ({ ...prev, deadline: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -212,7 +212,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.link}
                 onChange={(event) => setForm((prev) => ({ ...prev, link: event.target.value }))}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2">
@@ -225,7 +225,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
                 rows={3}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2">
@@ -237,7 +237,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.tags}
                 onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
                 placeholder="ml, backend, internship"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2 flex items-center gap-2">
@@ -255,7 +255,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
             <div className="md:col-span-2 flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 {editingId ? "Update Opportunity" : "Publish Opportunity"}
               </button>
@@ -276,7 +276,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                       featured: false,
                     });
                   }}
-                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[#0A3035] hover:text-[#0A3035]"
+                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -292,7 +292,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by title, organization, or keyword..."
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
           />
           <div className="flex flex-wrap gap-2 pt-1">
             {(["All", ...ALL_TYPES] as const).map((type) => (
@@ -302,8 +302,8 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 onClick={() => setFilterType(type)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   filterType === type
-                    ? "border-[#0A3035] bg-[#0A3035] text-white"
-                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[#0A3035] hover:text-[#0A3035]"
+                    ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
+                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 }`}
               >
                 {type}
@@ -323,7 +323,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
-                      TYPE_COLORS[opportunity.type] || "border-slate-200 bg-slate-50 text-slate-700"
+                      TYPE_COLORS[opportunity.type] || "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"
                     }`}
                   >
                     {opportunity.type}
@@ -331,16 +331,16 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                   <span className="text-xs text-[var(--text-secondary)]">
                     Deadline: {opportunity.deadline}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                  <span className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-secondary)]">
                     {opportunity.status}
                   </span>
                   {opportunity.featured ? (
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--warning)]">
                       Featured
                     </span>
                   ) : null}
                 </div>
-                <h3 className="mt-2 text-base font-semibold text-[#0A3035]">{opportunity.title}</h3>
+                <h3 className="mt-2 text-base font-semibold text-[var(--comp-text-primary)]">{opportunity.title}</h3>
                 <p className="mt-0.5 text-xs font-medium text-[var(--text-secondary)]">
                   {opportunity.organization}
                 </p>
@@ -352,7 +352,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                     {opportunity.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full bg-[#0A3035]/8 px-2.5 py-0.5 text-xs font-semibold text-[#0A3035]"
+                        className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]"
                       >
                         {tag}
                       </span>
@@ -366,7 +366,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                     href={opportunity.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-block rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                    className="inline-block rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
                   >
                     Open Link
                   </a>
@@ -382,7 +382,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                       opportunity.saved ? "Removed from saved opportunities." : "Saved opportunity."
                     )
                   }
-                  className="rounded-full border border-blue-300 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                  className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                 >
                   {opportunity.saved ? "Unsave" : "Save"}
                 </button>
@@ -394,7 +394,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                       opportunity.applied ? "Application already recorded." : "Application recorded."
                     )
                   }
-                  className="rounded-full border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--success)] transition hover:bg-[color-mix(in_srgb,var(--success)_10%,transparent)]"
                 >
                   {opportunity.applied ? "Applied" : "Apply / Track"}
                 </button>
@@ -416,7 +416,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                           featured: Boolean(opportunity.featured),
                         });
                       }}
-                      className="rounded-full border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+                      className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
                     >
                       Edit
                     </button>
@@ -437,7 +437,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                             : "Opportunity archived."
                         )
                       }
-                      className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                      className="rounded-full border border-[var(--comp-border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
                     >
                       {opportunity.status === "archived" ? "Publish" : "Archive"}
                     </button>

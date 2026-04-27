@@ -148,7 +148,7 @@ const OpportunityDetailPage: React.FC = () => {
             </Button>
             <Button 
               variant="outline" 
-              className={applied ? "flex-1 sm:flex-none h-12 text-emerald-600 border-emerald-200 bg-emerald-50" : "flex-1 sm:flex-none h-12"}
+              className={applied ? "flex-1 sm:flex-none h-12 text-emerald-600 border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" : "flex-1 sm:flex-none h-12"}
               onClick={handleAddToTracker}
               disabled={applied}
             >
@@ -201,7 +201,7 @@ const OpportunityDetailPage: React.FC = () => {
                     key={skill} 
                     className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
                       isMatched 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                        ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-emerald-100' 
                         : 'bg-gray-50 text-gray-600 border-gray-200'
                     }`}
                   >

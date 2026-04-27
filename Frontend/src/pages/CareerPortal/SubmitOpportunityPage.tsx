@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { submitOpportunity } from '../../lib/careerApi';
-import { Button } from '../../components/button';
-import { Input } from '../../components/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/card';
-import { AlertCircle, CheckCircle2, Loader2, PlusCircle, Globe, Briefcase, Calendar, Trophy, GraduationCap, Code, ExternalLink } from 'lucide-react';
+// Submit opportunity: SkeletonBlock replaces submit spinner; submit handler unchanged.
+import React, { useState } from "react";
+import { submitOpportunity } from "../../lib/careerApi";
+import { Button } from "../../components/button";
+import { Input } from "../../components/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/card";
+import { AlertCircle, CheckCircle2, PlusCircle, Globe } from "lucide-react";
+import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
 import { useNavigate } from 'react-router-dom';
 
 const SubmitOpportunityPage: React.FC = () => {
@@ -35,7 +37,7 @@ const SubmitOpportunityPage: React.FC = () => {
     setError(null);
 
     try {
-      const result = await submitOpportunity(formData);
+      await submitOpportunity(formData);
       setSuccess(true);
       setTimeout(() => navigate('/career'), 2000);
     } catch (err: any) {
@@ -67,7 +69,7 @@ const SubmitOpportunityPage: React.FC = () => {
       </header>
 
       {error && (
-        <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3 text-red-700">
+        <div className="bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border border-red-100 p-4 rounded-xl flex items-start gap-3 text-[var(--error)]">
           <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
           <p className="text-sm">{error}</p>
         </div>
@@ -183,7 +185,10 @@ const SubmitOpportunityPage: React.FC = () => {
             disabled={loading}
           >
             {loading ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
+              <>
+                <SkeletonBlock width={20} height={20} circle className="mr-2 inline-block align-middle" />
+                Submitting...
+              </>
             ) : (
               <><PlusCircle className="mr-2 h-5 w-5" /> Submit Opportunity</>
             )}

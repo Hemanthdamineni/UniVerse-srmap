@@ -22,10 +22,10 @@ const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, classNa
     colorClass = 'text-gray-500 bg-gray-100 border-gray-200';
   } else if (diffDays === 0) {
     display = '⚡ Today! Closes tonight';
-    colorClass = 'text-red-800 bg-red-100 border-red-200 font-bold';
+    colorClass = 'text-[var(--error)] bg-red-100 border-[color-mix(in_srgb,var(--error)_30%,transparent)] font-bold';
   } else if (diffDays < 3) {
     display = `⚡ ${diffDays} day${diffDays > 1 ? 's' : ''} left`;
-    colorClass = 'text-red-700 bg-red-50 border-red-100 font-bold';
+    colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-red-100 font-bold';
   } else if (diffDays < 7) {
     display = `Deadline in ${diffDays} days`;
     colorClass = 'text-orange-700 bg-orange-50 border-orange-100';

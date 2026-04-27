@@ -131,13 +131,13 @@ const CareerHomePage: React.FC = () => {
       </section>
 
       {/* Tracker Shortcut */}
-      <section className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <section className="bg-[color-mix(in_srgb,var(--info)_10%,transparent)] p-6 rounded-2xl border border-blue-100 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
           <h3 className="text-lg font-bold text-blue-900">Application Tracker</h3>
-          <p className="text-blue-700">Manage your applications and track their status in one place.</p>
+          <p className="text-[var(--info)]">Manage your applications and track their status in one place.</p>
         </div>
         <Link to="/career/me/tracker">
-          <Button variant="outline" className="border-blue-200 hover:bg-blue-100 text-blue-700">
+          <Button variant="outline" className="border-[color-mix(in_srgb,var(--info)_30%,transparent)] hover:bg-blue-100 text-[var(--info)]">
             Open Tracker
           </Button>
         </Link>

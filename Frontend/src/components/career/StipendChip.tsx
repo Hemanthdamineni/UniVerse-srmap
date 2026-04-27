@@ -12,7 +12,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
   if (stipend) {
     return (
       <span className={cn(
-        'px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] sm:text-xs font-medium border border-blue-100',
+        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] text-[10px] sm:text-xs font-medium border border-blue-100',
         className
       )}>
         Stipend: {stipend}
@@ -23,7 +23,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
   if (prize) {
     return (
       <span className={cn(
-        'px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] sm:text-xs font-medium border border-amber-100',
+        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] text-[10px] sm:text-xs font-medium border border-amber-100',
         className
       )}>
         Prize: {prize}
@@ -44,7 +44,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
 
   return (
     <span className={cn(
-      'px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] sm:text-xs font-medium border border-emerald-100',
+      'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] text-[10px] sm:text-xs font-medium border border-emerald-100',
       className
     )}>
       Free

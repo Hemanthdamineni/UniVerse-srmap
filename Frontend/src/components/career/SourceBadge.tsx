@@ -10,7 +10,7 @@ const sourceStyles: Record<string, string> = {
   jobspy: 'text-blue-600 font-semibold',
   devfolio: 'text-purple-600 font-semibold',
   unstop: 'text-blue-500 font-semibold',
-  linkedin: 'text-blue-700 font-bold',
+  linkedin: 'text-[var(--info)] font-bold',
   manual: 'text-gray-500 italic',
 };
 

@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+// Career profile: PageHeader-level tokens, SkeletonBlock for button loading, SkeletonCard page load; API unchanged.
+import React, { useEffect, useState } from "react";
 import { getProfile, updateProfile, uploadResume, type CareerProfile } from '../../lib/careerApi';
 import { Button } from '../../components/button';
 import { Input } from '../../components/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/card';
-import { User, Mail, Briefcase, MapPin, DollarSign, Award, Linkedin, Github, Globe, FileText, Upload, CheckCircle2, Loader2, Plus, X } from 'lucide-react';
+import { User, Briefcase, MapPin, DollarSign, Award, Linkedin, Github, Globe, FileText, Upload, CheckCircle2, Plus, X } from "lucide-react";
+import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { useSession } from '../../hooks/useSession';
 
 const CareerProfilePage: React.FC = () => {
@@ -73,7 +76,14 @@ const CareerProfilePage: React.FC = () => {
     setProfile({ ...profile, skills: profile.skills.filter(s => s !== skill) });
   };
 
-  if (loading) return <div className="p-12 text-center text-gray-500 animate-pulse">Loading your career profile...</div>;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-4 p-4 sm:p-8">
+        <SkeletonCard className="h-16" />
+        <SkeletonCard className="h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
@@ -87,13 +97,17 @@ const CareerProfilePage: React.FC = () => {
           disabled={saving}
           className="bg-blue-600 hover:bg-blue-700"
         >
-          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+          {saving ? (
+            <SkeletonBlock width={16} height={16} circle className="mr-2 inline-block align-middle" />
+          ) : (
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+          )}
           Save Changes
         </Button>
       </header>
 
       {message && (
-        <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+        <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] border-emerald-100 text-[var(--success)]' : 'bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-red-100 text-[var(--error)]'}`}>
           {message.text}
         </div>
       )}
@@ -131,10 +145,10 @@ const CareerProfilePage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {profile?.resumeUrl ? (
-                <div className="p-3 border rounded-lg bg-blue-50 border-blue-100 flex items-center justify-between">
+                <div className="p-3 border rounded-lg bg-[color-mix(in_srgb,var(--info)_10%,transparent)] border-blue-100 flex items-center justify-between">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <FileText className="h-5 w-5 text-blue-600 shrink-0" />
-                    <span className="text-sm font-medium text-blue-700 truncate">{profile.resumeFileName}</span>
+                    <span className="text-sm font-medium text-[var(--info)] truncate">{profile.resumeFileName}</span>
                   </div>
                   <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline shrink-0">View</a>
                 </div>
@@ -156,7 +170,11 @@ const CareerProfilePage: React.FC = () => {
                 <label htmlFor="resume-upload">
                   <Button variant="outline" className="w-full" asChild disabled={uploading}>
                     <span>
-                      {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {uploading ? (
+                        <SkeletonBlock width={16} height={16} circle className="mr-2 inline-block align-middle" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
                       {profile?.resumeUrl ? 'Update Resume' : 'Upload Resume (PDF)'}
                     </span>
                   </Button>
@@ -187,7 +205,7 @@ const CareerProfilePage: React.FC = () => {
               
               <div className="flex flex-wrap gap-2">
                 {profile?.skills.map(skill => (
-                  <span key={skill} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1 border border-blue-200">
+                  <span key={skill} className="px-3 py-1 bg-blue-100 text-[var(--info)] rounded-full text-sm font-medium flex items-center gap-1 border border-[color-mix(in_srgb,var(--info)_30%,transparent)]">
                     {skill}
                     <button onClick={() => removeSkill(skill)} className="hover:text-blue-900"><X className="h-3 w-3" /></button>
                   </span>
@@ -218,7 +236,7 @@ const CareerProfilePage: React.FC = () => {
                         className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
                           profile?.preferredTypes.includes(type) 
                             ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-[color-mix(in_srgb,var(--info)_30%,transparent)]'
                         }`}
                       >
                         {type}

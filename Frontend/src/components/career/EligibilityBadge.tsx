@@ -13,7 +13,7 @@ const EligibilityBadge: React.FC<EligibilityBadgeProps> = ({ eligible, label, cl
     <div className={cn(
       'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium',
       eligible 
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+        ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-emerald-100' 
         : 'bg-rose-50 text-rose-700 border-rose-100',
       className
     )}>

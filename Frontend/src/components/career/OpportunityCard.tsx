@@ -68,7 +68,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
                 key={skill} 
                 className={`px-1.5 py-0.5 text-[10px] rounded border ${
                   isMatched 
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100 font-medium' 
+                    ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-emerald-100 font-medium' 
                     : 'bg-gray-100 text-gray-600 border-gray-200'
                 }`}
               >

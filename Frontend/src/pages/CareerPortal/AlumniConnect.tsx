@@ -130,7 +130,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -140,7 +140,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 onChange={(event) => setForm((prev) => ({ ...prev, batch: event.target.value }))}
                 placeholder="2024"
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -149,7 +149,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.degree}
                 onChange={(event) => setForm((prev) => ({ ...prev, degree: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -158,7 +158,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.company}
                 onChange={(event) => setForm((prev) => ({ ...prev, company: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -167,7 +167,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.role}
                 onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.location}
                 onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2">
@@ -185,7 +185,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.expertise}
                 onChange={(event) => setForm((prev) => ({ ...prev, expertise: event.target.value }))}
                 placeholder="React, ML, System Design"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2">
@@ -194,7 +194,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.bio}
                 onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
                 rows={3}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div className="md:col-span-2 flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
             <div className="md:col-span-2 flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 {editingId ? "Update Alumni" : "Add Alumni"}
               </button>
@@ -233,7 +233,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                       openToConnect: true,
                     });
                   }}
-                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[#0A3035] hover:text-[#0A3035]"
+                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -249,7 +249,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by name, company, role, or skill..."
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
           />
           <div className="flex flex-wrap gap-2 pt-1">
             {batches.map((batch) => (
@@ -259,8 +259,8 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 onClick={() => setBatchFilter(batch)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   batchFilter === batch
-                    ? "border-[#0A3035] bg-[#0A3035] text-white"
-                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[#0A3035] hover:text-[#0A3035]"
+                    ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
+                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 }`}
               >
                 {batch}
@@ -279,13 +279,13 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-base font-semibold text-[#0A3035]">{item.name}</h3>
+                    <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{item.name}</h3>
                     <p className="text-xs text-[var(--text-secondary)]">
                       {item.degree} · Batch {item.batch}
                     </p>
                   </div>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A3035]/8">
-                    <span className="text-sm font-bold text-[#0A3035]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)]">
+                    <span className="text-sm font-bold text-[var(--comp-text-primary)]">
                       {item.name
                         .split(" ")
                         .map((value) => value[0])
@@ -295,7 +295,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                   </div>
                 </div>
                 <div className="mt-2 text-sm text-[var(--text-secondary)]">
-                  <span className="font-medium text-[#0A3035]">{item.role}</span> at {item.company}
+                  <span className="font-medium text-[var(--comp-text-primary)]">{item.role}</span> at {item.company}
                 </div>
                 <div className="text-xs text-[var(--text-secondary)]">{item.location}</div>
                 {item.bio ? (
@@ -306,7 +306,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                     {item.expertise.map((skill) => (
                       <span
                         key={skill}
-                        className="rounded-full bg-[#0A3035]/8 px-2.5 py-0.5 text-xs font-semibold text-[#0A3035]"
+                        className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]"
                       >
                         {skill}
                       </span>
@@ -316,7 +316,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {item.requested ? (
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">
+                  <span className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--success)]">
                     Request Sent
                   </span>
                 ) : item.openToConnect ? (
@@ -331,12 +331,12 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                         `Connection request sent to ${item.name}.`
                       )
                     }
-                    className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                    className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
                   >
                     Request Connect
                   </button>
                 ) : (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-500">
+                  <span className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-muted)]">
                     Not Available
                   </span>
                 )}
@@ -358,7 +358,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                           openToConnect: item.openToConnect,
                         });
                       }}
-                      className="rounded-full border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+                      className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
                     >
                       Edit
                     </button>

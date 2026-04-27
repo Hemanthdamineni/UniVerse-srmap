@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { listOpportunities, type CareerOpportunity } from '../../lib/careerApi';
-import OpportunityCard from '../../components/career/OpportunityCard';
-import { Bookmark, Loader2 } from 'lucide-react';
+// Bookmarks: PageHeader, SkeletonCard loading, EmptyState + tokens; listOpportunities filter unchanged.
+import React, { useEffect, useState } from "react";
+import { listOpportunities, type CareerOpportunity } from "../../lib/careerApi";
+import OpportunityCard from "../../components/career/OpportunityCard";
+import { Bookmark } from "lucide-react";
+import { PageHeader } from "../../components/ui/PageHeader";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { EmptyState } from "../../components/ui/EmptyState";
 
 const BookmarksPage: React.FC = () => {
   const [bookmarks, setBookmarks] = useState<CareerOpportunity[]>([]);
@@ -10,48 +14,50 @@ const BookmarksPage: React.FC = () => {
   useEffect(() => {
     const fetchBookmarks = async () => {
       try {
-        // In a real implementation, we might have a specific endpoint for bookmarks
-        // For Phase 1, we filter all opportunities that are bookmarked
         const data = await listOpportunities();
-        setBookmarks(data.items.filter(opp => opp.isBookmarked));
+        setBookmarks(data.items.filter((opp) => opp.isBookmarked));
       } catch (err) {
-        console.error('Failed to fetch bookmarks', err);
+        console.error("Failed to fetch bookmarks", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchBookmarks();
+    void fetchBookmarks();
   }, []);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-amber-100 rounded-lg">
-          <Bookmark className="h-6 w-6 text-amber-600 fill-amber-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Bookmarks</h1>
-          <p className="text-gray-500">Opportunities you've saved for later</p>
-        </div>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="My bookmarks"
+        subtitle="Opportunities you've saved for later"
+        actions={
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[color-mix(in_srgb,var(--warning)_12%,var(--comp-surface))] md:h-9 md:w-9"
+            aria-hidden
+          >
+            <Bookmark className="h-6 w-6 text-[var(--warning)]" />
+          </div>
+        }
+      />
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 text-gray-500">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
-          <p>Loading your bookmarks...</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} className="min-h-[200px]" />
+          ))}
         </div>
       ) : bookmarks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bookmarks.map(opp => (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {bookmarks.map((opp) => (
             <OpportunityCard key={opp.id} opportunity={opp} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-24 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-          <Bookmark className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">No bookmarks yet.</p>
-          <p className="text-gray-400 text-sm">Save opportunities you're interested in to see them here.</p>
-        </div>
+        <EmptyState
+          icon={<Bookmark className="h-12 w-12" />}
+          title="No bookmarks yet"
+          description="Save opportunities you're interested in to see them here."
+        />
       )}
     </div>
   );

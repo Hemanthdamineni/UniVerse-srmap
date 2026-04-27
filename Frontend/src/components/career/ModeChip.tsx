@@ -8,9 +8,9 @@ interface ModeChipProps {
 
 const modeStyles = {
   remote: 'bg-teal-50 text-teal-700 border-teal-100',
-  online: 'bg-blue-50 text-blue-700 border-blue-100',
+  online: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] border-blue-100',
   onsite: 'bg-orange-50 text-orange-700 border-orange-100',
-  offline: 'bg-amber-50 text-amber-700 border-amber-100',
+  offline: 'bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] border-amber-100',
   hybrid: 'bg-purple-50 text-purple-700 border-purple-100',
 };
 

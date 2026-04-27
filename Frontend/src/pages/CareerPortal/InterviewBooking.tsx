@@ -21,10 +21,10 @@ import {
 const INTERVIEW_TYPES = ["Technical", "HR", "Group Discussion", "Technical + HR", "Coding Round", "System Design"] as const;
 
 const TYPE_COLORS: Record<string, string> = {
-  Technical: "border-blue-200 bg-blue-50 text-blue-800",
-  HR: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  Technical: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
+  HR: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
   "Group Discussion": "border-purple-200 bg-purple-50 text-purple-800",
-  "Technical + HR": "border-amber-200 bg-amber-50 text-amber-800",
+  "Technical + HR": "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   "Coding Round": "border-rose-200 bg-rose-50 text-rose-800",
   "System Design": "border-cyan-200 bg-cyan-50 text-cyan-800",
 };
@@ -133,7 +133,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                 value={form.company}
                 onChange={(event) => setForm((prev) => ({ ...prev, company: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -141,7 +141,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
               <select
                 value={form.type}
                 onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {INTERVIEW_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -157,7 +157,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                 value={form.date}
                 onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -167,7 +167,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                 onChange={(event) => setForm((prev) => ({ ...prev, time: event.target.value }))}
                 placeholder="10:00 AM - 10:30 AM"
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -175,7 +175,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
               <input
                 value={form.location}
                 onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
             <div>
@@ -183,7 +183,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
               <select
                 value={form.status}
                 onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[#0A3035]"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 <option value="open">Open</option>
                 <option value="closed">Closed</option>
@@ -192,7 +192,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
             <div className="md:col-span-2 flex flex-wrap gap-2">
               <button
                 type="submit"
-                className="rounded-full bg-[#0A3035] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                className="rounded-full bg-[var(--comp-accent)] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
               >
                 {editingId ? "Update Slot" : "Create Slot"}
               </button>
@@ -210,7 +210,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                       status: "open",
                     });
                   }}
-                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[#0A3035] hover:text-[#0A3035]"
+                  className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -231,11 +231,11 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">{booking.id}</span>
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                      <span className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--success)]">
                         {booking.status}
                       </span>
                     </div>
-                    <h3 className="mt-1 text-base font-semibold text-[#0A3035]">
+                    <h3 className="mt-1 text-base font-semibold text-[var(--comp-text-primary)]">
                       {booking.slot?.company || "Interview Slot"}
                     </h3>
                     <div className="mt-1 grid gap-1 text-xs text-[var(--text-secondary)] sm:grid-cols-3">
@@ -274,10 +274,10 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
               <div key={slot.id} className="dashboard-card flex flex-col justify-between p-4 md:p-5">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-semibold text-[#0A3035]">{slot.company}</span>
+                    <span className="text-base font-semibold text-[var(--comp-text-primary)]">{slot.company}</span>
                     <span
                       className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
-                        TYPE_COLORS[slot.type] || "border-slate-200 bg-slate-50 text-slate-700"
+                        TYPE_COLORS[slot.type] || "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"
                       }`}
                     >
                       {slot.type}
@@ -293,7 +293,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                   <button
                     type="button"
                     onClick={() => void runAction(() => bookInterviewSlot(slot.id), "Interview slot booked.")}
-                    className="rounded-full bg-[#0A3035] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#124850]"
+                    className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)]"
                   >
                     Book Slot
                   </button>
@@ -312,7 +312,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                             status: slot.status,
                           });
                         }}
-                        className="rounded-full border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
                       >
                         Edit
                       </button>
