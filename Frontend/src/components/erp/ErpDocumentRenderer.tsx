@@ -525,7 +525,7 @@ function TableRenderer({ node }: NodeRendererProps) {
               <th
                 key={column.key}
                 data-page-contrast="true"
-                className="erp-table-head-cell break-words"
+                className="erp-table-head-cell label-text break-words"
               >
                 {column.label}
               </th>
@@ -628,7 +628,7 @@ function FormRenderer({ node, renderChildren }: NodeRendererProps) {
       >
         {title ? <h3 data-page-contrast="true" className="page-contrast-fg text-lg font-bold">{title}</h3> : null}
         <div className="space-y-4">{renderChildren(node.children)}</div>
-        {error ? <p className="text-sm text-[#B42318]">{error}</p> : null}
+        {error ? <p className="text-sm text-[var(--error)]">{error}</p> : null}
       </form>
     </FormContext.Provider>
   );
@@ -679,7 +679,7 @@ function FieldRenderer({ node }: NodeRendererProps) {
           defaultValue={isBound ? undefined : value}
           disabled={disabled}
           onChange={(event) => handleChange(event.currentTarget.value)}
-          className="rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-slate-900 px-3 py-2"
+          className="rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-[var(--comp-text-primary)] px-3 py-2"
         >
           <option value="">Select</option>
           {options.map((option) => (
@@ -705,7 +705,7 @@ function FieldRenderer({ node }: NodeRendererProps) {
           disabled={disabled}
           readOnly={readOnly}
           onChange={(event) => handleChange(event.currentTarget.value)}
-          className="min-h-24 rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-slate-900 px-3 py-2"
+          className="min-h-24 rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-[var(--comp-text-primary)] px-3 py-2"
         />
       </label>
     );
@@ -724,7 +724,7 @@ function FieldRenderer({ node }: NodeRendererProps) {
         disabled={disabled}
         readOnly={readOnly}
         onChange={(event) => handleChange(event.currentTarget.value)}
-        className="rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-slate-900 px-3 py-2"
+        className="rounded border border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-white text-[var(--comp-text-primary)] px-3 py-2"
       />
     </label>
   );
@@ -807,7 +807,7 @@ function ButtonRenderer({ node }: NodeRendererProps) {
         event.preventDefault();
         void onClick();
       }}
-      className="rounded bg-[#0A3035] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+      className="rounded bg-[var(--comp-accent)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
     >
       {isPending ? "Loading..." : label}
     </button>
@@ -1072,7 +1072,7 @@ export default function ErpDocumentRenderer({
     <ActionHandlerContext.Provider value={actionContextValue}>
       <div className="space-y-4 pb-6">
         {globalError ? (
-          <div className="rounded-xl border border-[#F0B3B8] bg-[#FEF3F4] px-4 py-3 text-sm text-[#B42318]">{globalError}</div>
+          <div className="rounded-xl border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-3 text-sm text-[var(--error)]">{globalError}</div>
         ) : null}
         <DocumentNode node={activeDocument.root} />
       </div>

@@ -1,5 +1,8 @@
+// ErpPageShell: optional section-card layout for ERP data pages; loading uses SkeletonBlock instead of spinners.
 import { useRef, type ReactNode } from "react";
 import { usePageContrast } from "../../hooks/usePageContrast";
+import { SectionCard as ShellSectionCard } from "../ui/SectionCard";
+import { SkeletonBlock } from "../ui/SkeletonBlock";
 
 const INTERNAL_JSP_PATH_PATTERN = /\b(?:[a-z0-9_-]+\/)+[a-z0-9_-]+\.jsp(?:\?[^\s]*)?\b/gi;
 const VISIBLE_TEXT_NOISE_PATTERN =
@@ -98,7 +101,36 @@ interface ErpPageShellProps {
   loadingMessage?: string;
   onRefresh?: () => void;
   headerActions?: ReactNode;
+  /** ERP data pages: single titled SectionCard wrapper (title + actions in card header). */
+  contentLayout?: "default" | "section-card";
   children: ReactNode;
+}
+
+function RefreshButton({ onRefresh }: { onRefresh: () => void }) {
+  return (
+    <button
+      type="button"
+      data-page-contrast="true"
+      onClick={onRefresh}
+      className="page-contrast-outline flex min-h-11 min-w-11 items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)] md:min-h-9 md:min-w-0"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+      </svg>
+      Refresh
+    </button>
+  );
 }
 
 export function ErpPageShell({
@@ -109,62 +141,63 @@ export function ErpPageShell({
   loadingMessage = "Loading...",
   onRefresh,
   headerActions,
+  contentLayout = "default",
   children,
 }: ErpPageShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null);
   usePageContrast(shellRef, [title, source, updatedAt, isLoading]);
 
+  const headerActionsSlot = (
+    <>
+      {headerActions}
+      {onRefresh ? <RefreshButton onRefresh={onRefresh} /> : null}
+    </>
+  );
+
   return (
     <div ref={shellRef} className="relative min-h-screen p-4 md:p-6">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 data-page-contrast="true" className="page-contrast-fg text-2xl font-bold">
-            {title}
-          </h1>
-          {/* Debug info hidden in production */}
+      {contentLayout === "section-card" ? (
+        <ShellSectionCard
+          data-page-contrast="true"
+          title={title}
+          titleClassName="page-contrast-fg section-title"
+          actions={headerActionsSlot}
+          className="relative"
+        >
           <div className="hidden">
             <SourceBadge source={source} />
             {updatedAt ? (
-              <span
-                data-page-contrast="true"
-                className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium"
-              >
+              <span className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium">
                 Updated {formatTimestamp(updatedAt)}
               </span>
             ) : null}
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {headerActions}
-          {onRefresh && (
-            <button
-              type="button"
-              data-page-contrast="true"
-              onClick={onRefresh}
-              className="page-contrast-outline flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold transition hover:bg-[color-mix(in_srgb,var(--surface)_20%,transparent)]"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-              </svg>
-              Refresh
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-6">{children}</div>
+          <div className="space-y-6">{children}</div>
+        </ShellSectionCard>
+      ) : (
+        <>
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 data-page-contrast="true" className="page-contrast-fg page-title">
+                {title}
+              </h1>
+              <div className="hidden">
+                <SourceBadge source={source} />
+                {updatedAt ? (
+                  <span
+                    data-page-contrast="true"
+                    className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium"
+                  >
+                    Updated {formatTimestamp(updatedAt)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">{headerActionsSlot}</div>
+          </div>
+          <div className="space-y-6">{children}</div>
+        </>
+      )}
 
       {isLoading ? <PageLoadingOverlay message={loadingMessage} /> : null}
     </div>
@@ -192,9 +225,16 @@ function SourceBadge({ source }: { source: PageSourceLabel }) {
 
 function PageLoadingOverlay({ message }: { message: string }) {
   return (
-    <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 backdrop-blur-sm bg-slate-900/8">
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#F8F8F8] border-t-[#0A3035]" />
-      <p data-page-contrast="true" className="page-contrast-fg text-sm font-medium">{message}</p>
+    <div
+      className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 backdrop-blur-sm px-6"
+      style={{ background: "color-mix(in srgb, var(--comp-accent) 6%, transparent)" }}
+    >
+      <SkeletonBlock width={200} height={12} className="max-w-full rounded-full" />
+      <SkeletonBlock width={140} height={12} className="max-w-full rounded-full" />
+      <SkeletonBlock width={80} height={40} className="rounded-lg" />
+      <p data-page-contrast="true" className="page-contrast-fg body-text text-center font-medium">
+        {message}
+      </p>
     </div>
   );
 }
@@ -202,7 +242,7 @@ function PageLoadingOverlay({ message }: { message: string }) {
 export function SectionCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="dashboard-card p-4 md:p-5">
-      <h2 className="mb-3 text-lg font-semibold text-[#0A3035]">{sanitizeVisibleText(title, "Section")}</h2>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--comp-text-primary)]">{sanitizeVisibleText(title, "Section")}</h2>
       <div className="space-y-3">{children}</div>
     </section>
   );
@@ -210,10 +250,11 @@ export function SectionCard({ title, children }: { title: string; children: Reac
 
 export function StatusBanner({ message }: { message: StatusMessage }) {
   const classNameByTone: Record<StatusTone, string> = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    info: "border-[#0A3035]/25 bg-[#F8F8F8] text-[#0A3035]",
-    locked: "border-rose-200 bg-rose-50 text-rose-800",
+    success: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
+    warning: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
+    info: "border-[color-mix(in_srgb,var(--comp-accent)_25%,transparent)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-primary)]",
+    locked:
+      "border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]",
   };
 
   return (
@@ -230,8 +271,8 @@ export function KpiGrid({ items }: { items: KpiItem[] }) {
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <div key={item.label} className="dashboard-card p-4">
-          <p className="text-sm text-slate-600">{item.label}</p>
-          <p className="mt-1 text-2xl font-semibold text-[#0A3035]">{item.value}</p>
+          <p className="text-sm text-[var(--comp-text-secondary)]">{item.label}</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--comp-text-primary)]">{item.value}</p>
         </div>
       ))}
     </div>
@@ -246,7 +287,7 @@ export function DataTable({ table }: { table: DataTableModel }) {
   return (
     <div className="erp-table-shell">
       {table.title ? (
-        <div className="border-b border-[#0A3035]/20 bg-[#FFFFFF] px-3 py-2 text-sm font-semibold text-[#0A3035]">
+        <div className="border-b border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] bg-[var(--comp-surface)] px-3 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
           {sanitizeVisibleText(table.title)}
         </div>
       ) : null}
@@ -257,7 +298,7 @@ export function DataTable({ table }: { table: DataTableModel }) {
               {table.columns.map((column) => (
                 <th
                   key={column}
-                  className={`erp-table-head-cell ${
+                  className={`erp-table-head-cell label-text ${
                     isNumericColumn(column) ? "erp-table-align-right" : ""
                   }`}
                 >
@@ -338,7 +379,7 @@ function isNumericColumn(column: string) {
 
 export function EmptyStateCard({ message }: { message: string }) {
   return (
-    <div className="dashboard-card border-dashed p-5 text-sm font-medium text-slate-600">
+    <div className="dashboard-card border-dashed p-5 text-sm font-medium text-[var(--comp-text-secondary)]">
       {message}
     </div>
   );
