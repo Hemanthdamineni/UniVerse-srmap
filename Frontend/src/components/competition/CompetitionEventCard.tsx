@@ -9,7 +9,7 @@ import { DeadlineCountdown } from './DeadlineCountdown';
 
 interface CompetitionEventCardProps {
   event: EventSummary & {
-    prizes?: string;
+    prizes?: string | null;
     isCompetition?: boolean;
     competitionConfig?: unknown;
   };
@@ -44,6 +44,10 @@ export function CompetitionEventCard({ event, onClick }: CompetitionEventCardPro
   const badgeStatus: ValidStatus = statusValues.includes(event.status as ValidStatus)
     ? (event.status as ValidStatus)
     : 'upcoming';
+  const venueLabel =
+    typeof event.location === 'string'
+      ? event.location
+      : event.location?.physical ?? event.venue;
 
   return (
     <article
@@ -153,8 +157,8 @@ export function CompetitionEventCard({ event, onClick }: CompetitionEventCardPro
         }}
       >
         {event.department && <span>🏛 {event.department}</span>}
-        {(event.location?.physical ?? event.venue) && (
-          <span>📍 {event.location?.physical ?? event.venue}</span>
+        {venueLabel && (
+          <span>📍 {venueLabel}</span>
         )}
         {event.registeredCount !== undefined && (
           <span>👥 {event.registeredCount} registered</span>

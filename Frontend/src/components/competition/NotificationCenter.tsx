@@ -59,7 +59,16 @@ async function fetchNotifications(): Promise<NotificationItem[]> {
     const res = await fetch('/api/events/notifications', { credentials: 'include' });
     if (!res.ok) return [];
     if (res.status === 404) return [];
-    return (await res.json()) as NotificationItem[];
+    const payload = await res.json();
+    if (Array.isArray(payload)) return payload as NotificationItem[];
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      Array.isArray((payload as { data?: unknown }).data)
+    ) {
+      return (payload as { data: NotificationItem[] }).data;
+    }
+    return [];
   } catch {
     return [];
   }
