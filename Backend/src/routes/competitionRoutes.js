@@ -30,6 +30,18 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
     }),
     limits: { fileSize: 25 * 1024 * 1024 },
   });
+  const templateRoot = path.join(competitionStore.certificatesDir, "templates");
+  fs.mkdirSync(templateRoot, { recursive: true });
+  const templateUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, templateRoot),
+      filename: (req, file, cb) => {
+        const ext = path.extname(String(file.originalname || ".png")).slice(0, 10) || ".png";
+        cb(null, `${String(req.params.eventId || "event")}_${Date.now()}_${crypto.randomUUID()}${ext}`);
+      },
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 },
+  });
 
   function ensureAuthenticated(req) {
     if (!req.userContext || !req.userContext.isAuthenticated) {
@@ -59,6 +71,53 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
     ensureAuthenticated(req);
     return competitionStore.getCompetitionConfig(req.params.eventId);
   }));
+
+  router.get("/competitions/:eventId/my-role", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.getMyRole(req.params.eventId, req.userContext);
+  }));
+
+  router.get("/competitions/:eventId/roles", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.getEventRoles(req.params.eventId, req.userContext);
+  }));
+
+  router.post("/competitions/:eventId/roles", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.assignRole(req.params.eventId, req.userContext, {
+      regNo: req.body?.regNo,
+      role: req.body?.role,
+    });
+  }));
+
+  router.delete("/competitions/:eventId/roles/:regNo", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.removeRole(req.params.eventId, req.userContext, req.params.regNo);
+  }));
+
+  router.get("/competitions/:eventId/certificate-template", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.getCertificateTemplate(req.params.eventId, req.userContext, req.query.roundId);
+  }));
+
+  router.put("/competitions/:eventId/certificate-template", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.saveCertificateTemplate(req.params.eventId, req.userContext, req.body || {});
+  }));
+
+  router.post(
+    "/competitions/:eventId/certificate-template/image",
+    templateUpload.single("file"),
+    wrap((req) => {
+      ensureAuthenticated(req);
+      if (!req.file) {
+        const error = new Error("Template image file is required");
+        error.status = 400;
+        throw error;
+      }
+      return { path: `/files/certificates/templates/${req.file.filename}` };
+    })
+  );
 
   router.get("/competitions/:eventId/analytics", wrap((req) => {
     ensureAuthenticated(req);
@@ -166,7 +225,14 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
 
   router.get("/competitions/:eventId/rounds/:roundId/leaderboard", wrap((req) => {
     ensureAuthenticated(req);
-    return competitionStore.getLeaderboard(req.params.eventId, req.params.roundId);
+    try {
+      return competitionStore.getLeaderboard(req.params.eventId, req.params.roundId);
+    } catch (error) {
+      if (Number(error.status) === 403) {
+        return [];
+      }
+      throw error;
+    }
   }));
 
   router.post("/competitions/:eventId/rounds/:roundId/certificates/generate", wrap((req) => {
@@ -176,8 +242,41 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
 
   router.get("/competitions/:eventId/rounds/:roundId/certificates/me", wrap((req) => {
     ensureAuthenticated(req);
-    return competitionStore.getMyCertificate(req.params.eventId, req.params.roundId, req.userContext.userId);
+    try {
+      return competitionStore.getMyCertificate(req.params.eventId, req.params.roundId, req.userContext.userId);
+    } catch (error) {
+      if (Number(error.status) === 404) {
+        return null;
+      }
+      throw error;
+    }
   }));
+
+  router.get("/competitions/:eventId/rounds/:roundId/certificates/me/download", async (req, res) => {
+    try {
+      ensureAuthenticated(req);
+      const certificate = competitionStore.getMyCertificate(
+        req.params.eventId,
+        req.params.roundId,
+        req.userContext.userId
+      );
+      const fileName = path.basename(certificate.fileName);
+      const filePath = path.join(competitionStore.certificatesDir, fileName);
+      res.download(filePath, fileName, (error) => {
+        if (error && !res.headersSent) {
+          res.status(error.status || 500).json({
+            success: false,
+            error: error.message || "Failed to download certificate",
+          });
+        }
+      });
+    } catch (error) {
+      res.status(error.status || 500).json({
+        success: false,
+        error: error.message || "Unknown error",
+      });
+    }
+  });
 
   router.post("/competitions/reminders/run", wrap((req) => {
     ensureAuthenticated(req);

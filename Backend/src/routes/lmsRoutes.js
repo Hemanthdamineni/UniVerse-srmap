@@ -607,6 +607,14 @@ function createLmsRoutes({
     )
   );
 
+  router.delete("/lms/guides/:id", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.deleteGuide(req.params.id, req.userContext.userId, {
+        isAdmin: req.userContext.hasAdminAccess,
+      })
+    )
+  );
+
   router.post("/lms/guides/:id/sections", (req, res, next) =>
     createHandle(req, res, next, async () =>
       lmsStore.addGuideSection(req.params.id, req.userContext.userId, req.body)
@@ -661,6 +669,14 @@ function createLmsRoutes({
   router.get("/lms/roadmaps/:id", (req, res, next) =>
     createHandle(req, res, next, async () =>
       lmsStore.getRoadmap(req.params.id, req.userContext.userId, {
+        isAdmin: req.userContext.hasAdminAccess,
+      })
+    )
+  );
+
+  router.delete("/lms/roadmaps/:id", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.deleteRoadmap(req.params.id, req.userContext.userId, {
         isAdmin: req.userContext.hasAdminAccess,
       })
     )

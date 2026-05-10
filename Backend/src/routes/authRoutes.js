@@ -17,6 +17,32 @@ const {
 } = require("../utils/cookies");
 
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
+const { NODE_ENV } = require("../config/env");
+
+const DEMO_ADMIN_REG_NO = "AP23110010419";
+
+function buildDemoProfileData(username) {
+  const registerNo = String(username || DEMO_ADMIN_REG_NO).trim().toUpperCase() || DEMO_ADMIN_REG_NO;
+  return {
+    PageHeading: "PROFILE",
+    TableContent: {
+      "Student Name": "Hemachandra K",
+      Name: "Hemachandra K",
+      "Register No.": registerNo,
+      Semester: "VI",
+      "Academic Year": "III Year",
+      "Program / Section": "B.Tech Computer Science and Engineering / A",
+      Department: "Computer Science and Engineering",
+      "Student E-Mail": `${registerNo.toLowerCase()}@srmap.edu.in`,
+      "Student Contact Number": "9000000000",
+    },
+    tables: [],
+    text: "",
+    meta: {
+      source: "development-demo-login",
+    },
+  };
+}
 
 function createAuthRoutes({ sessionStore }) {
   const router = express.Router();
@@ -126,6 +152,44 @@ function createAuthRoutes({ sessionStore }) {
 
   router.post("/login", handleLogin);
   router.post("/auth/login", handleLogin);
+
+  async function handleDevelopmentLogin(req, res) {
+    if (NODE_ENV === "production") {
+      const error = new Error("Development login is disabled in production.");
+      error.status = 404;
+      error.code = "NOT_FOUND";
+      return sendApiError(res, req, error);
+    }
+
+    try {
+      const username = String(req.body?.username || DEMO_ADMIN_REG_NO).trim().toUpperCase();
+      const sessionId = await sessionStore.create({ cookies: [], origins: [] });
+      const profileData = buildDemoProfileData(username);
+
+      await sessionStore.update(sessionId, {
+        loggedIn: true,
+        profileData,
+        username,
+        loginBootstrap: null,
+        preAuthAttempt: null,
+      });
+
+      setSessionCookie(res, req, sessionId);
+
+      return sendApiSuccess(res, req, {
+        success: true,
+        sessionId,
+        profileData,
+        profileStatus: "ready",
+        demo: true,
+      });
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  }
+
+  router.post("/dev/login", handleDevelopmentLogin);
+  router.post("/auth/dev-login", handleDevelopmentLogin);
 
   async function handleForgotPassword(req, res) {
     const type = String(req.body?.type || "").trim().toLowerCase();

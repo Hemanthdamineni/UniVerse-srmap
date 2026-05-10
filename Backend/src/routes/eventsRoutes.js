@@ -41,6 +41,8 @@ function createEventsRoutes({ eventsStore, sessionStore, competitionStore, admin
       startDate: req.query.startDate,
       endDate: req.query.endDate,
       myEvents: req.query.myEvents === "true",
+      registered: req.query.registered === "true",
+      createdBy: req.query.createdBy,
     };
 
     return eventsStore.listEvents({ user: req.userContext, filters });

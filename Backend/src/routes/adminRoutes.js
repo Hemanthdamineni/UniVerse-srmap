@@ -1,9 +1,8 @@
 const express = require("express");
 const { resolveSessionId } = require("../utils/cookies");
-const { assertAdminAccess } = require("../utils/adminAccess");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 
-function createAdminRoutes({ sessionStore, adminPassword = "" }) {
+function createAdminRoutes({ sessionStore }) {
   const router = express.Router();
 
   router.get("/admin/access/status", async (req, res) => {
@@ -25,7 +24,6 @@ function createAdminRoutes({ sessionStore, adminPassword = "" }) {
         error.status = 403;
         throw error;
       }
-      assertAdminAccess(req, adminPassword);
       const sessionId = resolveSessionId(req);
       await sessionStore.update(sessionId, {
         adminElevated: true,
