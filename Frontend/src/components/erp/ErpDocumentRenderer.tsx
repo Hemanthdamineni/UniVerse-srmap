@@ -349,16 +349,15 @@ function formatActionError(error: unknown) {
   return "Request failed.";
 }
 
+import { SectionCard } from "./ErpPrimitives";
+
 function ContainerRenderer({ node, renderChildren }: NodeRendererProps) {
   const title = readString(node.props.title);
-  const sectionClasses =
-    "space-y-4 rounded-2xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] backdrop-blur-xl p-5 shadow-sm";
 
   return (
-    <section data-page-contrast="true" className={`space-y-4 ${sectionClasses}`}>
-      {title ? <h3 data-page-contrast="true" className="page-contrast-fg text-lg font-bold">{title}</h3> : null}
-      <div className="space-y-4">{renderChildren(node.children)}</div>
-    </section>
+    <SectionCard title={title || ""}>
+      <div className="space-y-6">{renderChildren(node.children)}</div>
+    </SectionCard>
   );
 }
 
@@ -618,18 +617,19 @@ function FormRenderer({ node, renderChildren }: NodeRendererProps) {
 
   return (
     <FormContext.Provider value={contextValue}>
-      <form
-        data-page-contrast="true"
-        className="space-y-4 rounded-2xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] backdrop-blur-xl p-5 shadow-sm"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit();
-        }}
-      >
-        {title ? <h3 data-page-contrast="true" className="page-contrast-fg text-lg font-bold">{title}</h3> : null}
-        <div className="space-y-4">{renderChildren(node.children)}</div>
-        {error ? <p className="text-sm text-[var(--error)]">{error}</p> : null}
-      </form>
+      <SectionCard title={title}>
+        <form
+          data-page-contrast="true"
+          className="space-y-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+        >
+          <div className="space-y-4">{renderChildren(node.children)}</div>
+          {error ? <p className="text-sm text-[var(--error)]">{error}</p> : null}
+        </form>
+      </SectionCard>
     </FormContext.Provider>
   );
 }

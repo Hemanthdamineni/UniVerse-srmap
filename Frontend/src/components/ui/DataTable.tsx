@@ -14,12 +14,14 @@ export interface DataTableProps<T> {
   data: T[] | undefined | null;
   columns: Column<T>[];
   keyExtractor: (row: T, index: number) => string | number;
+  ariaLabel?: string;
   isLoading?: boolean;
   error?: Error | string | null;
   onRetry?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyIcon?: React.ReactNode;
+  stickyHeader?: boolean;
   className?: string;
 }
 
@@ -27,12 +29,14 @@ export function DataTable<T>({
   data,
   columns,
   keyExtractor,
+  ariaLabel = "Data table",
   isLoading,
   error,
   onRetry,
   emptyTitle = "No data found",
   emptyDescription,
   emptyIcon,
+  stickyHeader = false,
   className
 }: DataTableProps<T>) {
 
@@ -67,12 +71,12 @@ export function DataTable<T>({
   return (
     <div className={cn("w-full", className)}>
       {/* Desktop Table View */}
-      <div className="hidden md:block erp-table-shell">
-        <table className="erp-table">
+      <div className="hidden md:block erp-table-shell overflow-auto">
+        <table className="erp-table" aria-label={ariaLabel}>
           <thead className="erp-table-head">
             <tr className="erp-table-row">
               {columns.map((col, i) => (
-                <th key={i} className={cn("erp-table-head-cell label-text", col.className)}>
+                <th key={i} className={cn("erp-table-head-cell label-text", stickyHeader ? "sticky top-0 z-[1] bg-[var(--comp-surface)]" : "", col.className)}>
                   {col.header}
                 </th>
               ))}

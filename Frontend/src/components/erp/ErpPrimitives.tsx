@@ -1,62 +1,12 @@
 // ErpPageShell: optional section-card layout for ERP data pages; loading uses SkeletonBlock instead of spinners.
 import { useRef, type ReactNode } from "react";
 import { usePageContrast } from "../../hooks/usePageContrast";
-import { SectionCard as ShellSectionCard } from "../ui/SectionCard";
+import { sanitizeErpDisplayText } from "../../lib/erpDisplayText";
+import { PageContainer } from "../layout/PageLayouts";
 import { SkeletonBlock } from "../ui/SkeletonBlock";
 
-const INTERNAL_JSP_PATH_PATTERN = /\b(?:[a-z0-9_-]+\/)+[a-z0-9_-]+\.jsp(?:\?[^\s]*)?\b/gi;
-const VISIBLE_TEXT_NOISE_PATTERN =
-  /(function\s+[a-z0-9_]+\s*\(|\$\(|\.jsp\b|validationengine|ajaxparameter|e\.preventdefault|window\.open|document\.getelementbyid|@page\b|^var\s+[a-z0-9_]+\s*=|font-size\s*:|font-family\s*:|background(?:-color)?\s*:|text-align\s*:|font-weight\s*:|padding\s*:|border(?:-collapse)?\s*:|color\s*:|dialog\(|alert\(|\$.post\(|\$.ajax\()/i;
-
-function stripVisibleTextNoise(value: string) {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  if (!normalized || !VISIBLE_TEXT_NOISE_PATTERN.test(normalized)) {
-    return normalized;
-  }
-
-  const fragments = normalized
-    .replace(/([;{}])/g, "$1\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => !VISIBLE_TEXT_NOISE_PATTERN.test(line))
-    .filter((line) => !/^[$@.#]/.test(line))
-    .filter((line) => !/^\w+\([^)]*\)$/.test(line));
-
-  return fragments.join(" ").replace(/\s+/g, " ").trim();
-}
-
 export function sanitizeVisibleText(value: unknown, fallback = "") {
-  const normalized = String(value || "").replace(/\s+/g, " ").trim();
-  if (!normalized) return fallback;
-
-  const withoutInternalPaths = normalized.replace(INTERNAL_JSP_PATH_PATTERN, " ");
-  let sanitized = stripVisibleTextNoise(withoutInternalPaths);
-  
-  // 1. Convert ALL CAPS text to Title Case (ignoring pure numbers or tiny abbreviations)
-  if (sanitized === sanitized.toUpperCase() && sanitized.length > 2 && /[A-Z]/.test(sanitized)) {
-      sanitized = sanitized.replace(
-        /\w\S*/g,
-        (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
-      );
-  }
-  
-  // 2. Fix spacing around parentheses/brackets
-  sanitized = sanitized.replace(/([a-zA-Z0-9])\(/g, "$1 (");
-  sanitized = sanitized.replace(/ \)/g, ")");
-  sanitized = sanitized.replace(/\( /g, "(");
-  
-  // 3. Clean up internal Form IDs (e.g., frmStudentFeeDueDetails -> Fee Due Details)
-  if (sanitized.match(/^frm[A-Z]/i) || sanitized.toLowerCase().includes('frmstudent')) {
-      sanitized = sanitized
-        .replace(/^frmStudent/i, '')
-        .replace(/^frm/i, '')
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/\b\w/g, c => c.toUpperCase())
-        .trim();
-  }
-
-  return sanitized || fallback;
+  return sanitizeErpDisplayText(value, fallback);
 }
 
 export type PageSourceLabel =
@@ -101,8 +51,6 @@ interface ErpPageShellProps {
   loadingMessage?: string;
   onRefresh?: () => void;
   headerActions?: ReactNode;
-  /** ERP data pages: single titled SectionCard wrapper (title + actions in card header). */
-  contentLayout?: "default" | "section-card";
   children: ReactNode;
 }
 
@@ -141,7 +89,6 @@ export function ErpPageShell({
   loadingMessage = "Loading...",
   onRefresh,
   headerActions,
-  contentLayout = "default",
   children,
 }: ErpPageShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -155,52 +102,32 @@ export function ErpPageShell({
   );
 
   return (
-    <div ref={shellRef} className="relative min-h-screen p-4 md:p-6">
-      {contentLayout === "section-card" ? (
-        <ShellSectionCard
-          data-page-contrast="true"
-          title={title}
-          titleClassName="page-contrast-fg section-title"
-          actions={headerActionsSlot}
-          className="relative"
-        >
-          <div className="hidden">
-            <SourceBadge source={source} />
-            {updatedAt ? (
-              <span className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium">
-                Updated {formatTimestamp(updatedAt)}
-              </span>
-            ) : null}
-          </div>
-          <div className="space-y-6">{children}</div>
-        </ShellSectionCard>
-      ) : (
-        <>
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 data-page-contrast="true" className="page-contrast-fg page-title">
-                {title}
-              </h1>
-              <div className="hidden">
-                <SourceBadge source={source} />
-                {updatedAt ? (
-                  <span
-                    data-page-contrast="true"
-                    className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium"
-                  >
-                    Updated {formatTimestamp(updatedAt)}
-                  </span>
-                ) : null}
-              </div>
+    <PageContainer className="relative">
+      <div ref={shellRef}>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 data-page-contrast="true" className="page-contrast-fg page-title text-xl md:text-2xl">
+              {title}
+            </h1>
+            <div className="hidden">
+              <SourceBadge source={source} />
+              {updatedAt ? (
+                <span
+                  data-page-contrast="true"
+                  className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium"
+                >
+                  Updated {formatTimestamp(updatedAt)}
+                </span>
+              ) : null}
             </div>
-            <div className="flex items-center gap-3">{headerActionsSlot}</div>
           </div>
-          <div className="space-y-6">{children}</div>
-        </>
-      )}
+          <div className="flex items-center gap-3">{headerActionsSlot}</div>
+        </div>
+        <div className="space-y-4">{children}</div>
+      </div>
 
       {isLoading ? <PageLoadingOverlay message={loadingMessage} /> : null}
-    </div>
+    </PageContainer>
   );
 }
 
@@ -239,10 +166,10 @@ function PageLoadingOverlay({ message }: { message: string }) {
   );
 }
 
-export function SectionCard({ title, children }: { title: string; children: ReactNode }) {
+export function SectionCard({ title = "Section", children }: { title?: string; children: ReactNode }) {
   return (
-    <section className="dashboard-card p-4 md:p-5">
-      <h2 className="mb-3 text-lg font-semibold text-[var(--comp-text-primary)]">{sanitizeVisibleText(title, "Section")}</h2>
+    <section className="dashboard-card p-3 md:p-4">
+      <h2 className="mb-2 text-base md:text-lg font-semibold text-[var(--comp-text-primary)]">{sanitizeVisibleText(title, "Section")}</h2>
       <div className="space-y-3">{children}</div>
     </section>
   );
@@ -379,8 +306,13 @@ function isNumericColumn(column: string) {
 
 export function EmptyStateCard({ message }: { message: string }) {
   return (
-    <div className="dashboard-card border-dashed p-5 text-sm font-medium text-[var(--comp-text-secondary)]">
-      {message}
+    <div className="dashboard-card border-dashed p-6 text-sm font-medium text-[var(--comp-text-secondary)]">
+      <div className="mx-auto flex max-w-md flex-col items-center gap-2 text-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-base font-semibold text-[var(--comp-text-primary)]">
+          i
+        </div>
+        <p>{message}</p>
+      </div>
     </div>
   );
 }
