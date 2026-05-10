@@ -10,16 +10,18 @@
  *   Other phases     → 30s
  *
  * Polling only fires when !document.hidden. Always cleans up on unmount.
+ *
+ * Identity: uses readStoredProfileData() to get current user's reg no.
+ * Role: calls getMyRole(eventId) and merges result into userState.
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getEvent, getCompetitionConfig, type EventDetail, type CompetitionConfig, type CompetitionRound } from '../lib/campusApi';
 import { eventCache } from '../lib/eventCache';
 import { getEventPhase } from '../lib/eventPhase';
-import { getEventUserState, type EventUserState, type BackendPermissions } from '../lib/eventUserState';
-import { readStoredProfileData } from '../lib/session';
-import type { Submission } from '../lib/competitionsApi';
-import { getMySubmission } from '../lib/competitionsApi';
+import { getEventUserState, type EventUserState } from '../lib/eventUserState';
+import { getMyRole, getMySubmission, type MyRoleResponse, type Submission } from '../lib/competitionsApi';
+import { getCurrentRegNo, isPlatformAdmin } from '../lib/identity';
 
 // ─── Context value type ───────────────────────────────────────────────────────
 
@@ -27,9 +29,10 @@ interface EventContextValue {
   event: EventDetail | null;
   config: CompetitionConfig | null;
   userState: EventUserState | null;
+  myRole: MyRoleResponse | null;
   loading: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: (skipCache?: boolean) => void;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -73,43 +76,72 @@ export function EventProvider({
 }) {
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [config, setConfig] = useState<CompetitionConfig | null>(null);
+  const [roleData, setRoleData] = useState<MyRoleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const userId = (() => {
-    const profile = readStoredProfileData();
-    return (
-      (profile?.registerNumber as string | undefined) ??
-      (profile?.id as string | undefined) ??
-      ''
-    );
-  })();
+  const userId = getCurrentRegNo();
+  const platformAdmin = isPlatformAdmin(userId);
 
   const fetchData = useCallback(
     async (skipCache = false) => {
       const cacheKey = `event:${eventId}`;
       const configKey = `config:${eventId}`;
+      const roleKey = `role:${eventId}`;
 
       if (!skipCache) {
         const cachedEvent = eventCache.get<EventDetail>(cacheKey);
         const cachedConfig = eventCache.get<CompetitionConfig | null>(configKey);
+        const cachedRole = eventCache.get<MyRoleResponse | null>(roleKey);
         if (cachedEvent) {
+          const resolvedCachedRole =
+            platformAdmin
+              ? {
+                  regNo: userId,
+                  role: 'owner',
+                  permissions: {
+                    canEdit: true,
+                    canEvaluate: true,
+                    canShortlist: true,
+                    canManageRoles: true,
+                    canViewAllSubmissions: true,
+                  },
+                } satisfies MyRoleResponse
+              : cachedRole ?? null;
           setEvent(cachedEvent);
           setConfig(cachedConfig ?? null);
+          setRoleData(resolvedCachedRole);
           setLoading(false);
           return;
         }
       }
 
       try {
-        const [eventData, configData] = await Promise.all([
+        const [eventData, configData, myRoleData] = await Promise.all([
           getEvent(eventId),
           getCompetitionConfig(eventId).catch(() => null),
+          getMyRole(eventId).catch(() => null),
         ]);
+        const resolvedRoleData =
+          platformAdmin
+            ? {
+                regNo: userId,
+                role: 'owner',
+                permissions: {
+                  canEdit: true,
+                  canEvaluate: true,
+                  canShortlist: true,
+                  canManageRoles: true,
+                  canViewAllSubmissions: true,
+                },
+              } satisfies MyRoleResponse
+            : myRoleData;
         eventCache.set(cacheKey, eventData, 60_000);
         eventCache.set(configKey, configData, 120_000);
+        if (resolvedRoleData) eventCache.set(roleKey, resolvedRoleData, 60_000);
         setEvent(eventData);
         setConfig(configData as CompetitionConfig | null);
+        setRoleData(resolvedRoleData);
         setError(null);
       } catch {
         setError('Failed to load event. Please try again.');
@@ -117,7 +149,7 @@ export function EventProvider({
         setLoading(false);
       }
     },
-    [eventId]
+    [eventId, platformAdmin, userId]
   );
 
   // Initial fetch
@@ -149,6 +181,20 @@ export function EventProvider({
   }, [fetchData]);
 
   const submissions = useSubmissions(eventId, config);
+
+  // Build permissions from myRole response
+  const permissions = roleData?.permissions
+    ? {
+        canEdit: roleData.permissions.canEdit,
+        canEvaluate: roleData.permissions.canEvaluate,
+        canShortlist: roleData.permissions.canShortlist,
+        canManageRoles: roleData.permissions.canManageRoles,
+        canViewAllSubmissions: roleData.permissions.canViewAllSubmissions,
+      }
+    : (event as Record<string, unknown>)?.permissions as
+        | { canEdit: boolean; canEvaluate: boolean; canShortlist: boolean }
+        | undefined;
+
   const userState =
     event && userId
       ? getEventUserState(
@@ -156,13 +202,22 @@ export function EventProvider({
           config,
           userId,
           submissions,
-          (event as Record<string, unknown>).permissions as BackendPermissions | undefined
+          permissions,
+          roleData,
         )
       : null;
 
   return (
     <EventContext.Provider
-      value={{ event, config, userState, loading, error, refetch: () => void fetchData(true) }}
+      value={{
+        event,
+        config,
+        userState,
+        myRole: roleData,
+        loading,
+        error,
+        refetch: (skipCache = true) => void fetchData(skipCache),
+      }}
     >
       {children}
     </EventContext.Provider>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { hasSessionAuth } from "../lib/session";
 import { disableAdminMode, getAdminAccessStatus, unlockAdminMode } from "../lib/adminModeApi";
 import { getAdminHeaders } from "../lib/adminApi";
+import { getCurrentRegNo, isPlatformAdmin } from "../lib/identity";
 
 type AdminModeState = {
   potentialAdmin: boolean;
@@ -28,9 +29,9 @@ function hasSessionStorage() {
 }
 
 export function AdminModeProvider({ children }: { children: React.ReactNode }) {
-  const [potentialAdmin, setPotentialAdmin] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [registerNo, setRegisterNo] = useState("");
+  const [potentialAdmin, setPotentialAdmin] = useState(() => isPlatformAdmin());
+  const [isAdmin, setIsAdmin] = useState(() => isPlatformAdmin());
+  const [registerNo, setRegisterNo] = useState(() => getCurrentRegNo());
   const [showPrompt, setShowPrompt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

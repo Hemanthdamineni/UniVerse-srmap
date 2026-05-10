@@ -23,7 +23,10 @@ type TrackEvent =
   | 'create_event_quick_mode'
   | 'create_event_full_mode'
   | 'create_event_completed'
-  | 'create_event_abandoned';     // route leave before Step 4
+  | 'create_event_abandoned'      // route leave before Step 4
+  | 'certificate_downloaded'
+  | 'team_created'
+  | 'team_invite_sent';
 
 export function track(event: TrackEvent, properties?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
