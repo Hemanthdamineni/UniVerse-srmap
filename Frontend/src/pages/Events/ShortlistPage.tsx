@@ -4,7 +4,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import { SectionCard } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import {
   applyCompetitionShortlist,
   getCompetitionSubmissions,
@@ -14,6 +15,8 @@ import { SummaryStatBar } from '../../components/competition/SummaryStatBar';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { EmptyState } from '../../components/competition/EmptyState';
 import { SkeletonTable } from '../../components/competition/Skeletons';
+import { Input } from "../../components/input";
+import { Select } from "../../components/select";
 
 type SubmissionRow = {
   id: string;
@@ -105,32 +108,24 @@ export default function ShortlistPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    border: '1px solid var(--comp-border)',
-    borderRadius: 8,
-    background: 'var(--comp-surface)',
-    color: 'var(--comp-text-primary)',
-    fontSize: '0.875rem',
-    outline: 'none',
-  };
-
   return (
-    <ErpPageShell title="Shortlist & Publish" source="Internal API" isLoading={false} loadingMessage="Loading...">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+    <CompetitionPageShell
+      title="Shortlist & Publish"
+      subtitle="Apply selection rules and publish round results."
+      variant="wide"
+    >
+      <div className="space-y-5">
 
         <Link
           to={`/events/${encodeURIComponent(eventId)}/manage`}
-          style={{ fontSize: '0.8rem', color: 'var(--comp-text-secondary)', textDecoration: 'none' }}
+          className="text-xs text-[var(--text-secondary)] no-underline"
         >
           ← Back to Dashboard
         </Link>
 
-        <h1 className="comp-heading-xl" style={{ margin: 0 }}>Shortlist & Publish</h1>
-
         {error && <ErrorMessage message={error} onRetry={() => void load()} />}
         {successMsg && (
-          <div role="status" style={{ background: 'var(--status-open-bg)', border: '1px solid var(--status-open-border)', borderRadius: 8, padding: 'var(--space-sm) var(--space-md)', color: 'var(--status-open-text)', fontWeight: 600, fontSize: '0.875rem' }}>
+          <div role="status" className="rounded-xl border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-sm font-semibold text-[var(--status-open-text)]">
             ✓ {successMsg}
           </div>
         )}
@@ -140,31 +135,30 @@ export default function ShortlistPage() {
 
         {/* Shortlist controls */}
         <SectionCard title="Shortlist Controls">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
+          <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="comp-label" htmlFor="shortlist-mode" style={{ display: 'block', marginBottom: 4 }}>Mode</label>
-              <select
+              <label className="comp-label mb-1 block" htmlFor="shortlist-mode">Mode</label>
+              <Select
                 id="shortlist-mode"
                 value={mode}
                 onChange={(e) => setMode(e.target.value as 'topN' | 'threshold')}
-                style={inputStyle}
                 aria-label="Shortlist mode"
               >
                 <option value="topN">Top N submissions</option>
                 <option value="threshold">Score threshold ≥</option>
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="comp-label" htmlFor="shortlist-value" style={{ display: 'block', marginBottom: 4 }}>
+              <label className="comp-label mb-1 block" htmlFor="shortlist-value">
                 {mode === 'topN' ? 'N (count)' : 'Min score'}
               </label>
-              <input
+              <Input
                 id="shortlist-value"
                 type="number"
                 min={1}
                 value={value}
                 onChange={(e) => setValue(Number(e.target.value || 0))}
-                style={{ ...inputStyle, width: 80 }}
+                className="w-20"
                 aria-label={mode === 'topN' ? 'Top N count' : 'Score threshold'}
               />
             </div>
@@ -178,7 +172,7 @@ export default function ShortlistPage() {
               {busy ? 'Applying...' : '⚡ Apply Shortlist'}
             </button>
           </div>
-          <p className="comp-body" style={{ margin: 'var(--space-sm) 0 0' }}>
+          <p className="comp-body mt-2">
             {evaluated.length} evaluated · {rows.length - evaluated.length} pending · Preview: <strong>{previewIds.size}</strong> will be shortlisted
           </p>
         </SectionCard>
@@ -190,36 +184,31 @@ export default function ShortlistPage() {
           ) : evaluated.length === 0 ? (
             <EmptyState icon="📋" title="No evaluated submissions" description="Submit evaluations before applying shortlist." />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="space-y-1.5">
               {evaluated.map((row, idx) => {
                 const isSelected = previewIds.has(row.id);
                 return (
                   <div
                     key={row.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 14px',
-                      borderRadius: 8,
-                      border: `1px solid ${isSelected ? 'var(--status-open-border)' : 'var(--comp-border)'}`,
-                      background: isSelected ? 'var(--status-open-bg)' : 'var(--comp-surface)',
-                      gap: 8,
-                    }}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2 ${
+                      isSelected
+                        ? 'border-[var(--status-open-border)] bg-[var(--status-open-bg)]'
+                        : 'border-[var(--border)] bg-[var(--dash-subcard-bg)]'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontWeight: 700, color: 'var(--comp-accent)', minWidth: 28 }}>#{idx + 1}</span>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--comp-text-primary)' }}>{row.submittedBy}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="min-w-7 font-bold text-[var(--comp-accent)]">#{idx + 1}</span>
+                      <span className="text-sm text-[var(--text-primary)]">{row.submittedBy}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontWeight: 700, color: 'var(--comp-text-primary)', fontSize: '0.875rem' }}>{row.totalScore}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm font-bold text-[var(--text-primary)]">{row.totalScore}</span>
                       {isSelected && (
-                        <span style={{ background: 'var(--status-open-bg)', color: 'var(--status-open-text)', borderRadius: 20, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700 }}>
+                        <span className="rounded-full bg-[var(--status-open-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--status-open-text)]">
                           ✓ Shortlist
                         </span>
                       )}
                       {row.shortlisted && !isSelected && (
-                        <span style={{ color: 'var(--comp-text-muted)', fontSize: '0.72rem' }}>was shortlisted</span>
+                        <span className="text-xs text-[var(--text-secondary)]">was shortlisted</span>
                       )}
                     </div>
                   </div>
@@ -231,7 +220,7 @@ export default function ShortlistPage() {
 
         {/* Publish results */}
         <SectionCard title="Publish Results">
-          <p className="comp-body" style={{ margin: '0 0 var(--space-md)' }}>
+          <p className="comp-body mb-4 mt-0">
             Publishing results sends notifications to all participants and locks further evaluation for this round. This action is irreversible.
           </p>
           {!confirmPublish ? (
@@ -245,11 +234,11 @@ export default function ShortlistPage() {
               📢 Publish Results
             </button>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--status-live-text)' }}>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-[var(--status-live-text)]">
                 ⚠️ Confirm: Publish results for this round? This cannot be undone.
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="flex gap-2">
                 <button onClick={() => void publish()} disabled={busy} className="comp-btn-primary" aria-label="Confirm publish">
                   {busy ? 'Publishing...' : '✓ Yes, Publish'}
                 </button>
@@ -261,6 +250,6 @@ export default function ShortlistPage() {
           )}
         </SectionCard>
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
   );
 }

@@ -5,7 +5,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import { SectionCard } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import {
   generateRoundCertificates,
   getCompetitionAnalytics,
@@ -18,6 +19,8 @@ import {
 import { SummaryStatBar } from '../../components/competition/SummaryStatBar';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import type { EventDetail, CompetitionConfig } from '../../lib/campusApi';
+import { Input } from '../../components/input';
+import { Textarea } from '../../components/textarea';
 
 export default function OrganizerDashboard() {
   const { eventId = '' } = useParams();
@@ -109,28 +112,19 @@ export default function OrganizerDashboard() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid var(--comp-border)',
-    borderRadius: 8,
-    background: 'var(--comp-surface)',
-    color: 'var(--comp-text-primary)',
-    fontSize: '0.875rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
   return (
-    <ErpPageShell title="Manage Competition" source="Internal API" isLoading={loading} loadingMessage="Loading competition data...">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+    <CompetitionPageShell
+      title="Organizer Dashboard"
+      subtitle="Monitor registrations, submissions, announcements, and publishing readiness."
+      actions={<Link className="comp-btn-primary" to="/events/create">Create New Event</Link>}
+      variant="wide"
+    >
+      <div className="space-y-5">
 
         {/* Back link */}
-        <Link to={`/events/${encodeURIComponent(eventId)}`} style={{ fontSize: '0.8rem', color: 'var(--comp-text-secondary)', textDecoration: 'none' }}>
+        <Link to={`/events/${encodeURIComponent(eventId)}`} className="text-xs text-[var(--text-secondary)] no-underline">
           ← Back to Event
         </Link>
-
-        <h1 className="comp-heading-xl" style={{ margin: 0 }}>Organizer Dashboard</h1>
 
         {error && <ErrorMessage title="Error" message={error} />}
         {notCompetition && (
@@ -142,15 +136,11 @@ export default function OrganizerDashboard() {
         {notice && (
           <div
             role="status"
-            style={{
-              padding: 'var(--space-sm) var(--space-md)',
-              borderRadius: 8,
-              background: notice.tone === 'success' ? 'var(--status-open-bg)' : 'var(--status-live-bg)',
-              border: `1px solid ${notice.tone === 'success' ? 'var(--status-open-border)' : 'var(--status-live-border)'}`,
-              color: notice.tone === 'success' ? 'var(--status-open-text)' : 'var(--status-live-text)',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
+            className={`rounded-xl border px-3 py-2 text-sm font-medium ${
+              notice.tone === 'success'
+                ? 'border-[var(--status-open-border)] bg-[var(--status-open-bg)] text-[var(--status-open-text)]'
+                : 'border-[var(--status-live-border)] bg-[var(--status-live-bg)] text-[var(--status-live-text)]'
+            }`}
           >
             {notice.text}
           </div>
@@ -161,19 +151,11 @@ export default function OrganizerDashboard() {
 
         {/* Analytics */}
         <SectionCard title="Round Analytics">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          <div className="space-y-2">
             {(analytics?.rounds ?? []).map((row) => (
-              <div
-                key={row.roundId}
-                style={{
-                  background: 'var(--comp-surface)',
-                  border: '1px solid var(--comp-border)',
-                  borderRadius: 10,
-                  padding: 'var(--space-md)',
-                }}
-              >
-                <p className="comp-heading-md" style={{ margin: '0 0 6px' }}>{row.title}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+              <div key={row.roundId} className="rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
+                <p className="comp-heading-md mb-1.5 mt-0">{row.title}</p>
+                <div className="flex flex-wrap gap-4">
                   <span className="comp-body">Submission rate: <strong>{row.submissionRate}%</strong></span>
                   <span className="comp-body">Evaluation: <strong>{row.evaluationCompletion}%</strong></span>
                   <span className="comp-body">
@@ -189,19 +171,17 @@ export default function OrganizerDashboard() {
 
         {/* Co-organizers */}
         <SectionCard title="Co-organizers">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          <div className="space-y-2">
             <label className="comp-label" htmlFor="co-orgs">Add by register number, comma-separated</label>
-            <input
+            <Input
               id="co-orgs"
-              style={inputStyle}
               value={coOrganizersInput}
               onChange={(e) => setCoOrganizersInput(e.target.value)}
               placeholder="e.g. 21CS001, 21CS002"
               aria-label="Co-organizer register numbers"
             />
             <button
-              className="comp-btn-ghost"
-              style={{ alignSelf: 'flex-start' }}
+              className="comp-btn-ghost w-fit"
               onClick={() =>
                 void updateEventCoOrganizers(
                   eventId,
@@ -221,27 +201,25 @@ export default function OrganizerDashboard() {
 
         {/* Announcement */}
         <SectionCard title="Broadcast Announcement">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            <input
-              style={inputStyle}
+          <div className="space-y-2">
+            <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Announcement subject"
               aria-label="Announcement subject"
             />
-            <textarea
-              style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
+            <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
               placeholder="Message for all registered participants..."
               aria-label="Announcement message"
+              className="min-h-[80px]"
             />
             <button
               disabled={sending || !subject.trim() || !message.trim()}
               onClick={() => void onSendAnnouncement()}
-              className="comp-btn-primary"
-              style={{ alignSelf: 'flex-start' }}
+              className="comp-btn-primary w-fit"
               aria-label="Send announcement"
             >
               {sending ? 'Sending...' : '📢 Broadcast Announcement'}
@@ -249,64 +227,162 @@ export default function OrganizerDashboard() {
           </div>
         </SectionCard>
 
-        {/* Round management */}
-        <SectionCard title="Round Management">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            {(config?.rounds ?? []).map((round) => {
-              const submissions = (rowsByRound[round.roundId] ?? []) as Array<{ totalScore?: number }>;
-              const evaluated = submissions.filter((s) => typeof s.totalScore === 'number').length;
-              return (
-                <div
-                  key={round.roundId}
-                  style={{
-                    background: 'var(--comp-surface)',
-                    border: '1px solid var(--comp-border)',
-                    borderLeft: `3px solid ${round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-border)'}`,
-                    borderRadius: 10,
-                    padding: 'var(--space-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-sm)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                    <p className="comp-heading-md" style={{ margin: 0 }}>{round.title || round.roundId}</p>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-text)' }}>
-                      {round.resultsPublished ? '✓ Results Published' : 'Evaluation In Progress'}
-                    </span>
+        {/* 2-column layout: Rounds | Tasks & Milestones */}
+        <div className="grid items-start gap-5 xl:grid-cols-[1fr_320px]">
+
+          {/* Round management */}
+          <SectionCard title="Round Management">
+            <div className="space-y-2">
+              {(config?.rounds ?? []).map((round) => {
+                const submissions = (rowsByRound[round.roundId] ?? []) as Array<{ totalScore?: number }>;
+                const evaluated = submissions.filter((s) => typeof s.totalScore === 'number').length;
+                return (
+                  <div
+                    key={round.roundId}
+                    className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4"
+                    style={{ borderLeft: `3px solid ${round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-border)'}` }}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="comp-heading-md m-0">{round.title || round.roundId}</p>
+                      <span className="text-xs font-semibold" style={{ color: round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-text)' }}>
+                        {round.resultsPublished ? '✓ Results Published' : 'Evaluation In Progress'}
+                      </span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded bg-[var(--comp-border)]">
+                        <div style={{
+                          width: submissions.length > 0 ? `${Math.round((evaluated / submissions.length) * 100)}%` : '0%',
+                          height: '100%', borderRadius: 3,
+                          background: evaluated >= submissions.length && submissions.length > 0 ? 'var(--status-open-text)' : 'var(--comp-accent)',
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                      <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                        {evaluated}/{submissions.length}
+                      </span>
+                    </div>
+                    <p className="comp-body m-0">
+                      Submissions: <strong>{submissions.length}</strong> · Evaluated: <strong>{evaluated}/{submissions.length}</strong>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link className="comp-btn-ghost" to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(round.roundId)}/submissions`}>
+                        View Submissions
+                      </Link>
+                      <Link className="comp-btn-ghost" to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(round.roundId)}/shortlist`}>
+                        Shortlist & Publish
+                      </Link>
+                      <Link className="comp-btn-ghost" to={`/events/${encodeURIComponent(eventId)}/leaderboard/${encodeURIComponent(round.roundId)}`}>
+                        Leaderboard
+                      </Link>
+                      <button
+                        className="comp-btn-ghost"
+                        onClick={() =>
+                          void generateRoundCertificates(eventId, round.roundId)
+                            .then((result) => setNotice({ tone: 'success', text: `Generated ${result.generatedCount} certificate(s).` }))
+                            .catch((err: unknown) => setNotice({ tone: 'warning', text: err instanceof Error ? err.message : 'Certificate generation failed.' }))
+                        }
+                        aria-label={`Generate certificates for ${round.title}`}
+                      >
+                        🎓 Generate Certificates
+                      </button>
+                    </div>
                   </div>
-                  <p className="comp-body" style={{ margin: 0 }}>
-                    Submissions: <strong>{submissions.length}</strong> · Evaluated: <strong>{evaluated}/{submissions.length}</strong>
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <Link className="comp-btn-ghost" style={{ fontSize: '0.8rem', padding: '6px 12px' }} to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(round.roundId)}/submissions`}>
-                      View Submissions
-                    </Link>
-                    <Link className="comp-btn-ghost" style={{ fontSize: '0.8rem', padding: '6px 12px' }} to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(round.roundId)}/shortlist`}>
-                      Shortlist & Publish
-                    </Link>
-                    <Link className="comp-btn-ghost" style={{ fontSize: '0.8rem', padding: '6px 12px' }} to={`/events/${encodeURIComponent(eventId)}/rounds/${encodeURIComponent(round.roundId)}/leaderboard`}>
-                      Leaderboard
-                    </Link>
-                    <button
-                      className="comp-btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '6px 12px' }}
-                      onClick={() =>
-                        void generateRoundCertificates(eventId, round.roundId)
-                          .then((result) => setNotice({ tone: 'success', text: `Generated ${result.generatedCount} certificate(s).` }))
-                          .catch((err: unknown) => setNotice({ tone: 'warning', text: err instanceof Error ? err.message : 'Certificate generation failed.' }))
-                      }
-                      aria-label={`Generate certificates for ${round.title}`}
-                    >
-                      🎓 Generate Certificates
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </SectionCard>
+
+          {/* Right sidebar: Tasks & Milestones */}
+          <div className="space-y-3">
+            {/* Quick actions */}
+            <div className="space-y-2">
+              <Link
+                to={`/events/${encodeURIComponent(eventId)}/manage/roles`}
+                className="comp-btn-ghost justify-start gap-1.5 text-sm no-underline"
+              >
+                👩‍⚖️ Manage Judges
+              </Link>
+              <Link
+                to="/events/attendance"
+                className="comp-btn-ghost justify-start gap-1.5 text-sm no-underline"
+              >
+                📷 Check-In Console
+              </Link>
+            </div>
+
+            {/* Tasks */}
+            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="comp-heading-md m-0">Tasks</h3>
+                <span className="rounded-full bg-[var(--comp-accent-light)] px-2 py-0.5 text-[11px] font-bold text-[var(--comp-accent)]">
+                  {(config?.rounds ?? []).length + 2} Remaining
+                </span>
+              </div>
+              <TaskItem label="Review catering contract" urgency="overdue" />
+              <TaskItem label="Email marketing blast" urgency="today" />
+              <TaskItem label="Approve speaker list" urgency="tomorrow" />
+              <button
+                className="comp-btn-ghost"
+                style={{ borderStyle: 'dashed' }}
+              >
+                + Add Task
+              </button>
+            </div>
+
+            {/* Milestones */}
+            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
+              <h3 className="comp-heading-md m-0">Milestones</h3>
+              <MilestoneItem date="IN 2 DAYS" title="Registration Closes" description="Expected overflow processing required." active />
+              <MilestoneItem date="NEXT WEEK" title="Venue Load-in Begins" description="Availability from 6:00 AM." />
+              <MilestoneItem date="IN 2 WEEKS" title="Sponsorship Deadline" description="Follow up with University Foundation." />
+            </div>
           </div>
-        </SectionCard>
+        </div>
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
+  );
+}
+
+/* ---------- Sub-components ---------- */
+
+function TaskItem({ label, urgency }: { label: string; urgency: 'overdue' | 'today' | 'tomorrow' }) {
+  const [done, setDone] = useState(false);
+  const colorMap: Record<typeof urgency, { text: string; label: string }> = {
+    overdue: { text: 'var(--status-live-text)', label: 'OVERDUE' },
+    today: { text: 'var(--comp-text-secondary)', label: 'TODAY' },
+    tomorrow: { text: 'var(--comp-text-muted)', label: 'TOMORROW' },
+  };
+  const c = colorMap[urgency];
+  return (
+    <label className="flex cursor-pointer items-start gap-2 py-1" style={{ textDecoration: done ? 'line-through' : 'none', opacity: done ? 0.5 : 1 }}>
+      <input type="checkbox" checked={done} onChange={() => setDone(!done)} className="mt-0.5" />
+      <div>
+        <p className="m-0 text-sm font-medium text-[var(--text-primary)]">{label}</p>
+        <span className="text-xs font-semibold" style={{ color: c.text }}>{c.label}</span>
+      </div>
+    </label>
+  );
+}
+
+function MilestoneItem({ date, title, description, active }: { date: string; title: string; description: string; active?: boolean }) {
+  return (
+    <div className="relative flex gap-2">
+      <div className="flex flex-col items-center gap-1">
+        <div style={{
+          width: 10, height: 10, borderRadius: '50%',
+          background: active ? 'var(--comp-accent)' : 'var(--comp-border-strong)',
+          flexShrink: 0,
+        }} />
+        <div className="w-0.5 flex-1 bg-[var(--comp-border)]" />
+      </div>
+      <div className="pb-2">
+        <span className="text-[11px] font-bold tracking-[0.06em]" style={{ color: active ? 'var(--status-live-text)' : 'var(--comp-text-muted)' }}>
+          {date}
+        </span>
+        <p className="m-0.5 text-sm font-semibold text-[var(--text-primary)]">{title}</p>
+        <p className="comp-body m-0 text-xs">{description}</p>
+      </div>
+    </div>
   );
 }

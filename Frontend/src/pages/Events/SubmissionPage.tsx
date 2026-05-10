@@ -8,7 +8,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import { SectionCard } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import {
   getCompetitionConfig,
   getMyTeam,
@@ -18,6 +19,9 @@ import {
 } from '../../lib/campusApi';
 import { SubmissionStatusBanner } from '../../components/competition/SubmissionStatusBanner';
 import { FileUploadZone } from '../../components/competition/FileUploadZone';
+import { Input } from "../../components/input";
+import { Textarea } from "../../components/textarea";
+import { FormField } from "../../components/forms/FormField";
 import { EvaluationCriteriaTable } from '../../components/competition/EvaluationCriteriaTable';
 import { DeadlineCountdown } from '../../components/competition/DeadlineCountdown';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
@@ -27,12 +31,11 @@ import { useOptimistic } from '../../hooks/useOptimistic';
 export default function SubmissionPage() {
   const { eventId = '', roundId = '' } = useParams();
   const [round, setRound] = useState<CompetitionRound | null>(null);
-  const { value: submission, isPending: optimisticPending, update: updateSubmission, setOptimisticValue } = useOptimistic<Record<string, unknown> | null>(null);
+  const { value: submission, update: updateSubmission, setOptimisticValue } = useOptimistic<Record<string, unknown> | null>(null);
   const [type, setType] = useState<'file' | 'link'>('file');
   const [file, setFile] = useState<File | null>(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
@@ -43,7 +46,6 @@ export default function SubmissionPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   async function load() {
-    setLoading(true);
     setError(null);
     setNotCompetition(false);
     try {
@@ -69,7 +71,6 @@ export default function SubmissionPage() {
         setError(msg);
       }
     } finally {
-      setLoading(false);
     }
   }
 
@@ -146,26 +147,21 @@ export default function SubmissionPage() {
   const maxSizeMb = round?.maxFileSizeMb ?? 10;
 
   return (
-    <ErpPageShell
-      title=""
-      source="Internal API"
-      isLoading={loading}
-      loadingMessage="Loading round details..."
+    <CompetitionPageShell
+      eyebrow="Autosaved just now"
+      title={submission ? 'Resubmit Project' : 'Submit Project'}
+      subtitle={round?.title || 'Upload project files and links for this round.'}
+      variant="focus"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+      <div className="space-y-5">
 
         {/* Back link */}
         <Link
           to={`/events/${encodeURIComponent(eventId)}`}
-          style={{ fontSize: '0.8rem', color: 'var(--comp-text-secondary)', textDecoration: 'none' }}
+          className="text-xs text-[var(--text-secondary)] no-underline"
         >
           ← Back to Event
         </Link>
-
-        {/* Page title */}
-        <h1 className="comp-heading-xl" style={{ margin: 0 }}>
-          {submission ? 'Resubmit Work' : 'Submit Your Work'}
-        </h1>
 
         {/* Guard states */}
         {notCompetition && (
@@ -181,18 +177,7 @@ export default function SubmissionPage() {
 
         {/* Success */}
         {successBanner && (
-          <div
-            role="status"
-            style={{
-              background: 'var(--status-open-bg)',
-              border: '1px solid var(--status-open-border)',
-              borderRadius: 8,
-              padding: 'var(--space-sm) var(--space-md)',
-              color: 'var(--status-open-text)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-            }}
-          >
+          <div role="status" className="rounded-xl border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-sm font-semibold text-[var(--status-open-text)]">
             ✓ {successBanner}
           </div>
         )}
@@ -209,9 +194,9 @@ export default function SubmissionPage() {
 
         {/* Team info */}
         {submissionScope === 'team' && team && (
-          <div style={{ background: 'var(--comp-accent-light)', borderRadius: 10, padding: 'var(--space-md)', fontSize: '0.875rem' }}>
-            <p style={{ margin: '0 0 4px', fontWeight: 600 }}>Submitting as team: {team.name}</p>
-            <Link to={`/events/${encodeURIComponent(eventId)}/team`} style={{ color: 'var(--comp-accent)', fontSize: '0.8rem' }}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4 text-sm">
+            <p className="mb-1 font-semibold text-[var(--text-primary)]">Submitting as team: {team.name}</p>
+            <Link to={`/events/${encodeURIComponent(eventId)}/team`} className="text-xs text-[var(--comp-accent)]">
               Manage Team →
             </Link>
           </div>
@@ -220,18 +205,18 @@ export default function SubmissionPage() {
         {/* Round details */}
         {round && (
           <SectionCard title={round.title || 'Round'}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', fontSize: '0.875rem', color: 'var(--comp-text-secondary)' }}>
-              {round.instructions && <p style={{ margin: 0 }}>{round.instructions}</p>}
+            <div className="space-y-2 text-sm text-[var(--text-secondary)]">
+              {round.instructions && <p className="m-0">{round.instructions}</p>}
               {round.submissionDeadline && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="flex items-center gap-2">
                   <span>Deadline:</span>
-                  <span style={{ fontWeight: 600, color: 'var(--comp-text-primary)' }}>
+                  <span className="font-semibold text-[var(--text-primary)]">
                     {new Date(round.submissionDeadline).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </span>
                   <DeadlineCountdown deadline={round.submissionDeadline} compact />
                 </div>
               )}
-              <p style={{ margin: 0 }}>Resubmissions remaining: <strong>{resubmissionsRemaining}</strong></p>
+              <p className="m-0">Resubmissions remaining: <strong>{resubmissionsRemaining}</strong></p>
             </div>
           </SectionCard>
         )}
@@ -251,27 +236,21 @@ export default function SubmissionPage() {
           <SectionCard title={submission ? 'Resubmit Work' : 'Submit Work'}>
             <form
               onSubmit={(e) => void onSubmit(e)}
-              style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}
+              className="space-y-4"
             >
               {/* Type selector */}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="flex gap-2">
                 {(['file', 'link'] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setType(t)}
                     aria-pressed={type === t}
-                    style={{
-                      padding: '7px 16px',
-                      border: `1.5px solid ${type === t ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                      borderRadius: 8,
-                      background: type === t ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                      color: type === t ? '#fff' : 'var(--comp-text-secondary)',
-                      fontWeight: 600,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textTransform: 'capitalize',
-                    }}
+                    className={`rounded-xl border px-4 py-1.5 text-xs font-semibold capitalize ${
+                      type === t
+                        ? 'border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white'
+                        : 'border-[var(--border)] bg-[var(--dash-subcard-bg)] text-[var(--text-secondary)]'
+                    }`}
                   >
                     {t === 'file' ? '📁 File Upload' : '🔗 Link'}
                   </button>
@@ -297,38 +276,21 @@ export default function SubmissionPage() {
                   }
                 />
               ) : (
-                <div>
-                  <label className="comp-label" htmlFor="submission-link" style={{ display: 'block', marginBottom: 4 }}>
-                    Link URL
-                  </label>
-                  <input
+                <FormField id="submission-link" label="Link URL">
+                  <Input
                     id="submission-link"
                     type="url"
                     value={linkUrl}
                     onChange={(e) => setLinkUrl(e.target.value)}
                     placeholder="https://..."
                     aria-label="Submission link URL"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '1px solid var(--comp-border)',
-                      borderRadius: 8,
-                      background: 'var(--comp-surface)',
-                      color: 'var(--comp-text-primary)',
-                      fontSize: '0.875rem',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
                   />
-                </div>
+                </FormField>
               )}
 
               {/* Description */}
-              <div>
-                <label className="comp-label" htmlFor="submission-description" style={{ display: 'block', marginBottom: 4 }}>
-                  Description (optional)
-                </label>
-                <textarea
+              <FormField id="submission-description" label="Description (optional)" hint={`${description.length}/500`}>
+                <Textarea
                   id="submission-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -336,23 +298,9 @@ export default function SubmissionPage() {
                   maxLength={500}
                   placeholder="Brief note about your submission (max 500 chars)"
                   aria-label="Submission description"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid var(--comp-border)',
-                    borderRadius: 8,
-                    background: 'var(--comp-surface)',
-                    color: 'var(--comp-text-primary)',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                  }}
+                  className="min-h-[96px]"
                 />
-                <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: 'var(--comp-text-muted)' }}>
-                  {description.length}/500
-                </p>
-              </div>
+              </FormField>
 
               {/* Inline API error */}
               {error && <ErrorMessage message={error} preservedInput onRetry={() => void onSubmit(new Event('submit') as unknown as React.FormEvent)} />}
@@ -374,6 +322,6 @@ export default function SubmissionPage() {
           <ErrorMessage title="Submission closed" message="The deadline for this round has passed." />
         )}
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
   );
 }

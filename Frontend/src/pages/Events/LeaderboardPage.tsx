@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import { getCompetitionLeaderboard } from '../../lib/campusApi';
 import { readStoredProfileData } from '../../lib/session';
 import { EmptyState } from '../../components/competition/EmptyState';
@@ -52,7 +52,11 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <ErpPageShell title="Leaderboard" source="Internal API" isLoading={false} loadingMessage="Loading...">
+    <CompetitionPageShell
+      title="Submission Leaderboard"
+      subtitle="Ranked results for the selected competition round."
+      variant="wide"
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
 
         {/* Header */}
@@ -196,6 +200,6 @@ export default function LeaderboardPage() {
           </>
         )}
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
   );
 }

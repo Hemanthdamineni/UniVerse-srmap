@@ -1,188 +1,111 @@
-/**
- * MyCreatedEventsPage.tsx — /events/my-created
- * Lists events created/co-organized by the current user.
- */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { MoreVertical, Plus, Users } from "lucide-react";
+import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
+import { ErrorMessage } from "../../components/competition/ErrorMessage";
+import { SkeletonCard } from "../../components/competition/Skeletons";
+import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { getCurrentRegNo, isPlatformAdmin } from "../../lib/identity";
 
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ErpPageShell } from '../../components/erp/ErpPrimitives';
-import { listEvents, type EventSummary } from '../../lib/campusApi';
-import { readStoredProfileData } from '../../lib/session';
-import { StatusBadge } from '../../components/competition/StatusBadge';
-import { SkeletonTable } from '../../components/competition/Skeletons';
-import { EmptyState } from '../../components/competition/EmptyState';
-import { ErrorMessage } from '../../components/competition/ErrorMessage';
+const MAX_ACTIVE_EVENTS = 5;
 
-const MAX_ACTIVE_EVENTS = 5; // platform-enforced limit
+function formatRange(event: EventSummary) {
+  const start = event.startAt || event.startDate;
+  const end = event.endAt || event.endDate;
+  const fmt = (value?: string) => value ? new Date(value).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "TBA";
+  return `${fmt(start)} - ${fmt(end)}`;
+}
 
 export default function MyCreatedEventsPage() {
+  const regNo = getCurrentRegNo();
+  const admin = isPlatformAdmin(regNo);
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  const profile = readStoredProfileData();
-  const userId =
-    (profile?.registerNumber as string | undefined) ??
-    (profile?.id as string | undefined) ??
-    '';
+  const loadEvents = useCallback(() => {
+    setLoading(true);
+    setError("");
+    listEvents(admin ? undefined : { createdBy: regNo })
+      .then(setEvents)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load created events."))
+      .finally(() => setLoading(false));
+  }, [admin, regNo]);
 
   useEffect(() => {
-    setLoading(true);
-    listEvents({ createdBy: userId })
-      .then(setEvents)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load events.'))
-      .finally(() => setLoading(false));
-  }, [userId]);
+    loadEvents();
+  }, [loadEvents]);
 
-  const activeStatuses = new Set(['published', 'public', 'ongoing', 'draft']);
-  const activeCount = events.filter((e) => activeStatuses.has(e.status)).length;
-  const atLimit = activeCount >= MAX_ACTIVE_EVENTS;
-
-  const statusValues = [
-    'draft', 'published', 'public', 'ongoing', 'submission-closed',
-    'evaluation', 'results-published', 'completed', 'archived',
-    'open', 'upcoming', 'closed', 'in-progress',
-  ] as const;
-  type ValidStatus = typeof statusValues[number];
-
-  function safeStatus(s: string): ValidStatus {
-    return statusValues.includes(s as ValidStatus) ? (s as ValidStatus) : 'upcoming';
-  }
+  const activeEvents = useMemo(
+    () => events.filter((event) => ["draft", "published", "public", "ongoing", "upcoming"].includes(event.status)),
+    [events],
+  );
+  const atLimit = activeEvents.length >= MAX_ACTIVE_EVENTS && !admin;
 
   return (
-    <ErpPageShell title="My Created Events" source="Internal API" isLoading={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
-
-        {/* Active events limit indicator */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 'var(--space-sm)',
-          }}
-        >
-          <div>
-            <p className="comp-heading-md" style={{ margin: 0 }}>
-              Active Events: {activeCount} / {MAX_ACTIVE_EVENTS}
-            </p>
-            <p className="comp-body" style={{ margin: 0 }}>
-              {atLimit
-                ? 'You have reached the active event limit. Archive an event to create a new one.'
-                : `You can create ${MAX_ACTIVE_EVENTS - activeCount} more active event${MAX_ACTIVE_EVENTS - activeCount !== 1 ? 's' : ''}.`}
-            </p>
-          </div>
-          <Link
-            to="/events/create"
-            className={atLimit ? 'comp-btn-ghost' : 'comp-btn-primary'}
-            style={{ opacity: atLimit ? 0.5 : 1, pointerEvents: atLimit ? 'none' : undefined }}
-            aria-disabled={atLimit}
-            aria-label="Create new event"
-          >
-            + Create Event
-          </Link>
-        </div>
-
-        {/* Progress bar for active limit */}
-        <div style={{ height: 4, background: 'var(--comp-border)', borderRadius: 2, overflow: 'hidden' }}>
-          <div
-            style={{
-              height: '100%',
-              width: `${Math.min((activeCount / MAX_ACTIVE_EVENTS) * 100, 100)}%`,
-              background: atLimit ? 'var(--deadline-urgent)' : 'var(--comp-accent)',
-              borderRadius: 2,
-              transition: 'width 0.3s ease',
-            }}
-          />
-        </div>
-
-        {/* Error */}
-        {error && <ErrorMessage message={error} />}
-
-        {/* Events table */}
-        {loading ? (
-          <SkeletonTable rows={5} columns={4} />
-        ) : events.length === 0 ? (
-          <EmptyState
-            icon="✨"
-            title="No events created yet"
-            description="Create your first event to start organizing competitions."
-            action={{ label: 'Create Event', onClick: () => window.location.href = '/events/create' }}
-          />
-        ) : (
-          <div
-            style={{
-              border: '1px solid var(--comp-border)',
-              borderRadius: 12,
-              overflow: 'hidden',
-            }}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--comp-accent)' }}>
-                  {['Event Name', 'Category', 'Status', 'Registered', 'Actions'].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: '10px 16px',
-                        textAlign: 'left',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: '#fff',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((event, i) => (
-                  <tr
-                    key={event.id}
-                    style={{
-                      background: i % 2 === 0 ? 'var(--comp-surface)' : 'var(--comp-surface-hover)',
-                      borderTop: '1px solid var(--comp-border)',
-                    }}
-                  >
-                    <td style={{ padding: '10px 16px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--comp-text-primary)' }}>
-                      {event.title ?? 'Untitled'}
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: '0.8rem', color: 'var(--comp-text-secondary)' }}>
-                      {event.category ?? '—'}
-                    </td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <StatusBadge status={safeStatus(event.status)} size="sm" />
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: '0.8rem', color: 'var(--comp-text-secondary)' }}>
-                      {event.registeredCount ?? 0}
-                    </td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <Link
-                          to={`/events/${encodeURIComponent(event.id)}`}
-                          style={{ fontSize: '0.78rem', color: 'var(--comp-accent)', textDecoration: 'underline', fontWeight: 600 }}
-                        >
-                          View
-                        </Link>
-                        <Link
-                          to={`/events/${encodeURIComponent(event.id)}/manage`}
-                          style={{ fontSize: '0.78rem', color: 'var(--comp-text-secondary)', textDecoration: 'underline' }}
-                        >
-                          Manage
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+    <CompetitionPageShell
+      title={admin ? "Managed Events" : "My Created Events"}
+      subtitle={admin ? "Platform admin view for all event workspaces." : "Manage the competitions and events you created or co-organize."}
+      actions={
+        <Link className={atLimit ? "comp-btn-ghost" : "comp-btn-primary"} to="/events/create" aria-disabled={atLimit}>
+          <Plus size={18} />
+          Create New Event
+        </Link>
+      }
+      variant="wide"
+    >
+      <div className="created-events-summary">
+        <CompetitionCard>
+          <span>Total Events</span>
+          <strong>{events.length}</strong>
+          <small>{admin ? "Admin scope" : `Owned by ${regNo || "current user"}`}</small>
+        </CompetitionCard>
+        <CompetitionCard>
+          <span>Active Slots</span>
+          <strong>{activeEvents.length}/{MAX_ACTIVE_EVENTS}</strong>
+          <small>{atLimit ? "Archive one event to create another" : "Ready for more activity"}</small>
+        </CompetitionCard>
+        <CompetitionCard>
+          <span>Registrations</span>
+          <strong>{events.reduce((sum, event) => sum + Number(event.registeredCount ?? event.registrationCount ?? 0), 0)}</strong>
+          <small>Across visible events</small>
+        </CompetitionCard>
       </div>
-    </ErpPageShell>
+
+      {error ? <ErrorMessage message={error} onRetry={loadEvents} /> : null}
+
+      {loading ? (
+        <div className="created-events-list">
+          {[1, 2, 3].map((item) => <SkeletonCard key={item} />)}
+        </div>
+      ) : events.length ? (
+        <div className="created-events-list">
+          {events.map((event) => (
+            <CompetitionCard key={event.id} className="created-event-row">
+              <div className="created-event-poster">
+                <span>{event.category?.slice(0, 4).toUpperCase() || "EVNT"}</span>
+              </div>
+              <div>
+                <h2>{event.title}</h2>
+                <p>{formatRange(event)} · {typeof event.location === "string" ? event.location : event.venue || "Campus venue"}</p>
+                <span><Users size={15} /> {event.registeredCount ?? event.registrationCount ?? 0} Registered</span>
+              </div>
+              <span className="competition-pill">{event.status || "Draft"}</span>
+              <Link className="comp-btn-ghost" to={`/events/${event.id}`}>View</Link>
+              <Link className="comp-btn-primary" to={`/events/${event.id}/manage`}>Manage</Link>
+              <button className="competition-icon-button" aria-label={`More actions for ${event.title}`}>
+                <MoreVertical size={18} />
+              </button>
+            </CompetitionCard>
+          ))}
+        </div>
+      ) : (
+        <CompetitionEmptyPanel
+          title="No events created yet"
+          description="Use the create flow to publish your first competition workspace."
+          action={<Link className="comp-btn-primary" to="/events/create">Create Event</Link>}
+        />
+      )}
+    </CompetitionPageShell>
   );
 }

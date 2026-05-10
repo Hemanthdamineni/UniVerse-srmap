@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import { getMyCompetitionResult, getMyRoundCertificate, getCompetitionConfig } from '../../lib/campusApi';
 import { SubmissionStatusBanner } from '../../components/competition/SubmissionStatusBanner';
 import { EvaluationCriteriaTable } from '../../components/competition/EvaluationCriteriaTable';
@@ -77,7 +77,11 @@ export default function MyResultsPage() {
   })();
 
   return (
-    <ErpPageShell title="Your Results" source="Internal API" isLoading={loading} loadingMessage="Loading results...">
+    <CompetitionPageShell
+      title="Your Performance"
+      subtitle="Detailed breakdown of your event results."
+      variant="wide"
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
 
         <Link
@@ -185,13 +189,13 @@ export default function MyResultsPage() {
 
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'auto', paddingTop: 'var(--space-sm)' }}>
           <Link
-            to={`/events/${encodeURIComponent(eventId)}/rounds/${encodeURIComponent(roundId)}/leaderboard`}
+            to={`/events/${encodeURIComponent(eventId)}/leaderboard/${encodeURIComponent(roundId)}`}
             className="comp-btn-ghost"
           >
             View Leaderboard
           </Link>
         </div>
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
   );
 }

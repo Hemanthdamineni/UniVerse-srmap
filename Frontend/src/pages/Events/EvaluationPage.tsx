@@ -5,7 +5,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import { SectionCard } from '../../components/erp/ErpPrimitives';
+import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
 import {
   evaluateCompetitionSubmission,
   flagCompetitionSubmission,
@@ -18,6 +19,9 @@ import { AuditHistoryPanel } from '../../components/competition/AuditHistoryPane
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { track } from '../../lib/analytics';
 import { useOptimistic } from '../../hooks/useOptimistic';
+import { Input } from "../../components/input";
+import { Textarea } from "../../components/textarea";
+import { Select } from "../../components/select";
 
 type AuditItem = { label: string; actor?: string; at: string };
 
@@ -41,6 +45,10 @@ export default function EvaluationPage() {
   const index = useMemo(() => rows.findIndex((r) => r.id === submissionId), [rows, submissionId]);
   const prev = index > 0 ? rows[index - 1] : null;
   const next = index >= 0 && index + 1 < rows.length ? rows[index + 1] : null;
+  const currentType = String(current?.type ?? '');
+  const currentDescription = current?.description ? String(current.description) : '';
+  const currentLinkUrl = current?.linkUrl ? String(current.linkUrl) : '';
+  const currentFilePath = current?.filePath ? String(current.filePath) : '';
 
   async function load() {
     setLoading(true);
@@ -125,50 +133,40 @@ export default function EvaluationPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid var(--comp-border)',
-    borderRadius: 8,
-    background: 'var(--comp-surface)',
-    color: 'var(--comp-text-primary)',
-    fontSize: '0.875rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
   return (
-    <ErpPageShell title="Evaluate Submission" source="Internal API" isLoading={loading} loadingMessage="Loading submission...">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+    <CompetitionPageShell
+      eyebrow="Evaluation Phase"
+      title="Submission Review"
+      subtitle="Score the current submission, add notes, and record the final verdict."
+      variant="wide"
+    >
+      <div className="space-y-5">
 
         {/* Header navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex gap-2">
             <Link
               to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(roundId)}/submissions`}
               className="comp-btn-ghost"
-              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
             >
               ← All Submissions
             </Link>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             {prev && (
               <Link
                 className="comp-btn-ghost"
-                style={{ fontSize: '0.8rem', padding: '6px 12px' }}
                 to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(roundId)}/submissions/${encodeURIComponent(String(prev.id))}/evaluate`}
               >
                 ← Prev
               </Link>
             )}
-            <span className="comp-body" style={{ alignSelf: 'center' }}>
+            <span className="comp-body self-center">
               {index + 1}/{rows.length}
             </span>
             {next && (
               <Link
                 className="comp-btn-ghost"
-                style={{ fontSize: '0.8rem', padding: '6px 12px' }}
                 to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(roundId)}/submissions/${encodeURIComponent(String(next.id))}/evaluate`}
               >
                 Next →
@@ -179,7 +177,7 @@ export default function EvaluationPage() {
 
         {/* Status messages */}
         {successMsg && (
-          <div role="status" style={{ background: 'var(--status-open-bg)', border: '1px solid var(--status-open-border)', borderRadius: 8, padding: 'var(--space-sm) var(--space-md)', color: 'var(--status-open-text)', fontWeight: 600, fontSize: '0.875rem' }}>
+          <div role="status" className="rounded-xl border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-sm font-semibold text-[var(--status-open-text)]">
             ✓ {successMsg}
           </div>
         )}
@@ -189,33 +187,33 @@ export default function EvaluationPage() {
           <>
             {/* Submission preview */}
             <SectionCard title="Submission Preview">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', fontSize: '0.875rem' }}>
-                <p style={{ margin: 0 }}>
+              <div className="space-y-2 text-sm">
+                <p className="m-0">
                   <span className="comp-label">Participant:</span>{' '}
-                  <strong style={{ color: 'var(--comp-text-primary)' }}>{String(current.submittedBy ?? '—')}</strong>
+                  <strong className="text-[var(--text-primary)]">{String(current.submittedBy ?? '—')}</strong>
                 </p>
-                <p style={{ margin: 0 }}>
+                <p className="m-0">
                   <span className="comp-label">Submitted:</span>{' '}
                   {current.submittedAt ? new Date(String(current.submittedAt)).toLocaleString('en-IN') : '—'}
                 </p>
-                <p style={{ margin: 0 }}>
+                <p className="m-0">
                   <span className="comp-label">Type:</span> {String(current.type ?? '—')}
                 </p>
-                {current.description && (
-                  <p style={{ margin: 0, color: 'var(--comp-text-secondary)' }}>{String(current.description)}</p>
+                {currentDescription && (
+                  <p className="m-0 text-[var(--text-secondary)]">{currentDescription}</p>
                 )}
-                {current.type === 'link' && current.linkUrl && (
-                  <a href={String(current.linkUrl)} target="_blank" rel="noreferrer" className="comp-btn-ghost" style={{ alignSelf: 'flex-start', fontSize: '0.8rem' }}>
+                {currentType === 'link' && currentLinkUrl && (
+                  <a href={currentLinkUrl} target="_blank" rel="noreferrer" className="comp-btn-ghost w-fit">
                     🔗 Open Submission Link
                   </a>
                 )}
-                {current.type === 'file' && current.filePath && (
-                  <a href={`/files/submissions/${String(current.filePath)}`} target="_blank" rel="noreferrer" className="comp-btn-ghost" style={{ alignSelf: 'flex-start', fontSize: '0.8rem' }}>
+                {currentType === 'file' && currentFilePath && (
+                  <a href={`/files/submissions/${currentFilePath}`} target="_blank" rel="noreferrer" className="comp-btn-ghost w-fit">
                     📁 Open Submission File
                   </a>
                 )}
-                {current.flagged && (
-                  <div style={{ background: 'var(--status-live-bg)', border: '1px solid var(--status-live-border)', borderRadius: 6, padding: '6px 10px', color: 'var(--status-live-text)', fontSize: '0.8rem', fontWeight: 600 }}>
+                {Boolean(current.flagged) && (
+                  <div className="rounded-lg border border-[var(--status-live-border)] bg-[var(--status-live-bg)] px-2.5 py-1.5 text-xs font-semibold text-[var(--status-live-text)]">
                     🚩 Flagged: {String(current.flagReason ?? 'No reason provided')}
                   </div>
                 )}
@@ -224,7 +222,7 @@ export default function EvaluationPage() {
 
             {/* Evaluation form */}
             <SectionCard title="Evaluation Form">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+              <div className="space-y-4">
                 {/* Criteria table — editable */}
                 <EvaluationCriteriaTable
                   criteria={criteria}
@@ -235,36 +233,35 @@ export default function EvaluationPage() {
 
                 {/* Remarks */}
                 <div>
-                  <label className="comp-label" htmlFor="eval-remarks" style={{ display: 'block', marginBottom: 4 }}>Remarks</label>
-                  <textarea
+                  <label className="comp-label mb-1 block" htmlFor="eval-remarks">Remarks</label>
+                  <Textarea
                     id="eval-remarks"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     rows={3}
                     placeholder="Optional feedback for the participant..."
-                    style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
                     aria-label="Evaluation remarks"
+                    className="min-h-[80px]"
                   />
                 </div>
 
                 {/* Decision */}
                 <div>
-                  <label className="comp-label" htmlFor="eval-decision" style={{ display: 'block', marginBottom: 4 }}>Decision</label>
-                  <select
+                  <label className="comp-label mb-1 block" htmlFor="eval-decision">Decision</label>
+                  <Select
                     id="eval-decision"
                     value={decision}
                     onChange={(e) => setDecision(e.target.value)}
-                    style={inputStyle}
                     aria-label="Evaluation decision"
                   >
                     <option value="pending">Undecided</option>
                     <option value="selected">Selected</option>
                     <option value="rejected">Rejected</option>
-                  </select>
+                  </Select>
                 </div>
 
                 {/* Flag */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', color: 'var(--comp-text-secondary)' }}>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text-secondary)]">
                   <input
                     type="checkbox"
                     checked={flagged}
@@ -274,8 +271,7 @@ export default function EvaluationPage() {
                   🚩 Flag this submission
                 </label>
                 {flagged && (
-                  <input
-                    style={inputStyle}
+                  <Input
                     value={flagReason}
                     onChange={(e) => setFlagReason(e.target.value)}
                     placeholder="Reason for flagging..."
@@ -304,8 +300,8 @@ export default function EvaluationPage() {
           </>
         ) : (
           !loading && (
-            <div style={{ textAlign: 'center', padding: 'var(--space-xl)' }}>
-              <p className="comp-heading-md">Submission not found</p>
+            <div className="p-8 text-center">
+              <p className="comp-heading-md m-0">Submission not found</p>
               <Link
                 to={`/events/${encodeURIComponent(eventId)}/manage/rounds/${encodeURIComponent(roundId)}/submissions`}
                 className="comp-btn-ghost"
@@ -316,6 +312,6 @@ export default function EvaluationPage() {
           )
         )}
       </div>
-    </ErpPageShell>
+    </CompetitionPageShell>
   );
 }

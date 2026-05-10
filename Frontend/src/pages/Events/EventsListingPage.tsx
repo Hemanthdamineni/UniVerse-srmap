@@ -1,191 +1,207 @@
-/**
- * EventsListingPage.tsx — Main events discovery page at /events
- *
- * Features:
- * - URL-param driven filters (category, status, search)
- * - 2-column responsive grid
- * - Skeleton loading
- * - Virtualized list for large sets (swap SkeletonCard blocks for virtualized list)
- * - Empty/error/offline states
- */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Building2, CalendarClock, Plus, Search, Users } from "lucide-react";
+import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
+import { ErrorMessage } from "../../components/competition/ErrorMessage";
+import { SkeletonCard } from "../../components/competition/Skeletons";
+import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { Input } from "../../components/input";
+import { Select } from "../../components/select";
 
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ErpPageShell } from '../../components/erp/ErpPrimitives';
-import { listEvents, type EventSummary } from '../../lib/campusApi';
-import { eventCache } from '../../lib/eventCache';
-import { CompetitionEventCard } from '../../components/competition/CompetitionEventCard';
-import { SkeletonCard } from '../../components/competition/Skeletons';
-import { EmptyState } from '../../components/competition/EmptyState';
-import { ErrorMessage } from '../../components/competition/ErrorMessage';
+const categories = ["All Categories", "Technical", "Cultural", "Sports", "Academic", "Workshop"];
+const departments = ["All Departments", "CS Department", "Arts School", "Business Mgmt", "Student Union"];
+const formats = ["All", "Online", "Offline"];
 
-const CATEGORIES = ['All', 'Technical', 'Cultural', 'Sports', 'Academic', 'Workshop'];
-const STATUSES = ['All', 'published', 'ongoing', 'upcoming'];
+function getEventImage(event: EventSummary, index: number) {
+  const image = event.posterImagePath || (event as Record<string, unknown>).coverImageUrl;
+  if (typeof image === "string" && image.trim()) return `url("${image}")`;
 
-export default function EventsListingPage() {
+  const gradients = [
+    "linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, var(--accent-blue) 10%), color-mix(in srgb, var(--background) 88%, var(--accent-green) 12%))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--accent-blue) 12%), color-mix(in srgb, var(--background) 90%, var(--accent-yellow) 10%))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--surface) 90%, var(--accent-orange) 10%), color-mix(in srgb, var(--background) 90%, var(--accent-blue) 10%))",
+    "linear-gradient(135deg, color-mix(in srgb, var(--surface) 91%, var(--accent-green) 9%), color-mix(in srgb, var(--background) 89%, var(--accent-blue) 11%))",
+  ];
+  return gradients[index % gradients.length];
+}
+
+function deadlineLabel(event: EventSummary) {
+  const date = event.startAt || event.startDate;
+  if (!date) return "TBA";
+  const diff = new Date(date).getTime() - Date.now();
+  if (diff <= 0) return "Live";
+  const hours = Math.ceil(diff / 3_600_000);
+  if (hours < 24) return `${hours}H left`;
+  return `${Math.ceil(hours / 24)} days left`;
+}
+
+function eventVenue(event: EventSummary) {
+  if (typeof event.location === "string") return event.location;
+  return event.location?.physical ?? event.venue ?? "Campus venue";
+}
+
+function EventCard({ event, index }: { event: EventSummary; index: number }) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const search = searchParams.get('q') ?? '';
-  const category = searchParams.get('category') ?? 'All';
-  const status = searchParams.get('status') ?? 'All';
-
-  const [events, setEvents] = useState<EventSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchEvents = useCallback(async () => {
-    const qs = new URLSearchParams();
-    if (category !== 'All') qs.set('category', category);
-    if (status !== 'All') qs.set('status', status);
-    if (search) qs.set('q', search);
-
-    const cacheKey = `events-list:${qs.toString()}`;
-    const cached = eventCache.get<EventSummary[]>(cacheKey);
-    if (cached) {
-      setEvents(cached);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const query: Record<string, string> = {};
-      if (category !== 'All') query.category = category;
-      if (status !== 'All') query.status = status;
-      if (search) query.q = search;
-
-      const data = await listEvents(query);
-      eventCache.set(cacheKey, data, 30_000);
-      setEvents(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load events.');
-    } finally {
-      setLoading(false);
-    }
-  }, [category, status, search]);
-
-  useEffect(() => { void fetchEvents(); }, [fetchEvents]);
-
-  function setFilter(key: string, value: string) {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (value === 'All' || !value) next.delete(key);
-      else next.set(key, value);
-      return next;
-    });
-  }
+  const isOrganizerAction = event.createdBy || event.createdByUserId;
+  const registrations = event.registeredCount ?? event.registrationCount ?? 0;
 
   return (
-    <ErpPageShell
-      title="Explore Events"
-      source="Internal API"
-      isLoading={false}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
-
-        {/* Search + Filter bar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', alignItems: 'center' }}>
-          <div style={{ flex: '1 1 220px', position: 'relative' }}>
-            <input
-              type="search"
-              placeholder="Search events..."
-              defaultValue={search}
-              onKeyDown={(e) => e.key === 'Enter' && setFilter('q', (e.target as HTMLInputElement).value)}
-              onBlur={(e) => setFilter('q', e.target.value)}
-              aria-label="Search events"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid var(--comp-border)',
-                borderRadius: 8,
-                background: 'var(--comp-surface)',
-                color: 'var(--comp-text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {/* Category chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilter('category', cat)}
-                aria-pressed={category === cat}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  border: `1px solid ${category === cat ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                  background: category === cat ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                  color: category === cat ? '#fff' : 'var(--comp-text-secondary)',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Status filter */}
-          <select
-            value={status}
-            onChange={(e) => setFilter('status', e.target.value)}
-            aria-label="Filter by status"
-            style={{
-              padding: '7px 10px',
-              border: '1px solid var(--comp-border)',
-              borderRadius: 8,
-              background: 'var(--comp-surface)',
-              color: 'var(--comp-text-secondary)',
-              fontSize: '0.8rem',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{s === 'All' ? 'All Statuses' : s}</option>
-            ))}
-          </select>
+    <CompetitionCard className="overflow-hidden">
+      <button
+        className="relative h-40 w-full cursor-pointer border-0 bg-cover bg-center"
+        style={{ backgroundImage: getEventImage(event, index) }}
+        onClick={() => navigate(`/events/${encodeURIComponent(event.id)}`)}
+        aria-label={`Open ${event.title}`}
+      >
+        <span className="absolute right-2.5 top-2.5 rounded-full bg-[color-mix(in_srgb,var(--accent-orange)_14%,var(--background)_86%)] px-2 py-1 text-[11px] font-bold uppercase text-[color-mix(in_srgb,var(--accent-orange)_70%,var(--text-primary)_30%)]">{deadlineLabel(event)}</span>
+      </button>
+      <div className="grid gap-2 p-5">
+        <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{event.category || "Event"}</p>
+        <h2 className="m-0 min-h-[2.5em] text-[1.06rem] font-semibold leading-tight text-[var(--text-primary)]">{event.title || "Untitled Event"}</h2>
+        <p className="m-0 inline-flex min-h-5 items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[var(--text-secondary)]">
+          <Building2 size={14} />
+          {event.department || eventVenue(event)}
+        </p>
+        <div className="my-1 h-px bg-[var(--border)]" />
+        <div className="grid grid-cols-2 gap-3">
+          <span>
+            <small className="block text-[11px] font-bold uppercase text-[var(--text-secondary)]">Prizes</small>
+            <strong className="text-sm text-[var(--text-primary)]">{event.prizes || "Merit"}</strong>
+          </span>
+          <span>
+            <small className="block text-[11px] font-bold uppercase text-[var(--text-secondary)]">Reg.</small>
+            <strong className="text-sm text-[var(--text-primary)]">{registrations ? registrations.toLocaleString("en-IN") : "Open"}</strong>
+          </span>
         </div>
-
-        {/* Error */}
-        {error && (
-          <ErrorMessage message={error} onRetry={fetchEvents} />
-        )}
-
-        {/* Grid */}
-        {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-md)' }}>
-            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
-          </div>
-        ) : events.length === 0 ? (
-          <EmptyState
-            icon="🎯"
-            title="No events found"
-            description={search ? `No events match "${search}". Try different keywords.` : 'No events match the current filters.'}
-            action={search || category !== 'All' || status !== 'All' ? { label: 'Clear filters', onClick: () => setSearchParams({}) } : undefined}
-          />
-        ) : (
-          <>
-            <p className="comp-label">Showing {events.length} event{events.length !== 1 ? 's' : ''}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-md)' }}>
-              {events.map((event) => (
-                <CompetitionEventCard
-                  key={event.id}
-                  event={event as EventSummary & { isCompetition?: boolean; competitionConfig?: unknown }}
-                  onClick={() => navigate(`/events/${encodeURIComponent(event.id)}`)}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        <Link className="comp-btn-ghost mt-2" to={`/events/${encodeURIComponent(event.id)}`}>
+          {isOrganizerAction ? "Review" : "View Details"}
+        </Link>
       </div>
-    </ErpPageShell>
+    </CompetitionCard>
+  );
+}
+
+export default function EventsListingPage() {
+  const [events, setEvents] = useState<EventSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState(categories[0]);
+  const [department, setDepartment] = useState(departments[0]);
+  const [format, setFormat] = useState(formats[0]);
+
+  const loadEvents = useCallback(() => {
+    setLoading(true);
+    setError("");
+    listEvents()
+      .then(setEvents)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load events."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const filteredEvents = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return events.filter((event) => {
+      const matchesQuery =
+        !q ||
+        [event.title, event.description, event.category, event.department]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(q));
+      const matchesCategory = category === categories[0] || event.category === category;
+      const matchesDepartment = department === departments[0] || event.department === department;
+      const venue = eventVenue(event).toLowerCase();
+      const matchesFormat =
+        format === "All" ||
+        (format === "Online" ? venue.includes("online") || venue.includes("http") : !venue.includes("online"));
+      return matchesQuery && matchesCategory && matchesDepartment && matchesFormat;
+    });
+  }, [category, department, events, format, query]);
+
+  return (
+    <CompetitionPageShell
+      title="Active Events"
+      subtitle="Curate and manage upcoming university happenings."
+      actions={
+        <Link className="comp-btn-primary" to="/events/create">
+          <Plus size={18} />
+          New Event
+        </Link>
+      }
+      variant="wide"
+    >
+      <section className="dashboard-card grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_1fr_auto]" aria-label="Event filters">
+        <label>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Search</span>
+          <div className="flex h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] px-3">
+            <Search size={16} />
+            <Input className="h-full border-0 bg-transparent px-0 shadow-none" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search events..." />
+          </div>
+        </label>
+        <label>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Category</span>
+          <Select value={category} onChange={(event) => setCategory(event.target.value)}>
+            {categories.map((item) => <option key={item}>{item}</option>)}
+          </Select>
+        </label>
+        <label>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Department</span>
+          <Select value={department} onChange={(event) => setDepartment(event.target.value)}>
+            {departments.map((item) => <option key={item}>{item}</option>)}
+          </Select>
+        </label>
+        <label>
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Date Range</span>
+          <div className="flex h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] px-3">
+            <CalendarClock size={16} />
+            <Input className="h-full border-0 bg-transparent px-0 shadow-none" readOnly value="Upcoming This Week" />
+          </div>
+        </label>
+        <div className="inline-grid h-11 grid-flow-col items-center gap-1 rounded-xl bg-[var(--dash-subcard-bg)] p-1" role="group" aria-label="Format">
+          {formats.map((item) => (
+            <button
+              key={item}
+              className={`h-8 min-w-20 rounded-lg border-0 px-2 text-sm ${format === item ? "bg-[var(--background)] text-[var(--text-primary)]" : "bg-transparent text-[var(--text-secondary)]"}`}
+              onClick={() => setFormat(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {error ? <ErrorMessage message={error} onRetry={loadEvents} /> : null}
+
+      {loading ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+          {[1, 2, 3, 4, 5].map((item) => <SkeletonCard key={item} />)}
+        </div>
+      ) : filteredEvents.length ? (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+            {filteredEvents.map((event, index) => <EventCard key={event.id} event={event} index={index} />)}
+            <Link className="grid min-h-36 place-items-center content-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--dash-subcard-bg)] text-center no-underline text-[var(--text-primary)]" to="/events/create">
+              <Plus size={24} />
+              <strong>New Event</strong>
+              <span className="text-xs text-[var(--text-secondary)]">Host a department activity</span>
+            </Link>
+          </div>
+          <div className="mt-8 flex items-center justify-between gap-4 border-t border-[var(--border)] pt-5 text-sm text-[var(--text-secondary)]">
+            <span data-page-contrast="true">Showing {filteredEvents.length} of {events.length} active events</span>
+            <span data-page-contrast="true" className="inline-flex items-center gap-2"><Users size={15} /> Registration data updates live</span>
+          </div>
+        </>
+      ) : (
+        <CompetitionEmptyPanel
+          title="No events found"
+          description="Try clearing the filters or create the next campus event."
+          action={<Link className="comp-btn-primary" to="/events/create">Create Event</Link>}
+        />
+      )}
+    </CompetitionPageShell>
   );
 }
