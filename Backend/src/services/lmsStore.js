@@ -287,7 +287,45 @@ class LmsStore {
     }
   }
 
-  syncResourceSearchIndex(resourceId) {
+  createSearchIndex() {
+    this.db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS lms_search USING fts5(
+        title, description, tags,
+        content='lms_resources',
+        content_rowid='rowid'
+      )
+    `);
+  }
+
+  isSearchIndexError(error) {
+    const message = String(error?.message || error || "").toLowerCase();
+    return (
+      message.includes("lms_search") ||
+      message.includes("database disk image is malformed")
+    );
+  }
+
+  rebuildSearchIndex() {
+    this.db.exec("DROP TABLE IF EXISTS lms_search");
+    this.createSearchIndex();
+    const rows = this.db
+      .prepare(
+        `
+          SELECT rowid, title, description, tags
+          FROM lms_resources
+          WHERE isDeleted = 0 AND moderationState < 3
+        `
+      )
+      .all();
+    const insert = this.db.prepare(
+      "INSERT INTO lms_search (rowid, title, description, tags) VALUES (?, ?, ?, ?)"
+    );
+    for (const row of rows) {
+      insert.run(row.rowid, row.title, row.description || "", row.tags || "[]");
+    }
+  }
+
+  syncResourceSearchIndexOnce(resourceId) {
     const row = this.db
       .prepare(
         `
@@ -297,15 +335,27 @@ class LmsStore {
         `
       )
       .get(resourceId);
-    this.db.prepare("DELETE FROM lms_search WHERE rowid = (SELECT rowid FROM lms_resources WHERE id = ?)").run(
-      resourceId
-    );
+    this.createSearchIndex();
     if (!row || Number(row.isDeleted || 0) === 1 || Number(row.moderationState || 0) >= 3) {
+      this.rebuildSearchIndex();
       return;
     }
+    this.db.prepare("DELETE FROM lms_search WHERE rowid = ?").run(row.rowid);
     this.db.prepare(
       "INSERT INTO lms_search (rowid, title, description, tags) VALUES (?, ?, ?, ?)"
     ).run(row.rowid, row.title, row.description || "", row.tags || "[]");
+  }
+
+  syncResourceSearchIndex(resourceId) {
+    try {
+      this.syncResourceSearchIndexOnce(resourceId);
+    } catch (error) {
+      if (!this.isSearchIndexError(error)) {
+        throw error;
+      }
+      this.rebuildSearchIndex();
+      this.syncResourceSearchIndexOnce(resourceId);
+    }
   }
 
   checkDuplicate({ fileHash = "", title = "", subjectCode = "", excludeId = "" }) {
@@ -1525,6 +1575,17 @@ class LmsStore {
     return this.mapGuide(guide, true, userId);
   }
 
+  deleteGuide(id, userId, { isAdmin = false } = {}) {
+    const guide = this.getGuideRow(id);
+    assertCondition(guide, 404, "Guide not found", "LMS_NOT_FOUND");
+    assertCondition(isAdmin || guide.authorId === userId, 403, "You cannot delete this guide", "LMS_FORBIDDEN");
+    const timestamp = nowIso();
+    this.db
+      .prepare("UPDATE lms_guides SET isDeleted = 1, deletedAt = ?, deletedBy = ?, updatedAt = ? WHERE id = ?")
+      .run(timestamp, userId, timestamp, id);
+    return { deleted: true, id };
+  }
+
   updateGuide(id, userId, payload, { isAdmin = false } = {}) {
     const guide = this.getGuideRow(id);
     assertCondition(guide, 404, "Guide not found", "LMS_NOT_FOUND");
@@ -1679,6 +1740,17 @@ class LmsStore {
       "LMS_NOT_FOUND"
     );
     return this.mapRoadmap(roadmap, true, userId);
+  }
+
+  deleteRoadmap(id, userId, { isAdmin = false } = {}) {
+    const roadmap = this.getRoadmapRow(id);
+    assertCondition(roadmap, 404, "Roadmap not found", "LMS_NOT_FOUND");
+    assertCondition(isAdmin || roadmap.authorId === userId, 403, "You cannot delete this roadmap", "LMS_FORBIDDEN");
+    const timestamp = nowIso();
+    this.db
+      .prepare("UPDATE lms_roadmaps SET isDeleted = 1, deletedAt = ?, deletedBy = ?, updatedAt = ? WHERE id = ?")
+      .run(timestamp, userId, timestamp, id);
+    return { deleted: true, id };
   }
 
   addRoadmapNode(roadmapId, userId, payload) {
