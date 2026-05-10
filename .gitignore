@@ -18,6 +18,7 @@ Backend/data/*.sqlite-wal
 
 # Runtime upload/data directories
 Backend/data/certificates/
+Backend/data/events/
 Backend/data/submissions/
 Backend/data/uploads/
 Backend/data/lms/
@@ -81,3 +82,4 @@ Thumbs.db
 # Miscellaneous
 # ===========================
 *.tgz
+*.zip
