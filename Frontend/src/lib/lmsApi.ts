@@ -711,6 +711,12 @@ export async function updateGuide(id: string, payload: Record<string, unknown>) 
   });
 }
 
+export async function deleteGuide(id: string) {
+  return requestData<{ deleted: boolean; id: string }>(`/api/lms/guides/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function addGuideSection(id: string, payload: Record<string, unknown>) {
   return requestData<LmsGuide>(`/api/lms/guides/${encodeURIComponent(id)}/sections`, {
     method: "POST",
@@ -754,6 +760,12 @@ export async function createRoadmap(payload: Record<string, unknown>) {
 
 export async function getRoadmap(id: string) {
   return requestData<LmsRoadmap>(`/api/lms/roadmaps/${encodeURIComponent(id)}`);
+}
+
+export async function deleteRoadmap(id: string) {
+  return requestData<{ deleted: boolean; id: string }>(`/api/lms/roadmaps/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function addRoadmapNode(id: string, payload: Record<string, unknown>) {

@@ -1,11 +1,20 @@
 import { requestData } from "./apiClient";
 
+export type CareerOpportunityType =
+  | "job"
+  | "internship"
+  | "hackathon"
+  | "competition"
+  | "fellowship"
+  | "workshop";
+
 export type CareerOpportunity = {
   id: string;
-  type: 'job' | 'internship' | 'hackathon' | 'competition' | 'fellowship' | 'workshop';
+  type: CareerOpportunityType;
   title: string;
   company?: string;
   organizer?: string;
+  organization?: string;
   description?: string;
   shortDescription?: string;
   requirements?: string;
@@ -27,15 +36,20 @@ export type CareerOpportunity = {
   source: string;
   sourceUrl: string;
   applyUrl: string;
+  link?: string;
   viewCount: number;
   bookmarkCount: number;
   applyCount: number;
   relevanceScore: number;
+  status?: string;
   isActive: boolean;
   isVerified: boolean;
   isFeatured: boolean;
+  featured?: boolean;
   isBookmarked?: boolean;
   hasApplied?: boolean;
+  saved?: boolean;
+  applied?: boolean;
   personalizedScore?: number;
   skillMatch?: {
     matched: string[];
@@ -47,6 +61,9 @@ export type CareerOpportunity = {
 
 export type CareerProfile = {
   userId: string;
+  name?: string;
+  email?: string;
+  department?: string;
   skills: string[];
   preferredTypes: string[];
   preferredLocations: string[];
@@ -59,6 +76,27 @@ export type CareerProfile = {
   resumeUrl?: string;
   resumeFileName?: string;
   updatedAt: string;
+};
+
+export type ResumeCareerSkill = { name: string; level: string };
+
+export type ResumeCareerProject = {
+  id: string;
+  title: string;
+  description: string;
+  tech: string;
+  link: string;
+};
+
+export type ResumeCareerProfile = Omit<CareerProfile, "skills"> & {
+  name: string;
+  email: string;
+  department: string;
+  headline: string;
+  summary: string;
+  completionPercent: number;
+  skills: ResumeCareerSkill[];
+  projects: ResumeCareerProject[];
 };
 
 export type SkillGap = {
@@ -112,13 +150,18 @@ export type AlumniProfile = {
   email: string;
   batch: string;
   branch: string;
-  company?: string;
+  degree: string;
+  company: string;
   position?: string;
-  location?: string;
+  role: string;
+  location: string;
   linkedinUrl?: string;
   bio?: string;
   skills: string[];
+  expertise: string[];
   isAvailableForMentoring: boolean;
+  requested: boolean;
+  openToConnect: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -130,9 +173,14 @@ export type InterviewSlot = {
   date: string;
   startTime: string;
   endTime: string;
+  time: string;
   duration: number; // in minutes
-  type: 'mock' | 'technical' | 'behavioral' | 'system_design';
+  type: string;
+  company: string;
+  location: string;
+  status: string;
   isBooked: boolean;
+  available: boolean;
   bookedBy?: string;
   bookedByName?: string;
   notes?: string;
@@ -152,6 +200,12 @@ export type InterviewBooking = {
   endTime: string;
   type: string;
   status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  slot?: {
+    company: string;
+    date: string;
+    time: string;
+    type: string;
+  };
   notes?: string;
   feedback?: string;
   rating?: number;
@@ -196,6 +250,17 @@ export async function getProfile() {
 
 export async function updateProfile(data: Partial<CareerProfile>) {
   return requestData<{ updated: boolean }>("/api/career/profile", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getCareerProfile() {
+  return requestData<ResumeCareerProfile>("/api/career/profile");
+}
+
+export async function updateCareerProfile(data: Partial<ResumeCareerProfile>) {
+  return requestData<ResumeCareerProfile>("/api/career/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -296,13 +361,13 @@ export async function approveSubmission(id: string) {
 }
 
 export async function getCareerHealth() {
-  return requestData<{ sources: any[]; recentRuns: any[] }>("/api/career/health");
+  return requestData<{ sources: unknown[]; recentRuns: unknown[] }>("/api/career/health");
 }
 
 export async function getCareerStats() {
   return requestData<{ 
-    byType: any[]; 
-    bySource?: any[];
+    byType: unknown[]; 
+    bySource?: unknown[];
     newThisWeek?: number;
     totalActive: number; 
     totalBookmarks: number; 
@@ -311,62 +376,70 @@ export async function getCareerStats() {
 }
 
 // Alumni functions
-export async function listAlumni(filters?: { query?: string; batch?: string }) {
+export async function listAlumni(filters?: { query?: string; batch?: string }, headers?: HeadersInit) {
   const params = new URLSearchParams(filters || {});
   return requestData<{ items: AlumniProfile[] }>(
-    `/api/career/alumni${params.toString() ? `?${params.toString()}` : ""}`
+    `/api/career/alumni${params.toString() ? `?${params.toString()}` : ""}`,
+    { headers }
   );
 }
 
-export async function createAlumniProfile(data: Partial<AlumniProfile>) {
+export async function createAlumniProfile(data: Partial<AlumniProfile>, headers?: HeadersInit) {
   return requestData<AlumniProfile>("/api/career/alumni", {
     method: "POST",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function updateAlumniProfile(id: string, data: Partial<AlumniProfile>) {
+export async function updateAlumniProfile(id: string, data: Partial<AlumniProfile>, headers?: HeadersInit) {
   return requestData<{ updated: boolean }>(`/api/career/alumni/${encodeURIComponent(id)}`, {
     method: "PUT",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteAlumniProfile(id: string) {
+export async function deleteAlumniProfile(id: string, headers?: HeadersInit) {
   return requestData<{ deleted: boolean }>(`/api/career/alumni/${encodeURIComponent(id)}`, {
     method: "DELETE",
+    headers,
   });
 }
 
-export async function requestAlumniConnection(alumniId: string, message?: string) {
+export async function requestAlumniConnection(alumniId: string, message?: string | { message?: string }) {
+  const normalizedMessage = typeof message === "string" ? message : message?.message;
   return requestData<{ requested: boolean }>(`/api/career/alumni/${encodeURIComponent(alumniId)}/requests`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message: normalizedMessage }),
   });
 }
 
 // Interview functions
-export async function listInterviewSlots() {
-  return requestData<{ items: InterviewSlot[] }>("/api/career/interviews/slots");
+export async function listInterviewSlots(headers?: HeadersInit) {
+  return requestData<{ items: InterviewSlot[] }>("/api/career/interviews/slots", { headers });
 }
 
-export async function createInterviewSlot(data: Omit<InterviewSlot, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createInterviewSlot(data: Partial<InterviewSlot>, headers?: HeadersInit) {
   return requestData<InterviewSlot>("/api/career/interviews/slots", {
     method: "POST",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function updateInterviewSlot(id: string, data: Partial<InterviewSlot>) {
+export async function updateInterviewSlot(id: string, data: Partial<InterviewSlot>, headers?: HeadersInit) {
   return requestData<{ updated: boolean }>(`/api/career/interviews/slots/${encodeURIComponent(id)}`, {
     method: "PUT",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteInterviewSlot(id: string) {
+export async function deleteInterviewSlot(id: string, headers?: HeadersInit) {
   return requestData<{ deleted: boolean }>(`/api/career/interviews/slots/${encodeURIComponent(id)}`, {
     method: "DELETE",
+    headers,
   });
 }
 
@@ -388,30 +461,34 @@ export async function cancelInterviewBooking(bookingId: string) {
 }
 
 // Career Opportunities CRUD functions
-export async function listCareerOpportunities(filters?: Record<string, string>) {
+export async function listCareerOpportunities(filters?: Record<string, string>, headers?: HeadersInit) {
   const params = new URLSearchParams(filters || {});
   return requestData<{ items: CareerOpportunity[] }>(
-    `/api/career/opportunities${params.toString() ? `?${params.toString()}` : ""}`
+    `/api/career/opportunities${params.toString() ? `?${params.toString()}` : ""}`,
+    { headers }
   );
 }
 
-export async function createCareerOpportunity(data: Partial<CareerOpportunity>) {
+export async function createCareerOpportunity(data: Record<string, unknown>, headers?: HeadersInit) {
   return requestData<CareerOpportunity>("/api/career/opportunities", {
     method: "POST",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function updateCareerOpportunity(id: string, data: Partial<CareerOpportunity>) {
+export async function updateCareerOpportunity(id: string, data: Record<string, unknown>, headers?: HeadersInit) {
   return requestData<{ updated: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}`, {
     method: "PUT",
+    headers,
     body: JSON.stringify(data),
   });
 }
 
-export async function deleteCareerOpportunity(id: string) {
+export async function deleteCareerOpportunity(id: string, headers?: HeadersInit) {
   return requestData<{ deleted: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}`, {
     method: "DELETE",
+    headers,
   });
 }
 

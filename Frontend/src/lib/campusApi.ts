@@ -6,20 +6,33 @@ export type EventSummary = {
   description: string;
   startAt: string;
   endAt: string;
+  startDate: string;
+  endDate: string;
   category: string;
   department: string;
+  type?: string;
   status: string;
   approvalStatus?: string;
   visibility: string;
   createdByUserId?: string;
+  createdBy?: string;
   venue?: string;
-  location?: { physical?: string; virtual?: string; mapUrl?: string };
+  location?: string | { physical?: string; virtual?: string; mapUrl?: string };
   registeredCount?: number;
+  registrationCount?: number;
   seatsAvailable?: number;
+  maxCapacity?: number | null;
+  prizes?: string | null;
+  eligibility?: string | null;
+  isCompetition?: boolean;
+  competitionConfig?: CompetitionConfig | null;
+  posterImagePath?: string | null;
   myRegistration?: unknown;
 };
 
 export type EventDetail = EventSummary & {
+  rules?: string | null;
+  faq?: Array<{ question: string; answer: string }> | null;
   registrations?: Array<Record<string, unknown>>;
   feedback?: Array<Record<string, unknown>>;
   gallery?: Array<Record<string, unknown>>;
@@ -145,11 +158,18 @@ export type CampusFaq = {
   visible?: boolean;
 };
 
+function normalizeEventList(payload: EventSummary[] | { events?: EventSummary[] }) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.events)) return payload.events;
+  return [];
+}
+
 export async function listEvents(query?: Record<string, string>, headers?: HeadersInit) {
   const params = new URLSearchParams(query || {});
-  return requestData<EventSummary[]>(`/api/events${params.toString() ? `?${params.toString()}` : ""}`, {
+  const payload = await requestData<EventSummary[] | { events?: EventSummary[] }>(`/api/events${params.toString() ? `?${params.toString()}` : ""}`, {
     headers,
   });
+  return normalizeEventList(payload);
 }
 
 export async function getEvent(eventId: string, headers?: HeadersInit) {
@@ -373,7 +393,7 @@ export async function generateRoundCertificates(eventId: string, roundId: string
 }
 
 export async function getMyRoundCertificate(eventId: string, roundId: string) {
-  return requestData<{ fileName: string; filePath: string }>(
+  return requestData<{ fileName: string; filePath: string; url?: string }>(
     `/api/competitions/${encodeURIComponent(eventId)}/rounds/${encodeURIComponent(roundId)}/certificates/me`
   );
 }
