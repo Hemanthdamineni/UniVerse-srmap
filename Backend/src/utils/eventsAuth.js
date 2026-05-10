@@ -1,5 +1,6 @@
 const { resolveSessionId } = require("./cookies");
 const { hasAdminAccess } = require("./adminAccess");
+const { extractRegisterNoFromProfile, isPotentialAdminRegisterNo } = require("../config/adminUsers");
 
 function parseDepartmentFromProfile(profileData) {
   const table = profileData?.TableContent || {};
@@ -73,6 +74,9 @@ async function resolveRoleAsync(req, sessionStore, adminPassword = "") {
     if (!session?.loggedIn) return "guest";
 
     const profile = session.profileData || {};
+    const registerNo = extractRegisterNoFromProfile(profile);
+    if (isPotentialAdminRegisterNo(registerNo)) return "admin";
+
     const program = String(profile?.TableContent?.["Program / Section"] || "").toLowerCase();
 
     if (program.includes("faculty")) return "faculty";
