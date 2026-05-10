@@ -11,7 +11,7 @@ export default function AdminSystemControlsPage() {
           Signed in as potential admin account: <span className="font-semibold text-[var(--text-primary)]">{admin.registerNo || "Unknown"}</span>
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--success)]">
+          <span className="rounded-full bg-[var(--status-open-bg)] px-3 py-1 text-xs font-semibold text-[var(--status-open-text)]">
             Admin Mode Enabled
           </span>
           <button

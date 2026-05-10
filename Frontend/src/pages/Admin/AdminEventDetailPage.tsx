@@ -1,5 +1,5 @@
-import EventDetailPage from "../Events/EventDetailPage";
+import EventDetailPageNew from "../Events/EventDetailPageNew";
 
 export default function AdminEventDetailPage() {
-  return <EventDetailPage adminMode />;
+  return <EventDetailPageNew />;
 }
