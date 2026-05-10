@@ -27,19 +27,12 @@ import FeeDuesPage from "./pages/ERP/FeeDuesPage";
 import FeePaidPage from "./pages/ERP/FeePaidPage";
 
 /* Domain-specific pages — Campus (Events, Helpdesk, Feedback), LMS, Career */
-import EventListPage from "./pages/Events/EventListPage";
-import EventDetailPage from "./pages/Events/EventDetailPage";
-import MyEventsPage from "./pages/Events/MyEventsPage";
-import MyRegistrationsPage from "./pages/Events/MyRegistrationsPage";
-import ProposeNewEvent from "./pages/Events/ProposeNewEvent";
 import SubmissionPage from "./pages/Events/SubmissionPage";
 import MyResultsPage from "./pages/Events/MyResultsPage";
 import OrganizerDashboard from "./pages/Events/OrganizerDashboard";
 import SubmissionListPage from "./pages/Events/SubmissionListPage";
 import EvaluationPage from "./pages/Events/EvaluationPage";
 import ShortlistPage from "./pages/Events/ShortlistPage";
-import TeamManagementPage from "./pages/Events/TeamManagementPage";
-import InvitationsPage from "./pages/Events/InvitationsPage";
 import LeaderboardPage from "./pages/Events/LeaderboardPage";
 import RaiseTicket from "./pages/Helpdesk/RaiseTicket";
 /* Competition Platform — New Pages */
@@ -48,10 +41,21 @@ import CreateEventPage from "./pages/Events/CreateEventPage";
 import MyActivityPage from "./pages/Events/MyActivityPage";
 import MyCreatedEventsPage from "./pages/Events/MyCreatedEventsPage";
 import NotificationsPage from "./pages/Events/NotificationsPage";
+import EventAttendance from "./pages/Events/EventAttendance";
 /* EventProvider context wrapper */
-import { EventProvider, GlobalLoadingBoundary, FailureRecoveryBanner } from "./contexts/EventContext";
+import { EventProvider } from "./contexts/EventContext";
+import { RequireCompetitionAccess } from "./components/competition/CompetitionAccessGuard";
 /* Rewritten EventDetailPage */
 import EventDetailPageNew from "./pages/Events/EventDetailPageNew";
+import {
+  RegistrationFlowPage,
+  TeamFormationPage,
+  TeamDetailPage,
+  MyTeamsPage,
+  CertificateClaimPage,
+  RolesPage,
+  CertificateTemplatePage,
+} from "./pages/Events/EventWorkflowPages";
 
 /**
  * Thin wrapper: reads eventId from router params, provides EventContext.
@@ -89,6 +93,10 @@ import AdminCareerOpportunitiesPage from "./pages/Admin/AdminCareerOpportunities
 import AdminCareerInterviewsPage from "./pages/Admin/AdminCareerInterviewsPage";
 import AdminCareerAlumniPage from "./pages/Admin/AdminCareerAlumniPage";
 import AdminEventDetailPage from "./pages/Admin/AdminEventDetailPage";
+import AdminDeptPerformancePage from "./pages/Admin/AdminDeptPerformancePage";
+import AdminEventApprovalsPage from "./pages/Admin/AdminEventApprovalsPage";
+import AdminAuditLogsPage from "./pages/Admin/AdminAuditLogsPage";
+import AdminCertTemplatesPage from "./pages/Admin/AdminCertTemplatesPage";
 import {
   AddResourcePage,
   BrowsePage,
@@ -117,25 +125,6 @@ import {
 
 /** Route → dedicated component map for non-ERP domain pages */
 const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
-  /* Campus — Events */
-  "/events": <EventsListingPage />,
-  "/events/listings": <EventsListingPage />,  // legacy redirect handled at route level
-  "/events/create": <CreateEventPage />,
-  "/events/my-activity": <MyActivityPage />,
-  "/events/my-created": <MyCreatedEventsPage />,
-  "/events/notifications": <NotificationsPage />,
-  "/events/my-events": <MyActivityPage />,
-  "/events/registered-events": <MyActivityPage />,
-  "/events/propose-new-event": <ProposeNewEvent />,
-  "/events/:eventId/manage": <OrganizerDashboard />,
-  "/events/:eventId/manage/rounds/:roundId/submissions": <SubmissionListPage />,
-  "/events/:eventId/manage/rounds/:roundId/submissions/:submissionId/evaluate": <EvaluationPage />,
-  "/events/:eventId/manage/rounds/:roundId/shortlist": <ShortlistPage />,
-  "/events/:eventId/submit/:roundId": <SubmissionPage />,
-  "/events/:eventId/my-results/:roundId": <MyResultsPage />,
-  "/events/:eventId/team": <TeamManagementPage />,
-  "/events/:eventId/invitations": <InvitationsPage />,
-  "/events/:eventId/rounds/:roundId/leaderboard": <LeaderboardPage />,
   /* Campus — Helpdesk */
   "/helpdesk/raise-ticket": <RaiseTicket />,
   "/helpdesk/faqs": <HelpdeskFAQs />,
@@ -168,10 +157,18 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/admin/career-opportunities": <AdminCareerOpportunitiesPage />,
   "/admin/career-interviews": <AdminCareerInterviewsPage />,
   "/admin/career-alumni": <AdminCareerAlumniPage />,
+  "/admin/department-performance": <AdminDeptPerformancePage />,
+  "/admin/event-approvals": <AdminEventApprovalsPage />,
+  "/admin/audit-logs": <AdminAuditLogsPage />,
+  "/admin/certificate-templates": <AdminCertTemplatesPage />,
 };
 
 const appRoutes = Object.values(PAGE_BLUEPRINTS)
-  .filter((blueprint) => blueprint.route !== "/dashboard" && blueprint.route !== "/profile")
+  .filter((blueprint) =>
+    blueprint.route !== "/dashboard" &&
+    blueprint.route !== "/profile" &&
+    !blueprint.route.startsWith("/events")
+  )
   .map((blueprint) => {
     let Component = <MappedErpPage pageKeys={blueprint.fetchKeys} title={blueprint.heading} />;
 
@@ -216,6 +213,83 @@ const appRoutes = Object.values(PAGE_BLUEPRINTS)
     };
   });
 
+function withEventProvider(component: React.ReactNode) {
+  return (
+    <EventProviderWrapper>
+      {component}
+    </EventProviderWrapper>
+  );
+}
+
+const eventRoutes = [
+  { path: "/events", element: <EventsListingPage /> },
+  { path: "/events/create", element: <CreateEventPage /> },
+  { path: "/events/my-activity", element: <MyActivityPage /> },
+  { path: "/events/my-teams", element: <MyTeamsPage /> },
+  { path: "/events/my-created", element: <MyCreatedEventsPage /> },
+  { path: "/events/notifications", element: <NotificationsPage /> },
+  { path: "/events/attendance", element: <EventAttendance /> },
+  { path: "/events/:eventId", element: withEventProvider(<EventDetailPageNew />) },
+  { path: "/events/:eventId/register", element: withEventProvider(<RegistrationFlowPage />) },
+  { path: "/events/:eventId/teams/create", element: withEventProvider(<TeamFormationPage />) },
+  { path: "/events/:eventId/teams/:teamId", element: withEventProvider(<TeamDetailPage />) },
+  { path: "/events/:eventId/submit/:roundId", element: withEventProvider(<SubmissionPage />) },
+  { path: "/events/:eventId/my-results/:roundId", element: withEventProvider(<MyResultsPage />) },
+  { path: "/events/:eventId/leaderboard/:roundId", element: withEventProvider(<LeaderboardPage />) },
+  { path: "/events/:eventId/certificate/:roundId", element: withEventProvider(<CertificateClaimPage />) },
+  {
+    path: "/events/:eventId/manage",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canEdit">
+        <OrganizerDashboard />
+      </RequireCompetitionAccess>,
+    ),
+  },
+  {
+    path: "/events/:eventId/manage/roles",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canManageRoles">
+        <RolesPage />
+      </RequireCompetitionAccess>,
+    ),
+  },
+  {
+    path: "/events/:eventId/manage/certificate",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canManageRoles">
+        <CertificateTemplatePage />
+      </RequireCompetitionAccess>,
+    ),
+  },
+  {
+    path: "/events/:eventId/manage/rounds/:roundId/submissions",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canViewAllSubmissions">
+        <SubmissionListPage />
+      </RequireCompetitionAccess>,
+    ),
+  },
+  {
+    path: "/events/:eventId/manage/rounds/:roundId/submissions/:submissionId/evaluate",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canEvaluate">
+        <EvaluationPage />
+      </RequireCompetitionAccess>,
+    ),
+  },
+  {
+    path: "/events/:eventId/manage/rounds/:roundId/shortlist",
+    element: withEventProvider(
+      <RequireCompetitionAccess permission="canShortlist">
+        <ShortlistPage />
+      </RequireCompetitionAccess>,
+    ),
+  },
+].map((route) => ({
+  ...route,
+  element: <ProtectedPage>{route.element}</ProtectedPage>,
+}));
+
 const router = createBrowserRouter([
   { path: "/", element: <PageLayout><HomePage /></PageLayout> },
   { path: "/Home", element: <Navigate to="/" replace /> },
@@ -223,22 +297,7 @@ const router = createBrowserRouter([
   { path: "/forgot-password", element: <PageLayout><ForgotPasswordPage /></PageLayout> },
   { path: "/dashboard", element: <ProtectedPage><Dashboard /></ProtectedPage> },
   { path: "/profile", element: <ProtectedPage><ProfilePage /></ProtectedPage> },
-  /* ── NEW: /events/:eventId — EventProvider-wrapped event detail page ── */
-  {
-    path: "/events/:eventId",
-    element: (
-      <ProtectedPage>
-        <EventProviderWrapper>
-          <EventDetailPageNew />
-        </EventProviderWrapper>
-      </ProtectedPage>
-    ),
-  },
-  /* Legacy URL redirect: /events/listings/:eventId → /events/:eventId */
-  {
-    path: "/events/listings/:eventId",
-    element: <EventDetailPage />,
-  },
+  ...eventRoutes,
   { path: "/resources", element: <ProtectedPage><LmsHomePage /></ProtectedPage> },
   { path: "/resources/browse", element: <ProtectedPage><BrowsePage /></ProtectedPage> },
   { path: "/resources/explore", element: <ProtectedPage><ExplorePage /></ProtectedPage> },
@@ -263,21 +322,14 @@ const router = createBrowserRouter([
   { path: "/resources/me/revision", element: <ProtectedPage><RevisionQueuePage /></ProtectedPage> },
   { path: "/resources/me/exam-feedback", element: <ProtectedPage><ExamFeedbackPage /></ProtectedPage> },
   ...appRoutes,
-  { path: "/events/:eventId/submit/:roundId", element: <ProtectedPage><SubmissionPage /></ProtectedPage> },
-  { path: "/events/:eventId/my-results/:roundId", element: <ProtectedPage><MyResultsPage /></ProtectedPage> },
-  { path: "/events/:eventId/team", element: <ProtectedPage><TeamManagementPage /></ProtectedPage> },
-  { path: "/events/:eventId/invitations", element: <ProtectedPage><InvitationsPage /></ProtectedPage> },
-  { path: "/events/:eventId/rounds/:roundId/leaderboard", element: <ProtectedPage><LeaderboardPage /></ProtectedPage> },
-  { path: "/events/:eventId/manage", element: <ProtectedPage><OrganizerDashboard /></ProtectedPage> },
-  { path: "/events/:eventId/manage/rounds/:roundId/submissions", element: <ProtectedPage><SubmissionListPage /></ProtectedPage> },
-  { path: "/events/:eventId/manage/rounds/:roundId/submissions/:submissionId/evaluate", element: <ProtectedPage><EvaluationPage /></ProtectedPage> },
-  { path: "/events/:eventId/manage/rounds/:roundId/shortlist", element: <ProtectedPage><ShortlistPage /></ProtectedPage> },
   {
     path: "/admin/events-management/:eventId",
     element: (
       <ProtectedPage>
         <AdminOnlyPage>
-          <AdminEventDetailPage />
+          <EventProviderWrapper>
+            <AdminEventDetailPage />
+          </EventProviderWrapper>
         </AdminOnlyPage>
       </ProtectedPage>
     ),

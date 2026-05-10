@@ -6,7 +6,6 @@ import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
 import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/session";
 import { useAdminMode } from "../context/AdminModeContext";
-import { usePageContrast } from "../hooks/usePageContrast";
 
 function SidebarContrastText({ text, className = "" }: { text: string; className?: string }) {
   return (
@@ -25,9 +24,16 @@ function SidebarContrastText({ text, className = "" }: { text: string; className
   );
 }
 
+function normalizeRoute(route: string) {
+  const normalized = String(route || "").replace(/\/+$/, "");
+  return normalized || "/";
+}
+
 export default function Sidebar() {
   const admin = useAdminMode();
-  const [sidebarClosed, setSidebarClosed] = useState(false);
+  const [sidebarClosed, setSidebarClosed] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 900 : false
+  );
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(true);
   const [profileData, setProfileData] = useState<Record<string, unknown> | null>(null);
@@ -35,52 +41,38 @@ export default function Sidebar() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const currentPath = normalizeRoute(location.pathname);
+  const isActiveRoute = useCallback((route: string) => normalizeRoute(route) === currentPath, [currentPath]);
 
-  const baseNavSections = useMemo(() => getMainNavSections(), []);
-  const adminSection = useMemo(
-    () => ({
-      section: "ADMINISTRATION",
-      icon: "/src/assets/Icons/Settings.png",
-      items: [
-        {
-          type: "group",
-          label: "Admin",
-          icon: "/src/assets/Icons/Settings.png",
-          domain: "admin",
-          children: [
-            { type: "link", label: "Events Management", route: "/admin/events-management", domain: "admin", access: "B" },
-            { type: "link", label: "Content Management", route: "/admin/content-management", domain: "admin", access: "B" },
-            { type: "link", label: "Helpdesk Tickets", route: "/admin/helpdesk-tickets", domain: "admin", access: "B" },
-            { type: "link", label: "Helpdesk FAQs", route: "/admin/helpdesk-faqs", domain: "admin", access: "B" },
-            { type: "link", label: "Career Opportunities", route: "/admin/career-opportunities", domain: "admin", access: "B" },
-            { type: "link", label: "Career Interviews", route: "/admin/career-interviews", domain: "admin", access: "B" },
-            { type: "link", label: "Career Alumni", route: "/admin/career-alumni", domain: "admin", access: "B" },
-            { type: "link", label: "System Controls", route: "/admin/system-controls", domain: "admin", access: "B" },
-          ],
-        },
-      ],
-    }),
-    []
-  );
-
-  const navSections = useMemo(() => (admin.isAdmin ? [...baseNavSections, adminSection] : baseNavSections), [admin.isAdmin, adminSection, baseNavSections]);
+  const navSections = useMemo(() => getMainNavSections({ isAdmin: admin.isAdmin }), [admin.isAdmin]);
 
   const activeGroupKey = useMemo(() => {
     for (const section of navSections) {
       for (const item of section.items) {
-        if (item.type === "group" && item.children.some((child) => child.route === location.pathname)) {
+        if (item.type === "group" && item.children.some((child) => isActiveRoute(child.route))) {
           return `${section.section}:${item.label}`;
         }
       }
     }
     return null;
-  }, [location.pathname, navSections]);
+  }, [isActiveRoute, navSections]);
 
   useEffect(() => {
     if (activeGroupKey) {
       setOpenGroup(activeGroupKey);
     }
   }, [activeGroupKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onResize = () => {
+      if (window.innerWidth < 900) {
+        setSidebarClosed(true);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const storedProfile = readStoredProfileData();
@@ -119,14 +111,6 @@ export default function Sidebar() {
     navigate("/login");
   }, [navigate]);
 
-  usePageContrast(sidebarRef, [
-    location.pathname,
-    profileData,
-    sidebarClosed,
-    openGroup,
-    showAdvanced,
-  ]);
-
   const profilePhoto =
     typeof profileData?.photo === "string"
       ? profileData.photo
@@ -145,6 +129,14 @@ export default function Sidebar() {
           : typeof tableContent?.["Register No."] === "string"
             ? tableContent["Register No."]
           : "Student Portal";
+  const profileRegNo =
+    typeof tableContent?.["Register No."] === "string"
+      ? tableContent["Register No."]
+      : typeof profileData?.regNo === "string"
+        ? profileData.regNo
+        : typeof profileData?.registerNo === "string"
+          ? profileData.registerNo
+          : "";
 
   return (
     <div
@@ -154,7 +146,8 @@ export default function Sidebar() {
       }`}
       style={{
         borderColor: "var(--border)",
-        backgroundColor: "transparent",
+        backgroundColor: "var(--sidebar-bg)",
+        boxShadow: "var(--sidebar-shadow)",
       }}
     >
       <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--border)" }}>
@@ -201,7 +194,7 @@ export default function Sidebar() {
                         to={item.route}
                         className={`sidebar-item sidebar-item-hover flex w-full items-center gap-3 rounded-lg px-2 py-2 font-semibold transition ${
                           sidebarClosed ? "justify-center" : ""
-                        } ${location.pathname === item.route ? "sidebar-item-active" : ""}`}
+                        } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
                       >
                         <img
                           src={item.icon ?? "/src/assets/Icons/Dashboard.png"}
@@ -215,7 +208,7 @@ export default function Sidebar() {
 
                   const groupKey = `${section.section}:${item.label}`;
                   const isOpen = openGroup === groupKey;
-                  const activeChild = item.children.some((child) => child.route === location.pathname);
+                  const activeChild = item.children.some((child) => isActiveRoute(child.route));
 
                   return (
                     <div key={item.label} className="m-0 p-0">
@@ -263,7 +256,7 @@ export default function Sidebar() {
                                 key={child.route}
                                 to={child.route}
                                 className={`sidebar-item-muted sidebar-item-hover block rounded px-2 py-1 text-left text-sm ${
-                                  location.pathname === child.route ? "sidebar-item sidebar-item-active font-semibold" : ""
+                                  isActiveRoute(child.route) ? "sidebar-item sidebar-item-active font-semibold" : ""
                                 }`}
                               >
                                 <SidebarContrastText text={child.label} />
@@ -322,7 +315,7 @@ export default function Sidebar() {
                 onClick={handleLogout}
                 className={`sidebar-item sidebar-item-hover flex w-full items-center rounded-lg px-2 py-2 font-medium transition ${
                   sidebarClosed ? "justify-center" : ""
-                }`}
+                } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
               >
                 <img src={item.icon} alt={`${item.label} Icon`} className="sidebar-icon mr-3 h-6 w-6" />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
@@ -359,6 +352,11 @@ export default function Sidebar() {
               <p className="sidebar-item text-sm font-medium">
                 <SidebarContrastText text={profileName} />
               </p>
+              {profileRegNo ? (
+                <p className="sidebar-item-muted text-xs">
+                  <SidebarContrastText text={profileRegNo} />
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -369,7 +367,7 @@ export default function Sidebar() {
       {!sidebarClosed && admin.potentialAdmin ? (
         <div className="px-3 pb-2">
           {admin.isAdmin ? (
-            <div className="rounded-lg border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--success)]">
+            <div className="rounded-lg border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-xs font-semibold text-[var(--status-open-text)]">
               Admin Mode Enabled
             </div>
           ) : (

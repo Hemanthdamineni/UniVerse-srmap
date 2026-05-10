@@ -17,8 +17,9 @@ import {
   WalletIcon,
   type LucideIcon,
 } from "lucide-react"
+import { useAdminMode } from "../context/AdminModeContext"
 
-import { COMMAND_PALETTE_EXTRA_GROUPS, getMergedMainNav, getRouteCatalog } from "../config/navigationRegistry"
+import { COMMAND_PALETTE_EXTRA_GROUPS, getCommandPaletteGroupOrder, getRouteCatalog } from "../config/navigationRegistry"
 import { logoutSession } from "../lib/session"
 import { Button } from "./button"
 import {
@@ -77,6 +78,7 @@ function getShortcutLabel() {
 }
 
 export default function NavigationCommandPalette() {
+  const admin = useAdminMode()
   const location = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = React.useState(false)
@@ -86,7 +88,7 @@ export default function NavigationCommandPalette() {
   const routeCommands = React.useMemo(() => {
     const commandMap = new Map<string, RouteCommand>()
 
-    for (const entry of getRouteCatalog()) {
+    for (const entry of getRouteCatalog({ isAdmin: admin.isAdmin })) {
       commandMap.set(entry.route, {
         id: `route-${entry.route}`,
         label: entry.label,
@@ -98,11 +100,11 @@ export default function NavigationCommandPalette() {
     }
 
     return Array.from(commandMap.values())
-  }, [])
+  }, [admin.isAdmin])
 
   const groupOrder = React.useMemo(
-    () => [...getMergedMainNav().map((item) => item.label), ...COMMAND_PALETTE_EXTRA_GROUPS],
-    []
+    () => [...getCommandPaletteGroupOrder({ isAdmin: admin.isAdmin }), ...COMMAND_PALETTE_EXTRA_GROUPS],
+    [admin.isAdmin]
   )
 
   const groupedCommands = React.useMemo(() => {

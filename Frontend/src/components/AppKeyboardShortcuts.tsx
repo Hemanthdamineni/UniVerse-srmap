@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { KeyboardIcon } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -18,9 +18,11 @@ function isTypingTarget(target: EventTarget | null) {
 }
 
 export default function AppKeyboardShortcuts() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [helpOpen, setHelpOpen] = React.useState(false);
   const gRef = React.useRef(false);
+  const isCompetitionRoute = location.pathname.startsWith("/events");
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -65,7 +67,7 @@ export default function AppKeyboardShortcuts() {
       if (gRef.current && event.key === "e") {
         event.preventDefault();
         gRef.current = false;
-        navigate("/events/listings");
+        navigate("/events");
       }
     };
 
@@ -75,7 +77,7 @@ export default function AppKeyboardShortcuts() {
 
   return (
     <>
-      <div className="pointer-events-none fixed bottom-6 left-6 z-40">
+      <div className={`pointer-events-none fixed bottom-6 z-40 ${isCompetitionRoute ? "left-6 sm:left-[300px]" : "left-6"}`}>
         <Button
           type="button"
           variant="outline"
