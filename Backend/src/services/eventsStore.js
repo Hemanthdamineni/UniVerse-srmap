@@ -574,6 +574,25 @@ class EventsStore {
       );
     }
 
+    if (filters.registered && user) {
+      const myRegEventIds = new Set(
+        ensureArray(this.registrationsByUser.get(user.userId))
+          .filter((item) => item.status === REGISTRATION_STATUS.REGISTERED)
+          .map((item) => item.eventId)
+      );
+      events = events.filter((event) => myRegEventIds.has(event.id));
+    }
+
+    if (filters.createdBy && user) {
+      const createdBy =
+        String(filters.createdBy).trim().toLowerCase() === "me"
+          ? user.userId
+          : String(filters.createdBy).trim();
+      if (createdBy) {
+        events = events.filter((event) => String(event.createdByUserId) === createdBy);
+      }
+    }
+
     events.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
     return events.map((event) => this._eventSummary(event, user));
   }
