@@ -207,6 +207,29 @@ class CompetitionStore {
         UNIQUE (eventId, roundId, userId, marker)
       );
     `);
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS event_roles (
+        id TEXT PRIMARY KEY,
+        eventId TEXT NOT NULL,
+        regNo TEXT NOT NULL,
+        name TEXT,
+        role TEXT NOT NULL,
+        assignedBy TEXT NOT NULL,
+        assignedAt TEXT NOT NULL,
+        UNIQUE (eventId, regNo)
+      );
+    `);
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_event_roles_event ON event_roles(eventId);");
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS certificate_templates (
+        eventId TEXT PRIMARY KEY,
+        roundId TEXT,
+        templateImagePath TEXT NOT NULL,
+        fields TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    `);
   }
 
   _getEventOrThrow(eventId) {
@@ -374,16 +397,99 @@ class CompetitionStore {
   }
 
   _ensureCanManageEvent(user, event) {
-    const coOrganizers = Array.isArray(event.coOrganizers) ? event.coOrganizers.map(String) : [];
-    const allowed =
-      event.createdByUserId === user.userId ||
-      coOrganizers.includes(user.userId) ||
-      ["admin", "event_coordinator"].includes(user.role);
-    if (!allowed) {
+    this._ensurePermission(user, event, "canEdit");
+  }
+
+  _getStoredRole(eventId, userId) {
+    return this.db
+      .prepare("SELECT * FROM event_roles WHERE eventId = ? AND regNo = ?")
+      .get(eventId, String(userId || "").trim().toUpperCase());
+  }
+
+  _isRegistered(eventId, userId) {
+    return (this.eventsStore.registrationsByEvent.get(eventId) || []).some(
+      (item) => item.userId === userId && item.status === "registered"
+    );
+  }
+
+  _rolePayload(event, user) {
+    const regNo = String(user?.userId || "").trim().toUpperCase();
+    const coOrganizers = Array.isArray(event.coOrganizers) ? event.coOrganizers.map((item) => String(item).toUpperCase()) : [];
+    const stored = this._getStoredRole(event.id, regNo);
+    let role = "visitor";
+
+    if (["admin", "event_coordinator"].includes(user?.role)) {
+      role = "owner";
+    } else if (String(event.createdByUserId || "").toUpperCase() === regNo) {
+      role = "owner";
+    } else if (coOrganizers.includes(regNo)) {
+      role = "co-organizer";
+    } else if (stored?.role) {
+      role = String(stored.role);
+    } else if (this._isRegistered(event.id, user?.userId)) {
+      role = "participant";
+    }
+
+    const permissionMap = {
+      owner: {
+        canEdit: true,
+        canEvaluate: true,
+        canShortlist: true,
+        canManageRoles: true,
+        canViewAllSubmissions: true,
+      },
+      "co-organizer": {
+        canEdit: true,
+        canEvaluate: true,
+        canShortlist: true,
+        canManageRoles: false,
+        canViewAllSubmissions: true,
+      },
+      manager: {
+        canEdit: true,
+        canEvaluate: false,
+        canShortlist: true,
+        canManageRoles: false,
+        canViewAllSubmissions: true,
+      },
+      judge: {
+        canEdit: false,
+        canEvaluate: true,
+        canShortlist: false,
+        canManageRoles: false,
+        canViewAllSubmissions: true,
+      },
+      participant: {
+        canEdit: false,
+        canEvaluate: false,
+        canShortlist: false,
+        canManageRoles: false,
+        canViewAllSubmissions: false,
+      },
+      visitor: {
+        canEdit: false,
+        canEvaluate: false,
+        canShortlist: false,
+        canManageRoles: false,
+        canViewAllSubmissions: false,
+      },
+    };
+
+    return {
+      regNo,
+      role,
+      permissions: permissionMap[role] || permissionMap.visitor,
+    };
+  }
+
+  _ensurePermission(user, event, permission) {
+    const role = this._rolePayload(event, user);
+    if (!role.permissions[permission]) {
       const error = new Error("Forbidden");
       error.status = 403;
       throw error;
     }
+    return role;
   }
 
   _ensureRegistered(eventId, userId) {
@@ -1049,7 +1155,7 @@ class CompetitionStore {
 
   getSubmissionsForRound(eventId, roundId, user) {
     const { event } = this._getRoundOrThrow(eventId, roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canViewAllSubmissions");
     const teamScope = this._getSubmissionScope(event) === "team";
     if (!teamScope) {
       const rows = this.db
@@ -1090,7 +1196,7 @@ class CompetitionStore {
       throw error;
     }
     const { event } = this._getRoundOrThrow(submission.eventId, submission.roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canEvaluate");
     if (submission.submittedBy === user.userId) {
       const error = new Error("Conflict of interest.");
       error.status = 403;
@@ -1177,7 +1283,7 @@ class CompetitionStore {
       throw error;
     }
     const { event } = this._getRoundOrThrow(submission.eventId, submission.roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canEvaluate");
     const flagged = Boolean(payload.flagged);
     this.db
       .prepare("UPDATE submissions SET flagged = ?, flagReason = ? WHERE id = ?")
@@ -1187,7 +1293,7 @@ class CompetitionStore {
 
   applyShortlist(eventId, roundId, user, { mode, value }) {
     const { event } = this._getRoundOrThrow(eventId, roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canShortlist");
     const evaluated = this.db
       .prepare(
         `SELECT * FROM submissions
@@ -1229,7 +1335,7 @@ class CompetitionStore {
 
   publishResults(eventId, roundId, user) {
     const { event, round } = this._getRoundOrThrow(eventId, roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canShortlist");
     this.db
       .prepare("UPDATE rounds SET resultsPublished = 1 WHERE eventId = ? AND roundId = ?")
       .run(eventId, roundId);
@@ -1332,9 +1438,119 @@ class CompetitionStore {
     };
   }
 
+  getMyRole(eventId, user) {
+    const event = this._getEventOrThrow(eventId);
+    return this._rolePayload(event, user);
+  }
+
+  getEventRoles(eventId, user) {
+    const event = this._getEventOrThrow(eventId);
+    this._ensurePermission(user, event, "canManageRoles");
+    return this.db
+      .prepare("SELECT regNo, name, role, assignedAt, assignedBy FROM event_roles WHERE eventId = ? ORDER BY assignedAt DESC")
+      .all(eventId);
+  }
+
+  assignRole(eventId, user, { regNo, role }) {
+    const event = this._getEventOrThrow(eventId);
+    this._ensurePermission(user, event, "canManageRoles");
+    const normalizedRegNo = String(regNo || "").trim().toUpperCase();
+    const normalizedRole = String(role || "").trim();
+    if (!normalizedRegNo) {
+      const error = new Error("Registration number is required.");
+      error.status = 400;
+      throw error;
+    }
+    if (!["co-organizer", "manager", "judge"].includes(normalizedRole)) {
+      const error = new Error("Invalid event role.");
+      error.status = 400;
+      throw error;
+    }
+
+    const assignedAt = nowIso();
+    this.db
+      .prepare(
+        `INSERT INTO event_roles (id, eventId, regNo, name, role, assignedBy, assignedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(eventId, regNo) DO UPDATE SET
+           role = excluded.role,
+           assignedBy = excluded.assignedBy,
+           assignedAt = excluded.assignedAt`
+      )
+      .run(
+        `${eventId}:${normalizedRegNo}`,
+        eventId,
+        normalizedRegNo,
+        normalizedRegNo,
+        normalizedRole,
+        user.userId,
+        assignedAt
+      );
+
+    return this.db
+      .prepare("SELECT regNo, name, role, assignedAt, assignedBy FROM event_roles WHERE eventId = ? AND regNo = ?")
+      .get(eventId, normalizedRegNo);
+  }
+
+  removeRole(eventId, user, regNo) {
+    const event = this._getEventOrThrow(eventId);
+    this._ensurePermission(user, event, "canManageRoles");
+    const normalizedRegNo = String(regNo || "").trim().toUpperCase();
+    this.db.prepare("DELETE FROM event_roles WHERE eventId = ? AND regNo = ?").run(eventId, normalizedRegNo);
+    return { removed: true };
+  }
+
+  getCertificateTemplate(eventId, user, roundId = "") {
+    const event = this._getEventOrThrow(eventId);
+    void event;
+    const row = this.db.prepare("SELECT * FROM certificate_templates WHERE eventId = ?").get(eventId);
+    if (!row) return null;
+    return {
+      id: row.eventId,
+      eventId: row.eventId,
+      roundId: row.roundId || roundId || null,
+      templateImagePath: row.templateImagePath,
+      fields: safeJsonParse(row.fields, []),
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  saveCertificateTemplate(eventId, user, payload) {
+    const event = this._getEventOrThrow(eventId);
+    this._ensurePermission(user, event, "canEdit");
+    const templateImagePath = String(payload?.templateImagePath || "").trim();
+    if (!templateImagePath) {
+      const error = new Error("Template image is required.");
+      error.status = 400;
+      throw error;
+    }
+    const existing = this.db.prepare("SELECT createdAt FROM certificate_templates WHERE eventId = ?").get(eventId);
+    const timestamp = nowIso();
+    this.db
+      .prepare(
+        `INSERT INTO certificate_templates (eventId, roundId, templateImagePath, fields, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(eventId) DO UPDATE SET
+           roundId = excluded.roundId,
+           templateImagePath = excluded.templateImagePath,
+           fields = excluded.fields,
+           updatedAt = excluded.updatedAt`
+      )
+      .run(
+        eventId,
+        payload?.roundId || null,
+        templateImagePath,
+        JSON.stringify(Array.isArray(payload?.fields) ? payload.fields : []),
+        existing?.createdAt || timestamp,
+        timestamp
+      );
+    return this.getCertificateTemplate(eventId, user, payload?.roundId);
+  }
+
   getSubmissionEvaluations(eventId, roundId, submissionId, user) {
     const { event } = this._getRoundOrThrow(eventId, roundId);
-    this._ensureCanManageEvent(user, event);
+    this._ensurePermission(user, event, "canEvaluate");
     const submission = this.db
       .prepare("SELECT * FROM submissions WHERE id = ? AND eventId = ? AND roundId = ?")
       .get(submissionId, eventId, roundId);
