@@ -16,6 +16,8 @@
     "refresh:artifacts:manual": "node scripts/manual-refresh-artifacts.js --run",
     "map:template": "node scripts/generate-content-map-template.js data/endpoint-discovery.json data/erp-content-map.template.json",
     "seed:external": "node scripts/seed-external-pages.js",
+    "seed:demo": "node scripts/seed-demo-data.js",
+    "seed:demo:clean": "node scripts/seed-demo-data.js --clean",
     "load:cached": "k6 run load-tests/erp-cached.js",
     "load:live": "k6 run load-tests/erp-live.js",
     "load:mixed": "k6 run load-tests/erp-mixed.js",
