@@ -7,11 +7,11 @@ interface ModeChipProps {
 }
 
 const modeStyles = {
-  remote: 'bg-teal-50 text-teal-700 border-teal-100',
-  online: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] border-blue-100',
-  onsite: 'bg-orange-50 text-orange-700 border-orange-100',
-  offline: 'bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] border-amber-100',
-  hybrid: 'bg-purple-50 text-purple-700 border-purple-100',
+  remote: 'bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] text-[var(--comp-accent)] border-[color-mix(in_srgb,var(--comp-accent)_22%,transparent)]',
+  online: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_24%,transparent)]',
+  onsite: 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_24%,transparent)]',
+  offline: 'bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_24%,transparent)]',
+  hybrid: 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-primary)] border-[var(--comp-border)]',
 };
 
 const ModeChip: React.FC<ModeChipProps> = ({ mode, className }) => {
@@ -20,7 +20,7 @@ const ModeChip: React.FC<ModeChipProps> = ({ mode, className }) => {
   return (
     <span className={cn(
       'px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium border capitalize',
-      modeStyles[mode] || 'bg-gray-50 text-gray-700 border-gray-100',
+      modeStyles[mode] || 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] border-[var(--comp-border)]',
       className
     )}>
       {mode}

@@ -36,7 +36,7 @@ function BasicInfo({ profileData }: { profileData: any }) {
   };
 
   return (
-    <>
+    <div className="grid grid-cols-12 gap-x-4 gap-y-3">
       {[
         { label: "Name", value: profileModel.studentName, span: 4 },
         { label: "Register No", value: profileModel.registerNo, span: 2 },
@@ -55,7 +55,7 @@ function BasicInfo({ profileData }: { profileData: any }) {
           <h3 className="card-title font-semibold">{sanitizeVisibleText(value || "N/A")}</h3>
         </div>
       ))}
-    </>
+    </div>
   )
 }
 

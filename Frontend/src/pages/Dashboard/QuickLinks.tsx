@@ -41,24 +41,22 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
   };
 
   return (
-    <div className="p-2">
-      <h2 className="card-title font-bold mb-2">Quick Links</h2>
+    <div className="h-full p-3">
+      <h2 className="card-title font-bold mb-2.5">Quick Links</h2>
       {feedbackPendingCount > 0 ? (
         <div className="mb-3 rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--status-pending-bg)', color: 'var(--status-pending-text)', border: '1px solid var(--status-pending-border)' }}>
           {feedbackPendingCount} feedback item{feedbackPendingCount === 1 ? "" : "s"} waiting for review.
         </div>
       ) : null}
-      <div className="flex flex-col gap-2">
+      <div className="flex h-[calc(100%-2.25rem)] flex-col gap-1.5">
         {quickLinks.map((link, index) => (
           <div
             key={index}
             onClick={() => handleLinkClick(link.path)}
-            className={`${link.color} p-2 rounded-lg cursor-pointer hover:shadow-md hover:scale-105 transition-all`}
+            className={`${link.color} flex min-h-[30px] items-center justify-center rounded-lg px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all`}
             style={{ transitionDuration: 'var(--transition-fast)' }}
           >
-            <div className="text-center">
-              <p className="text-md font-medium" style={{ color: 'var(--comp-text-primary)' }}>{link.name}</p>
-            </div>
+            <p className="text-sm font-medium text-center" style={{ color: 'var(--comp-text-primary)' }}>{link.name}</p>
           </div>
         ))}
       </div>

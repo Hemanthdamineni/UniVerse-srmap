@@ -4,6 +4,7 @@ import { fetchSessionProfile } from "../../lib/session";
 import { executePipeline, type StudentProfile } from "../../lib/erpTransformers";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { SectionCard } from "../../components/ui/SectionCard";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { InlineError } from "../../components/ui/InlineError";
 import { StatusBadge } from "../../components/ui/StatusBadge";
@@ -45,7 +46,7 @@ function ProfilePage() {
       : undefined;
 
   return (
-    <div style={{ padding: "var(--space-lg)" }} className="min-h-screen">
+    <PageContainer>
       <PageHeader title={headerTitle} subtitle={headerSubtitle} />
 
       {loading && (
@@ -63,7 +64,7 @@ function ProfilePage() {
       )}
 
       {pData && !loading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <SectionCard title="Personal" className="md:col-span-2">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -136,7 +137,7 @@ function ProfilePage() {
           </pre>
         </SectionCard>
       ) : null}
-    </div>
+    </PageContainer>
   );
 }
 

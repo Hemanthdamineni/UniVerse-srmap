@@ -15,6 +15,7 @@ import { getEndSemesterFeedbackStatus } from "../../lib/studentToolsApi";
 import { InlineError } from "../../components/ui/InlineError";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { DashboardLayout } from "../../components/layout/PageLayouts";
 
 function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -76,89 +77,93 @@ function Dashboard() {
 
   if (loading || profileLoading) {
     return (
-      <div className="grid grid-cols-12 gap-4 p-4 h-screen">
-        {/* Welcome skeleton */}
-        <div className="col-span-9"><SkeletonCard className="h-48" /></div>
-        <div className="col-span-3"><SkeletonCard className="h-48" /></div>
-        {/* Basic info skeleton */}
-        <div className="col-span-9"><SkeletonCard className="h-[180px]" /></div>
-        {/* Schedule skeleton */}
-        <div className="col-span-3 row-span-2"><SkeletonCard className="h-[400px]" /></div>
-        {/* Bottom cards */}
-        <div className="col-span-2"><SkeletonCard className="h-[200px]" /></div>
-        <div className="col-span-4"><SkeletonCard className="h-[200px]" /></div>
-        <div className="col-span-3"><SkeletonCard className="h-[200px]" /></div>
-        <div className="col-span-9"><SkeletonCard className="h-[200px]" /></div>
+      <DashboardLayout>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div className="space-y-4 md:col-span-9">
+          <SkeletonCard className="h-12" />
+          <SkeletonCard className="h-[180px]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-9">
+            <SkeletonCard className="h-[220px] md:col-span-2" />
+            <SkeletonCard className="h-[220px] md:col-span-4" />
+            <SkeletonCard className="h-[220px] md:col-span-3" />
+          </div>
+          <SkeletonCard className="h-[230px]" />
+        </div>
+        <div className="space-y-4 md:col-span-3">
+          <SkeletonCard className="h-[180px]" />
+          <SkeletonCard className="h-[500px]" />
+        </div>
       </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
+      <DashboardLayout>
         <InlineError message={error} />
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (profileError) {
     return (
-      <div className="p-6">
+      <DashboardLayout>
         <InlineError message={`Profile Error: ${profileError}`} />
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!profileData) {
     return (
-      <div className="p-6">
+      <DashboardLayout>
         <InlineError message="Profile Error: No profile data available for the current session." />
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div ref={dashboardRef} className="grid-rows-12 grid grid-cols-12 p-4 gap-4 h-screen">
-      {/* Welcome Card - 1 row */}
-      <SectionCard data-page-contrast="true" className="page-contrast-fg bg-transparent col-span-9 row-span-1 p-0 border-0 shadow-none">
-        <WelcomeCard />
-      </SectionCard>
+    <DashboardLayout>
+    <div ref={dashboardRef} className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <div className="space-y-4 md:col-span-9">
+        <div data-page-contrast="true" className="page-contrast-fg">
+          <WelcomeCard profileData={profileData} />
+        </div>
 
-      {/* Weekly Calendar - 2 rows 3 columns */}
-      <SectionCard interactive className="col-span-3 row-span-2 p-0 overflow-hidden">
-        <WeekCalendar onDateSelect={setSelectedDate} />
-      </SectionCard>
+        <SectionCard interactive title="Basic Info" className="overflow-hidden p-4">
+          <BasicInfo profileData={profileData} />
+        </SectionCard>
 
-      {/* Basic Info - 3 rows 9 columns*/}
-      <SectionCard interactive title="Basic Info" className="col-span-9 row-span-3 overflow-hidden">
-        <BasicInfo profileData={profileData} />
-      </SectionCard>
+        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-9">
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-2 md:h-[300px]">
+            <QuickLinks feedbackPendingCount={feedbackPendingCount} />
+          </SectionCard>
 
-      {/* Schedule - 10 rows 3 columns */}
-      <SectionCard interactive className="col-span-3 row-span-10 p-0 overflow-hidden">
-        <Schedule scheduleData={timetableData || data} selectedDate={selectedDate} />
-      </SectionCard>
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 md:h-[300px]">
+            <InternalMarks marksData={data} />
+          </SectionCard>
 
-      {/* Quick Links - 4 rows */}
-      <SectionCard interactive className="col-span-2 row-span-4 p-0 overflow-hidden">
-        <QuickLinks feedbackPendingCount={feedbackPendingCount} />
-      </SectionCard>
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-3 md:h-[300px]">
+            <Attendance attendanceData={data} />
+          </SectionCard>
+        </div>
 
-      {/* Internal Marks - 4 rows */}
-      <SectionCard interactive className="col-span-4 row-span-4 p-0 overflow-hidden">
-        <InternalMarks marksData={data} />
-      </SectionCard>
+        <SectionCard interactive className="overflow-hidden p-0">
+          <ToDo selectedDate={selectedDate} profileData={profileData} />
+        </SectionCard>
+      </div>
 
-      {/* Attendance - 4 rows */}
-      <SectionCard interactive className="col-span-3 row-span-4 p-0 overflow-hidden">
-        <Attendance attendanceData={data} />
-      </SectionCard>
+      <div className="space-y-4 md:col-span-3">
+        <SectionCard interactive className="overflow-hidden p-3">
+          <WeekCalendar onDateSelect={setSelectedDate} />
+        </SectionCard>
 
-      {/* ToDo - 4 rows */}
-      <SectionCard interactive className="col-span-9 row-span-4 p-0 overflow-hidden">
-        <ToDo selectedDate={selectedDate} profileData={profileData} />
-      </SectionCard>
+        <SectionCard interactive className="overflow-hidden p-0">
+          <Schedule scheduleData={timetableData || data} selectedDate={selectedDate} />
+        </SectionCard>
+      </div>
     </div>
+    </DashboardLayout>
   );
 }
 

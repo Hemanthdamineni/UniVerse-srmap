@@ -18,9 +18,14 @@ import {
 } from "../../lib/erpApi";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, getSessionId, readStoredProfileData } from "../../lib/session";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { sanitizeErpDisplayText } from "../../lib/erpDisplayText";
+import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
 import ErpDocumentRenderer from "../../components/erp/ErpDocumentRenderer";
+import { Select } from "../../components/select";
+import { Input } from "../../components/input";
+import { RowActionButton } from "../../components/data/RowActionButton";
 
 type Props = {
   pageKeys?: string[];
@@ -106,43 +111,11 @@ function isTimetablePageKey(value: string) {
   return normalized === "academic/time-table" || normalized === "academic/timetable";
 }
 
-const INTERNAL_JSP_PATH_PATTERN = /\b(?:[a-z0-9_-]+\/)+[a-z0-9_-]+\.jsp(?:\?[^\s]*)?\b/gi;
 const DOCUMENT_TEXT_NOISE_PATTERN =
   /(function\s+[a-z0-9_]+\s*\(|\$\(|\.jsp\b|validationengine|ajaxparameter|e\.preventdefault|window\.open|document\.getelementbyid|@page\b|^var\s+[a-z0-9_]+\s*=|font-size\s*:|font-family\s*:|background(?:-color)?\s*:|text-align\s*:|font-weight\s*:|padding\s*:|border(?:-collapse)?\s*:|color\s*:|dialog\(|alert\(|\$.post\(|\$.ajax\()/i;
 
 function displayText(value: unknown, fallback = "") {
-  const normalized = cleanText(value);
-  if (!normalized) return fallback;
-
-  const withoutInternalPaths = normalized.replace(INTERNAL_JSP_PATH_PATTERN, " ");
-  let sanitized = withoutInternalPaths.replace(/\s+/g, " ").trim();
-
-  // Advanced Normalization
-
-  // 1. Convert ALL CAPS text to Title Case (ignoring pure numbers or tiny abbreviations)
-  if (sanitized === sanitized.toUpperCase() && sanitized.length > 2 && /[A-Z]/.test(sanitized)) {
-    sanitized = sanitized.replace(
-      /\w\S*/g,
-      (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
-    );
-  }
-
-  // 2. Fix spacing around parentheses/brackets
-  sanitized = sanitized.replace(/([a-zA-Z0-9])\(/g, "$1 (");
-  sanitized = sanitized.replace(/ \)/g, ")");
-  sanitized = sanitized.replace(/\( /g, "(");
-
-  // 3. Clean up internal Form IDs (e.g., frmStudentFeeDueDetails -> Fee Due Details)
-  if (sanitized.match(/^frm[A-Z]/i) || sanitized.toLowerCase().includes('frmstudent')) {
-    sanitized = sanitized
-      .replace(/^frmStudent/i, '')
-      .replace(/^frm/i, '')
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/\b\w/g, c => c.toUpperCase())
-      .trim();
-  }
-
-  return sanitized || fallback;
+  return sanitizeErpDisplayText(value, fallback);
 }
 
 function isTimeRangeLabel(value: string) {
@@ -1243,11 +1216,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                       return (
                         <label key={field.key} className="flex flex-col gap-1 text-sm">
                           <span className="font-medium">{field.label}</span>
-                          <select
+                          <Select
                             value={value}
                             onChange={(e) => updateActionField(action.id, field.key, e.target.value)}
-                            className="rounded border px-2 py-2"
-                            style={{ borderColor: 'var(--comp-border)' }}
+                            className="h-9"
                           >
                             <option value="">Select</option>
                             {(field.options || []).map((option) => (
@@ -1255,7 +1227,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                                 {option}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                           {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{field.helperText}</span>}
                         </label>
                       );
@@ -1264,13 +1236,12 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                     return (
                       <label key={field.key} className="flex flex-col gap-1 text-sm">
                         <span className="font-medium">{field.label}</span>
-                        <input
+                        <Input
                           value={value}
                           onChange={(e) => updateActionField(action.id, field.key, e.target.value)}
                           placeholder={field.placeholder}
                           maxLength={field.maxLength}
-                          className="rounded border px-2 py-2"
-                          style={{ borderColor: 'var(--comp-border)' }}
+                          className="h-9"
                         />
                         {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{field.helperText}</span>}
                       </label>
@@ -1321,12 +1292,11 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                       return (
                         <label key={fieldKey} className="flex flex-col gap-1 text-sm">
                           <span className="font-medium">{displayText(field.label || fieldKey, fieldKey)}</span>
-                          <select
+                          <Select
                             value={value}
                             onChange={(e) => updateFormField(sectionHint, fieldKey, e.target.value)}
                             disabled={Boolean(field.disabled || field.readOnly)}
-                            className="rounded border px-2 py-2"
-                            style={{ borderColor: 'var(--comp-border)' }}
+                            className="h-9"
                           >
                             <option value="">Select</option>
                             {field.options.map((option) => (
@@ -1334,7 +1304,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                                 {displayText(option.label || option.value, cleanText(option.value))}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                           {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{displayText(field.helperText)}</span>}
                         </label>
                       );
@@ -1343,7 +1313,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                     return (
                       <label key={fieldKey} className="flex flex-col gap-1 text-sm">
                         <span className="font-medium">{displayText(field.label || fieldKey, fieldKey)}</span>
-                        <input
+                        <Input
                           type={cleanText(field.type || "text") || "text"}
                           value={value}
                           onChange={(e) => updateFormField(sectionHint, fieldKey, e.target.value)}
@@ -1351,8 +1321,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                           disabled={Boolean(field.disabled)}
                           readOnly={Boolean(field.readOnly)}
                           maxLength={typeof field.maxLength === "number" ? field.maxLength : undefined}
-                          className="rounded border px-2 py-2"
-                          style={{ borderColor: 'var(--comp-border)' }}
+                          className="h-9"
                         />
                         {field.helperText && <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{displayText(field.helperText)}</span>}
                       </label>
@@ -1490,17 +1459,17 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
           if (uniqueRows.length === 0) return null;
 
           return (
-            <div key={`${sectionData?.id || "section"}-table-${tableIdx}`} className="erp-table-shell">
-              <table className="erp-table table-fixed">
+            <div key={`${sectionData?.id || "section"}-table-${tableIdx}`} className="erp-table-shell overflow-auto">
+              <table className="erp-table table-fixed" aria-label={`${displayText(sectionData?.subitem, "ERP data")} table`}>
                 <thead className="erp-table-head">
                   <tr>
                     {tableView.headers.map((header) => (
-                      <th key={header} className="erp-table-head-cell label-text break-words">
+                      <th key={header} className="erp-table-head-cell label-text break-words sticky top-0 z-[1] bg-[var(--comp-surface)]">
                         {displayText(header, "-").toUpperCase()}
                       </th>
                     ))}
                     {actions.some((action) => typeof action.tableRowIndex === "number") && (
-                      <th className="erp-table-head-cell label-text">Actions</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-surface)]">Actions</th>
                     )}
                   </tr>
                 </thead>
@@ -1519,15 +1488,15 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                             {rowActions.length ? (
                               <div className="flex flex-wrap gap-2">
                                 {rowActions.map((action) => (
-                                  <button
+                                  <RowActionButton
                                     key={action.id}
-                                    type="button"
                                     onClick={() => handleAction(findUiSectionForData(sectionData), sectionData, action)}
                                     disabled={pendingActionId === action.id || action.enabled === false}
-                                    className="comp-btn-primary min-h-0 rounded px-2 py-1 text-xs disabled:opacity-50"
+                                    className="min-h-0 rounded px-2 py-1 text-xs"
+                                    aria-label={`${displayText(action.label, "Run action")} for row ${sourceRowIdx + 1}`}
                                   >
                                     {pendingActionId === action.id ? "..." : displayText(action.label, "Run")}
-                                  </button>
+                                  </RowActionButton>
                                 ))}
                               </div>
                             ) : (
@@ -1588,11 +1557,13 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
   if (loading) {
     return (
-      <div ref={pageRef} className="min-h-screen p-6 pb-10 space-y-4">
-        <SkeletonBlock height={14} className="max-w-xs rounded-full" />
-        <SkeletonBlock height={200} className="w-full max-w-3xl rounded-xl" />
-        <p className="body-text">Loading {toPageTitle(primaryPageKey, title)}...</p>
-      </div>
+      <PageContainer className="space-y-4">
+        <div ref={pageRef} className="space-y-4">
+          <SkeletonBlock height={14} className="max-w-xs rounded-full" />
+          <SkeletonBlock height={200} className="w-full max-w-3xl rounded-xl" />
+          <p className="body-text">Loading {toPageTitle(primaryPageKey, title)}...</p>
+        </div>
+      </PageContainer>
     );
   }
 
@@ -1607,8 +1578,8 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
       cleanText(loadError.code).toUpperCase() === "UNAUTHORIZED" || Number(loadError.status) === 401;
 
     return (
-      <div ref={pageRef} className="min-h-screen p-6 pb-10">
-        <div className="rounded p-4 space-y-3" style={{ background: 'color-mix(in srgb, var(--error) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--error) 30%, transparent)', color: 'var(--error)' }}>
+      <PageContainer>
+        <div ref={pageRef} className="rounded p-4 space-y-3" style={{ background: 'color-mix(in srgb, var(--error) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--error) 30%, transparent)', color: 'var(--error)' }}>
           <div className="font-semibold">
             {isAuthError
               ? "ERP session expired."
@@ -1646,7 +1617,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
             )}
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -1656,7 +1627,6 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
         title={toPageTitle(primaryPageKey, title)}
         source={metaSource as any}
         updatedAt={metaFetchedAt}
-        contentLayout="section-card"
         isLoading={loading}
         onRefresh={() => loadPage(true)}
       >
@@ -1705,7 +1675,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
           </div>
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-5">
           {documentForRender ? (
             <ErpDocumentRenderer document={documentForRender} refreshDocument={() => loadPage(false)} />
           ) : (() => {
@@ -1753,12 +1723,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
                 renderedSectionKeys.add(uniqueKey);
                 return (
-                  <section key={block.id} className="rounded-2xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] backdrop-blur-xl p-6 shadow-sm overflow-hidden">
-                    {(() => {
-                      const headingText = displayText(sectionHint.pageHeading || sectionHint.subitem || sectionData?.subitem, "Section");
-                      if (headingText.toLowerCase() === toPageTitle(primaryPageKey, title).toLowerCase() || headingText.toLowerCase() === "page") return null;
-                      return <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)] tracking-tight">{headingText}</h3>;
-                    })()}
+                  <SectionCard key={block.id} title={displayText(sectionHint.pageHeading || sectionHint.subitem || sectionData?.subitem, "Section")}>
                     {(() => {
                       if (block.showDescription === false || !summaryText) return null;
                       const headingText = displayText(sectionHint.pageHeading || sectionHint.subitem || sectionData?.subitem, "Section");
@@ -1783,7 +1748,7 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
                       return <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{cleanSummary}</p>;
                     })()}
                     {block.showActions && renderActionControls(sectionHint, sectionData, actions)}
-                  </section>
+                  </SectionCard>
                 );
               }
 
@@ -1793,15 +1758,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
                 renderedSectionKeys.add(uniqueKey);
                 return (
-                  <section key={block.id} className="rounded-2xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] backdrop-blur-xl p-6 shadow-sm overflow-hidden">
-                    {(() => {
-                      const headingText = displayText(sectionHint.subitem, "Form");
-                      if (headingText.toLowerCase() === toPageTitle(primaryPageKey, title).toLowerCase() || headingText.toLowerCase() === "page") return null;
-                      return <h3 className="mb-6 text-xl font-bold text-[var(--text-primary)] tracking-tight">{headingText}</h3>;
-                    })()}
+                  <SectionCard key={block.id} title={displayText(sectionHint.subitem, "Form")}>
                     {renderForms(sectionHint)}
                     {block.showActions && renderActionControls(sectionHint, sectionData, actions)}
-                  </section>
+                  </SectionCard>
                 );
               }
 
@@ -1816,15 +1776,10 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
                 renderedSectionKeys.add(uniqueKey);
                 return (
-                  <section key={block.id} className="rounded-2xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,transparent)] backdrop-blur-xl p-6 shadow-sm overflow-hidden">
-                    {(() => {
-                      const headingText = displayText(sectionHint.subitem, "Data");
-                      if (headingText.toLowerCase() === toPageTitle(primaryPageKey, title).toLowerCase() || headingText.toLowerCase() === "page" || headingText.toLowerCase() === "information") return null;
-                      return <h3 className="mb-6 text-xl font-bold text-[var(--text-primary)] tracking-tight">{headingText}</h3>;
-                    })()}
+                  <SectionCard key={block.id} title={displayText(sectionHint.subitem, "Data")}>
                     {renderTables(sectionData, actions)}
                     {!block.showActions && renderActionControls(sectionHint, sectionData, actions.filter((a) => typeof a.tableRowIndex !== "number"))}
-                  </section>
+                  </SectionCard>
                 );
               }
 
@@ -1835,11 +1790,11 @@ export default function MappedErpPage({ pageKeys, pageKey, title }: Props) {
 
             if (isPageEmpty) {
               return (
-                <div className="flex flex-col items-center justify-center p-16 text-center bg-[color-mix(in_srgb,var(--surface)_30%,transparent)] rounded-2xl border border-[color-mix(in_srgb,var(--border)_50%,transparent)] shadow-sm">
-                  <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--surface)_60%,transparent)] rounded-full flex items-center justify-center mb-4">
-                    <span className="text-3xl opacity-60 grayscale">📄</span>
+                <div className="flex min-h-[320px] flex-col items-center justify-center p-10 text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-lg font-semibold text-[var(--comp-text-primary)]">
+                    i
                   </div>
-                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Content Available</h3>
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No content available</h3>
                   <p className="text-[var(--text-secondary)] text-sm max-w-sm">
                     There are no records, forms, or data matrices currently logged for this section.
                   </p>

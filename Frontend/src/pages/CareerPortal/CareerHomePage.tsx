@@ -4,6 +4,7 @@ import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
 import { PlusCircle, Search, Clock, Briefcase, GraduationCap, Code, Trophy, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PageContainer } from '../../components/layout/PageLayouts';
 
 const CareerHomePage: React.FC = () => {
   const [latestOpps, setLatestOpps] = useState<CareerOpportunity[]>([]);
@@ -40,14 +41,14 @@ const CareerHomePage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8 p-4 sm:p-6">
+    <PageContainer className="space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Career Portal</h1>
-          <p className="text-gray-500">Autonomous opportunity discovery and tracker</p>
+          <h1 className="page-title">Career Portal</h1>
+          <p className="body-text mt-1">Autonomous opportunity discovery and tracker</p>
         </div>
         <Link to="/career/submit">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Submit Opportunity
           </Button>
         </Link>
@@ -69,13 +70,13 @@ const CareerHomePage: React.FC = () => {
 
       {/* Personalized for You (Phase 4) */}
       {personalizedOpps.length > 0 && (
-        <section className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-3xl border border-blue-100">
+        <section className="dashboard-card p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-blue-900">Personalized for You</h2>
+              <Sparkles className="w-5 h-5 text-[var(--comp-accent)]" />
+              <h2 className="section-title">Personalized for you</h2>
             </div>
-            <Link to="/career/me/profile" className="text-sm font-medium text-blue-600 hover:underline">
+            <Link to="/career/me/profile" className="text-sm font-medium text-[var(--comp-accent)] hover:underline">
               Update Profile
             </Link>
           </div>
@@ -91,8 +92,8 @@ const CareerHomePage: React.FC = () => {
       {expiringOpps.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-red-500" />
-            <h2 className="text-xl font-semibold">Expiring Soon</h2>
+            <Clock className="w-5 h-5 text-[var(--error)]" />
+            <h2 className="section-title">Expiring soon</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {expiringOpps.map(opp => (
@@ -105,16 +106,16 @@ const CareerHomePage: React.FC = () => {
       {/* Latest Opportunities */}
       <section>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Latest Opportunities</h2>
-          <Link to="/career/opportunities" className="text-blue-600 hover:underline text-sm font-medium">
-            View All
+          <h2 className="section-title">Latest opportunities</h2>
+          <Link to="/career/opportunities" className="text-[var(--comp-accent)] hover:underline text-sm font-medium">
+            View all
           </Link>
         </div>
         
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-48 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] animate-pulse" />
             ))}
           </div>
         ) : latestOpps.length > 0 ? (
@@ -124,25 +125,25 @@ const CareerHomePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-            <p className="text-gray-500">No opportunities found. Be the first to submit one!</p>
+          <div className="dashboard-card border-dashed py-12 text-center">
+            <p className="body-text">No opportunities found. Be the first to submit one.</p>
           </div>
         )}
       </section>
 
       {/* Tracker Shortcut */}
-      <section className="bg-[color-mix(in_srgb,var(--info)_10%,transparent)] p-6 rounded-2xl border border-blue-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <section className="dashboard-card flex flex-col sm:flex-row justify-between items-center gap-4 p-6">
         <div>
-          <h3 className="text-lg font-bold text-blue-900">Application Tracker</h3>
-          <p className="text-[var(--info)]">Manage your applications and track their status in one place.</p>
+          <h3 className="card-title">Application Tracker</h3>
+          <p className="body-text">Manage your applications and track their status in one place.</p>
         </div>
         <Link to="/career/me/tracker">
-          <Button variant="outline" className="border-[color-mix(in_srgb,var(--info)_30%,transparent)] hover:bg-blue-100 text-[var(--info)]">
+          <Button variant="outline">
             Open Tracker
           </Button>
         </Link>
       </section>
-    </div>
+    </PageContainer>
   );
 };
 

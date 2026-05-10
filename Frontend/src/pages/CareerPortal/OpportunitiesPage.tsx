@@ -4,6 +4,7 @@ import { listOpportunities, type CareerOpportunity } from "../../lib/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { FilterBar } from "../../components/ui/FilterBar";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -73,7 +74,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <PageContainer className="space-y-6">
       <PageHeader title="Opportunities" subtitle="Find your next step" />
 
       <FilterBar
@@ -132,8 +133,8 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
         </div>
       ) : (
         <EmptyState
-          title="No matches"
-          description="No opportunities match your search."
+          title="No opportunities found"
+          description="Try adjusting your search or filters to find what you're looking for."
           action={
             <button
               type="button"
@@ -149,7 +150,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
           }
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
 

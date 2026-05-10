@@ -8,7 +8,7 @@ import AppKeyboardShortcuts from "../components/AppKeyboardShortcuts";
 import AdminAccessPrompt from "../components/admin/AdminAccessPrompt";
 import { AdminModeProvider } from "../context/AdminModeContext";
 
-const PUBLIC_ROUTES = new Set(["/", "/Home", "/login", "/forgot-password"]);
+const PUBLIC_ROUTES = new Set(["/", "/login", "/forgot-password"]);
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -28,19 +28,13 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <AdminModeProvider>
-    <div style={{ display: "flex", height: "100vh", flexDirection: "column", backgroundColor: "var(--background)" }}>
-      <div style={{ display: "flex", flex: 1, height: "100vh", overflow: "hidden" }}>
-        <div className="dashboard-background" style={{ flex: 1, position: "relative", display: "flex", height: "100vh", minHeight: "100vh", overflow: "hidden" }}>
-          <Sidebar />
-          <main
-            style={{
-              flex: 1,
-              position: "relative",
-              overflow: "auto",
-              zIndex: 1,
-              minHeight: "100vh",
-            }}
-          >
+    <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)]">
+      <div className="dashboard-background relative flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main
+          className="relative z-[1] flex-1 overflow-auto"
+          style={{ minHeight: "100vh" }}
+        >
             <a
               href="#main-content"
               className="fixed left-4 top-2 z-[60] -translate-y-24 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-md transition focus:translate-y-0 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--accent-blue)]"
@@ -52,9 +46,8 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
             <AppContentChrome>{children}</AppContentChrome>
           </main>
         </div>
+        <AdminAccessPrompt />
       </div>
-      <AdminAccessPrompt />
-    </div>
     </AdminModeProvider>
   );
 }

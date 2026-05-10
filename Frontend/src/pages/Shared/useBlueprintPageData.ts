@@ -18,6 +18,7 @@ import {
   isSessionAuthFailure,
   readStoredProfileData,
 } from "../../lib/session";
+import { sanitizeErpDisplayText } from "../../lib/erpDisplayText";
 
 interface BlueprintPageState {
   isLoading: boolean;
@@ -1313,7 +1314,7 @@ function stripScriptNoise(text: string) {
     .filter((line) => !/^[$@.#]/.test(line))
     .filter((line) => !/^\w+\([^)]*\)$/.test(line));
 
-  return lines.join(" ").replace(/\s+/g, " ").trim();
+  return sanitizeErpDisplayText(lines.join(" "), "");
 }
 
 function buildSummary(text: string) {
@@ -1448,7 +1449,8 @@ function cleanCell(value: unknown): string {
   // Safety: extract a primitive from objects instead of String() which
   // produces "[object Object]". This mirrors backend normalizeValue().
   const primitive = extractCellPrimitive(value);
-  const raw = String(primitive ?? "")
+  const raw = sanitizeErpDisplayText(
+    String(primitive ?? "")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     // Strip inline JS artifacts that leak as plain text from ERP scraping
@@ -1457,7 +1459,9 @@ function cleanCell(value: unknown): string {
     .replace(/<\/?[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim(),
+    ""
+  );
   if (raw.length <= 220) return raw;
   return `${raw.slice(0, 217)}...`;
 }
@@ -1491,10 +1495,13 @@ function extractCellPrimitive(value: unknown): string | number | boolean {
 }
 
 function cleanTitle(title: string) {
-  return title
+  return sanitizeErpDisplayText(
+    title
     .replace(/[-_]/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim(),
+    "Details"
+  );
 }
 
 function looksLikeObjectTreeTable(columns: string[], rows: Array<Record<string, string>>) {

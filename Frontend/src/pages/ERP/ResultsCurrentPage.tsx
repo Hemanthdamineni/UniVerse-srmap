@@ -12,6 +12,7 @@ import type { PageBlueprint } from "../../config/erpBlueprints";
 
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/InlineError";
+import { DataTable, type Column } from "../../components/ui/DataTable";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -274,7 +275,6 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
-      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage || "Loading results..."}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
@@ -314,52 +314,38 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
             <div className="border-b border-[var(--border)] px-5 py-4">
               <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Subject Results</h3>
             </div>
-            <div className="erp-table-shell rounded-none border-0">
-              <table className="erp-table text-left">
-                <thead className="erp-table-head">
-                  <tr>
-                    <th className="erp-table-head-cell label-text">Code</th>
-                    <th className="erp-table-head-cell label-text">Description</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-center">Semester</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-center">Credits</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-center">Grade</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-center">Result</th>
-                  </tr>
-                </thead>
-                <tbody className="erp-table-body">
-                  {data.subjects.map((subject, index) => (
-                    <tr key={`${subject.subjectCode}-${index}`} className="erp-table-row">
-                      <td className="erp-table-cell erp-table-cell-strong">{subject.subjectCode}</td>
-                      <td className="erp-table-cell">{subject.subjectDescription}</td>
-                      <td className="erp-table-cell erp-table-align-center">{subject.semester}</td>
-                      <td className="erp-table-cell erp-table-align-center font-medium text-[var(--comp-text-secondary)]">{subject.credit}</td>
-                      <td className="erp-table-cell erp-table-align-center">
-                        <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
-                          {subject.grade}
-                        </span>
-                      </td>
-                      <td className="erp-table-cell erp-table-align-center">
-                        <span
-                          className={`erp-status-pill ${
-                            subject.result.toLowerCase() === "pass"
-                              ? "erp-status-pill-success"
-                              : "erp-status-pill-error"
-                          }`}
-                        >
-                          {subject.result}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.subjects.length === 0 && (
-                    <tr className="erp-table-row">
-                      <td colSpan={6} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                        No subject results found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="px-5 pb-5">
+              <DataTable
+                data={data.subjects}
+                stickyHeader
+                ariaLabel="Current semester subject results"
+                emptyTitle="No subject results found."
+                keyExtractor={(subject, index) => `${subject.subjectCode}-${index}`}
+                columns={[
+                  { header: "Code", accessor: (s) => <span className="font-semibold">{s.subjectCode}</span> },
+                  { header: "Description", accessor: (s) => s.subjectDescription },
+                  { header: "Semester", accessor: (s) => s.semester, className: "text-center" },
+                  { header: "Credits", accessor: (s) => <span className="font-medium text-[var(--comp-text-secondary)]">{s.credit}</span>, className: "text-center" },
+                  {
+                    header: "Grade",
+                    accessor: (s) => (
+                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
+                        {s.grade}
+                      </span>
+                    ),
+                    className: "text-center",
+                  },
+                  {
+                    header: "Result",
+                    accessor: (s) => (
+                      <span className={`erp-status-pill ${s.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
+                        {s.result}
+                      </span>
+                    ),
+                    className: "text-center",
+                  },
+                ] as Column<CurrentResultModel["subjects"][number]>[]}
+              />
             </div>
           </section>
 

@@ -267,7 +267,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
               type="button"
               onClick={() => void handleSubmit()}
               disabled={disabled || submitting || Boolean(commentError) || !pendingSubjects.length}
-              className="w-full rounded-2xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="w-full rounded-2xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--text-secondary)]"
             >
               {submitting ? "Submitting Feedback..." : `Submit For ${pendingSubjects.length || 0} Subject${pendingSubjects.length === 1 ? "" : "s"}`}
             </button>

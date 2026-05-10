@@ -84,11 +84,11 @@ const OpportunityDetailPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-12 text-center text-gray-500 animate-pulse">Loading opportunity details...</div>;
+  if (loading) return <div className="body-text p-12 text-center animate-pulse">Loading opportunity details...</div>;
   if (error || !opp) return (
     <div className="p-12 text-center">
-      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-      <p className="text-gray-900 font-bold text-xl mb-4">{error || 'Opportunity not found'}</p>
+      <AlertCircle className="h-12 w-12 text-[var(--error)] mx-auto mb-4" />
+      <p className="text-[var(--comp-text-primary)] font-bold text-xl mb-4">{error || 'Opportunity not found'}</p>
       <Button onClick={() => navigate('/career/opportunities')}>Back to Listings</Button>
     </div>
   );
@@ -110,7 +110,7 @@ const OpportunityDetailPage: React.FC = () => {
       <Button 
         variant="ghost" 
         onClick={() => navigate(-1)} 
-        className="text-gray-600 hover:text-gray-900 mb-2"
+        className="mb-2"
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
@@ -125,9 +125,9 @@ const OpportunityDetailPage: React.FC = () => {
               <DeadlineCountdown deadline={opp.deadline} className="text-sm px-3 py-1" />
             </div>
             
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{opp.title}</h1>
+            <h1 className="page-title">{opp.title}</h1>
             
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-gray-600">
+            <div className="body-text flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-1.5 font-medium">
                 <Briefcase className="h-5 w-5" />
                 {opp.company || opp.organizer || 'University Opportunity'}
@@ -141,7 +141,7 @@ const OpportunityDetailPage: React.FC = () => {
 
           <div className="flex flex-wrap gap-4">
             <Button 
-              className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 h-12 px-8 text-lg"
+              className="flex-1 sm:flex-none h-12 px-8 text-lg"
               onClick={handleApply}
             >
               Apply Now <ExternalLink className="ml-2 h-5 w-5" />
@@ -158,7 +158,7 @@ const OpportunityDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className={bookmarked ? "h-12 w-12 text-amber-500 fill-amber-500" : "h-12 w-12 text-gray-400"}
+              className={bookmarked ? "h-12 w-12 text-amber-500 fill-amber-500" : "h-12 w-12 text-[var(--comp-text-muted)]"}
               onClick={handleBookmark}
             >
               <Bookmark className="h-6 w-6" />
@@ -166,9 +166,9 @@ const OpportunityDetailPage: React.FC = () => {
           </div>
 
           {/* Description */}
-          <section className="prose max-w-none text-gray-700">
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">Description</h2>
-            <div className="whitespace-pre-wrap leading-relaxed">
+          <section className="max-w-none text-[var(--comp-text-secondary)]">
+            <h2 className="section-title border-b border-[var(--comp-border)] pb-2 mb-4">Description</h2>
+            <div className="body-text whitespace-pre-wrap leading-relaxed">
               {opp.description || 'No detailed description provided.'}
             </div>
           </section>
@@ -176,8 +176,8 @@ const OpportunityDetailPage: React.FC = () => {
           {/* Requirements */}
           {opp.requirements && (
             <section>
-              <h2 className="text-xl font-bold border-b pb-2 mb-4">Requirements</h2>
-              <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+              <h2 className="section-title border-b border-[var(--comp-border)] pb-2 mb-4">Requirements</h2>
+              <div className="body-text whitespace-pre-wrap leading-relaxed">
                 {opp.requirements}
               </div>
             </section>
@@ -185,10 +185,10 @@ const OpportunityDetailPage: React.FC = () => {
 
           {/* Skills & Tags */}
           <section className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2 mb-2">
-              <h2 className="text-xl font-bold">Required Skills</h2>
+            <div className="flex items-center justify-between border-b border-[var(--comp-border)] pb-2 mb-2">
+              <h2 className="section-title">Required Skills</h2>
               {opp.skillMatch && (
-                <span className="text-sm font-medium text-gray-500">
+                <span className="text-sm font-medium text-[var(--comp-text-muted)]">
                   {opp.skillMatch.percent}% Match
                 </span>
               )}
@@ -201,8 +201,8 @@ const OpportunityDetailPage: React.FC = () => {
                     key={skill} 
                     className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
                       isMatched 
-                        ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-emerald-100' 
-                        : 'bg-gray-50 text-gray-600 border-gray-200'
+                        ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_24%,transparent)]' 
+                        : 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] border-[var(--comp-border)]'
                     }`}
                   >
                     {isMatched && <CheckCircle2 className="h-3.5 w-3.5" />}
@@ -212,7 +212,7 @@ const OpportunityDetailPage: React.FC = () => {
               })}
             </div>
             {opp.skillMatch && opp.skillMatch.missing.length > 0 && (
-              <p className="text-xs text-gray-400 italic">
+              <p className="text-xs text-[var(--comp-text-muted)] italic">
                 Missing skills: {opp.skillMatch.missing.join(', ')}
               </p>
             )}
@@ -227,32 +227,32 @@ const OpportunityDetailPage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-[var(--comp-text-muted)]">
                   <Calendar className="h-4 w-4" /> Posted on
                 </div>
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-[var(--comp-text-primary)]">
                   {opp.postedAt ? new Date(opp.postedAt).toLocaleDateString() : 'N/A'}
                 </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-[var(--comp-text-muted)]">
                   <DollarSign className="h-4 w-4" /> Compensation
                 </div>
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-[var(--comp-text-primary)]">
                   <StipendChip stipend={opp.stipend} prize={opp.prize} isFree={opp.isFree} />
                 </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-[var(--comp-text-muted)]">
                   <GraduationCap className="h-4 w-4" /> Degree
                 </div>
-                <div className="font-medium text-gray-900">B.Tech / Undergraduate</div>
+                <div className="font-medium text-[var(--comp-text-primary)]">B.Tech / Undergraduate</div>
               </div>
               <div className="flex justify-between items-center py-2">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-[var(--comp-text-muted)]">
                   <Award className="h-4 w-4" /> Experience
                 </div>
-                <div className="font-medium text-gray-900">Fresher / Student</div>
+                <div className="font-medium text-[var(--comp-text-primary)]">Fresher / Student</div>
               </div>
             </CardContent>
           </Card>
@@ -280,13 +280,13 @@ const OpportunityDetailPage: React.FC = () => {
           </Card>
 
           <div className="flex flex-col gap-2">
-            <Button variant="ghost" className="w-full justify-start text-gray-500 hover:text-blue-600">
+            <Button variant="ghost" className="w-full justify-start">
               <Share2 className="mr-2 h-4 w-4" /> Share Opportunity
             </Button>
             <Button
               type="button"
               variant="ghost"
-              className="w-full justify-start text-gray-500 hover:text-red-600"
+              className="w-full justify-start hover:text-[var(--error)]"
               onClick={handleFlag}
             >
               <Flag className="mr-2 h-4 w-4" /> Flag for moderation
@@ -296,9 +296,9 @@ const OpportunityDetailPage: React.FC = () => {
       </div>
 
       {opp.similar && opp.similar.length > 0 ? (
-        <section className="mt-12 space-y-4 border-t border-gray-100 pt-10">
-          <h2 className="text-xl font-bold text-gray-900">Similar opportunities</h2>
-          <p className="text-sm text-gray-500">Same type as this listing — explore related openings.</p>
+        <section className="mt-12 space-y-4 border-t border-[var(--comp-border)] pt-10">
+          <h2 className="section-title">Similar opportunities</h2>
+          <p className="body-text">Same type as this listing, explore related openings.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {opp.similar.map((s) => (
               <OpportunityCard key={s.id} opportunity={s} />

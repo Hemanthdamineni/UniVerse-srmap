@@ -219,7 +219,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-128px)] items-center justify-center bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] px-4 py-8">
+    <div className="flex items-center justify-center px-4 py-8">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="mb-6 flex flex-wrap items-center gap-3">

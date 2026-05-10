@@ -58,7 +58,6 @@ export default function FeePaidPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
-      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage || "Loading fees paid..."}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}

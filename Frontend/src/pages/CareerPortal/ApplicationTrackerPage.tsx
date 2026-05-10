@@ -8,6 +8,8 @@ import { StatusBadge } from "../../components/ui/StatusBadge";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Trash2, Calendar } from "lucide-react";
+import { Select } from "../../components/select";
+import { RowActionButton } from "../../components/data/RowActionButton";
 
 const ApplicationTrackerPage: React.FC = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -127,8 +129,8 @@ const ApplicationTrackerPage: React.FC = () => {
                     status={app.status}
                     label={statusOptions.find((o) => o.value === app.status)?.label ?? app.status}
                   />
-                  <select
-                    className="btn-secondary min-h-11 max-w-full rounded-lg py-1 text-xs md:min-h-9"
+                  <Select
+                    className="h-9 max-w-full py-1 text-xs"
                     value={app.status}
                     aria-label="Update status"
                     onChange={(e) => void handleStatusChange(app.id, e.target.value)}
@@ -138,7 +140,7 @@ const ApplicationTrackerPage: React.FC = () => {
                         {opt.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               ),
             },
@@ -146,14 +148,13 @@ const ApplicationTrackerPage: React.FC = () => {
               header: "",
               className: "w-14",
               accessor: (app) => (
-                <button
-                  type="button"
-                  className="btn-ghost min-h-11 min-w-11 text-[var(--error)] md:min-h-9 md:min-w-9"
+                <RowActionButton
                   aria-label="Remove from tracker"
                   onClick={() => void handleDelete(app.id)}
+                  className="text-[var(--error)]"
                 >
                   <Trash2 className="mx-auto h-4 w-4" />
-                </button>
+                </RowActionButton>
               ),
             },
           ]}

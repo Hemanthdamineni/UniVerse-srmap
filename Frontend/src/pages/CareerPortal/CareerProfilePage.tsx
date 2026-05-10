@@ -89,13 +89,12 @@ const CareerProfilePage: React.FC = () => {
     <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Career Profile</h1>
-          <p className="text-gray-500">Personalize your opportunity matching and feed</p>
+          <h1 className="page-title">Career Profile</h1>
+          <p className="body-text mt-1">Personalize your opportunity matching and feed</p>
         </div>
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700"
         >
           {saving ? (
             <SkeletonBlock width={16} height={16} circle className="mr-2 inline-block align-middle" />
@@ -107,7 +106,7 @@ const CareerProfilePage: React.FC = () => {
       </header>
 
       {message && (
-        <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] border-emerald-100 text-[var(--success)]' : 'bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-red-100 text-[var(--error)]'}`}>
+        <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] border-[color-mix(in_srgb,var(--success)_24%,transparent)] text-[var(--success)]' : 'bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-[color-mix(in_srgb,var(--error)_24%,transparent)] text-[var(--error)]'}`}>
           {message.text}
         </div>
       )}
@@ -117,20 +116,20 @@ const CareerProfilePage: React.FC = () => {
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">ERP Sync</CardTitle>
+              <CardTitle className="label-text">ERP Sync</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-full"><User className="h-4 w-4 text-gray-600" /></div>
+                <div className="p-2 bg-[var(--comp-surface-hover)] rounded-full"><User className="h-4 w-4 text-[var(--comp-text-secondary)]" /></div>
                 <div>
-                  <p className="text-xs text-gray-400">Name</p>
+                  <p className="text-xs text-[var(--comp-text-muted)]">Name</p>
                   <p className="text-sm font-medium">{erpProfile?.Name || 'Syncing...'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-full"><Award className="h-4 w-4 text-gray-600" /></div>
+                <div className="p-2 bg-[var(--comp-surface-hover)] rounded-full"><Award className="h-4 w-4 text-[var(--comp-text-secondary)]" /></div>
                 <div>
-                  <p className="text-xs text-gray-400">Branch & Year</p>
+                  <p className="text-xs text-[var(--comp-text-muted)]">Branch & Year</p>
                   <p className="text-sm font-medium">
                     {erpProfile?.TableContent?.["Program / Section"]?.split(' ')[1] || 'CSE'} - {erpProfile?.TableContent?.["Academic Year"]?.split(' ')[0] || 'III'} Year
                   </p>
@@ -141,20 +140,20 @@ const CareerProfilePage: React.FC = () => {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Resume</CardTitle>
+              <CardTitle className="label-text">Resume</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {profile?.resumeUrl ? (
-                <div className="p-3 border rounded-lg bg-[color-mix(in_srgb,var(--info)_10%,transparent)] border-blue-100 flex items-center justify-between">
+                <div className="p-3 border rounded-lg bg-[color-mix(in_srgb,var(--info)_10%,transparent)] border-[color-mix(in_srgb,var(--info)_24%,transparent)] flex items-center justify-between">
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <FileText className="h-5 w-5 text-blue-600 shrink-0" />
+                    <FileText className="h-5 w-5 text-[var(--info)] shrink-0" />
                     <span className="text-sm font-medium text-[var(--info)] truncate">{profile.resumeFileName}</span>
                   </div>
-                  <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline shrink-0">View</a>
+                  <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="text-xs text-[var(--comp-accent)] hover:underline shrink-0">View</a>
                 </div>
               ) : (
                 <div className="p-8 border-2 border-dashed rounded-lg text-center">
-                  <p className="text-xs text-gray-400 mb-2">No resume uploaded</p>
+                  <p className="text-xs text-[var(--comp-text-muted)] mb-2">No resume uploaded</p>
                 </div>
               )}
               
@@ -180,7 +179,7 @@ const CareerProfilePage: React.FC = () => {
                   </Button>
                 </label>
               </div>
-              <p className="text-[10px] text-gray-400 text-center">Max 5MB. PDF only.</p>
+              <p className="text-[10px] text-[var(--comp-text-muted)] text-center">Max 5MB. PDF only.</p>
             </CardContent>
           </Card>
         </div>
@@ -205,12 +204,12 @@ const CareerProfilePage: React.FC = () => {
               
               <div className="flex flex-wrap gap-2">
                 {profile?.skills.map(skill => (
-                  <span key={skill} className="px-3 py-1 bg-blue-100 text-[var(--info)] rounded-full text-sm font-medium flex items-center gap-1 border border-[color-mix(in_srgb,var(--info)_30%,transparent)]">
+                  <span key={skill} className="px-3 py-1 bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] text-[var(--comp-accent)] rounded-full text-sm font-medium flex items-center gap-1 border border-[color-mix(in_srgb,var(--comp-accent)_24%,transparent)]">
                     {skill}
-                    <button onClick={() => removeSkill(skill)} className="hover:text-blue-900"><X className="h-3 w-3" /></button>
+                    <button onClick={() => removeSkill(skill)} className="hover:text-[var(--text-primary)]"><X className="h-3 w-3" /></button>
                   </span>
                 ))}
-                {profile?.skills.length === 0 && <p className="text-sm text-gray-400 italic">No skills added yet.</p>}
+                {profile?.skills.length === 0 && <p className="text-sm text-[var(--comp-text-muted)] italic">No skills added yet.</p>}
               </div>
             </CardContent>
           </Card>
@@ -235,8 +234,8 @@ const CareerProfilePage: React.FC = () => {
                         }}
                         className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
                           profile?.preferredTypes.includes(type) 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-[color-mix(in_srgb,var(--info)_30%,transparent)]'
+                            ? 'bg-[var(--comp-accent)] text-white border-[var(--comp-accent)]' 
+                            : 'bg-[var(--comp-surface)] text-[var(--comp-text-secondary)] border-[var(--comp-border)] hover:border-[var(--comp-accent)]'
                         }`}
                       >
                         {type}
@@ -285,7 +284,7 @@ const CareerProfilePage: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="relative">
-                  <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                   <Input 
                     className="pl-9" 
                     placeholder="LinkedIn URL" 
@@ -294,7 +293,7 @@ const CareerProfilePage: React.FC = () => {
                   />
                 </div>
                 <div className="relative">
-                  <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                   <Input 
                     className="pl-9" 
                     placeholder="GitHub URL" 
@@ -304,7 +303,7 @@ const CareerProfilePage: React.FC = () => {
                 </div>
               </div>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                 <Input 
                   className="pl-9" 
                   placeholder="Portfolio / Website URL" 

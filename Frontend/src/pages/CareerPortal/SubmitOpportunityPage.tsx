@@ -6,6 +6,7 @@ import { Input } from "../../components/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/card";
 import { AlertCircle, CheckCircle2, PlusCircle, Globe } from "lucide-react";
 import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { useNavigate } from 'react-router-dom';
 
 const SubmitOpportunityPage: React.FC = () => {
@@ -51,25 +52,25 @@ const SubmitOpportunityPage: React.FC = () => {
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <div className="p-4 bg-emerald-100 rounded-full">
-          <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+        <div className="p-4 bg-[color-mix(in_srgb,var(--success)_10%,transparent)] rounded-full">
+          <CheckCircle2 className="h-12 w-12 text-[var(--success)]" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Successfully Submitted!</h1>
-        <p className="text-gray-500">Your opportunity has been received and will be reviewed soon.</p>
-        <p className="text-sm text-blue-600 font-medium animate-pulse">Redirecting you to the portal...</p>
+        <h1 className="page-title">Successfully submitted</h1>
+        <p className="body-text">Your opportunity has been received and will be reviewed soon.</p>
+        <p className="text-sm text-[var(--comp-accent)] font-medium animate-pulse">Redirecting you to the portal...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-8 space-y-8">
+    <PageContainer className="max-w-3xl space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Submit an Opportunity</h1>
-        <p className="text-gray-500">Share a job, internship, or competition with your fellow students.</p>
+        <h1 className="page-title">Submit an Opportunity</h1>
+        <p className="body-text">Share a job, internship, or competition with your fellow students.</p>
       </header>
 
       {error && (
-        <div className="bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border border-red-100 p-4 rounded-xl flex items-start gap-3 text-[var(--error)]">
+        <div className="bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border border-[color-mix(in_srgb,var(--error)_24%,transparent)] p-4 rounded-xl flex items-start gap-3 text-[var(--error)]">
           <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
           <p className="text-sm">{error}</p>
         </div>
@@ -84,7 +85,7 @@ const SubmitOpportunityPage: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Opportunity Title *</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Opportunity Title *</label>
                 <Input 
                   name="title"
                   placeholder="e.g. Software Engineering Intern" 
@@ -94,10 +95,10 @@ const SubmitOpportunityPage: React.FC = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Type *</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Type *</label>
                 <select 
                   name="type"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex h-10 w-full rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--comp-accent)] focus-visible:ring-offset-2"
                   value={formData.type}
                   onChange={handleChange}
                   required
@@ -114,7 +115,7 @@ const SubmitOpportunityPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Company / Organization</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Company / Organization</label>
                 <Input 
                   name="company"
                   placeholder="e.g. Google, SRM University" 
@@ -123,9 +124,9 @@ const SubmitOpportunityPage: React.FC = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Apply URL *</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Apply URL *</label>
                 <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                   <Input 
                     name="applyUrl"
                     placeholder="https://..." 
@@ -141,7 +142,7 @@ const SubmitOpportunityPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Deadline</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Deadline</label>
                 <Input 
                   name="deadline"
                   type="date"
@@ -150,10 +151,10 @@ const SubmitOpportunityPage: React.FC = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Mode</label>
+                <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Mode</label>
                 <select 
                   name="mode"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex h-10 w-full rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--comp-accent)] focus-visible:ring-offset-2"
                   value={formData.mode}
                   onChange={handleChange}
                 >
@@ -166,10 +167,10 @@ const SubmitOpportunityPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Description</label>
+              <label className="text-sm font-semibold text-[var(--comp-text-primary)]">Description</label>
               <textarea 
                 name="description"
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex min-h-[120px] w-full rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--comp-accent)] focus-visible:ring-offset-2"
                 placeholder="Describe the opportunity, requirements, and benefits..."
                 value={formData.description}
                 onChange={handleChange}
@@ -181,7 +182,7 @@ const SubmitOpportunityPage: React.FC = () => {
         <div className="flex gap-4">
           <Button 
             type="submit" 
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 font-bold text-lg"
+            className="flex-1 h-12 font-bold text-lg"
             disabled={loading}
           >
             {loading ? (
@@ -204,7 +205,7 @@ const SubmitOpportunityPage: React.FC = () => {
           </Button>
         </div>
       </form>
-    </div>
+    </PageContainer>
   );
 };
 

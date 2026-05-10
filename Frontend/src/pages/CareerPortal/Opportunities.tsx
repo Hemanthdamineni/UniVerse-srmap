@@ -407,12 +407,12 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                         setForm({
                           title: opportunity.title,
                           type: opportunity.type,
-                          organization: opportunity.organization,
-                          deadline: opportunity.deadline,
-                          description: opportunity.description,
+                          organization: opportunity.organization ?? "",
+                          deadline: opportunity.deadline ?? "",
+                          description: opportunity.description ?? "",
                           tags: opportunity.tags.join(", "),
-                          link: opportunity.link,
-                          status: opportunity.status,
+                          link: opportunity.link ?? "",
+                          status: opportunity.status ?? "published",
                           featured: Boolean(opportunity.featured),
                         });
                       }}

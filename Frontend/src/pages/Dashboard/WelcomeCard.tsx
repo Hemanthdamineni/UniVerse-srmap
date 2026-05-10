@@ -1,8 +1,19 @@
-function WelcomeCard() {
+import { getCurrentProfileName, getCurrentRegNo } from "../../lib/identity";
+
+function WelcomeCard({ profileData }: { profileData?: Record<string, unknown> | null }) {
+  const name = getCurrentProfileName(profileData ?? null);
+  const regNo = getCurrentRegNo(profileData ?? null);
+
   return (
-    <div className="flex items-center justify-between h-full">
+    <div className="flex items-center justify-between h-full px-1">
       <div className="flex items-center gap-4">
-        <h2 className="page-title">Welcome back!</h2>
+        <div>
+          <h2 className="page-title">Welcome back!</h2>
+          <p className="body-text mt-1">
+            {name}
+            {regNo ? ` · Register No. ${regNo}` : ""}
+          </p>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         {/* Search bar removed to avoid redundancy with Command Palette */}

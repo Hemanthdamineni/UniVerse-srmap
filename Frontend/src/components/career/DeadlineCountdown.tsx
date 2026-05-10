@@ -19,22 +19,22 @@ const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, classNa
 
   if (diffDays < 0) {
     display = 'Expired';
-    colorClass = 'text-gray-500 bg-gray-100 border-gray-200';
+    colorClass = 'text-[var(--comp-text-muted)] bg-[var(--comp-surface-hover)] border-[var(--comp-border)]';
   } else if (diffDays === 0) {
-    display = '⚡ Today! Closes tonight';
-    colorClass = 'text-[var(--error)] bg-red-100 border-[color-mix(in_srgb,var(--error)_30%,transparent)] font-bold';
+    display = 'Today, closes tonight';
+    colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-[color-mix(in_srgb,var(--error)_30%,transparent)] font-bold';
   } else if (diffDays < 3) {
-    display = `⚡ ${diffDays} day${diffDays > 1 ? 's' : ''} left`;
-    colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-red-100 font-bold';
+    display = `${diffDays} day${diffDays > 1 ? 's' : ''} left`;
+    colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-[color-mix(in_srgb,var(--error)_24%,transparent)] font-bold';
   } else if (diffDays < 7) {
     display = `Deadline in ${diffDays} days`;
-    colorClass = 'text-orange-700 bg-orange-50 border-orange-100';
+    colorClass = 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] border-[color-mix(in_srgb,var(--warning)_24%,transparent)]';
   } else if (diffDays < 14) {
     display = `Deadline in ${diffDays} days`;
-    colorClass = 'text-yellow-700 bg-yellow-50 border-yellow-100';
+    colorClass = 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_8%,transparent)] border-[color-mix(in_srgb,var(--warning)_20%,transparent)]';
   } else {
     display = `Deadline: ${deadlineDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
-    colorClass = 'text-gray-600 bg-gray-50 border-gray-100';
+    colorClass = 'text-[var(--comp-text-secondary)] bg-[var(--comp-surface-hover)] border-[var(--comp-border)]';
   }
 
   return (

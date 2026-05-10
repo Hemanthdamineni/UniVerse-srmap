@@ -3,7 +3,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useMemo, useState } from "react";
 import { executePipeline, type InternalMarksModel, type InternalMarkSubject } from "../../lib/erpTransformers";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { StatCard } from "../../components/ui/StatCard";
 
 function InternalMarks({ marksData }: { marksData?: any }) {
   const [selectedCourse, setSelectedCourse] = useState<InternalMarkSubject | null>(null);
@@ -63,15 +62,6 @@ function InternalMarks({ marksData }: { marksData?: any }) {
       <header className="mb-3 flex shrink-0 items-center justify-between">
         <h2 className="card-title flex items-center gap-2 font-bold">Internal Marks</h2>
       </header>
-
-      <div className="mb-3 grid shrink-0 grid-cols-2 gap-2">
-        <StatCard label="Average %" value={`${averagePercentage.toFixed(1)}%`} />
-        <StatCard
-          label="Below 60%"
-          value={String(atRiskCount)}
-          delta={{ value: "courses", trend: atRiskCount > 0 ? "down" : "neutral" }}
-        />
-      </div>
 
       <div className="flex min-h-0 flex-1 gap-4">
         {/* Left Area: 1. Donut Chart & 2. Legend */}

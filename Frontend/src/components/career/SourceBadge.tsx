@@ -7,11 +7,11 @@ interface SourceBadgeProps {
 }
 
 const sourceStyles: Record<string, string> = {
-  jobspy: 'text-blue-600 font-semibold',
-  devfolio: 'text-purple-600 font-semibold',
-  unstop: 'text-blue-500 font-semibold',
-  linkedin: 'text-[var(--info)] font-bold',
-  manual: 'text-gray-500 italic',
+  jobspy: 'text-[var(--comp-accent)] font-semibold',
+  devfolio: 'text-[var(--comp-accent)] font-semibold',
+  unstop: 'text-[var(--comp-accent)] font-semibold',
+  linkedin: 'text-[var(--comp-accent)] font-bold',
+  manual: 'text-[var(--comp-text-muted)] italic',
 };
 
 const SourceBadge: React.FC<SourceBadgeProps> = ({ source, className }) => {
@@ -22,7 +22,7 @@ const SourceBadge: React.FC<SourceBadgeProps> = ({ source, className }) => {
   return (
     <span className={cn(
       'text-[10px] sm:text-xs uppercase tracking-wider',
-      sourceStyles[source.toLowerCase()] || 'text-gray-400',
+      sourceStyles[source.toLowerCase()] || 'text-[var(--comp-text-muted)]',
       className
     )}>
       via {displaySource}

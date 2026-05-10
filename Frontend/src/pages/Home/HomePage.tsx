@@ -43,7 +43,7 @@ export default function HomePage() {
 
   if (authenticated) {
     return (
-      <div className="flex min-h-[calc(100vh-128px)] items-center justify-center bg-[color-mix(in_srgb,var(--surface)_55%,transparent)] px-4 py-8">
+      <div className="flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-3xl rounded-[32px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
             Session Active
@@ -77,8 +77,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="bg-[color-mix(in_srgb,var(--surface)_55%,transparent)] px-4 py-8">
-      <div className="mx-auto grid min-h-[calc(100vh-160px)] w-full max-w-6xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div className="px-4 py-8">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-[32px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">

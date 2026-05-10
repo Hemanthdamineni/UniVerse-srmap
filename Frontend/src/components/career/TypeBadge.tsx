@@ -7,19 +7,19 @@ interface TypeBadgeProps {
 }
 
 const typeStyles = {
-  job: 'bg-blue-100 text-[var(--info)] border-[color-mix(in_srgb,var(--info)_30%,transparent)]',
-  internship: 'bg-green-100 text-green-800 border-green-200',
-  hackathon: 'bg-purple-100 text-purple-800 border-purple-200',
-  competition: 'bg-orange-100 text-orange-800 border-orange-200',
-  fellowship: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  workshop: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  job: 'bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-accent)] border-[color-mix(in_srgb,var(--comp-accent)_25%,transparent)]',
+  internship: 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]',
+  hackathon: 'bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]',
+  competition: 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]',
+  fellowship: 'bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] text-[var(--comp-text-primary)] border-[color-mix(in_srgb,var(--comp-accent)_22%,transparent)]',
+  workshop: 'bg-[color-mix(in_srgb,var(--surface)_70%,var(--background)_30%)] text-[var(--comp-text-primary)] border-[var(--comp-border)]',
 };
 
 const TypeBadge: React.FC<TypeBadgeProps> = ({ type, className }) => {
   return (
     <span className={cn(
       'px-2 py-0.5 rounded-full text-xs font-medium border capitalize',
-      typeStyles[type] || 'bg-gray-100 text-gray-800 border-gray-200',
+      typeStyles[type] || 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-primary)] border-[var(--comp-border)]',
       className
     )}>
       {type}

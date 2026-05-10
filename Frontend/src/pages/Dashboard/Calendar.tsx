@@ -107,7 +107,7 @@ function Calendar({ onDateSelect }: { onDateSelect?: (date: Date) => void }) {
                 style={{
                   background: isToday(date) ? 'var(--comp-accent)' : isSelected(date) ? 'var(--success)' : undefined,
                   color: (isToday(date) || isSelected(date)) ? '#fff' : 'var(--comp-text-primary)',
-                  ringColor: isToday(date) ? 'var(--comp-surface)' : undefined,
+                  boxShadow: isToday(date) ? '0 0 0 2px var(--comp-surface)' : undefined,
                   transition: `all var(--transition-fast)`,
                 }}
               >

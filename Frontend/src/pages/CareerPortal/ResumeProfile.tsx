@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
-import { getCareerProfile, type CareerProfile, updateCareerProfile } from "../../lib/careerApi";
+import { getCareerProfile, type ResumeCareerProfile, updateCareerProfile } from "../../lib/careerApi";
 
 const LEVEL_COLORS: Record<string, string> = {
   Beginner: "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]",
@@ -11,8 +11,93 @@ const LEVEL_COLORS: Record<string, string> = {
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"] as const;
 
+function toText(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function normalizeSkill(skill: unknown) {
+  if (typeof skill === "string") {
+    return { name: skill.trim(), level: "Intermediate" };
+  }
+  if (skill && typeof skill === "object") {
+    const item = skill as Partial<{ name: unknown; level: unknown }>;
+    return {
+      name: toText(item.name),
+      level: LEVELS.includes(item.level as (typeof LEVELS)[number])
+        ? String(item.level)
+        : "Intermediate",
+    };
+  }
+  return { name: "", level: "Intermediate" };
+}
+
+function normalizeProject(project: unknown, index: number) {
+  if (!project || typeof project !== "object") {
+    return null;
+  }
+  const item = project as Partial<Record<keyof ResumeCareerProfile["projects"][number], unknown>>;
+  const title = toText(item.title);
+  if (!title) return null;
+  return {
+    id: toText(item.id, `project-${index}`),
+    title,
+    description: toText(item.description),
+    tech: toText(item.tech),
+    link: toText(item.link),
+  };
+}
+
+function calculateCompletion(profile: ResumeCareerProfile) {
+  const checks = [
+    profile.headline,
+    profile.summary,
+    profile.resumeUrl || profile.resumeFileName,
+    profile.skills.length > 0,
+    profile.projects.length > 0,
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+function toResumeProfile(data: Partial<ResumeCareerProfile> & Record<string, unknown>): ResumeCareerProfile {
+  const rawSkills = Array.isArray(data.skills) ? data.skills : [];
+  const rawProjects = Array.isArray(data.projects) ? data.projects : [];
+  const profile = {
+    userId: toText(data.userId, "student"),
+    name: toText(data.name, "Student"),
+    email: toText(data.email, ""),
+    department: toText(data.department, ""),
+    headline: toText(data.headline, "Student developer"),
+    summary: toText(data.summary, toText(data.bio)),
+    skills: rawSkills.map(normalizeSkill).filter((skill) => skill.name),
+    preferredTypes: Array.isArray(data.preferredTypes) ? data.preferredTypes.map(String) : [],
+    preferredLocations: Array.isArray(data.preferredLocations) ? data.preferredLocations.map(String) : [],
+    minStipend: toText(data.minStipend),
+    cgpa: typeof data.cgpa === "number" ? data.cgpa : undefined,
+    bio: toText(data.bio, toText(data.summary)),
+    linkedinUrl: toText(data.linkedinUrl),
+    githubUrl: toText(data.githubUrl),
+    portfolioUrl: toText(data.portfolioUrl),
+    resumeUrl: toText(data.resumeUrl),
+    resumeFileName: toText(data.resumeFileName),
+    projects: rawProjects
+      .map((project, index) => normalizeProject(project, index))
+      .filter((project): project is ResumeCareerProfile["projects"][number] => Boolean(project)),
+    updatedAt: toText(data.updatedAt, new Date().toISOString()),
+    completionPercent: 0,
+  };
+  return { ...profile, completionPercent: calculateCompletion(profile) };
+}
+
+function toCareerProfilePayload(profile: ResumeCareerProfile) {
+  return {
+    ...profile,
+    bio: profile.summary,
+    skills: profile.skills.map((skill) => skill.name),
+  };
+}
+
 export default function ResumeProfile() {
-  const [profile, setProfile] = useState<CareerProfile | null>(null);
+  const [profile, setProfile] = useState<ResumeCareerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [newSkill, setNewSkill] = useState("");
@@ -29,7 +114,7 @@ export default function ResumeProfile() {
     getCareerProfile()
       .then((response) => {
         if (!active) return;
-        setProfile(response);
+        setProfile(toResumeProfile(response as Partial<ResumeCareerProfile> & Record<string, unknown>));
       })
       .catch((error) => {
         if (!active) return;
@@ -48,20 +133,20 @@ export default function ResumeProfile() {
     };
   }, []);
 
-  async function persist(next: CareerProfile, successText: string) {
+  async function persist(next: ResumeCareerProfile, successText: string) {
     try {
-      const saved = await updateCareerProfile({
-        name: next.name,
-        email: next.email,
-        department: next.department,
-        headline: next.headline,
-        summary: next.summary,
-        resumeUrl: next.resumeUrl,
-        resumeFileName: next.resumeFileName,
-        skills: next.skills,
-        projects: next.projects,
-      });
-      setProfile(saved);
+      const saved = await updateCareerProfile(
+        toCareerProfilePayload(next) as unknown as Partial<ResumeCareerProfile>
+      );
+      setProfile(
+        toResumeProfile({
+          ...(saved as Partial<ResumeCareerProfile> & Record<string, unknown>),
+          headline: next.headline,
+          summary: next.summary,
+          skills: next.skills,
+          projects: next.projects,
+        })
+      );
       setBanner({ tone: "success", text: successText });
     } catch (error) {
       setBanner({
@@ -103,10 +188,10 @@ export default function ResumeProfile() {
             <div
               className={`h-full rounded-full transition-all ${
                 profile.completionPercent === 100
-                  ? "bg-[color-mix(in_srgb,var(--success)_10%,transparent)]0"
+                  ? "bg-[var(--success)]"
                   : profile.completionPercent >= 66
                     ? "bg-[var(--comp-accent)]"
-                    : "bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]0"
+                    : "bg-[var(--warning)]"
               }`}
               style={{ width: `${profile.completionPercent}%` }}
             />

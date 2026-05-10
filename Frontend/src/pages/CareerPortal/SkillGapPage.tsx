@@ -4,6 +4,7 @@ import { listSkillGaps, type SkillGap } from "../../lib/careerApi";
 import { Award, Zap, TrendingUp, BookOpen, ChevronRight, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { Tag } from "../../components/ui/Tag";
@@ -29,21 +30,21 @@ const SkillGapPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4 p-4 sm:p-8">
+      <PageContainer className="max-w-4xl space-y-4">
         <SkeletonCard className="h-20" />
         <SkeletonCard className="h-72" />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-4 sm:p-8">
+    <PageContainer className="max-w-4xl space-y-6">
       <PageHeader
         title="Skill gap analysis"
         subtitle="Identify technical skills that unlock the most opportunities for you"
       />
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <SectionCard title="High impact skills" className="md:col-span-2">
           <div className="mb-2 flex items-center gap-2">
             <Zap className="h-5 w-5 text-[var(--warning)]" />
@@ -87,7 +88,7 @@ const SkillGapPage: React.FC = () => {
           )}
         </SectionCard>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <SectionCard
             title="Career growth"
             className="border-[var(--comp-accent)] bg-[color-mix(in_srgb,var(--comp-accent)_8%,var(--comp-surface))]"
@@ -119,7 +120,7 @@ const SkillGapPage: React.FC = () => {
           </SectionCard>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

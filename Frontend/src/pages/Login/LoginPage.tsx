@@ -179,7 +179,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-128px)] items-center justify-center bg-[color-mix(in_srgb,var(--surface)_55%,transparent)] px-4 py-8">
+    <div className="flex items-center justify-center px-4 py-8">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="rounded-[30px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="flex flex-wrap items-center gap-3">

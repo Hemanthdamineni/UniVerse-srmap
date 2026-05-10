@@ -7,6 +7,7 @@ import { getSessionId, handleSessionAuthFailure, isSessionAuthFailure } from "..
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/InlineError";
+import { DataTable, type Column } from "../../components/ui/DataTable";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -332,7 +333,6 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
-      contentLayout="section-card"
       isLoading={loading}
       loadingMessage="Loading earlier semester results..."
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
@@ -378,39 +378,21 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
           ) : internalError ? (
             <InlineError message={internalError} />
           ) : (
-            <div className="erp-table-shell">
-              <table className="erp-table w-full text-left">
-                <thead className="erp-table-head">
-                  <tr>
-                    <th className="erp-table-head-cell label-text">Semester</th>
-                    <th className="erp-table-head-cell label-text">Code</th>
-                    <th className="erp-table-head-cell label-text">Description</th>
-                    <th className="erp-table-head-cell label-text">Subject Type</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-right">Mark Obtained</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-right">Max Mark</th>
-                  </tr>
-                </thead>
-                <tbody className="erp-table-body">
-                  {internalMarks.map((row) => (
-                    <tr key={`${row.semester}-${row.code}-${row.subjectType}`} className="erp-table-row">
-                      <td className="erp-table-cell erp-table-cell-strong">{row.semester}</td>
-                      <td className="erp-table-cell erp-table-cell-strong">{row.code}</td>
-                      <td className="erp-table-cell">{row.description}</td>
-                      <td className="erp-table-cell">{row.subjectType}</td>
-                      <td className="erp-table-cell erp-table-align-right">{row.markObtained}</td>
-                      <td className="erp-table-cell erp-table-align-right">{row.maxMark}</td>
-                    </tr>
-                  ))}
-                  {internalMarks.length === 0 ? (
-                    <tr className="erp-table-row">
-                      <td colSpan={6} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                        No internal mark details were found for semester {selectedSemester}.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              data={internalMarks}
+              stickyHeader
+              ariaLabel="Earlier internal marks"
+              emptyTitle={`No internal mark details were found for semester ${selectedSemester}.`}
+              keyExtractor={(row) => `${row.semester}-${row.code}-${row.subjectType}`}
+              columns={[
+                { header: "Semester", accessor: (row) => <span className="font-semibold">{row.semester}</span> },
+                { header: "Code", accessor: (row) => <span className="font-semibold">{row.code}</span> },
+                { header: "Description", accessor: (row) => row.description },
+                { header: "Subject Type", accessor: (row) => row.subjectType },
+                { header: "Mark Obtained", accessor: (row) => row.markObtained, className: "text-right" },
+                { header: "Max Mark", accessor: (row) => row.maxMark, className: "text-right" },
+              ] as Column<InternalMarkRecord>[]}
+            />
           )}
         </section>
 
@@ -427,59 +409,40 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
             </div>
           </div>
 
-          <div className="erp-table-shell">
-            <table className="erp-table w-full text-left">
-              <thead className="erp-table-head">
-                <tr>
-                  <th className="erp-table-head-cell label-text">Semester</th>
-                  <th className="erp-table-head-cell label-text">Month &amp; Year</th>
-                  <th className="erp-table-head-cell label-text">Subject Code</th>
-                  <th className="erp-table-head-cell label-text">Subject Description</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-right">Credit</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Grade</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-right">Grade Point</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Result</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-right">Attempt</th>
-                </tr>
-              </thead>
-              <tbody className="erp-table-body">
-                {historicalMarks.map((row) => (
-                  <tr key={`${row.semester}-${row.monthYear}-${row.subjectCode}-${row.attempt}`} className="erp-table-row">
-                    <td className="erp-table-cell erp-table-cell-strong">{row.semester}</td>
-                    <td className="erp-table-cell">{row.monthYear}</td>
-                    <td className="erp-table-cell erp-table-cell-strong">{row.subjectCode}</td>
-                    <td className="erp-table-cell">{row.subjectDescription}</td>
-                    <td className="erp-table-cell erp-table-align-right">{row.credit}</td>
-                    <td className="erp-table-cell erp-table-align-center">
-                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
-                        {row.grade}
-                      </span>
-                    </td>
-                    <td className="erp-table-cell erp-table-align-right">{row.gradePoint}</td>
-                    <td className="erp-table-cell erp-table-align-center">
-                      <span
-                        className={`erp-status-pill ${
-                          row.result.toLowerCase() === "pass"
-                            ? "erp-status-pill-success"
-                            : "erp-status-pill-error"
-                        }`}
-                      >
-                        {row.result}
-                      </span>
-                    </td>
-                    <td className="erp-table-cell erp-table-align-right">{row.attempt}</td>
-                  </tr>
-                ))}
-                {historicalMarks.length === 0 ? (
-                  <tr className="erp-table-row">
-                    <td colSpan={9} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                      No historical exam marks were found.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            data={historicalMarks}
+            stickyHeader
+            ariaLabel="Historical exam marks"
+            emptyTitle="No historical exam marks were found."
+            keyExtractor={(row) => `${row.semester}-${row.monthYear}-${row.subjectCode}-${row.attempt}`}
+            columns={[
+              { header: "Semester", accessor: (row) => <span className="font-semibold">{row.semester}</span> },
+              { header: "Month & Year", accessor: (row) => row.monthYear },
+              { header: "Subject Code", accessor: (row) => <span className="font-semibold">{row.subjectCode}</span> },
+              { header: "Subject Description", accessor: (row) => row.subjectDescription },
+              { header: "Credit", accessor: (row) => row.credit, className: "text-right" },
+              {
+                header: "Grade",
+                accessor: (row) => (
+                  <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
+                    {row.grade}
+                  </span>
+                ),
+                className: "text-center",
+              },
+              { header: "Grade Point", accessor: (row) => row.gradePoint, className: "text-right" },
+              {
+                header: "Result",
+                accessor: (row) => (
+                  <span className={`erp-status-pill ${row.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
+                    {row.result}
+                  </span>
+                ),
+                className: "text-center",
+              },
+              { header: "Attempt", accessor: (row) => row.attempt, className: "text-right" },
+            ] as Column<HistoricalExamMark>[]}
+          />
         </section>
       </div>
     </ErpPageShell>

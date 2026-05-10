@@ -4,6 +4,7 @@ import { listOpportunities, type CareerOpportunity } from "../../lib/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { Bookmark } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { EmptyState } from "../../components/ui/EmptyState";
 
@@ -26,7 +27,7 @@ const BookmarksPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <PageContainer className="space-y-6">
       <PageHeader
         title="My bookmarks"
         subtitle="Opportunities you've saved for later"
@@ -59,7 +60,7 @@ const BookmarksPage: React.FC = () => {
           description="Save opportunities you're interested in to see them here."
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
 

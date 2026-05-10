@@ -3,7 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recha
 import { useMemo } from "react";
 import { executePipeline, type AttendanceModel } from "../../lib/erpTransformers";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { StatCard } from "../../components/ui/StatCard";
 
 function Attendance({ attendanceData }: { attendanceData?: any }) {
   const processedData = useMemo(() => {
@@ -24,14 +23,8 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
       };
     });
 
-    const totalAttendance = chartData.reduce((sum, item) => sum + item.attendance, 0);
-    const averageAttendance = chartData.length > 0 ? totalAttendance / chartData.length : 0;
-    const criticalSubjects = chartData.filter((item) => item.attendance < 75).length;
-
     return {
       subjects: chartData,
-      averageAttendance,
-      criticalSubjects,
     };
   }, [attendanceData]);
 
@@ -61,20 +54,12 @@ function Attendance({ attendanceData }: { attendanceData?: any }) {
     );
   }
 
-  const { subjects, averageAttendance, criticalSubjects } = processedData;
+  const { subjects } = processedData;
 
   return (
-    <div className="p-4 h-full flex flex-col space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Avg Attendance" value={`${averageAttendance.toFixed(1)}%`} />
-        <StatCard 
-          label="Critical Subjects" 
-          value={criticalSubjects.toString()} 
-          delta={{ value: "below 75%", trend: criticalSubjects > 0 ? "down" : "neutral" }} 
-        />
-      </div>
+    <div className="p-4 h-full flex flex-col">
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 pt-1">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <BarChart
             data={subjects}

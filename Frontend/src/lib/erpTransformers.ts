@@ -21,6 +21,7 @@
 // IMPORTS
 // ---------------------------------------------------------------------------
 import type { PageBlueprint } from "../config/erpBlueprints";
+import { sanitizeErpDisplayText } from "./erpDisplayText";
 
 // ---------------------------------------------------------------------------
 // 1. GLOBAL NORMALIZER
@@ -30,13 +31,7 @@ import type { PageBlueprint } from "../config/erpBlueprints";
 export function normalizeRawValue(value: unknown, fallback = ""): string {
   if (value === null || value === undefined) return fallback;
   if (typeof value === "string") {
-    const cleaned = value
-      // Strip inline JS artifacts that leak as plain text from ERP scraping
-      .replace(/\$\(document\)\.ready\([\s\S]*?\}\);?/g, " ")
-      .replace(/\$\(['"][^'"]*['"]\)[\s\S]*?;/g, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    const cleaned = sanitizeErpDisplayText(value, fallback);
     return cleaned || fallback;
   }
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -839,23 +834,24 @@ function transformFeesPaid(rawData: unknown): Partial<FeesPaidModel> {
   
   // 1. ROBUST SECTION DISCOVERY
   // Search for the "Fee Paid Details" block or use the root if it looks like the data we want
-  let section: Record<string, unknown> | null = null;
-  
-  const findBlock = (obj: any): any => {
+  const findBlock = (obj: unknown): Record<string, unknown> | null => {
     if (!obj || typeof obj !== "object") return null;
-    if (obj["Fee Paid Details"]) return obj["Fee Paid Details"];
-    if (obj.tables && Array.isArray(obj.tables)) return obj;
-    
-    for (const key of Object.keys(obj)) {
-      if (typeof obj[key] === "object") {
-        const found = findBlock(obj[key]);
+    const record = obj as Record<string, unknown>;
+    if (record["Fee Paid Details"] && typeof record["Fee Paid Details"] === "object") {
+      return record["Fee Paid Details"] as Record<string, unknown>;
+    }
+    if (Array.isArray(record.tables)) return record;
+
+    for (const key of Object.keys(record)) {
+      if (typeof record[key] === "object") {
+        const found = findBlock(record[key]);
         if (found) return found;
       }
     }
     return null;
   };
 
-  section = findBlock(root) || root;
+  const section = findBlock(root) || root;
 
   const title = normalizeRawValue(section.title) || "Payment Receipts";
   const records: FeePaidRecord[] = [];

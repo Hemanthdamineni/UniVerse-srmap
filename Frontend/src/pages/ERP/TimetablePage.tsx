@@ -56,7 +56,6 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
     <ErpPageShell
       title={blueprint.heading}
       source="Live ERP"
-      contentLayout="section-card"
       isLoading={loading}
       loadingMessage={blueprint.loadingMessage}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}

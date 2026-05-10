@@ -12,7 +12,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
   if (stipend) {
     return (
       <span className={cn(
-        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] text-[10px] sm:text-xs font-medium border border-blue-100',
+        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)] text-[10px] sm:text-xs font-medium border border-[color-mix(in_srgb,var(--info)_24%,transparent)]',
         className
       )}>
         Stipend: {stipend}
@@ -23,7 +23,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
   if (prize) {
     return (
       <span className={cn(
-        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] text-[10px] sm:text-xs font-medium border border-amber-100',
+        'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)] text-[10px] sm:text-xs font-medium border border-[color-mix(in_srgb,var(--warning)_24%,transparent)]',
         className
       )}>
         Prize: {prize}
@@ -34,7 +34,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
   if (isFree === false) {
     return (
       <span className={cn(
-        'px-2 py-0.5 rounded-md bg-gray-50 text-gray-700 text-[10px] sm:text-xs font-medium border border-gray-100',
+        'px-2 py-0.5 rounded-md bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] text-[10px] sm:text-xs font-medium border border-[var(--comp-border)]',
         className
       )}>
         Paid Opportunity
@@ -44,7 +44,7 @@ const StipendChip: React.FC<StipendChipProps> = ({ stipend, prize, isFree, class
 
   return (
     <span className={cn(
-      'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] text-[10px] sm:text-xs font-medium border border-emerald-100',
+      'px-2 py-0.5 rounded-md bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] text-[10px] sm:text-xs font-medium border border-[color-mix(in_srgb,var(--success)_24%,transparent)]',
       className
     )}>
       Free

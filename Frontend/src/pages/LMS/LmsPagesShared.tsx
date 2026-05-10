@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 // LMS shell: InlineError in frame; StatCard momentum row; resource preview uses comp-surface tokens.
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/InlineError";
@@ -27,9 +27,12 @@ import {
   createLmsCollection,
   createLmsRequest,
   createLmsResource,
+  deleteGuide,
+  deleteLmsResource,
   createQuestionBankItem,
   createRoadmap,
   deleteLmsAnnotation,
+  deleteRoadmap,
   flagLmsResource,
   generateLearningSession,
   getContinueLearning,
@@ -67,6 +70,8 @@ import {
   toggleGuideUpvote,
   toggleResourceBookmark,
   toggleResourceUpvote,
+  updateGuide,
+  updateLmsResource,
   upvoteLmsRequest,
   upvoteQuestionBankItem,
   type LmsGuide,
@@ -74,6 +79,85 @@ import {
   type LmsResource,
   type LmsRoadmap,
 } from "../../lib/lmsApi";
+import { useSession } from "../../hooks/useSession";
+
+const ADMIN_REGISTER_NO = "AP23110010419";
+
+type ResourceFormState = {
+  type: string;
+  title: string;
+  description: string;
+  semester: string;
+  subjectCode: string;
+  subjectName: string;
+  unit: string;
+  url: string;
+  noteContent: string;
+  difficulty: string;
+  tags: string;
+  examYear: string;
+  examType: string;
+  examMonth: string;
+  file: File | null;
+};
+
+function getProfileRegisterNo(profile: Record<string, unknown> | null | undefined) {
+  const table =
+    profile && typeof profile.TableContent === "object" && profile.TableContent
+      ? (profile.TableContent as Record<string, unknown>)
+      : null;
+
+  return String(table?.["Register No."] || profile?.regNo || profile?.registerNo || "").trim().toUpperCase();
+}
+
+function createEmptyResourceForm(): ResourceFormState {
+  return {
+    type: "note",
+    title: "",
+    description: "",
+    semester: "",
+    subjectCode: "",
+    subjectName: "",
+    unit: "",
+    url: "",
+    noteContent: "",
+    difficulty: "intermediate",
+    tags: "",
+    examYear: "",
+    examType: "",
+    examMonth: "",
+    file: null,
+  };
+}
+
+function resourceToForm(resource: LmsResource): ResourceFormState {
+  return {
+    type: resource.type || "note",
+    title: resource.title || "",
+    description: resource.description || "",
+    semester: resource.semester || "",
+    subjectCode: resource.subjectCode || "",
+    subjectName: resource.subjectName || "",
+    unit: resource.unit || "",
+    url: resource.url || "",
+    noteContent: resource.noteContent || "",
+    difficulty: resource.difficulty || "intermediate",
+    tags: Array.isArray(resource.tags) ? resource.tags.join(", ") : "",
+    examYear: resource.examYear || "",
+    examType: resource.examType || "",
+    examMonth: resource.examMonth || "",
+    file: null,
+  };
+}
+
+function buildResourcePayload(form: ResourceFormState) {
+  return {
+    ...form,
+    subjectCode: form.subjectCode.trim().toUpperCase(),
+    tags: form.tags.split(",").map((item) => item.trim()).filter(Boolean),
+    file: form.file || undefined,
+  };
+}
 
 function useAsyncPage<T>(loader: () => Promise<T>, deps: unknown[]) {
   const [data, setData] = useState<T | null>(null);
@@ -249,30 +333,31 @@ export function ExplorePage() {
 
 export function AddResourcePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit") || "";
   const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
   const [duplicate, setDuplicate] = useState<{ exact?: { title: string } | null; similar?: unknown[] } | null>(null);
-  const [form, setForm] = useState({
-    type: "note",
-    title: "",
-    description: "",
-    semester: "",
-    subjectCode: "",
-    subjectName: "",
-    unit: "",
-    url: "",
-    noteContent: "",
-    difficulty: "intermediate",
-    tags: "",
-    examYear: "",
-    examType: "",
-    examMonth: "",
-    file: null as File | null,
-  });
+  const [form, setForm] = useState<ResourceFormState>(() => createEmptyResourceForm());
+  const editState = useAsyncPage<LmsResource | null>(
+    () => (editId ? getLmsResource(editId) : Promise.resolve(null)),
+    [editId]
+  );
+
+  useEffect(() => {
+    if (editState.data) {
+      setForm(resourceToForm(editState.data));
+    }
+  }, [editState.data?.id]);
+
+  const submitLabel = editId ? "Update resource" : "Create resource";
+  const frameTitle = editId ? "Edit Resource" : "Add Resource";
 
   return (
-    <LmsFrame title="Add Resource">
+    <LmsFrame title={frameTitle} loading={Boolean(editId && editState.loading)} error={editState.error}>
       <div className="dashboard-card grid gap-4 p-5">
         <DuplicateWarning exact={duplicate?.exact || null} similarCount={duplicate?.similar?.length || 0} />
+        {formError ? <InlineError message={formError} /> : null}
         <div className="grid gap-4 md:grid-cols-2">
           <input className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] px-3 py-2" placeholder="Title" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
           <select className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] px-3 py-2" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}>
@@ -306,24 +391,35 @@ export function AddResourcePage() {
             disabled={busy}
             onClick={async () => {
               setBusy(true);
+              setFormError("");
               try {
+                if (!form.title.trim() || !form.subjectCode.trim() || !form.subjectName.trim()) {
+                  setFormError("Title, subject code, and subject name are required.");
+                  return;
+                }
+
+                const payload = buildResourcePayload(form);
+                if (editId) {
+                  const updated = await updateLmsResource(editId, payload);
+                  navigate(`/resources/${updated.id}`);
+                  return;
+                }
+
                 const duplicateResult = await checkLmsDuplicate({
                   title: form.title,
                   subjectCode: form.subjectCode,
                 });
                 setDuplicate(duplicateResult);
-                const created = await createLmsResource({
-                  ...form,
-                  tags: form.tags.split(",").map((item) => item.trim()).filter(Boolean),
-                  file: form.file || undefined,
-                });
+                const created = await createLmsResource(payload);
                 navigate(`/resources/${created.id}`);
+              } catch (err) {
+                setFormError(err instanceof Error ? err.message : "Unable to save this resource.");
               } finally {
                 setBusy(false);
               }
             }}
           >
-            {busy ? "Saving..." : "Create resource"}
+            {busy ? "Saving..." : submitLabel}
           </button>
           <button
             className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-5 py-2.5 text-sm font-semibold text-[var(--comp-text-primary)]"
@@ -342,8 +438,11 @@ export function AddResourcePage() {
 
 export function ResourceDetailPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useSession();
   const resourceState = useAsyncPage(() => getLmsResource(id), [id]);
   const [comment, setComment] = useState("");
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -352,6 +451,10 @@ export function ResourceDetailPage() {
   }, [id]);
 
   const resource = resourceState.data;
+  const registerNo = getProfileRegisterNo(profile);
+  const canManageResource = Boolean(
+    resource && (String(resource.uploadedBy || "").toUpperCase() === registerNo || registerNo === ADMIN_REGISTER_NO)
+  );
 
   return (
     <LmsFrame title={resource?.title || "Resource"} loading={resourceState.loading} error={resourceState.error}>
@@ -363,6 +466,11 @@ export function ResourceDetailPage() {
                 {resource.subjectCode} • {resource.subjectName} • {resource.unit}
               </p>
               <p className="text-sm text-[var(--text-secondary)]">{resource.description}</p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--comp-text-muted)]">
+                <span>Uploaded by {resource.uploadedBy}</span>
+                {resource.updatedAt ? <span>Updated {new Date(resource.updatedAt).toLocaleDateString()}</span> : null}
+              </div>
+              {actionError ? <InlineError message={actionError} /> : null}
               <div className="flex flex-wrap gap-2">
                 <button className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white" onClick={() => void toggleResourceUpvote(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   {resource.userUpvoted ? "Remove upvote" : "Upvote"}
@@ -379,6 +487,28 @@ export function ResourceDetailPage() {
                 <button className="rounded-full border border-[color-mix(in_srgb,var(--info)_25%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" onClick={() => void rateLmsResource(resource.id, { rating: 5, dimensionTags: ["Exam useful"] }).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   Quick rate 5
                 </button>
+                {canManageResource ? (
+                  <>
+                    <Link className="rounded-full border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)] no-underline" to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}>
+                      Edit
+                    </Link>
+                    <button
+                      className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
+                      onClick={async () => {
+                        if (!window.confirm("Delete this resource?")) return;
+                        setActionError("");
+                        try {
+                          await deleteLmsResource(resource.id);
+                          navigate("/resources/me/contributions");
+                        } catch (err) {
+                          setActionError(err instanceof Error ? err.message : "Unable to delete this resource.");
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </>
+                ) : null}
               </div>
               <OutdatedWarning isOutdated={resource.isOutdated} />
             </div>
@@ -551,13 +681,24 @@ export function GuidesListPage() {
 
 export function GuideReaderPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useSession();
   const { data, setData, loading, error } = useAsyncPage(() => getGuide(id), [id]);
+  const registerNo = getProfileRegisterNo(profile);
+  const canManageGuide = Boolean(
+    data && (String(data.authorId || "").toUpperCase() === registerNo || registerNo === ADMIN_REGISTER_NO)
+  );
   return (
     <LmsFrame title={data?.title || "Guide"} loading={loading} error={error}>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Link to={`/resources/guides/new?clone=${id}`} className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
           Clone into editor
         </Link>
+        {canManageGuide ? (
+          <Link to={`/resources/guides/new?edit=${id}`} className="rounded-full border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+            Edit
+          </Link>
+        ) : null}
         <button
           className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
           onClick={async () => {
@@ -571,6 +712,18 @@ export function GuideReaderPage() {
         <a className="rounded-full border border-[color-mix(in_srgb,var(--info)_20%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" href={`/api/lms/guides/${id}/export`} target="_blank" rel="noreferrer">
           Export PDF
         </a>
+        {canManageGuide ? (
+          <button
+            className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
+            onClick={async () => {
+              if (!window.confirm("Delete this guide?")) return;
+              await deleteGuide(id);
+              navigate("/resources/me/contributions");
+            }}
+          >
+            Delete
+          </button>
+        ) : null}
       </div>
       {(data?.sections || []).map((section) => (
         <GuideSection
@@ -588,6 +741,10 @@ export function GuideReaderPage() {
 
 export function GuideEditorPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit") || "";
+  const cloneId = searchParams.get("clone") || "";
+  const sourceId = editId || cloneId;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectCode, setSubjectCode] = useState("");
@@ -595,9 +752,28 @@ export function GuideEditorPage() {
   const [semester, setSemester] = useState("");
   const [unit, setUnit] = useState("");
   const [sections, setSections] = useState([{ title: "Introduction", content: "" }]);
+  const sourceState = useAsyncPage<LmsGuide | null>(
+    () => (sourceId ? getGuide(sourceId) : Promise.resolve(null)),
+    [sourceId]
+  );
+
+  useEffect(() => {
+    if (!sourceState.data) return;
+    setTitle(editId ? sourceState.data.title : `${sourceState.data.title} Copy`);
+    setDescription(sourceState.data.description || "");
+    setSubjectCode(sourceState.data.subjectCode || "");
+    setSubjectName(sourceState.data.subjectName || "");
+    setSemester(sourceState.data.semester || "");
+    setUnit(sourceState.data.unit || "");
+    setSections(
+      sourceState.data.sections?.length
+        ? sourceState.data.sections.map((section) => ({ title: section.title, content: section.content }))
+        : [{ title: "Introduction", content: "" }]
+    );
+  }, [sourceState.data?.id, editId]);
 
   return (
-    <LmsFrame title="Guide Editor">
+    <LmsFrame title={editId ? "Edit Guide" : "Guide Editor"} loading={Boolean(sourceId && sourceState.loading)} error={sourceState.error}>
       <div className="dashboard-card space-y-4 p-5">
         <div className="grid gap-3 md:grid-cols-2">
           <input className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] px-3 py-2" placeholder="Guide title" value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -620,11 +796,12 @@ export function GuideEditorPage() {
           <button
             className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
             onClick={async () => {
-              const guide = await createGuide({ title, description, subjectCode, subjectName, semester, unit, sections, published: true });
+              const payload = { title, description, subjectCode, subjectName, semester, unit, sections, published: true };
+              const guide = editId ? await updateGuide(editId, payload) : await createGuide(payload);
               navigate(`/resources/guides/${guide.id}`);
             }}
           >
-            Publish guide
+            {editId ? "Update guide" : "Publish guide"}
           </button>
         </div>
       </div>
@@ -651,17 +828,39 @@ export function RoadmapsListPage() {
 
 export function RoadmapViewerPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useSession();
   const { data, setData, loading, error } = useAsyncPage(() => getRoadmap(id), [id]);
+  const registerNo = getProfileRegisterNo(profile);
+  const canManageRoadmap = Boolean(
+    data && (String(data.authorId || "").toUpperCase() === registerNo || registerNo === ADMIN_REGISTER_NO)
+  );
   return (
     <LmsFrame title={data?.title || "Roadmap"} loading={loading} error={error}>
       {data ? (
-        <RoadmapGraph
-          roadmap={data}
-          onComplete={async (nodeId) => {
-            const next = await completeRoadmapNode(id, nodeId);
-            setData(next);
-          }}
-        />
+        <div className="space-y-4">
+          {canManageRoadmap ? (
+            <div className="flex justify-end">
+              <button
+                className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
+                onClick={async () => {
+                  if (!window.confirm("Delete this roadmap?")) return;
+                  await deleteRoadmap(id);
+                  navigate("/resources/me/contributions");
+                }}
+              >
+                Delete roadmap
+              </button>
+            </div>
+          ) : null}
+          <RoadmapGraph
+            roadmap={data}
+            onComplete={async (nodeId) => {
+              const next = await completeRoadmapNode(id, nodeId);
+              setData(next);
+            }}
+          />
+        </div>
       ) : null}
     </LmsFrame>
   );
@@ -810,16 +1009,30 @@ export function QuestionBankPage() {
 
 export function MyContributionsPage() {
   const { data, loading, error } = useAsyncPage(() => getMyContributions(), []);
+  const resources = ((data?.resources as LmsResource[]) || []);
+  const guides = ((data?.guides as LmsGuide[]) || []);
+  const roadmaps = ((data?.roadmaps as LmsRoadmap[]) || []);
   return (
     <LmsFrame title="My Contributions" loading={loading} error={error}>
-      <RecommendationSection title="My Resources" items={((data?.resources as LmsResource[]) || [])} />
+      <RecommendationSection title="My Resources" items={resources} />
       <SectionCard title="My Guides">
         <div className="space-y-2">
-          {((data?.guides as LmsGuide[]) || []).map((guide) => (
+          {guides.map((guide) => (
             <Link key={guide.id} to={`/resources/guides/${guide.id}`} className="dashboard-card block p-4">
               {guide.title}
             </Link>
           ))}
+          {guides.length === 0 ? <p className="body-text">No guides published yet.</p> : null}
+        </div>
+      </SectionCard>
+      <SectionCard title="My Roadmaps">
+        <div className="space-y-2">
+          {roadmaps.map((roadmap) => (
+            <Link key={roadmap.id} to={`/resources/roadmaps/${roadmap.id}`} className="dashboard-card block p-4">
+              {roadmap.title}
+            </Link>
+          ))}
+          {roadmaps.length === 0 ? <p className="body-text">No roadmaps published yet.</p> : null}
         </div>
       </SectionCard>
     </LmsFrame>
