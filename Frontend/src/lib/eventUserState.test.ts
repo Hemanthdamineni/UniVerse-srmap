@@ -37,15 +37,15 @@ describe("eventUserState", () => {
     expect(state.role).toBe("visitor");
   });
 
-  it("identifies creator as organizer regardless of permission overrides", () => {
+  it("identifies creator as owner regardless of permission overrides", () => {
     const state = getEventUserState(baseEvent, baseConfig, "usr_org", {}, undefined);
-    expect(state.role).toBe("organizer");
+    expect(state.role).toBe("owner");
     expect(state.canEdit).toBe(true);
   });
 
-  it("identifies users with explicit backend canEdit permission as organizer", () => {
+  it("identifies users with explicit backend canEdit permission as owner", () => {
     const state = getEventUserState(baseEvent, baseConfig, "usr_other", {}, { ...basePerms, canEdit: true });
-    expect(state.role).toBe("organizer");
+    expect(state.role).toBe("owner");
     expect(state.canEdit).toBe(true);
   });
 

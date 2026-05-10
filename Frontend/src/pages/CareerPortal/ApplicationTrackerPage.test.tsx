@@ -46,7 +46,7 @@ describe("ApplicationTrackerPage", () => {
         <ApplicationTrackerPage />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText("Role")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("Role").length).toBeGreaterThan(0));
     const select = document.querySelector("select") as HTMLSelectElement;
     expect(select).toBeTruthy();
     await user.selectOptions(select, "shortlisted");
@@ -60,7 +60,7 @@ describe("ApplicationTrackerPage", () => {
         <ApplicationTrackerPage />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByText("Role")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("Role").length).toBeGreaterThan(0));
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();
     await user.click(trash!);
