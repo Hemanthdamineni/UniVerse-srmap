@@ -1,0 +1,83 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(erp_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ],
+      "title": "API P95 Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "targets": [
+        {
+          "expr": "sum(rate(erp_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(erp_http_requests_total[5m]))",
+          "legendFormat": "5xx_rate"
+        }
+      ],
+      "title": "API Error Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "id": 3,
+      "targets": [
+        {
+          "expr": "erp_cache_hit_ratio{policy=\"cached-first\"}",
+          "legendFormat": "cache_hit_ratio"
+        }
+      ],
+      "title": "Cached-First Hit Ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "id": 4,
+      "targets": [
+        {
+          "expr": "max(erp_circuit_open_state)",
+          "legendFormat": "circuit_open"
+        }
+      ],
+      "title": "Circuit Open State",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "loki", "uid": "${DS_LOKI}"},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "id": 5,
+      "targets": [
+        {
+          "expr": "{container=~\".*backend.*\"} |= \"error\""
+        }
+      ],
+      "title": "Backend Error Logs",
+      "type": "logs"
+    }
+  ],
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["erp", "slo"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "title": "University ERP Overview",
+  "uid": "university-erp-overview",
+  "version": 1
+}

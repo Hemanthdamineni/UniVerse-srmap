@@ -1,0 +1,38 @@
+groups:
+  - name: erp-slo-alerts
+    rules:
+      - alert: ErpHighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(erp_http_request_duration_seconds_bucket[5m])) by (le, route)) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP p95 latency is above 1.5s"
+          description: "Route {{ $labels.route }} has p95 latency > 1.5s for 10m"
+
+      - alert: ErpHighErrorRate
+        expr: sum(rate(erp_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(erp_http_requests_total[5m])) > 0.01
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP error rate above 1%"
+          description: "5xx error rate has exceeded 1% for 10m"
+
+      - alert: ErpCacheHitRatioLow
+        expr: avg(erp_cache_hit_ratio{policy="cached-first"}) < 0.85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP cached-first hit ratio below 85%"
+          description: "Cached-first hit ratio has dropped below 85% for 15m"
+
+      - alert: ErpCircuitOpen
+        expr: max(erp_circuit_open_state) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP circuit breaker open"
+          description: "At least one ERP page group is circuit-open for more than 5m"
