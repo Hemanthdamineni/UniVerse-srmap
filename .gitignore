@@ -1,13 +1,83 @@
-.config/
-.cursor/
-.kiro/
-.references/
-Data/
-.vscode/
-infra/
+# ===========================
+# Dependencies
+# ===========================
 node_modules/
-logs/
+
+# ===========================
+# Build outputs
+# ===========================
+Frontend/dist/
 .vite/
+
+# ===========================
+# Runtime databases
+# ===========================
+Backend/data/*.sqlite
+Backend/data/*.sqlite-shm
+Backend/data/*.sqlite-wal
+
+# Runtime upload/data directories
+Backend/data/certificates/
+Backend/data/submissions/
+Backend/data/uploads/
+Backend/data/lms/
+Backend/data/lms-smoke-files/
+Backend/data/lms-smoke-files-2/
+
+# ===========================
+# Logs & coverage
+# ===========================
+logs/
+Backend/logs/
 coverage/
-public/
-dist/
+Frontend/coverage/
+
+# ===========================
+# Scratch / temp workspaces
+# ===========================
+Frontend/tmp_workspace/
+
+# ===========================
+# Large design assets (store separately)
+# ===========================
+Stitch Designs/
+
+# ===========================
+# Reference data (local only)
+# ===========================
+.references/
+
+# ===========================
+# IDE & editor configs
+# ===========================
+.vscode/
+.cursor/
+
+# ===========================
+# AI tool configs
+# ===========================
+.kiro/
+.agents/
+.codex/
+.config/
+
+# ===========================
+# OS files
+# ===========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ===========================
+# Environment files
+# ===========================
+.env
+.env.local
+.env.*.local
+
+# ===========================
+# Miscellaneous
+# ===========================
+*.tgz
