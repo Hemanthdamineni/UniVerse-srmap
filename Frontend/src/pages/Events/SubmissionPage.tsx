@@ -70,7 +70,6 @@ export default function SubmissionPage() {
       } else {
         setError(msg);
       }
-    } finally {
     }
   }
 

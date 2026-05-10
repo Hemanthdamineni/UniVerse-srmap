@@ -9,7 +9,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { listEvents } from '../../lib/campusApi';
+import { listEvents, type EventSummary } from '../../lib/campusApi';
 
 /* ---------- Types ---------- */
 
