@@ -17,7 +17,7 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
   low: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
   medium: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   high: "border-orange-200 bg-orange-50 text-orange-800",
-  urgent: "border-rose-200 bg-rose-50 text-rose-800",
+  urgent: "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]",
 };
 
 export default function RaiseTicket() {

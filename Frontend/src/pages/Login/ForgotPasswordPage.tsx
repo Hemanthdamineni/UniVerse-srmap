@@ -3,7 +3,6 @@ import type { ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  extractApiErrorCode,
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
   normalizeRegistrationNumber,
@@ -19,7 +18,7 @@ function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
 
   const toneClasses =
     tone === "success"
-      ? "border-green-200 bg-green-50 text-green-700"
+      ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
       : tone === "error"
         ? "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
         : "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]";
@@ -153,15 +152,10 @@ export default function ForgotPasswordPage() {
       );
     } catch (error: unknown) {
       const payload = axios.isAxiosError(error) ? error.response?.data : null;
-      const code = extractApiErrorCode(payload);
       const message = extractApiErrorMessage(payload, "Unable to request OTP.");
 
-      if (code === "CAPTCHA_EXPIRED" || code === "PREAUTH_EXPIRED") {
-        await fetchCaptcha("Captcha expired. A fresh captcha is ready.");
-      } else {
-        setStatusTone("error");
-        setStatusMessage(message);
-      }
+      setStatusTone("error");
+      setStatusMessage(message);
     } finally {
       setSubmitting(false);
     }
@@ -450,7 +444,7 @@ export default function ForgotPasswordPage() {
             ) : null}
 
             {step === "done" ? (
-              <div className="space-y-4 rounded-2xl border border-green-200 bg-green-50 p-5 text-sm text-green-700">
+              <div className="space-y-4 rounded-2xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-5 text-sm text-[var(--success)]">
                 <p>Your ERP password has been updated successfully.</p>
                 <p>You’ll be sent back to the login page in a moment.</p>
                 <Link

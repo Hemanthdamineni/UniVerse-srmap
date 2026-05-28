@@ -6,7 +6,10 @@ import {
   createResourceRecommendation,
   createLearningMaterialItem,
   deleteLearningMaterialItem,
+  executeLearningMaterialBulkAction,
+  getContentWorkflow,
   getLearningMaterialCatalog,
+  getLearningMaterialHistory,
   getLearningMaterialLibrary,
   getLearningMaterialSubjects,
   listResourceRecommendations,
@@ -18,7 +21,12 @@ import {
   type ResourceLibraryResponse,
   type ResourceSubjectResponse,
   reviewResourceRecommendation,
+  previewLearningMaterialBulkAction,
+  transitionLearningMaterialLifecycle,
   updateLearningMaterialItem,
+  type ContentBulkPreview,
+  type ContentHistoryEntry,
+  type ContentWorkflowSpec,
 } from "../../lib/lmsApi";
 
 type Props = {
@@ -49,6 +57,12 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
   const [subjects, setSubjects] = useState<ResourceSubjectResponse | null>(null);
   const [library, setLibrary] = useState<ResourceLibraryResponse | null>(null);
   const [adminItems, setAdminItems] = useState<Array<LearningResourceItem & { createdAt?: string }>>([]);
+  const [workflow, setWorkflow] = useState<ContentWorkflowSpec | null>(null);
+  const [selectedAdminIds, setSelectedAdminIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState("unpublish");
+  const [bulkPreview, setBulkPreview] = useState<ContentBulkPreview | null>(null);
+  const [historyOpenId, setHistoryOpenId] = useState("");
+  const [historyItems, setHistoryItems] = useState<ContentHistoryEntry[]>([]);
   const [recommendations, setRecommendations] = useState<ResourceRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [libraryLoading, setLibraryLoading] = useState(false);
@@ -112,6 +126,28 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
   }, [loadCatalog]);
 
   useEffect(() => {
+    if (!adminMode || !admin.unlocked) {
+      setWorkflow(null);
+      setSelectedAdminIds([]);
+      setBulkPreview(null);
+      return;
+    }
+    let active = true;
+    getContentWorkflow(admin.adminHeaders)
+      .then((spec) => {
+        if (!active) return;
+        setWorkflow(spec);
+      })
+      .catch(() => {
+        if (!active) return;
+        setWorkflow(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [admin.adminHeaders, admin.unlocked, adminMode]);
+
+  useEffect(() => {
     if (!selectedYear || !selectedCourseCode) {
       setSubjects(null);
       setSelectedSubjectCode("");
@@ -164,6 +200,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               year: String(selectedYear),
               courseCode: selectedCourseCode,
               subjectCode: selectedSubjectCode,
+              includeDeleted: "true",
             },
             admin.adminHeaders
           )
@@ -220,6 +257,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               year: String(selectedYear),
               courseCode: selectedCourseCode,
               subjectCode: selectedSubjectCode,
+              includeDeleted: "true",
             },
             admin.adminHeaders
           )
@@ -394,6 +432,89 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
     }
   }
 
+  function toggleAdminSelection(contentId: string) {
+    setSelectedAdminIds((prev) =>
+      prev.includes(contentId) ? prev.filter((id) => id !== contentId) : [...prev, contentId]
+    );
+    setBulkPreview(null);
+  }
+
+  async function handleLifecycleAction(contentId: string, action: string) {
+    try {
+      await transitionLearningMaterialLifecycle(
+        contentId,
+        { action, reason: `Admin ${action} action from content management` },
+        admin.adminHeaders
+      );
+      setBanner({ tone: "success", text: `Lifecycle action ${action} completed.` });
+      await refreshCurrentSelection();
+    } catch (lifecycleError) {
+      setBanner({
+        tone: "warning",
+        text: lifecycleError instanceof Error ? lifecycleError.message : "Lifecycle action failed.",
+      });
+    }
+  }
+
+  async function handleHistory(contentId: string) {
+    try {
+      const response = await getLearningMaterialHistory(contentId, admin.adminHeaders);
+      setHistoryOpenId(contentId);
+      setHistoryItems(response.items || []);
+    } catch (historyError) {
+      setBanner({
+        tone: "warning",
+        text: historyError instanceof Error ? historyError.message : "Failed to load change history.",
+      });
+    }
+  }
+
+  async function handleBulkPreview() {
+    if (!selectedAdminIds.length) {
+      setBanner({ tone: "warning", text: "Select at least one resource for bulk action preview." });
+      return;
+    }
+    try {
+      const preview = await previewLearningMaterialBulkAction(
+        { ids: selectedAdminIds, action: bulkAction },
+        admin.adminHeaders
+      );
+      setBulkPreview(preview);
+      setBanner({ tone: preview.valid ? "success" : "warning", text: "Bulk action preview generated." });
+    } catch (bulkError) {
+      setBanner({
+        tone: "warning",
+        text: bulkError instanceof Error ? bulkError.message : "Failed to preview bulk action.",
+      });
+    }
+  }
+
+  async function handleBulkExecute() {
+    if (!bulkPreview?.valid) {
+      setBanner({ tone: "warning", text: "Run a valid preview before executing bulk changes." });
+      return;
+    }
+    try {
+      const result = await executeLearningMaterialBulkAction(
+        {
+          ids: selectedAdminIds,
+          action: bulkAction,
+          reason: "Bulk action confirmed from admin content management",
+        },
+        admin.adminHeaders
+      );
+      setBanner({ tone: "success", text: `Bulk action updated ${result.updated} item(s).` });
+      setBulkPreview(null);
+      setSelectedAdminIds([]);
+      await refreshCurrentSelection();
+    } catch (bulkError) {
+      setBanner({
+        tone: "warning",
+        text: bulkError instanceof Error ? bulkError.message : "Failed to execute bulk action.",
+      });
+    }
+  }
+
   return (
     <ErpPageShell
       title={blueprint.heading}
@@ -410,6 +531,36 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
         </p>
       ) : null}
 
+      {adminMode && admin.unlocked && workflow ? (
+        <SectionCard title="Admin Workflow Map">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+              <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Lifecycle states</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {workflow.states.map((state) => (
+                  <span key={state} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                    {state}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+              <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Bulk safety</h3>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">{workflow.bulkSafety.rollback}</p>
+              <p className="mt-2 text-xs text-[var(--text-secondary)]">Limit: {workflow.bulkSafety.maxItems} items per operation.</p>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {workflow.transitions.map((transition) => (
+              <div key={transition.action} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm">
+                <span className="font-semibold text-[var(--comp-text-primary)]">{transition.label}</span>
+                <span className="text-[var(--text-secondary)]">: {transition.from.join(", ")} to {transition.to}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      ) : null}
+
       <SectionCard title="Recommend a Resource">
         <form onSubmit={handleRecommendationSubmit} className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
@@ -420,6 +571,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               value={recommendationForm.title}
               onChange={(event) => setRecommendationForm((prev) => ({ ...prev, title: event.target.value }))}
               placeholder="e.g. Unit 4 Important PYQs"
+              aria-label="Resource Title"
             />
           </div>
           <div className="md:col-span-2">
@@ -432,6 +584,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 setRecommendationForm((prev) => ({ ...prev, description: event.target.value }))
               }
               placeholder="Why this resource is useful for this subject."
+              aria-label="Description"
             />
           </div>
           <div>
@@ -442,6 +595,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
               value={recommendationForm.url}
               onChange={(event) => setRecommendationForm((prev) => ({ ...prev, url: event.target.value }))}
               placeholder="https://..."
+              aria-label="Resource URL"
             />
             <label className="mt-2 block text-xs text-[var(--text-secondary)]">Or upload a file</label>
             <input
@@ -597,6 +751,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder="e.g. Unit 3 revision notes"
+                aria-label="Resource Title"
               />
             </div>
             <div className="md:col-span-2">
@@ -607,6 +762,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 rows={3}
                 onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
                 placeholder="What this resource covers and when to use it"
+                aria-label="Description"
               />
             </div>
             <div>
@@ -617,6 +773,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 value={form.url}
                 onChange={(event) => setForm((prev) => ({ ...prev, url: event.target.value }))}
                 placeholder="https://..."
+                aria-label="Resource URL"
               />
               <label className="mt-2 block text-xs text-[var(--text-secondary)]">Or upload a file</label>
               <input
@@ -673,6 +830,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                 value={form.tags}
                 onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
                 placeholder="revision, unit-3, high-priority"
+                aria-label="Tags"
               />
             </div>
             <div className="md:col-span-2 flex items-center gap-2">
@@ -789,19 +947,82 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
 
       {adminMode && admin.unlocked && adminItems.length ? (
         <SectionCard title="Admin Resource Queue">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label htmlFor="admin-bulk-action" className="mb-1 block text-xs font-semibold text-[var(--text-secondary)]">Bulk action</label>
+                <select
+                  id="admin-bulk-action"
+                  value={bulkAction}
+                  onChange={(event) => {
+                    setBulkAction(event.target.value);
+                    setBulkPreview(null);
+                  }}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                >
+                  <option value="publish">Publish</option>
+                  <option value="unpublish">Unpublish</option>
+                  <option value="archive">Archive</option>
+                  <option value="restore">Restore</option>
+                  <option value="delete">Delete</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleBulkPreview()}
+                className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)]"
+              >
+                Preview Bulk Action
+              </button>
+              <button
+                type="button"
+                disabled={!bulkPreview?.valid}
+                onClick={() => void handleBulkExecute()}
+                className="rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
+              >
+                Execute Preview
+              </button>
+              <p className="text-sm text-[var(--text-secondary)]">{selectedAdminIds.length} selected</p>
+            </div>
+            {bulkPreview ? (
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {bulkPreview.items.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+                    <span className="font-semibold text-[var(--comp-text-primary)]">{item.title || item.id}</span>{" "}
+                    {item.currentState} to {item.nextState} · {item.valid ? "valid" : item.reason || "invalid"}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <div className="space-y-3">
             {adminItems.map((item) => {
               const primaryResource = item.resources[0];
               return (
                 <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h3>
+                    <div className="flex min-w-0 gap-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${item.title}`}
+                        checked={selectedAdminIds.includes(item.id)}
+                        onChange={() => toggleAdminSelection(item.id)}
+                        className="mt-1 h-4 w-4 rounded border-[var(--border)]"
+                      />
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h3>
+                          <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+                            {item.lifecycleState || "published"}
+                          </span>
+                        </div>
                       <p className="mt-1 text-sm text-[var(--text-secondary)]">{item.description}</p>
                       <p className="mt-2 text-xs text-[var(--text-secondary)]">
                         Group: {String(item.metadata?.resourceGroup || "links")} · Visibility:{" "}
-                        {String(item.metadata?.visibility || "visible")}
+                        {String(item.metadata?.visibility || "visible")} · Version {item.version || 1} · Last actor{" "}
+                        {item.lastActor || "system"}
                       </p>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -866,10 +1087,45 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                       </button>
                       <button
                         type="button"
+                        onClick={() => void handleLifecycleAction(item.id, "publish")}
+                        className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--success)] transition hover:bg-[color-mix(in_srgb,var(--success)_10%,transparent)]"
+                      >
+                        Publish
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleLifecycleAction(item.id, "unpublish")}
+                        className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--warning)] transition hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]"
+                      >
+                        Unpublish
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleLifecycleAction(item.id, "archive")}
+                        className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+                      >
+                        Archive
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleLifecycleAction(item.id, "restore")}
+                        className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+                      >
+                        Restore
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleHistory(item.id)}
+                        className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)]"
+                      >
+                        History
+                      </button>
+                      <button
+                        type="button"
                         onClick={() =>
                           void deleteLearningMaterialItem(item.id, admin.adminHeaders)
                             .then(() => {
-                              setBanner({ tone: "success", text: "Resource deleted successfully." });
+                              setBanner({ tone: "success", text: "Resource moved to deleted state." });
                               return refreshCurrentSelection();
                             })
                             .catch((deleteError) =>
@@ -882,12 +1138,34 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                               })
                             )
                         }
-                        className="rounded-full border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                       >
                         Delete
                       </button>
                     </div>
                   </div>
+                  {historyOpenId === item.id ? (
+                    <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-3">
+                      <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">Change history and diff</h4>
+                      {historyItems.length ? (
+                        <div className="mt-2 space-y-2">
+                          {historyItems.slice(0, 4).map((entry) => (
+                            <div key={entry.id} className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs">
+                              <div className="font-semibold text-[var(--comp-text-primary)]">
+                                {entry.action} by {entry.actorId}
+                              </div>
+                              <div className="text-[var(--text-secondary)]">{entry.reason || "No reason recorded."}</div>
+                              <div className="mt-1 text-[var(--text-secondary)]">
+                                {Object.keys(entry.diff || {}).join(", ") || "No field diff recorded"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-sm text-[var(--text-secondary)]">No audit entries found.</p>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
@@ -955,7 +1233,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
                               })
                             )
                         }
-                        className="rounded-full border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                       >
                         Reject
                       </button>

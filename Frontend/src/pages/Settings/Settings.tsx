@@ -51,7 +51,7 @@ function ToggleSwitch({ checked, onChange, label, description }: {
       >
         <div style={{
           width: 16, height: 16, borderRadius: '50%',
-          background: '#fff', position: 'absolute', top: 3,
+          background: 'var(--background)', position: 'absolute', top: 3,
           left: checked ? 21 : 3,
           transition: 'left 0.2s ease',
           boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
