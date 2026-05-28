@@ -18,7 +18,7 @@ export function RegistrationClosedBanner({
 }: RegistrationClosedBannerProps) {
   return (
     <div
-      role="alert"
+      role="alert" aria-live="polite"
       style={{
         background: 'var(--status-closed-bg)',
         border: '1px solid var(--status-closed-border)',

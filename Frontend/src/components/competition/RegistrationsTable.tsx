@@ -217,12 +217,7 @@ export function RegistrationsTable({ registrations, onApprove, onReject, onExpor
               aria-label={`Select ${reg.studentName}`}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: '50%',
-                background: 'var(--comp-accent)', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.68rem', fontWeight: 700, flexShrink: 0,
-              }}>
+              <div className="reg-avatar">
                 {reg.studentName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </div>
               <div>
@@ -243,11 +238,7 @@ export function RegistrationsTable({ registrations, onApprove, onReject, onExpor
       </div>
 
         {/* Pagination */}
-        <div style={{
-          padding: 'var(--space-sm) var(--space-md)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          fontSize: '0.78rem', color: 'var(--comp-text-muted)',
-        }}>
+        <div className="reg-pagination">
           <span>Showing {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} of {filtered.length} registrations</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button
@@ -263,12 +254,7 @@ export function RegistrationsTable({ registrations, onApprove, onReject, onExpor
                 key={n}
                 onClick={() => setPage(n)}
                 aria-label={`Go to page ${n}`}
-                style={{
-                  width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
-                  background: n === page ? 'var(--comp-accent)' : 'transparent',
-                  color: n === page ? '#fff' : 'var(--comp-text-muted)',
-                  fontWeight: 600, fontSize: '0.78rem',
-                }}
+                className={`reg-page-btn ${n === page ? 'reg-page-btn-active' : 'reg-page-btn-inactive'}`}
               >
                 {n}
               </button>

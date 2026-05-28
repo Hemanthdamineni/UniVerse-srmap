@@ -68,7 +68,7 @@ export function OrganizerGuard({ event, currentUserId, children }: OrganizerGuar
 function OrganizerInfoCard({ message, eventId }: { message: string; eventId: string }) {
   return (
     <div
-      role="alert"
+      role="alert" aria-live="polite"
       style={{
         border: `2px solid var(--comp-accent)`,
         borderRadius: 12,

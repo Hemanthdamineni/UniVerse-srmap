@@ -24,9 +24,9 @@ function getBorderColor(roundState: RoundUserState): string {
   if (roundState.isBlocked) return 'var(--comp-border)';
   switch (roundState.submissionState) {
     case 'published': return 'var(--comp-accent)';
-    case 'locked': return '#b45309';
-    case 'evaluated': return '#b45309';
-    default: return '#15803d';
+    case 'locked': return 'var(--warning)';
+    case 'evaluated': return 'var(--warning)';
+    default: return 'var(--success)';
   }
 }
 
@@ -46,38 +46,20 @@ export function RoundStatusCard({
   return (
     <div
       aria-label={round.title}
-      style={{
-        background: 'var(--comp-surface)',
-        border: '1px solid var(--comp-border)',
-        borderLeft: `3px solid ${borderColor}`,
-        borderRadius: 10,
-        padding: 'var(--space-md)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-sm)',
-      }}
+      className="comp-round-card"
+      style={{ borderLeft: `1px solid ${borderColor}` }}
     >
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              background: 'var(--comp-accent)',
-              color: '#fff',
-              borderRadius: 20,
-              padding: '2px 8px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-            }}
-          >
+      <div className="comp-round-header">
+        <div className="comp-round-header-left">
+          <span className="comp-round-badge">
             Round {roundIndex + 1}
           </span>
           <span className="comp-heading-md">{round.title}</span>
         </div>
         <span
+          className="comp-round-status-text"
           style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
             color: roundState.submissionState === 'published' ? 'var(--comp-accent)' : 'var(--comp-text-muted)',
           }}
         >
@@ -95,7 +77,7 @@ export function RoundStatusCard({
 
       {/* Deadline */}
       {round.submissionDeadline && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="comp-round-deadline">
           <span className="comp-body" style={{ color: 'var(--comp-text-muted)', fontSize: '0.78rem' }}>
             Deadline:{' '}
             {new Date(round.submissionDeadline).toLocaleDateString('en-IN', {
@@ -128,19 +110,9 @@ export function RoundStatusCard({
 
       {/* Evaluation criteria chips */}
       {criteria.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div className="flex flex-wrap gap-1.5">
           {criteria.map((c) => (
-            <span
-              key={c.label}
-              style={{
-                background: 'var(--comp-accent-light)',
-                color: 'var(--comp-accent)',
-                borderRadius: 20,
-                padding: '2px 8px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-              }}
-            >
+            <span key={c.label} className="comp-eval-chip">
               {c.label} /{c.maxScore}
             </span>
           ))}
@@ -149,28 +121,16 @@ export function RoundStatusCard({
 
       {/* Blocked state */}
       {roundState.isBlocked && roundState.blockReason && (
-        <div
-          style={{
-            background: 'var(--status-closed-bg)',
-            border: '1px solid var(--status-closed-border)',
-            borderRadius: 6,
-            padding: '6px 10px',
-            fontSize: '0.8rem',
-            color: 'var(--status-closed-text)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
+        <div className="comp-blocked-banner">
           🔒 {roundState.blockReason}
         </div>
       )}
 
       {/* Divider */}
-      <div style={{ borderTop: '1px solid var(--comp-border)' }} />
+      <div className="comp-divider" />
 
       {/* CTAs */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div className="comp-round-ctas">
         {roundState.canSubmit && onSubmit && (
           <button
             onClick={onSubmit}

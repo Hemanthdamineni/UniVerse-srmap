@@ -46,22 +46,12 @@ export function SummaryStatBar({ stats }: SummaryStatBarProps) {
             minWidth: 100,
             padding: 'var(--space-md)',
             borderLeft: i > 0 ? '1px solid var(--comp-border)' : 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
           }}
         >
-          <span
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: stat.color ?? 'var(--comp-text-primary)',
-              lineHeight: 1,
-            }}
-          >
-            {stat.value}
-          </span>
-          <span className="comp-label">{stat.label}</span>
+          <p className="summary-stat">
+            <strong style={{ color: stat.color ?? 'var(--comp-text-primary)' }}>{stat.value}</strong>
+            <span>{stat.label}</span>
+          </p>
         </div>
       ))}
     </div>
