@@ -20,6 +20,8 @@ const TABLE_REQUIRED_PAGE_KEYS = [
   "finance/fee-due-details",
   "finance/fee-dues",
   "finance/fee-paid-details",
+  "finance/payment-acknowledgment",
+  "finance/online-payment-verification",
   "finance/fee-paid",
   "finance/bank-account-details",
   "hostel/room-details",
@@ -35,6 +37,7 @@ const MEANINGFUL_TEXT_FALLBACK_PAGE_KEYS = [
   "academic/student-attendance",
   "sap/attachments",
   "sap/details",
+  "sap/feedback",
 ];
 
 const defaultContract = Object.freeze({

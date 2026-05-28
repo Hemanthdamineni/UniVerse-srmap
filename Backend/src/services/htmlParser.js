@@ -70,9 +70,12 @@ function parseHtmlContent(html = "") {
       const cells = $(rowEl).find("td");
       if (!cells.length) return;
 
-      cells.each((cellIndex, cell) => {
-        const headerKey = headers[cellIndex] || `col${cellIndex + 1}`;
+      let colOffset = 0;
+      cells.each((_cellIndex, cell) => {
+        const colspan = Math.max(1, parseInt($(cell).attr("colspan") || "1", 10) || 1);
+        const headerKey = headers[colOffset] || `col${colOffset + 1}`;
         row[headerKey] = cleanText($(cell).text());
+        colOffset += colspan;
       });
 
       if (Object.values(row).some((value) => cleanText(value) !== "")) {

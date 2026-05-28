@@ -61,8 +61,6 @@ const scrapeTargets = {
   "finance/fee-dues": [{ dropdown: "Finance", subitem: "Fee Due Details" }],
   "finance/fee-paid-details": [
     { dropdown: "Finance", subitem: "Fee Paid Details" },
-    { dropdown: "Finance", subitem: "Payment Acknowledgment" },
-    { dropdown: "Finance", subitem: "Online Payment Verification" },
   ],
   "finance/payment-acknowledgment": [
     { dropdown: "Finance", subitem: "Payment Acknowledgment" },
@@ -109,9 +107,9 @@ const scrapeTargets = {
   ],
   "sap/attachments": [{ dropdown: "SAP", subitem: "Attachments" }],
   "sap/details": [{ dropdown: "SAP", subitem: "Details" }],
+  "sap/feedback": [{ dropdown: "SAP", subitem: "Feedback" }],
   "sap/sap-process": [
-    { dropdown: "SAP", subitem: "SAP Process" },
-    { dropdown: "SAP", subitem: "Withdraw" },
+    { dropdown: "SAP", subitem: "SAP Process", loadDetailsId: 44 },
   ],
   "sap/withdraw": [{ dropdown: "SAP", subitem: "Withdraw" }],
 

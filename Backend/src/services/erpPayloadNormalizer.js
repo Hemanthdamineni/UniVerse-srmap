@@ -1,3 +1,7 @@
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function cleanText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
@@ -484,8 +488,21 @@ function normalizeArtifactItem(item) {
     tableFingerprints: [],
   };
 
-  const nextTables = item.data.tables.map((table) => {
-    const normalized = applyTableRules(cloneJson(table), {
+  const nextTables = item.data.tables.map((table, index) => {
+    // First, ensure we have a summary table object
+    let summary;
+    if (Array.isArray(table)) {
+      // If it's a raw rows array, convert to summary
+      summary = runtimeTableToSummary(table, index);
+    } else if (isRecord(table) && "sampleRows" in table && Array.isArray(table.sampleRows)) {
+      // If it's already a summary object, use it
+      summary = cloneJson(table);
+    } else {
+      // Skip invalid tables
+      return table;
+    }
+
+    const normalized = applyTableRules(summary, {
       sectionKey: String(item.key || ""),
       dropdown: item.dropdown,
       subitem: item.subitem,
@@ -521,7 +538,8 @@ function normalizeArtifactItem(item) {
       headers: nextTable.headers,
     });
 
-    return nextTable;
+    // Convert summary table back to runtime rows array
+    return summaryToRuntimeTable(nextTable);
   });
 
   return {
