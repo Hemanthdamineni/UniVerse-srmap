@@ -90,6 +90,42 @@ test("returns live response then cache-fresh on subsequent request", async () =>
   assert.equal(liveCalls, 1);
 });
 
+test("adds fee-paid source row counts to ERP response metadata", async () => {
+  const { service } = makeService({
+    scrapeTargets: {
+      "finance/payment-acknowledgment": [
+        { dropdown: "Finance", subitem: "Payment Acknowledgment" },
+      ],
+      profile: [],
+    },
+    liveImpl: async () => ({
+      Finance: {
+        "Payment Acknowledgment": {
+          title: "Payment Acknowledgment",
+          tables: [[{ "Receipt No.": "R-1", Amount: "500" }]],
+        },
+      },
+    }),
+  });
+
+  const result = await service.getPage({
+    pageKey: "finance/payment-acknowledgment",
+    sessionId: "s-1",
+  });
+
+  assert.equal(result.meta.financePaidIntegrity.rawRowCount, 1);
+  assert.deepEqual(result.meta.financePaidIntegrity.sources[0], {
+    pageKey: "finance/payment-acknowledgment",
+    label: "Payment Acknowledgment",
+    dropdown: "Finance",
+    subitem: "Payment Acknowledgment",
+    status: "loaded",
+    tableCount: 1,
+    rowCount: 1,
+    warnings: [],
+  });
+});
+
 test("accepts meaningful text-only payloads for timetable pages", async () => {
   const { service } = makeService({
     liveImpl: async () => ({

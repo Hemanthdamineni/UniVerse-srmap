@@ -111,6 +111,50 @@ test("converts form-like tables into form nodes", () => {
   assert.deepEqual(fieldLabels, ["Beneficiary Name*", "Bank Name*"]);
 });
 
+test("recovers exam selection tables as actionable form controls", () => {
+  const html = `
+    <div id="divContent">
+      <h2>Exam Application Details</h2>
+      <table>
+        <td>Exam Month And Year</td>
+        <td>
+          <select name="cmbExamMonth" id="cmbExamMonth">
+            <option value="0,0,0">[Select Exam Month And Year]</option>
+            <option value="12,2025,14688">DECEMBER 2025</option>
+          </select>
+        </td>
+        <tr>
+          <td colspan="2"><button onclick="funPrintApplication()">Print</button></td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const parsed = parseHtmlContent(html);
+  const formNode = parsed.document.root.children.find((child) => child.type === "form");
+
+  assert.ok(formNode);
+  assert.equal(formNode.children.length, 2);
+
+  const fieldNode = formNode.children.find((child) => child.type === "field");
+  assert.equal(fieldNode.props.name, "cmbExamMonth");
+  assert.equal(fieldNode.props.inputType, "select");
+  assert.deepEqual(fieldNode.props.options[1], {
+    label: "DECEMBER 2025",
+    value: "12,2025,14688",
+    selected: false,
+  });
+
+  const buttonNode = formNode.children.find((child) => child.type === "button");
+  assert.equal(buttonNode.props.label, "Print");
+  assert.deepEqual(buttonNode.props.action, {
+    type: "print_exam_application",
+    target: "/srmapstudentcorner/students/report/PrintStudentExamApplication.jsp",
+    method: "GET",
+    onSuccess: "no_update",
+  });
+});
+
 test("normalizes interactive table cells into safe display values", () => {
   const html = `
     <div id="divContent">
