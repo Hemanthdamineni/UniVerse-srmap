@@ -35,6 +35,7 @@ Backend/data/lms/
 Backend/data/lms-smoke-files/
 Backend/data/lms-smoke-files-2/
 Backend/data/live-page-audit/
+Backend/data/erp-dump/
 
 # ===========================
 # Logs & coverage
