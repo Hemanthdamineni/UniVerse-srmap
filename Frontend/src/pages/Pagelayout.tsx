@@ -6,7 +6,8 @@ import NavigationCommandPalette from "../components/NavigationCommandPalette";
 import AppContentChrome from "../components/shell/AppContentChrome";
 import AppKeyboardShortcuts from "../components/AppKeyboardShortcuts";
 import AdminAccessPrompt from "../components/admin/AdminAccessPrompt";
-import { AdminModeProvider } from "../context/AdminModeContext";
+import { AdminModeProvider } from "../contexts/AdminModeContext";
+import { isStaticPrototype } from "../lib/prototype/staticPrototypeEnv";
 
 const PUBLIC_ROUTES = new Set(["/", "/login", "/forgot-password"]);
 
@@ -18,7 +19,7 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
     return (
       <div style={{ display: "flex", height: "100vh", flexDirection: "column", backgroundColor: "var(--background)" }}>
         <Header />
-        <main style={{ flex: 1, flexGrow: 1, alignItems: "center", justifyContent: "center", backgroundColor: "var(--background)" }}>
+        <main role="main" style={{ flex: 1, flexGrow: 1, alignItems: "center", justifyContent: "center", backgroundColor: "var(--background)" }}>
           {children}
         </main>
         <Footer />
@@ -29,9 +30,19 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
   return (
     <AdminModeProvider>
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)]">
+      {isStaticPrototype() ? (
+        <div
+          className="z-[70] shrink-0 border-b border-amber-500/40 bg-amber-500/15 px-4 py-2 text-center text-sm font-medium text-amber-950 dark:text-amber-100"
+          role="status"
+        >
+          Static prototype — UI only; data comes from <code className="rounded bg-[var(--contrast-2)]/10 px-1 dark:bg-white/10">public/fixtures</code> and
+          built-in stubs. No live backend.
+        </div>
+      ) : null}
       <div className="dashboard-background relative flex flex-1 overflow-hidden">
         <Sidebar />
         <main
+          role="main"
           className="relative z-[1] flex-1 overflow-auto"
           style={{ minHeight: "100vh" }}
         >
@@ -41,8 +52,10 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
             >
               Skip to main content
             </a>
-            <NavigationCommandPalette />
-            <AppKeyboardShortcuts />
+            <div className="pointer-events-none fixed bottom-6 right-6 z-40 flex items-center gap-3">
+              <NavigationCommandPalette />
+              <AppKeyboardShortcuts />
+            </div>
             <AppContentChrome>{children}</AppContentChrome>
           </main>
         </div>
