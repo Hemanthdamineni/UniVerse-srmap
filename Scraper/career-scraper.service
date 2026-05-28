@@ -1,0 +1,19 @@
+[Unit]
+Description=University ERP Career Scraper Pipeline
+After=network.target
+
+[Service]
+Type=simple
+User=zorro-omarchy
+WorkingDirectory=/home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Scraper
+ExecStart=/home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Scraper/venv/bin/python3 main.py
+Restart=always
+RestartSec=10
+Environment="PYTHONUNBUFFERED=1"
+
+# Restrict resources slightly to prevent runaway scenarios
+MemoryHigh=1G
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target
