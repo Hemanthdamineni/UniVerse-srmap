@@ -2,13 +2,13 @@
 import { SkeletonBlock } from "./ui/SkeletonBlock";
 
 interface LoadingSpinnerProps {
-  message?: string;
+  message: string;
   size?: "sm" | "md" | "lg";
   fullHeight?: boolean;
 }
 
 export default function LoadingSpinner({
-  message = "Loading...",
+  message,
   size = "md",
   fullHeight = true,
 }: LoadingSpinnerProps) {
@@ -20,7 +20,7 @@ export default function LoadingSpinner({
   return (
     <div className={containerClasses}>
       <SkeletonBlock width={h * 2} height={h} className="max-w-full rounded-xl" />
-      {message ? <p className="body-text font-medium">{message}</p> : null}
+      <p className="body-text font-medium">{message}</p>
     </div>
   );
 }

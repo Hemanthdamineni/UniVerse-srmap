@@ -4,8 +4,28 @@ import { XIcon } from "lucide-react"
 
 import { cn } from "../lib/utils"
 
-function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+function toggleInert(open: boolean) {
+  const main = document.getElementById("main-content");
+  if (main) {
+    if (open) {
+      main.setAttribute("inert", "");
+    } else {
+      main.removeAttribute("inert");
+    }
+  }
+}
+
+function Dialog({ onOpenChange, ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      onOpenChange={(open) => {
+        toggleInert(open);
+        onOpenChange?.(open);
+      }}
+      {...props}
+    />
+  )
 }
 
 function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {

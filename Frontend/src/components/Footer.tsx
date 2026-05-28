@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <footer className="flex justify-between items-center bg-[var(--comp-accent)] text-white rounded-t-lg p-5">
+    <footer className="flex justify-between items-center rounded-t-lg border-t border-[var(--comp-accent)]/30 p-5" style={{ backgroundColor: "var(--footer-bg)", color: "var(--footer-fg)" }}>
       <div className="text-left p-0">
         © 2025 UniVerse — SRMAP Edition. All rights reserved.
       </div>

@@ -14,7 +14,7 @@ export default function AppContentChrome({ children }: { children: React.ReactNo
       <Suspense
         fallback={
           <div className="flex min-h-[40vh] items-center justify-center p-8" role="status" aria-live="polite">
-            <LoadingSpinner />
+            <LoadingSpinner message="Loading page..." />
           </div>
         }
       >

@@ -5,7 +5,7 @@ import { BOTTOM_NAV } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
 import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/session";
-import { useAdminMode } from "../context/AdminModeContext";
+import { useAdminMode } from "../contexts/AdminModeContext";
 
 function SidebarContrastText({ text, className = "" }: { text: string; className?: string }) {
   return (
@@ -198,7 +198,7 @@ export default function Sidebar() {
                       >
                         <img
                           src={item.icon ?? "/src/assets/Icons/Dashboard.png"}
-                          alt={`${item.label} Icon`}
+                          alt=""
                           className="sidebar-icon h-6 w-6"
                         />
                         {!sidebarClosed && <SidebarContrastText text={item.label} />}
@@ -228,7 +228,7 @@ export default function Sidebar() {
                       >
                         <img
                           src={item.icon ?? "/src/assets/Icons/Dashboard.png"}
-                          alt={`${item.label} Icon`}
+                          alt=""
                           className="sidebar-icon h-6 w-6"
                         />
                         {!sidebarClosed ? <SidebarContrastText text={item.label} /> : null}
@@ -317,7 +317,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
               >
-                <img src={item.icon} alt={`${item.label} Icon`} className="sidebar-icon mr-3 h-6 w-6" />
+                <img src={item.icon} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </button>
             ) : (
@@ -329,7 +329,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 }`}
               >
-                <img src={item.icon} alt={`${item.label} Icon`} className="sidebar-icon mr-3 h-6 w-6" />
+                <img src={item.icon} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </Link>
             )
@@ -340,27 +340,27 @@ export default function Sidebar() {
       <div className={`border-t p-2 flex ${sidebarClosed ? "flex-col items-center gap-2" : "items-center justify-between"}`} style={{ borderColor: "var(--border)" }}>
         <div
           data-page-contrast="true"
-          className="sidebar-item-hover flex cursor-pointer items-center gap-3 rounded-lg p-1 transition-colors flex-1"
+          className="sidebar-item-hover flex cursor-pointer items-center gap-3 rounded-lg p-1 transition-colors flex-1 min-w-0"
           onClick={() => navigate("/profile")}
         >
-          <img src={profilePhoto} alt="User avatar" className="h-10 w-10 rounded-full" />
+          <img src={profilePhoto} alt="User avatar" className="h-10 w-10 shrink-0 rounded-full" loading="lazy" />
           {!sidebarClosed ? (
-            <div className="flex-1">
-              <p className="sidebar-item-muted text-xs">
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="sidebar-item-muted text-xs truncate">
                 <SidebarContrastText text="Welcome back 👋" />
               </p>
-              <p className="sidebar-item text-sm font-medium">
+              <p className="sidebar-item text-sm font-medium truncate" title={profileName}>
                 <SidebarContrastText text={profileName} />
               </p>
               {profileRegNo ? (
-                <p className="sidebar-item-muted text-xs">
+                <p className="sidebar-item-muted text-xs truncate" title={profileRegNo}>
                   <SidebarContrastText text={profileRegNo} />
                 </p>
               ) : null}
             </div>
           ) : null}
         </div>
-        <div className={sidebarClosed ? "mt-2 flex justify-center w-full" : "ml-2"}>
+        <div className={sidebarClosed ? "mt-2 flex justify-center w-full shrink-0" : "ml-2 shrink-0"}>
           <ThemeToggle />
         </div>
       </div>

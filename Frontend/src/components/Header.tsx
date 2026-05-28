@@ -42,14 +42,13 @@ function Header() {
         ]
         : [
             { label: "Home", to: "/" },
-            { label: "Reset Password", to: "/forgot-password" },
             { label: "Login", to: "/login", primary: true },
         ];
 
     return (
         <header
-            className="flex items-center justify-between rounded-b-lg pr-4"
-            style={{ backgroundColor: "var(--comp-accent)", color: "var(--comp-surface)" }}
+            className="flex items-center justify-between rounded-b-lg border-b border-[var(--comp-accent)]/30 pr-4"
+            style={{ backgroundColor: "var(--header-bg)", color: "var(--header-fg)" }}
         >
             <div className="flex items-center">
                 <Logo />
