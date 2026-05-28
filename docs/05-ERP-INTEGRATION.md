@@ -151,6 +151,23 @@ npm run discover:endpoints
 | Payment Acknowledgment | `POST receiptgeneration.jsp` | `ids=27, stuId=<dynamic>` |
 | Bank Account Details | `POST studentbankdetails.jsp` | `ids=54` |
 
+### Fee-Paid Source Integrity
+The `/finance/fee-paid` UX is intentionally sourced from three distinct ERP menu items:
+
+| Frontend fetch key | ERP menu item | Purpose |
+|--------------------|---------------|---------|
+| `finance/fee-paid-details` | Fee Paid Details | Ledger-style paid-fee rows |
+| `finance/payment-acknowledgment` | Payment Acknowledgment | Receipt history and print actions |
+| `finance/online-payment-verification` | Online Payment Verification | Gateway verification rows |
+
+Production rules:
+- Each fetch key maps to exactly one ERP menu item in `Backend/src/config/scrapeTargets.js`.
+- Backend V2 responses include `meta.financePaidIntegrity.sources[]` with per-source table and row counts.
+- The frontend fee-paid transformer merges by stable key: `receiptNo` when present, otherwise an FNV-1a hash of date, amount, and particulars.
+- Displayed rows always carry `sourcePageKey`, `sourceLabel`, `sourcePageKeys`, and `sourceLabels`.
+- Partial source failures remain visible in the UI as warnings while loaded sources continue to render.
+- Print actions execute against the row's `sourcePageKey`, not a hardcoded first fetch key.
+
 #### Hostel & Transport
 | Menu Item | Endpoint | Params |
 |-----------|----------|--------|
@@ -167,6 +184,21 @@ npm run discover:endpoints
 | End Semester Feedback | `POST subjectwisefeedback.jsp` | `ids=9` |
 | Announcements | `POST announcements.jsp` | `ids=107, stuId=<dynamic>` |
 | Mobile Verification | `POST mobilenumberverification.jsp` | `ids=1` |
+
+### Feedback Governance Split
+Official feedback is ERP-owned and limited to the end-semester automation flow:
+
+| Product | Route namespace | Storage owner | Moderation |
+|---------|-----------------|---------------|------------|
+| Official course feedback | `/api/feedback/end-semester/*` | ERP session workflow | University ERP controls |
+| Unofficial campus feedback | `/api/campus-feedback/*` | Platform SQLite store | Campus admin moderation queue |
+
+Rules:
+- Official course feedback is submitted only through `FeedbackAutomationService` and keeps using the authenticated ERP session.
+- Events, hostel/mess, and transport feedback are API-backed platform submissions, not browser-local production data.
+- Legacy browser-local unofficial feedback can be imported once through `/api/campus-feedback/:type/legacy-import`; imported entries enter the normal pending moderation queue.
+- Unofficial entries store submitter identity internally for abuse prevention while the student-facing display can remain anonymous.
+- Admin moderation requires an explicit approve/reject decision reason and writes an audit entry. It cannot mutate official ERP feedback.
 
 ---
 
