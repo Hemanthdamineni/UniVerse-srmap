@@ -20,11 +20,14 @@ const {
   erpUpstreamFailuresTotal,
   observeErpSourceLatency,
   setCircuitState,
+  setFinancePaidSourceRows,
   setUpstreamLoad,
   updateCacheHitRatio,
 } = require("./metricsService");
 const { getPayloadContract } = require("../config/erpPayloadContracts");
 const { collectNormalizationMeta } = require("./erpPayloadNormalizer");
+const { extractFinanceFeePaidSourceStats } = require("./erpFinanceIntegrity");
+const { log } = require("../utils/logger");
 
 function nowIso() {
   return new Date().toISOString();
@@ -403,6 +406,51 @@ function makeResponse({ pageKey, source, policyMode, data, fetchedAt, staleAt, w
   };
 }
 
+function makeMeta({ pageKey, data, targets, normalizationMeta, responseSource, policyMode }) {
+  const meta = {
+    normalizationRules: normalizationMeta.appliedRules,
+    issues: normalizationMeta.issues,
+    targets,
+  };
+  const financePaidIntegrity = extractFinanceFeePaidSourceStats({
+    pageKey,
+    data,
+    targets,
+  });
+
+  if (!financePaidIntegrity) return meta;
+
+  for (const source of financePaidIntegrity.sources) {
+    setFinancePaidSourceRows({
+      pageKey: financePaidIntegrity.pageKey,
+      source: source.label,
+      rowCount: source.rowCount,
+    });
+  }
+
+  log({
+    level: "info",
+    msg: "ERP fee-paid source row counts",
+    pageKey: financePaidIntegrity.pageKey,
+    responseSource,
+    policyMode,
+    rawRowCount: financePaidIntegrity.rawRowCount,
+    sources: financePaidIntegrity.sources.map((source) => ({
+      pageKey: source.pageKey,
+      label: source.label,
+      status: source.status,
+      tableCount: source.tableCount,
+      rowCount: source.rowCount,
+      warnings: source.warnings,
+    })),
+  });
+
+  return {
+    ...meta,
+    financePaidIntegrity,
+  };
+}
+
 class ErpAggregationService {
   constructor({
     liveService,
@@ -728,11 +776,14 @@ class ErpAggregationService {
           source: "live",
           policyMode,
           data,
-          meta: {
-            normalizationRules: normalizationMeta.appliedRules,
-            issues: normalizationMeta.issues,
+          meta: makeMeta({
+            pageKey,
+            data,
             targets: this.getTargetsForPage(pageKey),
-          },
+            normalizationMeta,
+            responseSource: "live",
+            policyMode,
+          }),
           fetchedAt: cached.fetchedAt,
           staleAt: new Date(cached.staleAt).toISOString(),
           warnings: [],
@@ -804,11 +855,14 @@ class ErpAggregationService {
         source: "cache-fresh",
         policyMode,
         data: entry.data,
-        meta: {
-          normalizationRules: normalizationMeta.appliedRules,
-          issues: normalizationMeta.issues,
+        meta: makeMeta({
+          pageKey,
+          data: entry.data,
           targets: this.getTargetsForPage(pageKey),
-        },
+          normalizationMeta,
+          responseSource: "cache-fresh",
+          policyMode,
+        }),
         fetchedAt: entry.fetchedAt,
         staleAt: new Date(entry.staleAt).toISOString(),
         warnings: [],
@@ -834,11 +888,14 @@ class ErpAggregationService {
         source: "cache-stale",
         policyMode,
         data: entry.data,
-        meta: {
-          normalizationRules: normalizationMeta.appliedRules,
-          issues: normalizationMeta.issues,
+        meta: makeMeta({
+          pageKey,
+          data: entry.data,
           targets: this.getTargetsForPage(pageKey),
-        },
+          normalizationMeta,
+          responseSource: "cache-stale",
+          policyMode,
+        }),
         fetchedAt: entry.fetchedAt,
         staleAt: new Date(entry.staleAt).toISOString(),
         warnings: ["Stale cache served while background refresh runs"],

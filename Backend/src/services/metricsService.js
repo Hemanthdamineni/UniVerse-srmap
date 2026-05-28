@@ -68,6 +68,13 @@ const erpUpstreamQueueDepth = new client.Gauge({
   registers: [register],
 });
 
+const erpFinancePaidSourceRows = new client.Gauge({
+  name: "erp_finance_paid_source_rows",
+  help: "Rows observed per upstream fee-paid finance source before frontend merge/dedupe",
+  labelNames: ["page_key", "source"],
+  registers: [register],
+});
+
 const erpCacheHitRatio = new client.Gauge({
   name: "erp_cache_hit_ratio",
   help: "Observed ERP cache hit ratio by policy mode",
@@ -131,6 +138,16 @@ function setUpstreamLoad({ className = "default", inFlight = 0, queued = 0 }) {
   erpUpstreamQueueDepth.set(labels, Math.max(0, Number(queued || 0)));
 }
 
+function setFinancePaidSourceRows({ pageKey, source, rowCount }) {
+  erpFinancePaidSourceRows.set(
+    {
+      page_key: String(pageKey || "unknown"),
+      source: String(source || "unknown"),
+    },
+    Math.max(0, Number(rowCount || 0))
+  );
+}
+
 function updateCacheHitRatio({ policy = "cached-first", result = "miss" }) {
   const key = String(policy || "cached-first");
   const current = cacheStatsByPolicy.get(key) || { hit: 0, total: 0 };
@@ -186,6 +203,7 @@ module.exports = {
   observeErpSourceLatency,
   setCircuitState,
   setUpstreamLoad,
+  setFinancePaidSourceRows,
   updateCacheHitRatio,
   recordFrontendTelemetry,
 };
