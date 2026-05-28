@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { MoreVertical, Plus, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/competition/Skeletons";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { listEvents, type EventSummary } from "../../lib/campusApi";
 import { getCurrentRegNo, isPlatformAdmin } from "../../lib/identity";
 
@@ -56,18 +56,15 @@ export default function MyCreatedEventsPage() {
     >
       <div className="created-events-summary">
         <CompetitionCard>
-          <span>Total Events</span>
-          <strong>{events.length}</strong>
+          <p className="summary-stat"><strong>{events.length}</strong> <span>events total</span></p>
           <small>{admin ? "Admin scope" : `Owned by ${regNo || "current user"}`}</small>
         </CompetitionCard>
         <CompetitionCard>
-          <span>Active Slots</span>
-          <strong>{activeEvents.length}/{MAX_ACTIVE_EVENTS}</strong>
+          <p className="summary-stat"><strong>{activeEvents.length}/{MAX_ACTIVE_EVENTS}</strong> <span>active slots</span></p>
           <small>{atLimit ? "Archive one event to create another" : "Ready for more activity"}</small>
         </CompetitionCard>
         <CompetitionCard>
-          <span>Registrations</span>
-          <strong>{events.reduce((sum, event) => sum + Number(event.registeredCount ?? event.registrationCount ?? 0), 0)}</strong>
+          <p className="summary-stat"><strong>{events.reduce((sum, event) => sum + Number(event.registeredCount ?? event.registrationCount ?? 0), 0)}</strong> <span>registrations</span></p>
           <small>Across visible events</small>
         </CompetitionCard>
       </div>

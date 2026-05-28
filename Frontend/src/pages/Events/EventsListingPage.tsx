@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, CalendarClock, Plus, Search, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/competition/Skeletons";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { listEvents, type EventSummary } from "../../lib/campusApi";
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
@@ -38,6 +38,43 @@ function deadlineLabel(event: EventSummary) {
 function eventVenue(event: EventSummary) {
   if (typeof event.location === "string") return event.location;
   return event.location?.physical ?? event.venue ?? "Campus venue";
+}
+
+function FeaturedEventCard({ event, index }: { event: EventSummary; index: number }) {
+  const navigate = useNavigate();
+  const registrations = event.registeredCount ?? event.registrationCount ?? 0;
+
+  return (
+    <CompetitionCard className="mb-5 grid overflow-hidden md:grid-cols-[1fr_1.5fr]">
+      <div
+        className="min-h-52 bg-cover bg-center md:min-h-full"
+        style={{ backgroundImage: getEventImage(event, index) }}
+      />
+      <div className="flex flex-col justify-center gap-3 p-6">
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{event.category || "Featured Event"}</span>
+        <h2 className="m-0 text-2xl font-bold leading-tight text-[var(--text-primary)]">{event.title || "Untitled Event"}</h2>
+        <p className="m-0 text-sm text-[var(--text-secondary)]">{event.description || "No description available."}</p>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+            <Building2 size={14} /> {event.department || "Campus"}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+            <Users size={14} /> {registrations ? `${registrations.toLocaleString("en-IN")} registered` : "Open"}
+          </span>
+        </div>
+        <div className="mt-2 flex gap-3">
+          <button className="comp-btn-primary" onClick={() => navigate(`/events/${encodeURIComponent(event.id)}`)}>
+            View Details
+          </button>
+          {event.prizes && (
+            <span className="inline-flex items-center text-sm font-semibold text-[var(--comp-text-secondary)]">
+              🏅 {event.prizes}
+            </span>
+          )}
+        </div>
+      </div>
+    </CompetitionCard>
+  );
 }
 
 function EventCard({ event, index }: { event: EventSummary; index: number }) {
@@ -182,8 +219,11 @@ export default function EventsListingPage() {
         </div>
       ) : filteredEvents.length ? (
         <>
+          {filteredEvents.length > 0 ? (
+            <FeaturedEventCard event={filteredEvents[0]} index={0} />
+          ) : null}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
-            {filteredEvents.map((event, index) => <EventCard key={event.id} event={event} index={index} />)}
+            {filteredEvents.slice(1).map((event, index) => <EventCard key={event.id} event={event} index={index + 1} />)}
             <Link className="grid min-h-36 place-items-center content-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--dash-subcard-bg)] text-center no-underline text-[var(--text-primary)]" to="/events/create">
               <Plus size={24} />
               <strong>New Event</strong>

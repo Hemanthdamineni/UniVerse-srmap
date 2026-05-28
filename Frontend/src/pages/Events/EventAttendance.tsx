@@ -1,4 +1,4 @@
-import MappedErpPage from "../ERP/MappedErpPage";
+import DocumentErpPage from "../ERP/DocumentErpPage";
 import { CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 
 export default function EventAttendance() {
@@ -8,7 +8,16 @@ export default function EventAttendance() {
       subtitle="ERP attendance records for university events."
       variant="wide"
     >
-      <MappedErpPage pageKey="events/event-attendance" title="Event Attendance" />
+      <DocumentErpPage blueprint={{
+        route: "/events/attendance",
+        heading: "Event Attendance",
+        fetchKeys: ["events/event-attendance"],
+        domain: "erp",
+        sourceMode: "erp",
+        integrationState: "native",
+        renderer: "document",
+        loadingMessage: "Loading event attendance...",
+      }} />
     </CompetitionPageShell>
   );
 }

@@ -131,7 +131,7 @@ export default function LeaderboardPage() {
                           paddingTop: 8,
                         }}
                       >
-                        <span style={{ fontWeight: 800, fontSize: '1.1rem', color: isMe ? '#fff' : 'var(--comp-accent)' }}>
+                        <span className="leaderboard-score" style={{ color: isMe ? 'var(--background)' : 'var(--comp-accent)' }}>
                           {row.totalScore ?? '—'}
                         </span>
                       </div>
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
                 <thead>
                   <tr style={{ background: 'var(--comp-accent)' }}>
                     {['Rank', 'Name', 'Score', 'Decision'].map((h) => (
-                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <th key={h} className="leaderboard-header-cell">
                         {h}
                       </th>
                     ))}

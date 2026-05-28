@@ -134,7 +134,7 @@ export default function CreateEventPage() {
               <CompetitionCard className="create-wizard-card">
                 <h2><Info size={20} /> Basic Information</h2>
                 <label className="competition-form-label">Event Title</label>
-                <input className="competition-form-control" value={basic.title} onChange={(event) => setBasic((prev) => ({ ...prev, title: event.target.value }))} placeholder="e.g. Annual Tech Symposium 2026" />
+                <input className="competition-form-control" value={basic.title} onChange={(event) => setBasic((prev) => ({ ...prev, title: event.target.value }))} placeholder="e.g. Annual Tech Symposium 2026" aria-label="Event Title" />
                 <div className="create-form-grid">
                   <label>
                     <span className="competition-form-label">Category</span>
@@ -156,7 +156,19 @@ export default function CreateEventPage() {
                   </label>
                 </div>
                 <label className="competition-form-label">Description</label>
-                <textarea className="competition-form-control" value={basic.description} onChange={(event) => setBasic((prev) => ({ ...prev, description: event.target.value }))} placeholder="Briefly describe the objective, scope, and target audience of the event..." />
+                <textarea className="competition-form-control" value={basic.description} onChange={(event) => setBasic((prev) => ({ ...prev, description: event.target.value }))} placeholder="Briefly describe the objective, scope, and target audience of the event..." aria-label="Description" />
+                <div className="create-form-grid">
+                  <label>
+                    <span className="competition-form-label">Start Date & Time <span style={{ color: 'var(--status-live-text)' }}>*</span></span>
+                    <input className="competition-form-control" type="datetime-local" value={basic.startAt} onChange={(event) => setBasic((prev) => ({ ...prev, startAt: event.target.value }))} required />
+                  </label>
+                  <label>
+                    <span className="competition-form-label">End Date & Time <span style={{ color: 'var(--status-live-text)' }}>*</span></span>
+                    <input className="competition-form-control" type="datetime-local" value={basic.endAt} min={basic.startAt || undefined} onChange={(event) => setBasic((prev) => ({ ...prev, endAt: event.target.value }))} required />
+                  </label>
+                </div>
+                <label className="competition-form-label">Venue / Location</label>
+                <input className="competition-form-control" value={basic.venue} onChange={(event) => setBasic((prev) => ({ ...prev, venue: event.target.value }))} placeholder="e.g. APJ Abdul Kalam Auditorium or Online (Zoom)" aria-label="Venue" />
               </CompetitionCard>
 
               <CompetitionCard className="create-wizard-card">
@@ -189,9 +201,9 @@ export default function CreateEventPage() {
               </div>
               {rounds.map((round, index) => (
                 <div className="create-round-editor" key={`${round.title}-${index}`}>
-                  <input className="competition-form-control" value={round.title} onChange={(event) => updateRound(index, { title: event.target.value })} />
-                  <input className="competition-form-control" type="datetime-local" value={round.submissionDeadline} onChange={(event) => updateRound(index, { submissionDeadline: event.target.value })} />
-                  <textarea className="competition-form-control" value={round.instructions} onChange={(event) => updateRound(index, { instructions: event.target.value })} placeholder="Submission instructions" />
+                  <input className="competition-form-control" value={round.title} onChange={(event) => updateRound(index, { title: event.target.value })} aria-label="Round title" />
+                  <input className="competition-form-control" type="datetime-local" value={round.submissionDeadline} onChange={(event) => updateRound(index, { submissionDeadline: event.target.value })} aria-label="Round deadline" />
+                  <textarea className="competition-form-control" value={round.instructions} onChange={(event) => updateRound(index, { instructions: event.target.value })} placeholder="Submission instructions" aria-label="Submission instructions" />
                 </div>
               ))}
               <button className="comp-btn-ghost" onClick={addRound} type="button">Add Round</button>
@@ -202,7 +214,7 @@ export default function CreateEventPage() {
             <CompetitionCard className="create-wizard-card">
               <h2><CheckCircle2 size={20} /> Judges & Curators</h2>
               <label className="competition-form-label">Judge register numbers</label>
-              <textarea className="competition-form-control" value={judges} onChange={(event) => setJudges(event.target.value)} placeholder="AP23110010419, AP22110000001" />
+              <textarea className="competition-form-control" value={judges} onChange={(event) => setJudges(event.target.value)} placeholder="AP23110010419, AP22110000001" aria-label="Judge register numbers" />
               <p className="body-text">Add comma-separated registration numbers. Roles can be refined later from Roles & Permissions.</p>
             </CompetitionCard>
           ) : null}

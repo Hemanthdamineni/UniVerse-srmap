@@ -240,7 +240,7 @@ export default function OrganizerDashboard() {
                   <div
                     key={round.roundId}
                     className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4"
-                    style={{ borderLeft: `3px solid ${round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-border)'}` }}
+                    style={{ borderLeft: `1px solid ${round.resultsPublished ? 'var(--comp-accent)' : 'var(--status-pending-border)'}` }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="comp-heading-md m-0">{round.title || round.roundId}</p>
@@ -255,7 +255,7 @@ export default function OrganizerDashboard() {
                           width: submissions.length > 0 ? `${Math.round((evaluated / submissions.length) * 100)}%` : '0%',
                           height: '100%', borderRadius: 3,
                           background: evaluated >= submissions.length && submissions.length > 0 ? 'var(--status-open-text)' : 'var(--comp-accent)',
-                          transition: 'width 0.3s ease',
+                          transition: 'transform 0.3s ease',
                         }} />
                       </div>
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">
@@ -293,7 +293,7 @@ export default function OrganizerDashboard() {
             </div>
           </SectionCard>
 
-          {/* Right sidebar: Tasks & Milestones */}
+          {/* Right sidebar: Quick actions & Event milestones */}
           <div className="space-y-3">
             {/* Quick actions */}
             <div className="space-y-2">
@@ -311,32 +311,66 @@ export default function OrganizerDashboard() {
               </Link>
             </div>
 
-            {/* Tasks */}
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="comp-heading-md m-0">Tasks</h3>
-                <span className="rounded-full bg-[var(--comp-accent-light)] px-2 py-0.5 text-[11px] font-bold text-[var(--comp-accent)]">
-                  {(config?.rounds ?? []).length + 2} Remaining
-                </span>
+            {/* Auto-generated checklist from rounds */}
+            {(config?.rounds ?? []).length > 0 && (
+              <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="comp-heading-md m-0">Round Checklist</h3>
+                  <span className="rounded-full bg-[var(--comp-accent-light)] px-2 py-0.5 text-[11px] font-bold text-[var(--comp-accent)]">
+                    {(config?.rounds ?? []).filter((r) => !r.resultsPublished).length} Pending
+                  </span>
+                </div>
+                {(config?.rounds ?? []).map((round) => (
+                  <label key={round.roundId} className="flex cursor-default items-start gap-2 py-1">
+                    <input type="checkbox" readOnly checked={Boolean(round.resultsPublished)} className="mt-0.5" />
+                    <div>
+                      <p className="m-0 text-sm font-medium text-[var(--text-primary)]">{round.title}</p>
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: round.resultsPublished ? 'var(--status-open-text)' : 'var(--comp-text-muted)' }}
+                      >
+                        {round.resultsPublished ? 'Results published' : 'Evaluation pending'}
+                      </span>
+                    </div>
+                  </label>
+                ))}
               </div>
-              <TaskItem label="Review catering contract" urgency="overdue" />
-              <TaskItem label="Email marketing blast" urgency="today" />
-              <TaskItem label="Approve speaker list" urgency="tomorrow" />
-              <button
-                className="comp-btn-ghost"
-                style={{ borderStyle: 'dashed' }}
-              >
-                + Add Task
-              </button>
-            </div>
+            )}
 
-            {/* Milestones */}
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
-              <h3 className="comp-heading-md m-0">Milestones</h3>
-              <MilestoneItem date="IN 2 DAYS" title="Registration Closes" description="Expected overflow processing required." active />
-              <MilestoneItem date="NEXT WEEK" title="Venue Load-in Begins" description="Availability from 6:00 AM." />
-              <MilestoneItem date="IN 2 WEEKS" title="Sponsorship Deadline" description="Follow up with University Foundation." />
-            </div>
+            {/* Milestone timeline from round deadlines */}
+            {(config?.rounds ?? []).some((r) => r.submissionDeadline) && (
+              <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
+                <h3 className="comp-heading-md m-0">Upcoming Deadlines</h3>
+                {(config?.rounds ?? [])
+                  .filter((r) => r.submissionDeadline)
+                  .sort((a, b) => new Date(a.submissionDeadline!).getTime() - new Date(b.submissionDeadline!).getTime())
+                  .map((round) => {
+                    const dl = new Date(round.submissionDeadline!);
+                    const isPast = dl <= new Date();
+                    const isNear = !isPast && dl.getTime() - Date.now() < 48 * 3_600_000;
+                    return (
+                      <div key={round.roundId} className="relative flex gap-2">
+                        <div className="flex flex-col items-center gap-1">
+                          <div style={{
+                            width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                            background: isPast ? 'var(--comp-border-strong)' : isNear ? 'var(--status-live-text)' : 'var(--comp-accent)',
+                          }} />
+                          <div className="w-0.5 flex-1 bg-[var(--comp-border)]" />
+                        </div>
+                        <div className="pb-2">
+                          <span className="text-[11px] font-bold tracking-[0.06em]" style={{ color: isPast ? 'var(--comp-text-muted)' : isNear ? 'var(--status-live-text)' : 'var(--comp-accent)' }}>
+                            {isPast ? 'PASSED' : isNear ? 'SOON' : dl.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </span>
+                          <p className="m-0.5 text-sm font-semibold text-[var(--text-primary)]">{round.title} deadline</p>
+                          <p className="comp-body m-0 text-xs">
+                            {dl.toLocaleString('en-IN', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -344,45 +378,3 @@ export default function OrganizerDashboard() {
   );
 }
 
-/* ---------- Sub-components ---------- */
-
-function TaskItem({ label, urgency }: { label: string; urgency: 'overdue' | 'today' | 'tomorrow' }) {
-  const [done, setDone] = useState(false);
-  const colorMap: Record<typeof urgency, { text: string; label: string }> = {
-    overdue: { text: 'var(--status-live-text)', label: 'OVERDUE' },
-    today: { text: 'var(--comp-text-secondary)', label: 'TODAY' },
-    tomorrow: { text: 'var(--comp-text-muted)', label: 'TOMORROW' },
-  };
-  const c = colorMap[urgency];
-  return (
-    <label className="flex cursor-pointer items-start gap-2 py-1" style={{ textDecoration: done ? 'line-through' : 'none', opacity: done ? 0.5 : 1 }}>
-      <input type="checkbox" checked={done} onChange={() => setDone(!done)} className="mt-0.5" />
-      <div>
-        <p className="m-0 text-sm font-medium text-[var(--text-primary)]">{label}</p>
-        <span className="text-xs font-semibold" style={{ color: c.text }}>{c.label}</span>
-      </div>
-    </label>
-  );
-}
-
-function MilestoneItem({ date, title, description, active }: { date: string; title: string; description: string; active?: boolean }) {
-  return (
-    <div className="relative flex gap-2">
-      <div className="flex flex-col items-center gap-1">
-        <div style={{
-          width: 10, height: 10, borderRadius: '50%',
-          background: active ? 'var(--comp-accent)' : 'var(--comp-border-strong)',
-          flexShrink: 0,
-        }} />
-        <div className="w-0.5 flex-1 bg-[var(--comp-border)]" />
-      </div>
-      <div className="pb-2">
-        <span className="text-[11px] font-bold tracking-[0.06em]" style={{ color: active ? 'var(--status-live-text)' : 'var(--comp-text-muted)' }}>
-          {date}
-        </span>
-        <p className="m-0.5 text-sm font-semibold text-[var(--text-primary)]">{title}</p>
-        <p className="comp-body m-0 text-xs">{description}</p>
-      </div>
-    </div>
-  );
-}

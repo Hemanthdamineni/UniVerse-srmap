@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Award, CalendarClock, FileCheck2, Trophy } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/competition/Skeletons";
+import { SkeletonCard } from "../../components/ui/SkeletonCard";
 import { listEvents, type EventSummary } from "../../lib/campusApi";
 
 const tabs = [
@@ -136,7 +136,7 @@ export default function MyActivityPage() {
           <CompetitionCard className="activity-score-card">
             <Award size={28} />
             <h2>Competition Score</h2>
-            <strong>{Math.min(100, 70 + activeEvents.length * 7)}</strong>
+            <p className="summary-stat"><strong>{Math.min(100, 70 + activeEvents.length * 7)}</strong> <span>/ 100</span></p>
             <p>Based on participation, submission progress, and recent activity.</p>
           </CompetitionCard>
           <CompetitionCard className="activity-deadline-card">
