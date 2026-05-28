@@ -1,5 +1,6 @@
-python-jobspy
-playwright
-pandas
-schedule
-pyyaml
+python-jobspy>=1.1.80
+playwright>=1.40.0
+pandas>=2.0.0
+schedule>=1.2.0
+pyyaml>=6.0
+aiohttp>=3.9.0
