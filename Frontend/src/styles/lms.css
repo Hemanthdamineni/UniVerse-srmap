@@ -1,0 +1,21 @@
+@layer components {
+  .lms-input {
+    @apply rounded-xl border px-3 py-2 text-sm outline-none transition-colors;
+    border-color: color-mix(in srgb, var(--comp-accent) 10%, transparent);
+    background-color: var(--comp-surface);
+    color: var(--comp-text-primary);
+  }
+  .lms-input:focus {
+    border-color: var(--info);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

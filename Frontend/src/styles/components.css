@@ -1,0 +1,82 @@
+/* Interaction System */
+.interactive-card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+  border-radius: var(--border-radius-lg, 12px);
+  border: 0.5px solid var(--comp-border);
+  background: var(--comp-surface);
+  will-change: transform;
+}
+
+.interactive-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Base button reset structure */
+.btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (min-width: 768px) {
+  .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+    min-height: 36px;
+    min-width: 0;
+  }
+}
+
+/* Button Variants */
+.btn-primary {
+  background: var(--comp-accent);
+  color: #ffffff;
+  border: none;
+}
+.btn-primary:hover {
+  background: var(--comp-accent-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--comp-text-primary);
+  border: 1px solid var(--comp-border);
+}
+.btn-secondary:hover {
+  border-color: var(--comp-border-strong);
+  background: var(--comp-surface-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--comp-text-secondary);
+  border: none;
+}
+.btn-ghost:hover {
+  background: var(--comp-surface-hover);
+  color: var(--comp-text-primary);
+}
+
+.btn-danger {
+  background: #e11d48; /* safe destruction red */
+  color: #ffffff;
+  border: none;
+}
+.btn-danger:hover {
+  background: #be123c;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled, .btn-ghost:disabled, .btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

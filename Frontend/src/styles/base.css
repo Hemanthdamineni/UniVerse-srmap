@@ -1,0 +1,205 @@
+:root {
+  /* User Palette */
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #F2F2F4;
+  --contrast-1: #0A3035;
+  --contrast-2: #0A262A;
+
+  /* Competition platform surfaces */
+  --comp-surface: var(--bg-primary);
+  --comp-surface-hover: #f4f7f7;
+  --comp-border: #e2e8ea;
+  --comp-border-strong: #cbd5d8;
+  --comp-text-primary: #0A3035;
+  --comp-text-secondary: #4a6b70;
+  --comp-text-muted: #4a6b70;
+
+  /* Status colors */
+  --status-open-bg: #f0fdf4;
+  --status-open-text: #15803d;
+  --status-open-border: #bbf7d0;
+  --status-pending-bg: #fffbeb;
+  --status-pending-text: #92400e;
+  --status-pending-border: #fde68a;
+  --status-closed-bg: #f1f5f9;
+  --status-closed-text: #475569;
+  --status-closed-border: #cbd5e1;
+  --status-live-bg: #fff1f2;
+  --status-live-text: #be123c;
+  --status-live-border: #fecdd3;
+  --status-selected-bg: #f0fdf4;
+  --status-selected-text: #166534;
+  --status-rejected-bg: #fff1f2;
+  --status-rejected-text: #9f1239;
+
+  /* Deadline urgency */
+  --deadline-safe: #15803d;
+  --deadline-warn: #b45309;
+  --deadline-urgent: #b91c1c;
+
+  /* Competition accent */
+  --comp-accent: #0A3035;
+  --comp-accent-hover: #0d3438;
+  --comp-accent-light: #e6f0f1;
+
+  /* Spacing design tokens */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 4px 12px rgba(0,0,0,0.1);
+
+  /* Interaction timing */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 120ms var(--ease-spring);
+  --transition-base: 200ms var(--ease-spring);
+
+  /* Typography scale */
+  --text-xs: 0.75rem;   /* labels, captions */
+  --text-sm: 0.875rem;  /* body secondary */
+  --text-base: 0.9rem;  /* body primary */
+  --text-lg: 1rem;      /* card titles */
+  --text-xl: 1.25rem;   /* section headings */
+  --text-2xl: 1.75rem;  /* page titles */
+
+  /* Component boundaries */
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-full: 9999px;
+
+  /* Focus ring — accessible, on-brand */
+  --comp-focus-ring: 2px solid #0a272b;
+  --comp-focus-ring-offset: 2px;
+
+  /* Header / Footer — use full accent in light, muted in dark */
+  --header-bg: var(--comp-accent);
+  --header-fg: var(--comp-surface);
+  --footer-bg: var(--comp-accent);
+  --footer-fg: var(--comp-surface);
+
+  /* Brand / University Colors */
+  --primary: var(--contrast-1);
+  --background: var(--bg-primary);
+  --surface: var(--bg-secondary);
+  --border: rgba(10, 48, 53, 0.18);
+  
+  /* Text Colors */
+  --text-primary: var(--contrast-1);
+  --text-secondary: rgba(10, 48, 53, 0.72);
+  --text-dark: var(--contrast-2);
+  
+  /* Accent Colors */
+  --accent-blue: #34AEBE;
+  --accent-green: #33A33F;
+  --accent-yellow: #DDE03C;
+  --accent-orange: #FFB906;
+  
+  /* Status Colors */
+  --success: #1f7a2a;
+  --warning: #8a5a00;
+  --error: #D32F2F;
+  --info: #096b78;
+  
+  /* Utility Colors */
+  --white: var(--bg-primary);
+  --gray: #C1BFBF;
+  --light: var(--bg-secondary);
+
+  /* Dashboard (Design Reference) */
+  --dash-bg: var(--bg-primary);
+  --dash-accent: var(--contrast-2);
+  --shell-accent-seam-y: 55%;
+  --dash-accent-top-start: 68.97%;
+  --dash-accent-right-drop: 45%;
+  --dash-accent-bottom-left-x: 31.03%;
+  --dash-accent-left-start: 55%;
+  --dash-card-bg: color-mix(in srgb, var(--background) 96%, var(--surface) 4%);
+  --dash-card-border: color-mix(in srgb, var(--border) 86%, transparent);
+  --dash-card-shadow: 0 10px 24px rgba(10, 38, 42, 0.08);
+  --dash-subcard-bg: color-mix(in srgb, var(--surface) 88%, var(--background) 12%);
+  --dash-subcard-border: color-mix(in srgb, var(--border) 70%, transparent);
+  --sidebar-bg: var(--bg-primary);
+  --sidebar-accent: var(--contrast-2);
+  --sidebar-accent-top-start: var(--shell-accent-seam-y);
+  --sidebar-accent-left-start: 55%;
+  --sidebar-shadow: 0 16px 36px rgba(10, 38, 42, 0.25);
+}
+
+/* Dark Theme Support */
+[data-theme="dark"],
+.dark {
+  --bg-primary: #0A3035;
+  --bg-secondary: #0A262A;
+  --contrast-1: #FFFFFF;
+  --contrast-2: #F8F8F8;
+
+  --background: var(--bg-primary);
+  --surface: var(--bg-secondary);
+  --border: rgba(255, 255, 255, 0.16);
+  --text-primary: var(--contrast-1);
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --success: #66BB6A;
+  --warning: #FFCA28;
+  --error: #EF5350;
+  --info: #4FC3F7;
+
+  /* Dashboard (Design Reference) */
+  --dash-bg: var(--bg-primary);
+  --dash-accent: rgba(248, 248, 248, 0.6);
+  --shell-accent-seam-y: 55%;
+  --dash-accent-top-start: 68.97%;
+  --dash-accent-right-drop: 45%;
+  --dash-accent-bottom-left-x: 31.03%;
+  --dash-accent-left-start: 55%;
+  --dash-card-bg: color-mix(in srgb, var(--bg-primary) 92%, #000000 8%);
+  --dash-card-border: rgba(255, 255, 255, 0.16);
+  --dash-card-shadow: 0 14px 30px rgba(0, 0, 0, 0.26);
+  --dash-subcard-bg: color-mix(in srgb, var(--bg-secondary) 92%, #000000 8%);
+  --dash-subcard-border: rgba(255, 255, 255, 0.12);
+  --sidebar-bg: var(--bg-primary);
+  --sidebar-accent: rgba(248, 248, 248, 0.62);
+  --sidebar-accent-top-start: var(--shell-accent-seam-y);
+  --sidebar-accent-left-start: 55%;
+  --sidebar-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+
+  /* Competition platform surfaces — dark mode */
+  --comp-surface: #112428;
+  --comp-surface-hover: #163038;
+  --comp-border: #1e3a40;
+  --comp-border-strong: #2a4a52;
+  --comp-text-primary: #e8f4f5;
+  --comp-text-secondary: #8ab8be;
+  --comp-text-muted: #a8c3c7;
+  --comp-accent: #34AEBE;
+  --comp-accent-hover: #288a99;
+  --comp-accent-light: #0d2d32;
+
+  /* Header / Footer — muted surface in dark mode with accent border */
+  --header-bg: var(--bg-primary);
+  --header-fg: var(--contrast-1);
+  --footer-bg: var(--bg-primary);
+  --footer-fg: var(--contrast-1);
+}
+
+/* Global body styles */
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}

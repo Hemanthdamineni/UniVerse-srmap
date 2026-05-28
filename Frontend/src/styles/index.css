@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "./base.css";
+@import "./layout.css";
+@import "./events.css";
+@import "./erp.css";
+@import "./components.css";
+@import "./lms.css";
