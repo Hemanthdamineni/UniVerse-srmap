@@ -22,7 +22,6 @@ export default function AppKeyboardShortcuts() {
   const navigate = useNavigate();
   const [helpOpen, setHelpOpen] = React.useState(false);
   const gRef = React.useRef(false);
-  const isCompetitionRoute = location.pathname.startsWith("/events");
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -77,18 +76,16 @@ export default function AppKeyboardShortcuts() {
 
   return (
     <>
-      <div className={`pointer-events-none fixed bottom-6 z-40 ${isCompetitionRoute ? "left-6 sm:left-[300px]" : "left-6"}`}>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setHelpOpen(true)}
-          className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
-          aria-label="Keyboard shortcuts help"
-        >
-          <KeyboardIcon className="size-4" />
-          <span className="hidden text-sm sm:inline">Shortcuts</span>
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setHelpOpen(true)}
+        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
+        aria-label="Keyboard shortcuts help"
+      >
+        <KeyboardIcon className="size-4" />
+        <span className="hidden text-sm sm:inline">Shortcuts</span>
+      </Button>
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="max-w-md border-[var(--border)] bg-[var(--background)] p-6 text-[var(--text-primary)]">
           <DialogHeader className="px-0 pt-0">

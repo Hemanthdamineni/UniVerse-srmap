@@ -22,7 +22,7 @@ export function AdminAccessPanel({
   onLock,
 }: Props) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{label}</h3>
@@ -36,7 +36,7 @@ export function AdminAccessPanel({
           <button
             type="button"
             onClick={onLock}
-            className="rounded-full border border-rose-300 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+            className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-4 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
           >
             Lock Admin
           </button>
@@ -50,6 +50,7 @@ export function AdminAccessPanel({
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
             placeholder="Enter admin password"
+            aria-label="Admin password"
             className="min-w-[220px] flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
           />
           <button

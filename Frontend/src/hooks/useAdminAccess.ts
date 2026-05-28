@@ -1,4 +1,4 @@
-import { useAdminMode } from "../context/AdminModeContext";
+import { useAdminMode } from "../contexts/AdminModeContext";
 
 export function useAdminAccess() {
   const adminMode = useAdminMode();

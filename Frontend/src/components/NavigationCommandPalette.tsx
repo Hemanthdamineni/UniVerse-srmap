@@ -17,7 +17,7 @@ import {
   WalletIcon,
   type LucideIcon,
 } from "lucide-react"
-import { useAdminMode } from "../context/AdminModeContext"
+import { useAdminMode } from "../contexts/AdminModeContext"
 
 import { COMMAND_PALETTE_EXTRA_GROUPS, getCommandPaletteGroupOrder, getRouteCatalog } from "../config/navigationRegistry"
 import { logoutSession } from "../lib/session"
@@ -154,20 +154,18 @@ export default function NavigationCommandPalette() {
 
   return (
     <>
-      <div className="pointer-events-none fixed bottom-6 right-6 z-40">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setOpen(true)}
-          className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
-        >
-          <SearchIcon className="size-4" />
-          <span className="hidden text-sm md:inline">Search pages</span>
-          <span className="rounded-md border border-[var(--border)] bg-white/70 px-1.5 py-0.5 text-[11px] leading-none text-[var(--text-secondary)]">
-            {shortcut}
-          </span>
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
+      >
+        <SearchIcon className="size-4" />
+        <span className="hidden text-sm md:inline">Search pages</span>
+        <span className="rounded-md border border-[var(--border)] bg-white/70 px-1.5 py-0.5 text-[11px] leading-none text-[var(--text-secondary)]">
+          {shortcut}
+        </span>
+      </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <Command className="max-h-[72vh]">
