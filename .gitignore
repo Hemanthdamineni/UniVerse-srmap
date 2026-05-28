@@ -3,10 +3,20 @@
 # ===========================
 node_modules/
 
+# Python scraper virtualenv & cache
+Scraper/venv/
+Scraper/__pycache__/
+Scraper/scrapers/__pycache__/
+Scraper/logs/
+**/__pycache__/
+*.pyc
+
+
 # ===========================
 # Build outputs
 # ===========================
 Frontend/dist/
+StaticHost/dist/
 .vite/
 
 # ===========================
@@ -24,6 +34,7 @@ Backend/data/uploads/
 Backend/data/lms/
 Backend/data/lms-smoke-files/
 Backend/data/lms-smoke-files-2/
+Backend/data/live-page-audit/
 
 # ===========================
 # Logs & coverage
@@ -42,6 +53,12 @@ Frontend/tmp_workspace/
 # Large design assets (store separately)
 # ===========================
 Stitch Designs/
+Stitch Design/
+
+# ===========================
+# Generated outputs
+# ===========================
+graphify-out/
 
 # ===========================
 # Reference data (local only)
