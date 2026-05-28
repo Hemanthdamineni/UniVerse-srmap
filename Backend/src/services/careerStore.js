@@ -13,6 +13,7 @@ function toSafeString(value) {
 }
 
 const APPLICATION_STATUSES = new Set([
+  "interested",
   "applied",
   "under_review",
   "shortlisted",
@@ -21,6 +22,8 @@ const APPLICATION_STATUSES = new Set([
   "rejected",
   "withdrawn",
 ]);
+
+const OPPORTUNITY_TYPES = new Set(["job", "internship", "hackathon", "competition", "fellowship", "workshop"]);
 
 /** FTS5 prefix query: space-separated terms become mandatory prefixes (safe tokenization). */
 function careerSearchMatchExpression(rawQuery) {
@@ -44,6 +47,33 @@ function clampCareerPage(page) {
   const n = Number.parseInt(String(page), 10);
   if (!Number.isFinite(n) || n < 1) return 1;
   return n;
+}
+
+function normalizeOpportunityType(value) {
+  const normalized = toSafeString(value).toLowerCase().replace(/\s+/g, "-");
+  if (normalized === "full-time-job") return "job";
+  if (!OPPORTUNITY_TYPES.has(normalized)) {
+    const error = new Error("Invalid opportunity type");
+    error.status = 400;
+    throw error;
+  }
+  return normalized;
+}
+
+function normalizeStringList(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => toSafeString(item)).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(",").map((item) => toSafeString(item)).filter(Boolean);
+  }
+  return [];
+}
+
+function createOpportunityFingerprint({ title, company, organizer, applyUrl }) {
+  return [title, company || organizer, applyUrl]
+    .map((value) => toSafeString(value).toLowerCase().replace(/\s+/g, " "))
+    .join("|");
 }
 
 class CareerStore {
@@ -103,8 +133,36 @@ class CareerStore {
     }
   }
 
+  _migrateCareerOpportunitiesLifecycle() {
+    try {
+      this.db.exec("ALTER TABLE career_opportunities ADD COLUMN status TEXT DEFAULT 'active'");
+    } catch {}
+    try {
+      this.db.exec("ALTER TABLE career_opportunities ADD COLUMN expiredAt TEXT");
+    } catch {}
+    try {
+      this.db.exec("ALTER TABLE career_opportunities ADD COLUMN archivedAt TEXT");
+    } catch {}
+  }
+
+  _migrateCareerSubmissionGovernance() {
+    for (const statement of [
+      "ALTER TABLE career_submissions ADD COLUMN reviewedBy TEXT",
+      "ALTER TABLE career_submissions ADD COLUMN reviewReason TEXT",
+      "ALTER TABLE career_submissions ADD COLUMN publishedOpportunityId TEXT",
+      "ALTER TABLE career_submissions ADD COLUMN fingerprint TEXT",
+    ]) {
+      try {
+        this.db.exec(statement);
+      } catch {}
+    }
+  }
+
   _ensureSchema() {
     this._migrateFtsToRowidModel();
+    this._migrateCareerOpportunitiesLifecycle();
+    this._migrateSkillGapsGapLevel();
+    this._migrateCareerSubmissionGovernance();
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS career_opportunities (
         id              TEXT PRIMARY KEY,
@@ -144,7 +202,10 @@ class CareerStore {
         isFeatured      INTEGER DEFAULT 0,
         moderationState INTEGER DEFAULT 0,
         scrapedAt       TEXT NOT NULL,
-        updatedAt       TEXT
+        updatedAt       TEXT,
+        status          TEXT DEFAULT 'active',
+        expiredAt       TEXT,
+        archivedAt      TEXT
       );
 
       CREATE INDEX IF NOT EXISTS idx_career_type        ON career_opportunities(type);
@@ -203,6 +264,10 @@ class CareerStore {
         submittedBy    TEXT NOT NULL,
         status         TEXT DEFAULT 'pending',
         reviewedAt     TEXT,
+        reviewedBy     TEXT,
+        reviewReason   TEXT,
+        publishedOpportunityId TEXT,
+        fingerprint    TEXT,
         type           TEXT NOT NULL,
         title          TEXT NOT NULL,
         company        TEXT,
@@ -221,6 +286,23 @@ class CareerStore {
         applyUrl       TEXT NOT NULL,
         createdAt      TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS career_submission_audit (
+        id             TEXT PRIMARY KEY,
+        submissionId   TEXT NOT NULL,
+        action         TEXT NOT NULL,
+        actorId        TEXT NOT NULL,
+        fromStatus     TEXT,
+        toStatus       TEXT,
+        reason         TEXT,
+        metadata       TEXT DEFAULT '{}',
+        createdAt      TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_career_submissions_status_created ON career_submissions(status, createdAt DESC);
+      CREATE INDEX IF NOT EXISTS idx_career_submissions_submitter ON career_submissions(submittedBy, createdAt DESC);
+      CREATE INDEX IF NOT EXISTS idx_career_submissions_fingerprint ON career_submissions(fingerprint);
+      CREATE INDEX IF NOT EXISTS idx_career_submission_audit_submission ON career_submission_audit(submissionId, createdAt DESC);
 
       CREATE TABLE IF NOT EXISTS career_scraper_runs (
         id             TEXT PRIMARY KEY,
@@ -352,7 +434,6 @@ class CareerStore {
         VALUES (new.rowid, new.title, new.description, new.skills, new.tags, new.company, new.organizer);
       END;
     `);
-    this._migrateSkillGapsGapLevel();
   }
 
   _seedDefaultsIfNeeded() {
@@ -842,6 +923,27 @@ class CareerStore {
       throw error;
     }
 
+    const title = toSafeString(data.title);
+    const type = normalizeOpportunityType(data.type);
+    const company = toSafeString(data.company || data.organization);
+    const organizer = toSafeString(data.organizer);
+    const applyUrl = toSafeString(data.applyUrl || data.link || data.sourceUrl);
+    if (!title || !applyUrl || !/^https:\/\//i.test(applyUrl)) {
+      const error = new Error("Title and https apply URL are required");
+      error.status = 400;
+      throw error;
+    }
+    const fingerprint = createOpportunityFingerprint({ title, company, organizer, applyUrl });
+    const duplicate = this.db
+      .prepare("SELECT id FROM career_opportunities WHERE sourceUrl = ? OR applyUrl = ? OR fingerprint = ? LIMIT 1")
+      .get(applyUrl, applyUrl, fingerprint);
+    if (duplicate) {
+      const error = new Error("This opportunity already exists in the public catalog");
+      error.status = 409;
+      error.code = "CAREER_DUPLICATE_OPPORTUNITY";
+      throw error;
+    }
+
     const id = randomUUID();
     const now = nowIso();
     
@@ -850,24 +952,24 @@ class CareerStore {
         id, type, title, company, organizer, description, shortDescription, requirements,
         skills, tags, location, mode, isPanIndia, eligibleBranches, eligibleYears,
         minCGPA, stipend, prize, isFree, postedAt, deadline, startDate, duration,
-        source, sourceUrl, applyUrl, scrapedAt, updatedAt, isActive, isVerified
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
+        source, sourceUrl, applyUrl, fingerprint, scrapedAt, updatedAt, isActive, isVerified
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
     `).run(
       id,
-      data.type,
-      data.title,
-      data.company || null,
-      data.organizer || null,
+      type,
+      title,
+      company || null,
+      organizer || null,
       data.description || null,
       data.shortDescription || null,
       data.requirements || null,
-      JSON.stringify(data.skills || []),
-      JSON.stringify(data.tags || []),
+      JSON.stringify(normalizeStringList(data.skills)),
+      JSON.stringify(normalizeStringList(data.tags)),
       data.location || null,
       data.mode || null,
       data.isPanIndia ? 1 : 0,
-      JSON.stringify(data.eligibleBranches || []),
-      JSON.stringify(data.eligibleYears || []),
+      JSON.stringify(normalizeStringList(data.eligibleBranches)),
+      JSON.stringify(normalizeStringList(data.eligibleYears)),
       data.minCGPA || null,
       data.stipend || null,
       data.prize || null,
@@ -877,13 +979,14 @@ class CareerStore {
       data.startDate || null,
       data.duration || null,
       data.source || "manual",
-      data.sourceUrl || "",
-      data.applyUrl,
+      applyUrl,
+      applyUrl,
+      fingerprint,
       now,
       now
     );
 
-    return { id, ...data };
+    return this.getOpportunity(id, user);
   }
 
   updateOpportunity(id, data, user) {
@@ -1096,10 +1199,10 @@ class CareerStore {
     const now = nowIso();
     this.db.prepare(`
       INSERT INTO career_applications (id, opportunityId, userId, status, appliedAt, notes, updatedAt)
-      VALUES (?, ?, ?, 'applied', ?, ?, ?)
+      VALUES (?, ?, ?, 'interested', ?, ?, ?)
     `)
     .run(id, opportunityId, userId, now, notes || "", now);
-    return { id, status: 'applied' };
+    return { id, status: 'interested' };
   }
 
   updateApplicationStatus(id, userId, status, notes) {
@@ -1110,12 +1213,23 @@ class CareerStore {
       throw error;
     }
     const now = nowIso();
-    this.db.prepare(`
-      UPDATE career_applications 
-      SET status = ?, notes = COALESCE(?, notes), updatedAt = ?
-      WHERE id = ? AND userId = ?
-    `)
-    .run(st, notes === undefined ? null : notes, now, id, userId);
+    
+    if (st === 'applied') {
+      this.db.prepare(`
+        UPDATE career_applications 
+        SET status = ?, notes = COALESCE(?, notes), updatedAt = ?, appliedAt = ?
+        WHERE id = ? AND userId = ?
+      `)
+      .run(st, notes === undefined ? null : notes, now, now, id, userId);
+    } else {
+      this.db.prepare(`
+        UPDATE career_applications 
+        SET status = ?, notes = COALESCE(?, notes), updatedAt = ?
+        WHERE id = ? AND userId = ?
+      `)
+      .run(st, notes === undefined ? null : notes, now, id, userId);
+    }
+    
     return { updated: true };
   }
 
@@ -1138,6 +1252,35 @@ class CareerStore {
 
   // Manual Submissions
 
+  recordSubmissionAudit(submissionId, { action, actorId, fromStatus, toStatus, reason, metadata = {} }) {
+    this.db
+      .prepare(
+        `
+          INSERT INTO career_submission_audit
+          (id, submissionId, action, actorId, fromStatus, toStatus, reason, metadata, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+      .run(
+        randomUUID(),
+        submissionId,
+        toSafeString(action),
+        toSafeString(actorId) || "system",
+        fromStatus || null,
+        toStatus || null,
+        reason || null,
+        JSON.stringify(metadata || {}),
+        nowIso()
+      );
+  }
+
+  getSubmissionAudit(submissionId) {
+    return this.db
+      .prepare("SELECT * FROM career_submission_audit WHERE submissionId = ? ORDER BY createdAt DESC")
+      .all(submissionId)
+      .map((row) => ({ ...row, metadata: JSON.parse(row.metadata || "{}") }));
+  }
+
   submitOpportunity(userId, data) {
     if (!data || typeof data !== "object") {
       const error = new Error("Invalid submission payload");
@@ -1156,10 +1299,30 @@ class CareerStore {
       error.status = 400;
       throw error;
     }
-    const type = toSafeString(data.type);
-    if (!type) {
-      const error = new Error("Opportunity type is required");
-      error.status = 400;
+    const type = normalizeOpportunityType(data.type);
+    const company = toSafeString(data.company || data.organization);
+    const organizer = toSafeString(data.organizer);
+    const fingerprint = createOpportunityFingerprint({ title, company, organizer, applyUrl });
+    const duplicateActive = this.db
+      .prepare("SELECT id, title FROM career_opportunities WHERE sourceUrl = ? OR applyUrl = ? OR fingerprint = ? LIMIT 1")
+      .get(applyUrl, applyUrl, fingerprint);
+    if (duplicateActive) {
+      const error = new Error("This opportunity already exists in the public catalog");
+      error.status = 409;
+      error.code = "CAREER_DUPLICATE_OPPORTUNITY";
+      error.details = duplicateActive;
+      throw error;
+    }
+    const duplicatePending = this.db
+      .prepare(
+        "SELECT id, submittedBy, status FROM career_submissions WHERE status = 'pending' AND (applyUrl = ? OR fingerprint = ?) LIMIT 1"
+      )
+      .get(applyUrl, fingerprint);
+    if (duplicatePending) {
+      const error = new Error("This opportunity is already pending review");
+      error.status = 409;
+      error.code = "CAREER_DUPLICATE_SUBMISSION";
+      error.details = duplicatePending;
       throw error;
     }
 
@@ -1170,20 +1333,32 @@ class CareerStore {
       INSERT INTO career_submissions (
         id, submittedBy, status, type, title, company, organizer, description,
         skills, tags, location, mode, eligibleBranches, eligibleYears,
-        stipend, prize, deadline, startDate, applyUrl, createdAt
-      ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        stipend, prize, deadline, startDate, applyUrl, createdAt, fingerprint
+      ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     .run(
-      id, userId, type, title, data.company || null, data.organizer || null,
-      data.description || null, JSON.stringify(data.skills || []), JSON.stringify(data.tags || []),
-      data.location || null, data.mode || null, JSON.stringify(data.eligibleBranches || []),
-      JSON.stringify(data.eligibleYears || []), data.stipend || null, data.prize || null,
-      data.deadline || null, data.startDate || null, applyUrl, now
+      id, userId, type, title, company || null, organizer || null,
+      data.description || null, JSON.stringify(normalizeStringList(data.skills)), JSON.stringify(normalizeStringList(data.tags)),
+      data.location || null, data.mode || null, JSON.stringify(normalizeStringList(data.eligibleBranches)),
+      JSON.stringify(normalizeStringList(data.eligibleYears)), data.stipend || null, data.prize || null,
+      data.deadline || null, data.startDate || null, applyUrl, now, fingerprint
     );
-
-    // Auto-approve logic
-    const isAutoApproved = this.autoApproveIfValid(id);
-    return { id, status: isAutoApproved ? 'approved' : 'pending' };
+    this.recordSubmissionAudit(id, {
+      action: "submitted",
+      actorId: userId,
+      fromStatus: null,
+      toStatus: "pending",
+      reason: "Student submission created",
+      metadata: { fingerprint },
+    });
+    return {
+      id,
+      status: "pending",
+      governance: {
+        requiresApproval: true,
+        owner: "Career opportunities review",
+      },
+    };
   }
 
   autoApproveIfValid(submissionId) {
@@ -1218,19 +1393,20 @@ class CareerStore {
     }
 
     const now = nowIso();
+    const publishedOpportunityId = randomUUID();
     this.db
       .prepare(
         `
       INSERT INTO career_opportunities (
         id, type, title, company, organizer, description, shortDescription,
         skills, tags, location, mode, eligibleBranches, eligibleYears,
-        stipend, prize, deadline, startDate, source, sourceUrl, applyUrl,
+        stipend, prize, deadline, startDate, source, sourceUrl, applyUrl, fingerprint,
         scrapedAt, updatedAt, isActive, isVerified, moderationState
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?, ?, ?, 1, 1, 0)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?, ?, ?, ?, 1, 1, 0)
     `
       )
       .run(
-        sub.id,
+        publishedOpportunityId,
         sub.type,
         sub.title,
         sub.company,
@@ -1249,41 +1425,127 @@ class CareerStore {
         sub.startDate,
         sub.applyUrl,
         sub.applyUrl,
+        sub.fingerprint || createOpportunityFingerprint(sub),
         now,
         now
       );
-
-    this.db.prepare("UPDATE career_submissions SET status = 'approved', reviewedAt = ? WHERE id = ?").run(now, submissionId);
+    return publishedOpportunityId;
   }
 
   /**
    * Manual moderator approval. Pass moderatorContext for human reviewers; omit for system auto-approve.
    */
-  approveSubmission(submissionId, moderatorContext) {
+  reviewSubmission(submissionId, payload = {}, moderatorContext = {}) {
     const sub = this.db.prepare("SELECT * FROM career_submissions WHERE id = ?").get(submissionId);
     if (!sub) {
       const error = new Error("Submission not found");
       error.status = 404;
       throw error;
     }
-    if (moderatorContext) {
-      const modId = String(moderatorContext.userId || "");
-      const isAdmin = Boolean(moderatorContext.hasAdminAccess) || String(moderatorContext.role || "").toLowerCase() === "admin";
-      if (modId && String(sub.submittedBy) === modId && !isAdmin) {
-        const error = new Error("You cannot approve your own submission");
-        error.status = 403;
+    if (sub.status !== "pending") {
+      const error = new Error("Submission is not pending review");
+      error.status = 400;
+      throw error;
+    }
+    const reviewerId = toSafeString(moderatorContext.userId);
+    if (reviewerId && reviewerId === String(sub.submittedBy)) {
+      const error = new Error("Reviewer cannot decide their own submission");
+      error.status = 403;
+      throw error;
+    }
+    const decision = toSafeString(payload.decision || payload.status).toLowerCase();
+    if (!["approve", "approved", "reject", "rejected"].includes(decision)) {
+      const error = new Error("Invalid review decision");
+      error.status = 400;
+      throw error;
+    }
+    const reason = toSafeString(payload.reason || payload.reviewReason);
+    if (reason.length < 3) {
+      const error = new Error("Review reason is required");
+      error.status = 400;
+      throw error;
+    }
+
+    const nextStatus = decision.startsWith("approve") ? "approved" : "rejected";
+    let publishedOpportunityId = null;
+    if (nextStatus === "approved") {
+      if (sub.deadline && new Date(sub.deadline) < new Date()) {
+        const error = new Error("Expired opportunity submissions require an updated deadline before approval");
+        error.status = 400;
         throw error;
       }
+      const duplicateActive = this.db
+        .prepare("SELECT id, title FROM career_opportunities WHERE sourceUrl = ? OR applyUrl = ? OR fingerprint = ? LIMIT 1")
+        .get(sub.applyUrl, sub.applyUrl, sub.fingerprint);
+      if (duplicateActive) {
+        const error = new Error("This opportunity already exists in the public catalog");
+        error.status = 409;
+        error.code = "CAREER_DUPLICATE_OPPORTUNITY";
+        error.details = duplicateActive;
+        throw error;
+      }
+      publishedOpportunityId = this._applyApprovedSubmission(submissionId);
     }
-    this._applyApprovedSubmission(submissionId);
+
+    const now = nowIso();
+    this.db
+      .prepare(
+        `
+          UPDATE career_submissions
+          SET status = ?, reviewedAt = ?, reviewedBy = ?, reviewReason = ?, publishedOpportunityId = COALESCE(?, publishedOpportunityId)
+          WHERE id = ?
+        `
+      )
+      .run(nextStatus, now, reviewerId || "admin", reason, publishedOpportunityId, submissionId);
+    this.recordSubmissionAudit(submissionId, {
+      action: nextStatus,
+      actorId: reviewerId || "admin",
+      fromStatus: sub.status,
+      toStatus: nextStatus,
+      reason,
+      metadata: { publishedOpportunityId },
+    });
+    return this.getSubmissionById(submissionId);
   }
 
-  getPendingSubmissions() {
-    return this.db.prepare("SELECT * FROM career_submissions WHERE status = 'pending' ORDER BY createdAt DESC").all();
+  approveSubmission(submissionId, moderatorContext, reason = "Approved by reviewer") {
+    return this.reviewSubmission(submissionId, { decision: "approve", reason }, moderatorContext);
+  }
+
+  getSubmissions({ status = "pending", submittedBy = "", page = 1, limit = 25, query = "" } = {}) {
+    const normalizedStatus = toSafeString(status).toLowerCase();
+    const where = [];
+    const params = [];
+    if (normalizedStatus && normalizedStatus !== "all") {
+      where.push("status = ?");
+      params.push(normalizedStatus);
+    }
+    if (submittedBy) {
+      where.push("submittedBy = ?");
+      params.push(submittedBy);
+    }
+    if (query) {
+      where.push("(lower(title) LIKE ? OR lower(COALESCE(company, organizer, '')) LIKE ?)");
+      params.push(`%${toSafeString(query).toLowerCase()}%`, `%${toSafeString(query).toLowerCase()}%`);
+    }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const currentPage = clampCareerPage(page);
+    const pageLimit = clampCareerPageLimit(limit);
+    const total = Number(this.db.prepare(`SELECT COUNT(*) AS total FROM career_submissions ${clause}`).get(...params)?.total || 0);
+    const items = this.db
+      .prepare(`SELECT * FROM career_submissions ${clause} ORDER BY createdAt DESC LIMIT ? OFFSET ?`)
+      .all(...params, pageLimit, (currentPage - 1) * pageLimit)
+      .map((item) => ({ ...item, audit: this.getSubmissionAudit(item.id) }));
+    return { items, pagination: { page: currentPage, limit: pageLimit, total } };
+  }
+
+  getPendingSubmissions(options = {}) {
+    return this.getSubmissions({ ...options, status: options.status || "pending" });
   }
 
   getSubmissionById(id) {
-    return this.db.prepare("SELECT * FROM career_submissions WHERE id = ?").get(id) || null;
+    const row = this.db.prepare("SELECT * FROM career_submissions WHERE id = ?").get(id) || null;
+    return row ? { ...row, audit: this.getSubmissionAudit(id) } : null;
   }
 
   // Health

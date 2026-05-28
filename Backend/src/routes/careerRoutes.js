@@ -1,8 +1,9 @@
 const express = require("express");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
+const { resolveSessionId } = require("../utils/cookies");
 
-function createCareerRoutes({ careerStore, sessionStore, adminPassword = "" }) {
+function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
   router.use(userContext);
@@ -35,6 +36,20 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "" }) {
       } catch (error) {
         return sendApiError(res, req, error);
       }
+    };
+  }
+
+  function wrapAsync(handler) {
+    return (req, res) => {
+      Promise.resolve()
+        .then(() => handler(req, res))
+        .then((data) => {
+          if (!res.headersSent) {
+            return sendApiSuccess(res, req, data);
+          }
+          return undefined;
+        })
+        .catch((error) => sendApiError(res, req, error));
     };
   }
 
@@ -136,6 +151,15 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "" }) {
       })
       .map(decorateOpportunity),
   })));
+
+  if (lmsTrackerService) {
+    router.get("/career/insights/unified", wrapAsync((req) =>
+      lmsTrackerService.getUnifiedInsights({
+        sessionId: resolveSessionId(req),
+        user: req.userContext,
+      })
+    ));
+  }
 
   router.get("/career/health", wrap(() => ({
     sources: careerStore.getScraperHealth(),
@@ -265,15 +289,41 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "" }) {
     careerStore.submitOpportunity(req.userContext.userId, req.body || {})
   ));
 
+  router.get("/career/submit/mine", wrap((req) => {
+    const result = careerStore.getSubmissions({
+      submittedBy: req.userContext.userId,
+      status: req.query.status || "all",
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+    return { ...result, items: result.items.map(decorateSubmission) };
+  }));
+
   router.get("/career/submit/pending", wrap((req) => {
     ensureCareerAdmin(req);
-    return { items: careerStore.getPendingSubmissions().map(decorateSubmission) };
+    const result = careerStore.getPendingSubmissions({
+      status: req.query.status || "pending",
+      page: req.query.page,
+      limit: req.query.limit,
+      query: req.query.query,
+    });
+    return { ...result, items: result.items.map(decorateSubmission) };
   }));
 
   router.post("/career/submit/:submissionId/approve", wrap((req) => {
     ensureCareerAdmin(req);
-    careerStore.approveSubmission(req.params.submissionId, req.userContext);
-    return { approved: true };
+    const submission = careerStore.approveSubmission(
+      req.params.submissionId,
+      req.userContext,
+      req.body?.reason || "Approved by admin"
+    );
+    return { approved: true, submission: decorateSubmission(submission) };
+  }));
+
+  router.patch("/career/submit/:submissionId", wrap((req) => {
+    ensureCareerAdmin(req);
+    const submission = careerStore.reviewSubmission(req.params.submissionId, req.body || {}, req.userContext);
+    return decorateSubmission(submission);
   }));
 
   router.get("/career/interviews/slots", wrap((req) => ({
