@@ -1,4 +1,5 @@
 import { requestData } from "./apiClient";
+import { isStaticPrototype } from "./prototype/staticPrototypeEnv";
 
 export type CareerOpportunityType =
   | "job"
@@ -15,6 +16,8 @@ export type CareerOpportunity = {
   company?: string;
   organizer?: string;
   organization?: string;
+  logoUrl?: string;
+  imageUrl?: string;
   description?: string;
   shortDescription?: string;
   requirements?: string;
@@ -110,7 +113,7 @@ export type CareerApplication = {
   id: string;
   opportunityId: string;
   userId: string;
-  status: 'applied' | 'under_review' | 'shortlisted' | 'interviewed' | 'offered' | 'rejected' | 'withdrawn';
+  status: 'interested' | 'applied' | 'under_review' | 'shortlisted' | 'interviewed' | 'offered' | 'rejected' | 'withdrawn';
   appliedAt: string;
   notes?: string;
   updatedAt?: string;
@@ -124,6 +127,9 @@ export type CareerSubmission = {
   submittedBy: string;
   status: 'pending' | 'approved' | 'rejected';
   reviewedAt?: string;
+  reviewedBy?: string;
+  reviewReason?: string;
+  publishedOpportunityId?: string;
   type: string;
   title: string;
   company?: string;
@@ -141,7 +147,106 @@ export type CareerSubmission = {
   startDate?: string;
   applyUrl: string;
   createdAt: string;
+  audit?: Array<{
+    id: string;
+    action: string;
+    actorId: string;
+    fromStatus?: string | null;
+    toStatus?: string | null;
+    reason?: string | null;
+    createdAt: string;
+  }>;
 };
+
+const STATIC_CAREER_OPPORTUNITIES: CareerOpportunity[] = [
+  {
+    id: "opp-static-frontend",
+    type: "internship",
+    title: "Frontend Platform Internship",
+    company: "Acme Labs",
+    organization: "Acme Labs",
+    description: "Build frontend workflows for student platforms.",
+    shortDescription: "Frontend workflows for student platforms.",
+    skills: ["React", "TypeScript"],
+    tags: ["frontend", "platform"],
+    location: "Remote",
+    mode: "remote",
+    isPanIndia: true,
+    eligibleBranches: ["CSE"],
+    eligibleYears: [3, 4],
+    isFree: true,
+    deadline: "2030-06-30",
+    source: "manual",
+    sourceUrl: "https://careers.example.com/frontend-platform-internship",
+    applyUrl: "https://careers.example.com/frontend-platform-internship",
+    link: "https://careers.example.com/frontend-platform-internship",
+    viewCount: 24,
+    bookmarkCount: 7,
+    applyCount: 3,
+    relevanceScore: 0.82,
+    status: "active",
+    isActive: true,
+    isVerified: true,
+    isFeatured: false,
+  },
+];
+
+const STATIC_CAREER_SUBMISSIONS: CareerSubmission[] = [
+  {
+    id: "sub-static-pending",
+    submittedBy: "AP23110010001",
+    status: "pending",
+    type: "workshop",
+    title: "Cloud Platform Workshop",
+    company: "Cloud Guild",
+    description: "Hands-on workshop for cloud deployment basics.",
+    skills: ["Cloud", "Docker"],
+    tags: ["cloud"],
+    eligibleBranches: ["CSE"],
+    eligibleYears: [2, 3, 4],
+    applyUrl: "https://careers.example.com/cloud-workshop",
+    createdAt: "2026-05-25T10:00:00.000Z",
+    audit: [
+      {
+        id: "audit-static-submitted",
+        action: "submitted",
+        actorId: "AP23110010001",
+        toStatus: "pending",
+        reason: "Student submission created",
+        createdAt: "2026-05-25T10:00:00.000Z",
+      },
+    ],
+  },
+  {
+    id: "sub-static-rejected",
+    submittedBy: "AP23110010001",
+    status: "rejected",
+    reviewedAt: "2026-05-25T12:00:00.000Z",
+    reviewedBy: "AP23110010419",
+    reviewReason: "Company posting could not be verified.",
+    type: "internship",
+    title: "Unverified Growth Internship",
+    company: "Unknown Co",
+    description: "Incomplete submission.",
+    skills: [],
+    tags: [],
+    eligibleBranches: [],
+    eligibleYears: [],
+    applyUrl: "https://careers.example.com/unverified-growth",
+    createdAt: "2026-05-24T10:00:00.000Z",
+    audit: [
+      {
+        id: "audit-static-rejected",
+        action: "rejected",
+        actorId: "AP23110010419",
+        fromStatus: "pending",
+        toStatus: "rejected",
+        reason: "Company posting could not be verified.",
+        createdAt: "2026-05-25T12:00:00.000Z",
+      },
+    ],
+  },
+];
 
 export type AlumniProfile = {
   id: string;
@@ -224,6 +329,14 @@ export async function listTrendingOpportunities(limit: number = 12) {
 }
 
 export async function listOpportunities(filters?: Record<string, string>) {
+  if (isStaticPrototype()) {
+    const query = String(filters?.query || "").toLowerCase();
+    return {
+      items: STATIC_CAREER_OPPORTUNITIES.filter((item) =>
+        query ? `${item.title} ${item.company || ""}`.toLowerCase().includes(query) : true
+      ),
+    };
+  }
   const params = new URLSearchParams(filters || {});
   return requestData<{ items: CareerOpportunity[] }>(
     `/api/career/opportunities${params.toString() ? `?${params.toString()}` : ""}`
@@ -344,19 +457,63 @@ export async function deleteApplication(id: string) {
 }
 
 export async function submitOpportunity(payload: Record<string, unknown>) {
+  if (isStaticPrototype()) {
+    return {
+      id: "sub-static-new",
+      status: "pending",
+      governance: { requiresApproval: true, owner: "Career opportunities review" },
+    };
+  }
   return requestData<{ id: string; status: string }>("/api/career/submit", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function listPendingSubmissions() {
-  return requestData<{ items: CareerSubmission[] }>("/api/career/submit/pending");
+export async function listPendingSubmissions(headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    return {
+      items: STATIC_CAREER_SUBMISSIONS.filter((item) => item.status === "pending"),
+      pagination: { page: 1, limit: 25, total: 1 },
+    };
+  }
+  return requestData<{ items: CareerSubmission[]; pagination?: { page: number; limit: number; total: number } }>("/api/career/submit/pending", { headers });
 }
 
 export async function approveSubmission(id: string) {
-  return requestData<{ approved: boolean }>(`/api/career/submit/${encodeURIComponent(id)}/approve`, {
+  return requestData<{ approved: boolean; submission?: CareerSubmission }>(`/api/career/submit/${encodeURIComponent(id)}/approve`, {
     method: "POST",
+  });
+}
+
+export async function listMyOpportunitySubmissions() {
+  if (isStaticPrototype()) {
+    return {
+      items: STATIC_CAREER_SUBMISSIONS,
+      pagination: { page: 1, limit: 25, total: STATIC_CAREER_SUBMISSIONS.length },
+    };
+  }
+  return requestData<{ items: CareerSubmission[]; pagination?: { page: number; limit: number; total: number } }>("/api/career/submit/mine?status=all");
+}
+
+export async function reviewCareerSubmission(
+  id: string,
+  payload: { decision: "approve" | "reject"; reason: string },
+  headers?: HeadersInit
+) {
+  if (isStaticPrototype()) {
+    return {
+      ...(STATIC_CAREER_SUBMISSIONS.find((item) => item.id === id) || STATIC_CAREER_SUBMISSIONS[0]),
+      status: payload.decision === "approve" ? "approved" : "rejected",
+      reviewedBy: "AP23110010419",
+      reviewReason: payload.reason,
+      reviewedAt: "2026-05-26T04:20:00.000Z",
+    } as CareerSubmission;
+  }
+  return requestData<CareerSubmission>(`/api/career/submit/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(payload),
   });
 }
 
@@ -462,6 +619,9 @@ export async function cancelInterviewBooking(bookingId: string) {
 
 // Career Opportunities CRUD functions
 export async function listCareerOpportunities(filters?: Record<string, string>, headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    return { items: STATIC_CAREER_OPPORTUNITIES };
+  }
   const params = new URLSearchParams(filters || {});
   return requestData<{ items: CareerOpportunity[] }>(
     `/api/career/opportunities${params.toString() ? `?${params.toString()}` : ""}`,
@@ -470,6 +630,9 @@ export async function listCareerOpportunities(filters?: Record<string, string>, 
 }
 
 export async function createCareerOpportunity(data: Record<string, unknown>, headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    return { ...STATIC_CAREER_OPPORTUNITIES[0], id: "opp-static-admin", ...data } as CareerOpportunity;
+  }
   return requestData<CareerOpportunity>("/api/career/opportunities", {
     method: "POST",
     headers,

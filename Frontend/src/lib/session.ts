@@ -1,3 +1,6 @@
+import { isStaticPrototype } from "./prototype/staticPrototypeEnv";
+import { STATIC_PROTOTYPE_PROFILE } from "./prototype/staticPrototypeProfileData";
+
 const SESSION_ID_KEY = "sessionId";
 const PROFILE_DATA_KEY = "profileData";
 const ADMIN_PASSWORD_KEY = "erp.admin.password";
@@ -99,6 +102,7 @@ export function clearSessionAuth() {
 }
 
 export function hasSessionAuth() {
+  if (isStaticPrototype()) return true;
   return Boolean(getSessionId());
 }
 
@@ -112,16 +116,45 @@ export function isSessionAuthFailure(status: number, payload: unknown) {
 
 export function redirectToLogin() {
   if (typeof window === "undefined") return;
+  if (isStaticPrototype()) return;
   if (window.location.pathname === "/login") return;
   window.location.replace("/login");
 }
 
 export function handleSessionAuthFailure() {
+  if (isStaticPrototype()) return;
   clearSessionAuth();
   redirectToLogin();
 }
 
 export async function fetchSessionProfile(): Promise<PlainRecord | null> {
+  if (isStaticPrototype()) {
+    let snapshot = { ...STATIC_PROTOTYPE_PROFILE } as PlainRecord;
+    try {
+      const base = import.meta.env.BASE_URL || "/";
+      const prefix = base.endsWith("/") ? base : `${base}/`;
+      const res = await fetch(`${prefix}fixtures/session-profile.json`, { credentials: "same-origin" });
+      if (res.ok) {
+        const body = (await res.json()) as unknown;
+        if (body && typeof body === "object" && !Array.isArray(body)) {
+          const record = body as PlainRecord;
+          if (record.TableContent && typeof record.TableContent === "object" && !Array.isArray(record.TableContent)) {
+            snapshot = {
+              ...snapshot,
+              TableContent: { ...(snapshot.TableContent as PlainRecord), ...(record.TableContent as PlainRecord) },
+            };
+          }
+        }
+      }
+    } catch {
+      /* keep STATIC_PROTOTYPE_PROFILE */
+    }
+    if (hasStorage()) {
+      window.localStorage.setItem(PROFILE_DATA_KEY, JSON.stringify(snapshot));
+    }
+    return snapshot;
+  }
+
   const sessionId = getSessionId();
   if (!sessionId) {
     if (hasStorage()) {
@@ -160,6 +193,10 @@ export async function fetchSessionProfile(): Promise<PlainRecord | null> {
 }
 
 export async function logoutSession() {
+  if (isStaticPrototype()) {
+    clearSessionAuth();
+    return;
+  }
   try {
     await fetch("/api/logout", {
       method: "POST",

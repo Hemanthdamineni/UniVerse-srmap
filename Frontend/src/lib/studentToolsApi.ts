@@ -1,5 +1,6 @@
 import { ApiError } from "./erpApi";
 import { handleSessionAuthFailure, isSessionAuthFailure } from "./session";
+import { isStaticPrototype } from "./prototype/staticPrototypeEnv";
 
 type FeedbackSubject = {
   id?: string;
@@ -14,6 +15,7 @@ export type FeedbackStatusResponse = {
   defaultOption: number;
   templateAvailable: boolean;
   alreadySubmitted?: boolean;
+  disabledMessage?: string;
 };
 
 export type FeedbackTemplateResponse = {
@@ -176,6 +178,16 @@ export function validateFeedbackComment(value: string) {
 }
 
 export async function getEndSemesterFeedbackStatus(): Promise<FeedbackStatusResponse> {
+  if (isStaticPrototype()) {
+    return {
+      enabled: false,
+      pendingSubjects: [],
+      submittedSubjects: [],
+      totalPending: 0,
+      defaultOption: 0,
+      templateAvailable: false,
+    };
+  }
   return requestJson<FeedbackStatusResponse>("/api/feedback/end-semester/status");
 }
 

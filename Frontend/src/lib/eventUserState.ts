@@ -80,16 +80,24 @@ export function getEventUserState(
   if (myRole) {
     role = myRole.role;
   } else {
-    // Fallback: derive from event data
+    // Fallback: derive from event data when API role is unavailable
     const coOrgs: string[] = Array.isArray((event as Record<string, unknown>).coOrganizers)
       ? ((event as Record<string, unknown>).coOrganizers as string[])
       : [];
-    const createdByField =
-      (event as Record<string, unknown>).createdBy as string | undefined ??
-      (event as Record<string, unknown>).createdByUserId as string | undefined ??
-      '';
+    // Safely read createdBy / createdByUserId — either may be undefined
+    const rawCreatedBy = (event as Record<string, unknown>).createdBy;
+    const rawCreatedByUserId = (event as Record<string, unknown>).createdByUserId;
+    const createdByField = (
+      (typeof rawCreatedBy === 'string' && rawCreatedBy.trim()) ||
+      (typeof rawCreatedByUserId === 'string' && rawCreatedByUserId.trim()) ||
+      ''
+    ).toUpperCase();
+    const normalizedUserId = userId.trim().toUpperCase();
 
-    const isOrganizer = createdByField === userId || coOrgs.includes(userId) || Boolean(permissions?.canEdit);
+    const isOrganizer =
+      (createdByField !== '' && createdByField === normalizedUserId) ||
+      coOrgs.map((c) => c.trim().toUpperCase()).includes(normalizedUserId) ||
+      Boolean(permissions?.canEdit);
     const isRegistered = Boolean((event as Record<string, unknown>).myRegistration);
 
     role = isOrganizer ? 'owner' : isRegistered ? 'participant' : 'visitor';
