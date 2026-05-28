@@ -64,6 +64,8 @@ const CONTENT_DB_PATH =
   process.env.CONTENT_DB_PATH || path.join(__dirname, "../../data/content.sqlite");
 const LMS_DB_PATH =
   process.env.LMS_DB_PATH || path.join(__dirname, "../../data/lms.sqlite");
+const LMS_TRACKER_DB_PATH =
+  process.env.LMS_TRACKER_DB_PATH || path.join(__dirname, "../../data/lms-tracker.sqlite");
 const ADMIN_CONTENT_PASSWORD =
   process.env.ADMIN_CONTENT_PASSWORD || "asdfghjkl;'";
 const ERP_UI_MAP_FILE = process.env.ERP_UI_MAP_FILE || "";
@@ -77,6 +79,8 @@ const EVENTS_DB_PATH =
   process.env.EVENTS_DB_PATH || path.join(__dirname, "../../data/events.sqlite");
 const HELPDESK_DB_PATH =
   process.env.HELPDESK_DB_PATH || path.join(__dirname, "../../data/helpdesk.sqlite");
+const CAMPUS_FEEDBACK_DB_PATH =
+  process.env.CAMPUS_FEEDBACK_DB_PATH || path.join(__dirname, "../../data/campus-feedback.sqlite");
 const CAREER_DB_PATH =
   process.env.CAREER_DB_PATH || path.join(__dirname, "../../data/career.sqlite");
 /** Comma-separated roles that may review manual career submissions (overrides built-in defaults). */
@@ -155,6 +159,7 @@ module.exports = {
   EXTERNAL_DB_PATH,
   CONTENT_DB_PATH,
   LMS_DB_PATH,
+  LMS_TRACKER_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
@@ -162,6 +167,7 @@ module.exports = {
   EVENTS_DATA_DIR,
   EVENTS_DB_PATH,
   HELPDESK_DB_PATH,
+  CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
   CAREER_SUBMISSION_REVIEW_ROLES,
   CAREER_CACHE_TTL_SEC,
