@@ -11,6 +11,9 @@ const EXACT_TITLE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/^TRANSPORT REGISTRATION\s*20\d{2}$/, "Transport Registration"],
   [/^HOSTEL REGISTRATION\s*20\d{2}$/, "Hostel Registration"],
   [/^SAP ATTACHMENTS$/, "SAP Attachments"],
+  [/^SAP DETAILS$/, "SAP Details"],
+  [/^SAP FEEDBACK$/, "SAP Feedback"],
+  [/^SAP WITHDRAW$/, "SAP Withdraw"],
   [/^STUDENT BANK DETAILS$/, "Student Bank Details"],
   [/^BANK DETAILS$/, "Bank Details"],
 ];
@@ -21,6 +24,9 @@ const MIXED_TITLE_NOISE = [
   /\bTRANSPORT REGISTRATION\s*20\d{2}\b/g,
   /\bHOSTEL REGISTRATION\s*20\d{2}\b/g,
   /\bSAP ATTACHMENTS\b/g,
+  /\bSAP DETAILS\b/g,
+  /\bSAP FEEDBACK\b/g,
+  /\bSAP WITHDRAW\b/g,
 ];
 
 function normalizeWhitespace(value: string) {

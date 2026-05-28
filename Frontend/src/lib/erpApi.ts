@@ -1,4 +1,6 @@
 import { handleSessionAuthFailure, isSessionAuthFailure } from "./session";
+import { isStaticPrototype } from "./prototype/staticPrototypeEnv";
+import { loadStaticErpSupplementalJson, minimalStaticErpPageResponse, resolveStaticErpBatch } from "./prototype/erpStaticPrototypeFixtures";
 
 export type ErpNodeType = "container" | "text" | "table" | "form" | "field" | "button";
 
@@ -248,6 +250,10 @@ export async function sendErpDocumentRequest(payload: {
   method?: string;
   data?: Record<string, unknown>;
 }): Promise<unknown> {
+  if (isStaticPrototype()) {
+    return { success: true, message: "Static prototype: document request skipped." };
+  }
+
   const method = String(payload.method || "GET").trim().toUpperCase() || "GET";
   const baseUrl = String(payload.url || "").trim();
   const data = payload.data && typeof payload.data === "object" ? payload.data : {};
@@ -307,6 +313,15 @@ export async function sendErpDocumentRequest(payload: {
 }
 
 export async function getErpPage(pageKey: string, fallbackSessionId?: string): Promise<ErpPageResponse> {
+  if (isStaticPrototype()) {
+    const batch = await resolveStaticErpBatch([pageKey]);
+    const hit = batch[pageKey];
+    if (hit && "data" in hit && hit.success !== false) {
+      return hit as ErpPageResponse;
+    }
+    return minimalStaticErpPageResponse(pageKey);
+  }
+
   try {
     const v2 = await requestJson<ErpPageResponse>(withPageKeyPath("/api/v2/erp/page", pageKey));
     return v2;
@@ -340,6 +355,10 @@ export async function getErpBatch(pageKeys: string[]): Promise<ErpBatchResponse>
     return {};
   }
 
+  if (isStaticPrototype()) {
+    return resolveStaticErpBatch(normalizedPageKeys);
+  }
+
   const payload = await requestJson<{ success?: boolean; data?: ErpBatchResponse }>("/api/v2/erp/batch", {
     method: "POST",
     body: JSON.stringify({ pageKeys: normalizedPageKeys }),
@@ -349,6 +368,12 @@ export async function getErpBatch(pageKeys: string[]): Promise<ErpBatchResponse>
 }
 
 export async function getErpUiHints(pageKey: string): Promise<ErpUiHintsResponse | null> {
+  if (isStaticPrototype()) {
+    const map = await loadStaticErpSupplementalJson<Record<string, ErpUiHintsResponse | null>>("erp-ui-hints.json");
+    if (map && pageKey in map) return map[pageKey] ?? null;
+    return null;
+  }
+
   try {
     return await requestJson<ErpUiHintsResponse>(withPageKeyPath("/api/v2/erp/ui", pageKey));
   } catch (error) {
@@ -359,6 +384,12 @@ export async function getErpUiHints(pageKey: string): Promise<ErpUiHintsResponse
 }
 
 export async function getErpSchema(pageKey: string): Promise<ErpSchemaResponse | null> {
+  if (isStaticPrototype()) {
+    const map = await loadStaticErpSupplementalJson<Record<string, ErpSchemaResponse | null>>("erp-schema.json");
+    if (map && pageKey in map) return map[pageKey] ?? null;
+    return null;
+  }
+
   try {
     return await requestJson<ErpSchemaResponse>(withPageKeyPath("/api/v2/erp/schema", pageKey));
   } catch (error) {
@@ -376,6 +407,18 @@ export async function executeErpAction(payload: {
   url?: string;
   sessionId?: string;
 }): Promise<ErpActionExecuteResponse> {
+  if (isStaticPrototype()) {
+    return {
+      success: true,
+      pageKey: payload.pageKey,
+      actionId: payload.actionId,
+      status: 200,
+      method: String(payload.method || "POST").toUpperCase() || "POST",
+      url: String(payload.url || "/api/v2/erp/action/execute"),
+      message: "Static prototype: action not executed against a live server.",
+    };
+  }
+
   const body = {
     pageKey: payload.pageKey,
     actionId: payload.actionId,

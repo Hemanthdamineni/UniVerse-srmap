@@ -1,4 +1,5 @@
 import { requestData, requestMultipart } from "./apiClient";
+import { isStaticPrototype } from "./prototype/staticPrototypeEnv";
 
 export type EventSummary = {
   id: string;
@@ -126,11 +127,19 @@ export type CampusTicket = {
   status: string;
   assignedTo: string;
   assignedTeam?: string;
+  ownerUserId?: string;
+  ownerName?: string;
   createdAt: string;
   updatedAt: string;
   resolutionSummary?: string;
   replyCount?: number;
   slaBreached?: boolean;
+  queueState?: string;
+  sla?: {
+    policyHours: number;
+    dueAt: string;
+    breachedAt?: string;
+  };
   replies?: Array<{
     id: string;
     message: string;
@@ -147,6 +156,16 @@ export type CampusTicket = {
     actorRole: string;
     createdAt: string;
   }>;
+  auditTrail?: Array<{
+    id: string;
+    action: string;
+    fromStatus: string;
+    toStatus: string;
+    note: string;
+    actorName: string;
+    actorRole: string;
+    createdAt: string;
+  }>;
 };
 
 export type CampusFaq = {
@@ -157,6 +176,89 @@ export type CampusFaq = {
   tags?: string[];
   visible?: boolean;
 };
+
+const STATIC_HELPDESK_TICKETS: CampusTicket[] = [
+  {
+    id: "HD-STATIC-001",
+    category: "IT Support",
+    priority: "urgent",
+    subject: "ERP login blocked",
+    description: "The student portal fails after OTP and blocks attendance access.",
+    status: "open",
+    queueState: "breached",
+    assignedTo: "Asha Rao",
+    assignedTeam: "IT Support",
+    ownerName: "Asha Rao",
+    createdAt: "2026-05-25T03:00:00.000Z",
+    updatedAt: "2026-05-26T03:00:00.000Z",
+    resolutionSummary: "",
+    replyCount: 0,
+    slaBreached: true,
+    sla: {
+      policyHours: 4,
+      dueAt: "2026-05-25T07:00:00.000Z",
+      breachedAt: "2026-05-25T07:00:00.000Z",
+    },
+    replies: [],
+    statusHistory: [
+      {
+        id: "hist-static-1",
+        status: "open",
+        note: "Ticket created and routed to IT Support",
+        actorName: "Student One",
+        actorRole: "student",
+        createdAt: "2026-05-25T03:00:00.000Z",
+      },
+    ],
+    auditTrail: [
+      {
+        id: "audit-static-1",
+        action: "created",
+        fromStatus: "",
+        toStatus: "open",
+        note: "Ticket created and routed to IT Support",
+        actorName: "Student One",
+        actorRole: "student",
+        createdAt: "2026-05-25T03:00:00.000Z",
+      },
+    ],
+  },
+];
+
+function buildStaticHelpdeskList(filters?: Record<string, string>) {
+  let items = [...STATIC_HELPDESK_TICKETS];
+  if (filters?.queue) items = items.filter((ticket) => ticket.queueState === filters.queue);
+  if (filters?.status) items = items.filter((ticket) => ticket.status === filters.status);
+  if (filters?.query) {
+    const query = filters.query.toLowerCase();
+    items = items.filter((ticket) =>
+      [ticket.subject, ticket.description, ticket.category, ticket.assignedTo, ticket.assignedTeam]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+  const queues = STATIC_HELPDESK_TICKETS.reduce<Record<string, number>>((acc, ticket) => {
+    const queue = ticket.queueState || "new";
+    acc[queue] = (acc[queue] || 0) + 1;
+    return acc;
+  }, {});
+  return {
+    items,
+    counts: {
+      total: STATIC_HELPDESK_TICKETS.length,
+      filtered: items.length,
+      open: STATIC_HELPDESK_TICKETS.filter((ticket) => ticket.status === "open").length,
+      inProgress: STATIC_HELPDESK_TICKETS.filter((ticket) => ticket.status === "in-progress").length,
+      escalated: STATIC_HELPDESK_TICKETS.filter((ticket) => ticket.status === "escalated").length,
+      resolved: STATIC_HELPDESK_TICKETS.filter((ticket) => ticket.status === "resolved").length,
+      slaBreached: STATIC_HELPDESK_TICKETS.filter((ticket) => ticket.slaBreached).length,
+      queues,
+    },
+    pagination: { limit: 50, offset: 0, total: items.length },
+    workload: [{ assignedTeam: "IT Support", ownerName: "Asha Rao", open: 1, breached: 1, total: 1 }],
+  };
+}
 
 function normalizeEventList(payload: EventSummary[] | { events?: EventSummary[] }) {
   if (Array.isArray(payload)) return payload;
@@ -486,23 +588,58 @@ export async function getMyInvitations(eventId: string) {
 }
 
 export async function listHelpdeskTickets(filters?: Record<string, string>, headers?: HeadersInit) {
+  if (isStaticPrototype()) return buildStaticHelpdeskList(filters);
   const params = new URLSearchParams(filters || {});
   return requestData<{
     items: CampusTicket[];
     counts: {
       total: number;
+      filtered?: number;
       open: number;
       inProgress: number;
       escalated: number;
       resolved: number;
       slaBreached: number;
+      queues?: Record<string, number>;
     };
+    pagination?: { limit: number; offset: number; total: number };
+    workload?: Array<{
+      assignedTeam: string;
+      ownerName: string;
+      open: number;
+      breached: number;
+      total: number;
+    }>;
   }>(`/api/helpdesk/tickets${params.toString() ? `?${params.toString()}` : ""}`, {
     headers,
   });
 }
 
 export async function createHelpdeskTicket(payload: Record<string, unknown>) {
+  if (isStaticPrototype()) {
+    const now = new Date().toISOString();
+    const ticket: CampusTicket = {
+      id: `HD-STATIC-${STATIC_HELPDESK_TICKETS.length + 1}`,
+      category: String(payload.category || "Other"),
+      priority: String(payload.priority || "medium"),
+      subject: String(payload.subject || "Helpdesk ticket"),
+      description: String(payload.description || ""),
+      status: "open",
+      queueState: "new",
+      assignedTo: "General Help Desk",
+      assignedTeam: "General Help Desk",
+      ownerName: "General Help Desk",
+      createdAt: now,
+      updatedAt: now,
+      slaBreached: false,
+      sla: { policyHours: 48, dueAt: new Date(Date.now() + 48 * 36e5).toISOString() },
+      replies: [],
+      statusHistory: [],
+      auditTrail: [],
+    };
+    STATIC_HELPDESK_TICKETS.unshift(ticket);
+    return ticket;
+  }
   return requestData<CampusTicket>("/api/helpdesk/tickets", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -514,6 +651,31 @@ export async function updateHelpdeskTicket(
   payload: Record<string, unknown>,
   headers?: HeadersInit
 ) {
+  if (isStaticPrototype()) {
+    const ticket = STATIC_HELPDESK_TICKETS.find((item) => item.id === ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+    if (payload.status) ticket.status = String(payload.status);
+    if (payload.status === "resolved") ticket.queueState = "resolved";
+    if (payload.assignedTo) ticket.assignedTo = String(payload.assignedTo);
+    if (payload.assignedTeam) ticket.assignedTeam = String(payload.assignedTeam);
+    if (payload.ownerName) ticket.ownerName = String(payload.ownerName);
+    if (payload.resolutionSummary) ticket.resolutionSummary = String(payload.resolutionSummary);
+    ticket.updatedAt = new Date().toISOString();
+    ticket.auditTrail = [
+      {
+        id: `audit-${Date.now()}`,
+        action: payload.status ? "status_changed" : "ticket_updated",
+        fromStatus: "",
+        toStatus: String(payload.status || ""),
+        note: String(payload.note || "Static update"),
+        actorName: "Admin User",
+        actorRole: "admin",
+        createdAt: ticket.updatedAt,
+      },
+      ...(ticket.auditTrail || []),
+    ];
+    return ticket;
+  }
   return requestData<CampusTicket>(`/api/helpdesk/tickets/${encodeURIComponent(ticketId)}`, {
     method: "PATCH",
     headers,
@@ -521,7 +683,30 @@ export async function updateHelpdeskTicket(
   });
 }
 
+export async function bulkUpdateHelpdeskTickets(payload: Record<string, unknown>, headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    const ticketIds = Array.isArray(payload.ticketIds) ? payload.ticketIds.map(String) : [];
+    const updated = [];
+    for (const ticketId of ticketIds) {
+      updated.push(await updateHelpdeskTicket(ticketId, payload));
+    }
+    return { updated, failures: [], counts: { requested: ticketIds.length, updated: updated.length, failed: 0 } };
+  }
+  return requestData<{
+    updated: CampusTicket[];
+    failures: Array<{ ticketId: string; message: string; status: number }>;
+    counts: { requested: number; updated: number; failed: number };
+  }>("/api/helpdesk/tickets/bulk", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function escalateHelpdeskTicket(ticketId: string, reason?: string) {
+  if (isStaticPrototype()) {
+    return updateHelpdeskTicket(ticketId, { status: "escalated", note: reason || "Escalated by requester" });
+  }
   return requestData<CampusTicket>(`/api/helpdesk/tickets/${encodeURIComponent(ticketId)}/escalate`, {
     method: "POST",
     body: JSON.stringify({ reason }),
@@ -533,6 +718,22 @@ export async function replyToHelpdeskTicket(
   payload: { message: string; visibility?: string },
   headers?: HeadersInit
 ) {
+  if (isStaticPrototype()) {
+    const ticket = STATIC_HELPDESK_TICKETS.find((item) => item.id === ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+    const reply = {
+      id: `reply-${Date.now()}`,
+      message: payload.message,
+      visibility: payload.visibility || "public",
+      authorName: payload.visibility === "internal" ? "Admin User" : "Student One",
+      authorRole: payload.visibility === "internal" ? "admin" : "student",
+      createdAt: new Date().toISOString(),
+    };
+    ticket.replies = [reply, ...(ticket.replies || [])];
+    ticket.replyCount = ticket.replies.length;
+    ticket.updatedAt = reply.createdAt;
+    return ticket;
+  }
   return requestData<CampusTicket>(`/api/helpdesk/tickets/${encodeURIComponent(ticketId)}/replies`, {
     method: "POST",
     headers,
