@@ -59,7 +59,7 @@ export default function ProgressOverview() {
                 <span className="font-medium text-[var(--comp-text-primary)]">Overall Progress</span>
                 <span className="font-semibold text-[var(--comp-text-primary)]">{overview.progressPercent}%</span>
               </div>
-              <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-4 w-full overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
                 <div
                   className="h-full rounded-full bg-[var(--comp-accent)] transition-all"
                   style={{ width: `${overview.progressPercent}%` }}
@@ -77,7 +77,7 @@ export default function ProgressOverview() {
               {overview.semesters.map((semester) => (
                 <div
                   key={semester.semester}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)]">
@@ -111,17 +111,99 @@ export default function ProgressOverview() {
 
           <SectionCard title="Attendance Summary">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Overall Attendance</p>
                 <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{overview.attendancePct}%</p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Subjects at Risk</p>
-                <p className="mt-2 text-3xl font-semibold text-amber-600">{overview.subjectsAtRisk}</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--warning)]">{overview.subjectsAtRisk}</p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
                 <p className="text-sm text-[var(--text-secondary)]">Tracker Source</p>
                 <p className="mt-2 text-base font-semibold text-[var(--comp-text-primary)]">ERP-derived LMS model</p>
+              </div>
+            </div>
+          </SectionCard>
+
+          {overview.careerReadiness ? (
+            <SectionCard title="Career Readiness">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Profile Completeness</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
+                    {overview.careerReadiness.profileCompleteness.score}%
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Resume Score</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
+                    {overview.careerReadiness.resumeScore.score}%
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Skill Gaps</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--warning)]">
+                    {overview.careerReadiness.skillGaps.length}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Next Actions</h3>
+                  <ul className="mt-2 space-y-2 text-sm text-[var(--text-secondary)]">
+                    {overview.careerReadiness.nextActions.map((action) => (
+                      <li key={action} className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2">
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Top Skill Gaps</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {overview.careerReadiness.skillGaps.length ? (
+                      overview.careerReadiness.skillGaps.map((gap) => (
+                        <span
+                          key={gap.skill}
+                          className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]"
+                          title={gap.reason}
+                        >
+                          {gap.skill} · {gap.opportunityCount}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-[var(--text-secondary)]">No high-priority skill gaps detected.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+          ) : null}
+
+          <SectionCard title="Analytics Trace">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+              <div>
+                <p className="text-sm font-semibold text-[var(--comp-text-primary)]">
+                  Snapshot {overview.snapshot ? "saved" : "not persisted"}
+                </p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  {overview.snapshot
+                    ? `Captured ${new Date(overview.snapshot.createdAt).toLocaleString()} with hash ${overview.snapshot.inputsHash.slice(0, 8)}.`
+                    : "Tracker persistence is unavailable in this environment."}
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(overview.history || []).slice(0, 4).map((snapshot) => (
+                  <div key={snapshot.id} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm">
+                    <div className="font-semibold capitalize text-[var(--comp-text-primary)]">
+                      {snapshot.snapshotType}
+                    </div>
+                    <div className="text-xs text-[var(--text-secondary)]">
+                      {new Date(snapshot.createdAt).toLocaleString()} · {snapshot.summary.currentCgpa || "CGPA pending"}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </SectionCard>

@@ -6,14 +6,14 @@ const RECOMMENDATION_STYLES: Record<string, string> = {
   improvement: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]",
   positive: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]",
   suggestion: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]",
-  warning: "border-rose-200 bg-rose-50",
+  warning: "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)]",
 };
-
+ 
 const RECOMMENDATION_LABELS: Record<string, string> = {
   improvement: "text-[var(--warning)]",
   positive: "text-[var(--success)]",
   suggestion: "text-[var(--info)]",
-  warning: "text-rose-800",
+  warning: "text-[var(--error)]",
 };
 
 function GpaTrendBar({ semester, sgpa }: { semester: string; sgpa: number }) {
@@ -23,7 +23,7 @@ function GpaTrendBar({ semester, sgpa }: { semester: string; sgpa: number }) {
     <div className="flex items-center gap-3">
       <span className="w-14 shrink-0 text-xs font-medium text-[var(--text-secondary)]">{semester}</span>
       <div className="flex-1">
-        <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="h-6 w-full overflow-hidden rounded-full bg-[var(--comp-border)]">
           <div
             className="flex h-full items-center justify-end rounded-full bg-[var(--comp-accent)] px-2 text-xs font-bold text-white transition-all"
             style={{ width: `${widthPercent}%` }}
@@ -87,7 +87,7 @@ export default function AcademicInsights() {
                 {insights.categoryPerformance.map((category) => (
                   <div
                     key={category.category}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white p-4"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4"
                   >
                     <div>
                       <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{category.category}</h3>
@@ -111,7 +111,7 @@ export default function AcademicInsights() {
             <SectionCard title="Key Highlights">
               <div className="space-y-3">
                 {insights.highlights.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                  <div key={item.label} className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
                     <p className="text-sm text-[var(--text-secondary)]">{item.label}</p>
                     <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{item.value}</p>
                   </div>
@@ -137,6 +137,98 @@ export default function AcademicInsights() {
                   </p>
                 </div>
               ))}
+            </div>
+          </SectionCard>
+
+          {insights.careerReadiness ? (
+            <SectionCard title="Career-Aware Action Plan">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <p className="text-sm text-[var(--text-secondary)]">ATS-style Resume Score</p>
+                    <p className="mt-1 text-3xl font-semibold text-[var(--comp-text-primary)]">
+                      {insights.careerReadiness.resumeScore.score}%
+                    </p>
+                    <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                      Inputs: {insights.careerReadiness.inputsUsed.academicSignals.join(", ") || "career profile only"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">What to improve next</h3>
+                    <ul className="mt-2 space-y-2 text-sm text-[var(--text-secondary)]">
+                      {insights.careerReadiness.nextActions.map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {insights.careerReadiness.recommendedOpportunities.length ? (
+                    insights.careerReadiness.recommendedOpportunities.map((opportunity) => (
+                      <article
+                        key={opportunity.id}
+                        className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">
+                              {opportunity.title}
+                            </h3>
+                            <p className="text-xs text-[var(--text-secondary)]">
+                              {opportunity.organization || opportunity.type}
+                            </p>
+                          </div>
+                          <span className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+                            {Math.round(opportunity.confidence * 100)}% confidence
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-2 text-xs text-[var(--text-secondary)] sm:grid-cols-2">
+                          <p>Matched: {opportunity.matchedSkills.join(", ") || "profile signals"}</p>
+                          <p>Close gaps: {opportunity.missingSkills.join(", ") || "none detected"}</p>
+                        </div>
+                        <ul className="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
+                          {opportunity.reasons.map((reason) => (
+                            <li key={reason}>{reason}</li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4 text-sm text-[var(--text-secondary)]">
+                      No eligible career opportunities are available for the current profile.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
+          ) : null}
+
+          <SectionCard title="Recommendation Trace">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+              <div>
+                <p className="text-sm font-semibold text-[var(--comp-text-primary)]">
+                  Snapshot {insights.snapshot ? "saved" : "not persisted"}
+                </p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  {insights.snapshot
+                    ? `Captured ${new Date(insights.snapshot.createdAt).toLocaleString()} from academic and career signals.`
+                    : "Tracker persistence is unavailable in this environment."}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {(insights.recommendationEvents || []).slice(0, 4).map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-sm"
+                  >
+                    <span className="font-semibold text-[var(--comp-text-primary)]">{event.recommendationTitle}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      {event.sourceDomain} · {Math.round(event.confidence * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </SectionCard>
         </>

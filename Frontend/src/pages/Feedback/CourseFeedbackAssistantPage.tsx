@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import MappedErpPage from "../ERP/MappedErpPage";
+import DocumentErpPage from "../ERP/DocumentErpPage";
 import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import {
@@ -86,7 +86,16 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
             Back To Feedback Assistant
           </button>
         </div>
-        <MappedErpPage pageKey="feedback/end-semester-feedback" title="Raw ERP Feedback Page" />
+        <DocumentErpPage blueprint={{
+          route: blueprint.route,
+          heading: "Raw ERP Feedback Page",
+          fetchKeys: ["feedback/end-semester-feedback"],
+          domain: blueprint.domain,
+          sourceMode: "erp",
+          integrationState: "native",
+          renderer: "document",
+          loadingMessage: "Loading raw feedback page...",
+        }} />
       </div>
     );
   }
@@ -145,200 +154,226 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
       ) : null}
 
       {disabled ? (
-        <StatusBanner
-          message={{
-            id: "feedback-disabled",
-            tone: "warning",
-            text: "Automation is currently disabled. You can still open the raw ERP page and submit it manually.",
-          }}
-        />
-      ) : null}
-
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <SectionCard title="Submission Status">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
-              <p className="text-sm text-[var(--text-secondary)]">Pending Subjects</p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.totalPending ?? 0}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
-              <p className="text-sm text-[var(--text-secondary)]">Default Rating</p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.defaultOption ?? 5}</p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
-              <p className="text-sm text-[var(--text-secondary)]">Template Ready</p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
-                {status?.templateAvailable ? "Yes" : "No"}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Pending Subject List</p>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Review which subjects will be included before you submit the batch.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={toggleRawMode}
-                className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
-              >
-                Open Raw ERP Page
-              </button>
-            </div>
-
-            {pendingSubjects.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {pendingSubjects.map((subject) => (
-                  <span
-                    key={subject.id || subject.name}
-                    className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-3 py-2 text-sm font-medium text-[var(--comp-text-primary)]"
-                  >
-                    {subject.name}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-[var(--text-secondary)]">
-                {status?.alreadySubmitted
-                  ? "Everything already looks submitted for this cycle."
-                  : "No pending subjects were detected right now."}
-              </p>
-            )}
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Feedback Assistant">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="feedback-option" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-                Rating Option
-              </label>
-              <select
-                id="feedback-option"
-                value={optionNo}
-                onChange={(event) => setOptionNo(Number(event.target.value))}
-                disabled={disabled || submitting}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
-              >
-                <option value={5}>5 - Strongly Agree</option>
-                <option value={4}>4 - Somewhat Agree</option>
-                <option value={3}>3 - Neutral</option>
-                <option value={2}>2 - Somewhat Disagree</option>
-                <option value={1}>1 - Strongly Disagree</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <label htmlFor="feedback-comment" className="text-sm font-medium text-[var(--text-primary)]">
-                  Descriptive Comment
-                </label>
-                <button
-                  type="button"
-                  onClick={() => void fetchTemplate(true)}
-                  disabled={templateLoading || submitting}
-                  className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
-                >
-                  {templateLoading ? "Refreshing..." : "Refresh Template"}
-                </button>
-              </div>
-              <textarea
-                id="feedback-comment"
-                rows={7}
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                disabled={disabled || submitting}
-                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 outline-none focus:border-[var(--comp-accent)]"
-                placeholder="Write a clear and constructive course feedback comment."
-              />
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span className={commentError ? "text-[var(--error)]" : "text-[var(--text-secondary)]"}>
-                  {commentError || "Use one thoughtful comment for the full batch."}
-                </span>
-                <span className="text-[var(--text-secondary)]">{comment.trim().length}/500</span>
-              </div>
-            </div>
-
+        <div className="space-y-4">
+          <StatusBanner
+            message={{
+              id: "feedback-disabled",
+              tone: "locked",
+              text: status?.disabledMessage || "Automation is currently disabled. You can still open the raw ERP page and submit it manually.",
+            }}
+          />
+          <div className="flex justify-start">
             <button
               type="button"
-              onClick={() => void handleSubmit()}
-              disabled={disabled || submitting || Boolean(commentError) || !pendingSubjects.length}
-              className="w-full rounded-2xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--text-secondary)]"
+              onClick={toggleRawMode}
+              className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] bg-white px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
             >
-              {submitting ? "Submitting Feedback..." : `Submit For ${pendingSubjects.length || 0} Subject${pendingSubjects.length === 1 ? "" : "s"}`}
+              Open Raw ERP Page
             </button>
-
-            <p className="text-xs leading-6 text-[var(--text-secondary)]">
-              This helper only submits after you confirm. Manual captcha and your current ERP session remain the
-              source of truth.
-            </p>
           </div>
-        </SectionCard>
-      </div>
+        </div>
+      ) : pendingSubjects.length === 0 && status ? (
+        <div className="space-y-4">
+          <StatusBanner
+            message={{
+              id: "feedback-completed",
+              tone: "success",
+              text: status.alreadySubmitted
+                ? "Everything already looks submitted for this cycle."
+                : "No pending subjects were detected right now.",
+            }}
+          />
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={toggleRawMode}
+              className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] bg-white px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
+            >
+              Open Raw ERP Page
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <SectionCard title="Submission Status">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Pending Subjects</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.totalPending ?? 0}</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Default Rating</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{status?.defaultOption ?? 5}</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="text-sm text-[var(--text-secondary)]">Template Ready</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">
+                    {status?.templateAvailable ? "Yes" : "No"}
+                  </p>
+                </div>
+              </div>
 
-      {submitResult ? (
-        <SectionCard title="Latest Batch Result">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-emerald-100 bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-4">
-              <p className="text-sm text-[var(--success)]">Submitted</p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--success)]">{submitResult.counts.submitted}</p>
-            </div>
-            <div className="rounded-2xl border border-amber-100 bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] p-4">
-              <p className="text-sm text-[var(--warning)]">Skipped</p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--warning)]">{submitResult.counts.skipped}</p>
-            </div>
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
-              <p className="text-sm text-rose-700">Failed</p>
-              <p className="mt-2 text-3xl font-semibold text-rose-800">{submitResult.counts.failed}</p>
-            </div>
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Pending Subject List</p>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Review which subjects will be included before you submit the batch.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleRawMode}
+                    className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-4 py-2 text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
+                  >
+                    Open Raw ERP Page
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {pendingSubjects.map((subject) => (
+                    <span
+                      key={subject.id || subject.name}
+                      className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-3 py-2 text-sm font-medium text-[var(--comp-text-primary)]"
+                    >
+                      {subject.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Feedback Assistant">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="feedback-option" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+                    Rating Option
+                  </label>
+                  <select
+                    id="feedback-option"
+                    value={optionNo}
+                    onChange={(event) => setOptionNo(Number(event.target.value))}
+                    disabled={submitting}
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                  >
+                    <option value={5}>5 - Strongly Agree</option>
+                    <option value={4}>4 - Somewhat Agree</option>
+                    <option value={3}>3 - Neutral</option>
+                    <option value={2}>2 - Somewhat Disagree</option>
+                    <option value={1}>1 - Strongly Disagree</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label htmlFor="feedback-comment" className="text-sm font-medium text-[var(--text-primary)]">
+                      Descriptive Comment
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void fetchTemplate(true)}
+                      disabled={templateLoading || submitting}
+                      className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-accent)] hover:text-white"
+                    >
+                      {templateLoading ? "Refreshing..." : "Refresh Template"}
+                    </button>
+                  </div>
+                  <textarea
+                    id="feedback-comment"
+                    rows={7}
+                    value={comment}
+                    onChange={(event) => setComment(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 outline-none focus:border-[var(--comp-accent)]"
+                    placeholder="Write a clear and constructive course feedback comment."
+                  />
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className={commentError ? "text-[var(--error)]" : "text-[var(--text-secondary)]"}>
+                      {commentError || "Use one thoughtful comment for the full batch."}
+                    </span>
+                    <span className="text-[var(--text-secondary)]">{comment.trim().length}/500</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void handleSubmit()}
+                  disabled={submitting || Boolean(commentError)}
+                  className="w-full rounded-2xl bg-[var(--comp-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--text-secondary)]"
+                >
+                  {submitting ? "Submitting Feedback..." : `Submit For ${pendingSubjects.length} Subject${pendingSubjects.length === 1 ? "" : "s"}`}
+                </button>
+
+                <p className="text-xs leading-6 text-[var(--text-secondary)]">
+                  This helper only submits after you confirm. Manual captcha and your current ERP session remain the
+                  source of truth.
+                </p>
+              </div>
+            </SectionCard>
           </div>
 
-          <div className="erp-table-shell rounded-2xl">
-            <table className="erp-table text-left">
-              <thead className="erp-table-head">
-                <tr>
-                  <th className="erp-table-head-cell label-text">Subject</th>
-                  <th className="erp-table-head-cell label-text">Status</th>
-                  <th className="erp-table-head-cell label-text">Message</th>
-                </tr>
-              </thead>
-              <tbody className="erp-table-body">
-                {submitResult.results.map((result) => (
-                  <tr key={`${result.subjectId}-${result.subjectName}`} className="erp-table-row">
-                    <td className="erp-table-cell erp-table-cell-strong">{result.subjectName}</td>
-                    <td className="erp-table-cell">
-                      <span
-                        className={`erp-status-pill ${
-                          result.status === "submitted"
-                            ? "erp-status-pill-success"
-                            : result.status === "skipped"
-                              ? "erp-status-pill-warning"
-                              : "erp-status-pill-error"
-                        }`}
-                      >
-                        {result.status}
-                      </span>
-                    </td>
-                    <td className="erp-table-cell">{result.message}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SectionCard>
-      ) : null}
+          {submitResult ? (
+            <SectionCard title="Latest Batch Result">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-emerald-100 bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-4">
+                  <p className="text-sm text-[var(--success)]">Submitted</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--success)]">{submitResult.counts.submitted}</p>
+                </div>
+                <div className="rounded-2xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] p-4">
+                  <p className="text-sm text-[var(--warning)]">Skipped</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--warning)]">{submitResult.counts.skipped}</p>
+                </div>
+                <div className="rounded-2xl border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] p-4">
+                  <p className="text-sm text-[var(--error)]">Failed</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--error)]">{submitResult.counts.failed}</p>
+                </div>
+              </div>
 
-      <p className="text-sm text-[var(--text-secondary)]">
-        Need the raw fallback instead? Use the button above, or open{" "}
-        <Link className="font-semibold text-[var(--comp-text-primary)]" to={`${blueprint.route}?mode=raw`}>
-          the direct ERP page
-        </Link>
-        .
-      </p>
+              <div className="erp-table-shell rounded-2xl">
+                <table className="erp-table text-left">
+                  <thead className="erp-table-head">
+                    <tr>
+                      <th className="erp-table-head-cell label-text">Subject</th>
+                      <th className="erp-table-head-cell label-text">Status</th>
+                      <th className="erp-table-head-cell label-text">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="erp-table-body">
+                    {submitResult.results.map((result) => (
+                      <tr key={`${result.subjectId}-${result.subjectName}`} className="erp-table-row">
+                        <td className="erp-table-cell erp-table-cell-strong">{result.subjectName}</td>
+                        <td className="erp-table-cell">
+                          <span
+                            className={`erp-status-pill ${
+                              result.status === "submitted"
+                                ? "erp-status-pill-success"
+                                : result.status === "skipped"
+                                  ? "erp-status-pill-warning"
+                                  : "erp-status-pill-error"
+                            }`}
+                          >
+                            {result.status}
+                          </span>
+                        </td>
+                        <td className="erp-table-cell">{result.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </SectionCard>
+          ) : null}
+
+          <p className="text-sm text-[var(--text-secondary)]">
+            Need the raw fallback instead? Use the button above, or open{" "}
+            <Link className="font-semibold text-[var(--comp-text-primary)]" to={`${blueprint.route}?mode=raw`}>
+              the direct ERP page
+            </Link>
+            .
+          </p>
+        </>
+      )}
     </ErpPageShell>
   );
 }
