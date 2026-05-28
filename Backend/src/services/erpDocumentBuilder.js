@@ -161,7 +161,7 @@ function isFieldTag(tagName, $node) {
   if (tag !== "input") return false;
 
   const inputType = String($node.attr("type") || "text").toLowerCase();
-  return !["submit", "button", "reset", "image", "hidden"].includes(inputType);
+  return !["submit", "button", "reset", "image"].includes(inputType);
 }
 
 function isButtonTag(tagName, $node) {
@@ -216,10 +216,12 @@ function buildFieldProps($node, $) {
     tagName === "input" ? String($node.attr("type") || "text").toLowerCase() : tagName || "text";
 
   const props = {
+    id: cleanText($node.attr("id")),
     name: cleanText($node.attr("name") || $node.attr("id")),
     label: inferFieldLabel($node, $),
     inputType,
     value: normalizeValue($node.val()),
+    checked: $node.is("[checked]") || $node.is(":checked"),
     required: $node.is("[required]"),
     disabled: $node.is("[disabled]"),
     readOnly: $node.is("[readonly]"),
@@ -258,11 +260,27 @@ function buildButtonProps($node) {
   );
   const onclick = cleanText($node.attr("onclick"));
   const onclickPathMatch = onclick.match(/['"]((?:\/)?(?:[a-z0-9_-]+\/)+[a-z0-9_.-]+(?:\?[^'"]*)?)['"]/i);
-  const onclickPath = cleanText(onclickPathMatch?.[1]);
+  let onclickPath = cleanText(onclickPathMatch?.[1]);
+  const onclickFunctionName = cleanText(onclick.match(/\b([a-z][a-z0-9_]*)\s*\(/i)?.[1]).toLowerCase();
+
+  if (!onclickPath) {
+    const printMatch = onclick.match(/funPrint\(\s*['"]?(\d+)['"]?\s*\)/i);
+    if (printMatch) {
+      onclickPath = `/srmapstudentcorner/students/report/receiptgenerationprint.jsp?receiptid=${printMatch[1]}`;
+    }
+  }
+
   const normalizedActionPath = cleanText(dataUrl || href || onclickPath);
 
   let action = null;
-  if (href) {
+  if (onclickFunctionName === "funprintapplication") {
+    action = {
+      type: "print_exam_application",
+      target: "/srmapstudentcorner/students/report/PrintStudentExamApplication.jsp",
+      method: "GET",
+      onSuccess: "no_update",
+    };
+  } else if (href) {
     action = {
       type: "navigate",
       target: href,
@@ -331,9 +349,7 @@ function buildCellValue($cell, $) {
   if (visibleText) return visibleText;
 
   if (controls.length > 1) {
-    const buttonDescriptor = controls.find((item) => item.kind === "button");
-    if (buttonDescriptor) return buttonDescriptor;
-    return controls[0];
+    return controls;
   }
 
   return normalizeTextValue($cell.text());
@@ -343,8 +359,23 @@ function rowsLookLikeForm(rows) {
   if (!Array.isArray(rows) || rows.length < 2) return false;
 
   let labeledControlRows = 0;
+  let actionRows = 0;
   for (const row of rows) {
     const cells = Array.isArray(row.cells) ? row.cells : [];
+    const hasAction = cells.some((cell) => {
+      const value = cell?.value;
+      return (
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        cleanText(value.kind) === "button"
+      );
+    });
+
+    if (hasAction) {
+      actionRows += 1;
+    }
+
     if (cells.length < 2) continue;
 
     const label = cleanText(cells[0]?.text);
@@ -358,7 +389,7 @@ function rowsLookLikeForm(rows) {
     }
   }
 
-  return labeledControlRows >= 2;
+  return labeledControlRows >= 2 || (labeledControlRows >= 1 && actionRows >= 1);
 }
 
 function buildFormFromTable(table, $, rows, nextId) {
@@ -371,32 +402,39 @@ function buildFormFromTable(table, $, rows, nextId) {
     if (cells.length === 0) continue;
 
     const label = normalizeTextValue(cells[0]?.text);
-    const valueCell = cells[cells.length - 1] || cells[0];
-    const value = valueCell?.value;
+    const valueCells = cells.length > 1 ? cells.slice(1) : cells;
 
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      if (cleanText(value.kind) === "field") {
-        children.push(
-          buildFieldNode(nextId(), {
-            ...value.props,
-            label: label || cleanText(value.props?.label),
-          })
-        );
-        continue;
-      }
+    let hasExtractedControl = false;
+    for (const cell of valueCells) {
+      const value = cell?.value;
+      if (!value) continue;
 
-      if (cleanText(value.kind) === "button") {
-        const buttonLabel = cleanText(value.props?.label) || label || "Button";
-        if (label && cleanText(label).toLowerCase() !== cleanText(buttonLabel).toLowerCase()) {
-          children.push(buildTextNode(nextId(), { text: label }));
+      const valuesToProcess = Array.isArray(value) ? value : [value];
+      for (const v of valuesToProcess) {
+        if (typeof v === "object" && !Array.isArray(v)) {
+          if (cleanText(v.kind) === "field") {
+            const fieldLabel = label || cleanText(v.props?.label);
+            children.push(
+              buildFieldNode(nextId(), {
+                ...v.props,
+                label: fieldLabel,
+              })
+            );
+            hasExtractedControl = true;
+          } else if (cleanText(v.kind) === "button") {
+            const buttonLabel = cleanText(v.props?.label) || label || "Button";
+            if (label && cleanText(label).toLowerCase() !== cleanText(buttonLabel).toLowerCase() && !hasExtractedControl) {
+              children.push(buildTextNode(nextId(), { text: label }));
+            }
+            children.push(
+              buildButtonNode(nextId(), {
+                ...v.props,
+                label: buttonLabel,
+              })
+            );
+            hasExtractedControl = true;
+          }
         }
-        children.push(
-          buildButtonNode(nextId(), {
-            ...value.props,
-            label: buttonLabel,
-          })
-        );
-        continue;
       }
     }
   }
@@ -447,9 +485,11 @@ function extractTableData(table, $, fallbackId, nextId) {
     if (!tdCells.length) return;
     const rawCells = [];
 
-    cells.each((cellIndex, cell) => {
-      const column = columns[cellIndex] || { key: `col${cellIndex + 1}` };
+    let colOffset = 0;
+    cells.each((_cellIndex, cell) => {
       const $cell = $(cell);
+      const colspan = Math.max(1, parseInt($cell.attr("colspan") || "1", 10) || 1);
+      const column = columns[colOffset] || { key: `col${colOffset + 1}` };
       const cellValue = buildCellValue($cell, $);
       values[column.key] = normalizeValue(cellValue);
       rawCells.push({
@@ -457,6 +497,7 @@ function extractTableData(table, $, fallbackId, nextId) {
         text: normalizeTextValue($cell.text()),
         value: cellValue,
       });
+      colOffset += colspan;
     });
 
     rawRows.push({
@@ -740,6 +781,7 @@ function walkDomNode(node, $, nextId) {
 }
 
 function buildDocument(contentRoot, $, title = "") {
+  contentRoot.find("script, style, noscript").remove();
   const nextId = createIdGenerator("erp");
   const children = [];
 

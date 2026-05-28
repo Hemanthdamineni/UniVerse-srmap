@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const cheerio = require("cheerio");
 const { chromium, request } = require("playwright");
 const { parseHtmlContent } = require("./htmlParser");
@@ -14,6 +16,12 @@ const {
   createLoginAttemptId,
   createLoginAttemptTrace,
 } = require("./loginDiagnostics");
+
+let _captureDir = null;
+
+function setCaptureDir(dir) {
+  _captureDir = dir;
+}
 
 const ERP_SESSION_EXPIRED_HTML_PATTERNS = [
   /studentloginpage/i,
@@ -420,10 +428,12 @@ function buildLoginPayload({ username, password, captcha, loginBootstrap }) {
     return String(inputFieldsById[raw]?.name || raw).trim();
   }
 
+  // 1. Hidden fields first (original values)
   for (const [name, value] of Object.entries(hiddenFields)) {
     payload.append(name, String(value ?? ""));
   }
 
+  // 2. Dynamic credential assignments (obfuscated format support)
   const credentialAssignments = loginBootstrap?.credentialAssignments || {};
   if (credentialAssignments.username?.targetFieldId) {
     payload.set(
@@ -438,20 +448,45 @@ function buildLoginPayload({ username, password, captcha, loginBootstrap }) {
     );
   }
 
+  // 3. Static assignments (e.g. anti-CSRF tokens)
   for (const [fieldId, value] of Object.entries(loginBootstrap?.staticAssignments || {})) {
     payload.set(resolveSubmitFieldName(fieldId), String(value ?? ""));
   }
 
+  // 4. Source visible fields (when detected by JS parser)
   if (loginBootstrap?.sourceFieldIds?.username) {
     payload.set(resolveSubmitFieldName(loginBootstrap.sourceFieldIds.username), String(username));
   }
   if (loginBootstrap?.sourceFieldIds?.password) {
     payload.set(resolveSubmitFieldName(loginBootstrap.sourceFieldIds.password), String(password));
   }
+
+  // 5. Hardcoded hidden-target fallback (common across all ERP form versions)
   payload.set("txtUserName", String(username));
   payload.set("txtAuthKey", String(password));
+
+  // 6. Captcha fields
   payload.set(loginBootstrap?.captchaFieldName || "ccode", String(captcha));
   payload.set("ccode", String(captcha));
+
+  // 7. Ensure EVERY input field from the form is present in the payload.
+  //    The ERP may reject the request if expected fields are missing, even when
+  //    the JS parser failed to detect them (e.g. simplified form without obfuscation).
+  //    Visible password fields get the mangled value the ERP's own JS produces.
+  for (const [id, field] of Object.entries(inputFieldsById)) {
+    const fieldName = String(field.name || "").trim();
+    if (!fieldName) continue;
+    if (payload.has(fieldName)) continue;
+
+    if (field.type === "password") {
+      // The ERP's JS sets the visible password field to "......." before submit
+      payload.set(fieldName, ".......");
+    } else if (hiddenFields[fieldName] !== undefined) {
+      payload.set(fieldName, String(hiddenFields[fieldName] ?? ""));
+    } else {
+      payload.set(fieldName, "");
+    }
+  }
 
   return payload;
 }
@@ -1612,7 +1647,7 @@ async function loginWithCaptcha(
   throw combined;
 }
 
-async function callEndpointViaApi(api, endpoint, menuItem = null, variables = null) {
+async function callEndpointViaApi(api, endpoint, menuItem = null, variables = null, bodyOverride = null) {
   if (!endpoint || !endpoint.url) {
     return { error: "Endpoint mapping missing", title: "", tables: [], text: "" };
   }
@@ -1631,13 +1666,27 @@ async function callEndpointViaApi(api, endpoint, menuItem = null, variables = nu
   const formParams = buildEndpointRequest(endpoint, variables);
 
   let response;
-  if (method === "GET") {
-    response = await api.get(url, { params: formParams });
+  let body;
+
+  if (bodyOverride) {
+    body = bodyOverride;
   } else {
-    response = await api.post(url, { form: formParams });
+    if (method === "GET") {
+      response = await api.get(url, { params: formParams });
+    } else {
+      response = await api.post(url, { form: formParams });
+    }
+    body = await response.text();
+    if (_captureDir && menuItem?.dropdown) {
+      const encD = (menuItem.dropdown || "").replace(/[/\\|]/g, "_");
+      const encS = (menuItem.subitem || "").replace(/[/\\|]/g, "_");
+      const safeKey = `${encD}|${encS}`;
+      const rawDir = path.join(_captureDir, "raw");
+      if (!fs.existsSync(rawDir)) fs.mkdirSync(rawDir, { recursive: true });
+      fs.writeFileSync(path.join(rawDir, `${safeKey}.html`), body, "utf8");
+    }
   }
 
-  const body = await response.text();
   const parsed = parseHtmlContent(body);
   if (isErpSessionExpiredResponse(body, parsed)) {
     throw makeSessionExpiredError();
@@ -1650,7 +1699,7 @@ async function callEndpointViaApi(api, endpoint, menuItem = null, variables = nu
 
   return {
     ...normalized.payload,
-    status: response.status(),
+    status: bodyOverride ? 200 : response.status(),
     rawHtml: body,
     endpoint: {
       method,
@@ -1767,6 +1816,7 @@ module.exports = {
   classifyLoginResponse,
   isErpSessionExpiredResponse,
   makeSessionExpiredError,
+  setCaptureDir,
   redactSensitiveText: require("./loginDiagnostics").redactSensitiveText,
   sanitizeArtifactPayload: require("./loginDiagnostics").sanitizeArtifactPayload,
 };

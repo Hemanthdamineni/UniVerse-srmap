@@ -28,6 +28,19 @@ function extractStudentId(profileData) {
   return null;
 }
 
+function resolveLoadDetailsEndpoint(discoveryRepository, target) {
+  const loadDetailsId = target?.loadDetailsId;
+  if (loadDetailsId === undefined || loadDetailsId === null || loadDetailsId === "") {
+    return null;
+  }
+
+  const map = discoveryRepository?.raw?.functionMappings?.funLoadDetailsById;
+  if (!map || typeof map !== "object") return null;
+
+  const endpoint = map[String(loadDetailsId)];
+  return endpoint && typeof endpoint === "object" ? endpoint : null;
+}
+
 async function mapWithConcurrency(items, limit, worker) {
   const normalizedLimit = Math.max(1, Math.min(Number(limit) || 1, items.length || 1));
   const results = new Array(items.length);
@@ -47,13 +60,21 @@ async function mapWithConcurrency(items, limit, worker) {
 }
 
 class ErpLiveService {
-  constructor({ sessionStore, discoveryRepository, scrapeTargets }) {
+  constructor({ sessionStore, discoveryRepository, scrapeTargets, erpDumpService }) {
     this.sessionStore = sessionStore;
     this.discoveryRepository = discoveryRepository;
     this.scrapeTargets = scrapeTargets;
+    this.erpDumpService = erpDumpService || null;
   }
 
   async fetchProfile(sessionId) {
+    if (this.erpDumpService?.getProfile()) {
+      const profileData = this.erpDumpService.getProfile();
+      const session = await this.sessionStore.getOrThrow(sessionId);
+      await this.sessionStore.update(sessionId, { profileData });
+      return profileData;
+    }
+
     const session = await this.sessionStore.getOrThrow(sessionId);
     const api = await createApiContext(session.storageState);
 
@@ -102,7 +123,9 @@ class ErpLiveService {
     try {
       const groupedResult = {};
       const resolvedTargets = targets.map((target) => {
-        const endpoint = this.discoveryRepository.resolveEndpoint(target.dropdown, target.subitem);
+        const endpoint =
+          resolveLoadDetailsEndpoint(this.discoveryRepository, target) ||
+          this.discoveryRepository.resolveEndpoint(target.dropdown, target.subitem);
         if (!endpoint) {
           const error = new Error(
             `No endpoint mapping for ${target.dropdown} -> ${target.subitem || "(empty)"}`
@@ -122,8 +145,13 @@ class ErpLiveService {
       const resolvedPayloads = await mapWithConcurrency(
         resolvedTargets,
         Math.min(PER_PAGE_TARGET_CONCURRENCY, resolvedTargets.length || 1),
-        async ({ target, endpoint }) =>
-          callEndpointViaApi(api, endpoint, target, variables)
+        async ({ target, endpoint }) => {
+          if (this.erpDumpService?.hasRawHtml(target.dropdown, target.subitem)) {
+            const rawHtml = this.erpDumpService.getRawHtml(target.dropdown, target.subitem);
+            return callEndpointViaApi(api, endpoint, target, variables, rawHtml);
+          }
+          return callEndpointViaApi(api, endpoint, target, variables);
+        }
       );
 
       resolvedTargets.forEach(({ target, key }, index) => {
@@ -171,14 +199,23 @@ class ErpLiveService {
 
     const api = await createApiContext(session.storageState);
     try {
+      const semesterKey = `Semester ${semester}`;
+      let bodyOverride = null;
+      if (this.erpDumpService?.hasRawHtml("Examination", semesterKey)) {
+        bodyOverride = this.erpDumpService.getRawHtml("Examination", semesterKey);
+      } else if (this.erpDumpService?.hasRawHtml("Examination", "Earlier Internal Marks")) {
+        bodyOverride = this.erpDumpService.getRawHtml("Examination", "Earlier Internal Marks");
+      }
+
       const parsed = await callEndpointViaApi(
         api,
         endpoint,
         {
           dropdown: "Examination",
-          subitem: `Semester ${semester}`,
+          subitem: semesterKey,
         },
-        variables
+        variables,
+        bodyOverride
       );
 
       const nextStorageState = await api.storageState();
@@ -201,13 +238,20 @@ class ErpLiveService {
 
     const api = await createApiContext(session.storageState);
     try {
+      let bodyOverride = null;
+      if (this.erpDumpService?.hasRawHtml("Examination", "Exam Mark Details")) {
+        bodyOverride = this.erpDumpService.getRawHtml("Examination", "Exam Mark Details");
+      }
+
       const parsed = await callEndpointViaApi(
         api,
         endpoint,
         {
           dropdown: "Academic",
           subitem: "CGPA Summary",
-        }
+        },
+        null,
+        bodyOverride
       );
 
       const nextStorageState = await api.storageState();
