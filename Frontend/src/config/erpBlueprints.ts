@@ -14,6 +14,12 @@ export type PageRenderer =
   | "results-earlier"
   | "finance-dues"
   | "finance-paid"
+  | "bank-details"
+  | "room-details"
+  | "sap-scholarships"
+  | "faqs"
+  | "refund-change"
+  | "document"
   | "profile"
   | "announcements"
   | "generic";
@@ -24,6 +30,7 @@ interface PageBlueprintBase {
   fetchKeys: string[];
   domain: Domain;
   renderer: PageRenderer;
+  transform?: string;
   loadingMessage?: string;
   placeholderReason?: string;
   includeSessionProfile?: boolean;
@@ -97,6 +104,14 @@ export interface NavGroupItem {
 }
 
 export type NavItem = NavLinkItem | NavGroupItem;
+
+/** Routes that stay in PAGE_BLUEPRINTS but are omitted from sidebar + command palette. */
+export const NAV_HIDDEN_ROUTES = new Set<string>([
+  "/exams/essentials",
+  "/transport-hostel/outing-maintenance",
+  "/registration/registration-tracker",
+  "/registration/events-registration",
+]);
 
 export interface NavSection {
   section: string;
@@ -280,7 +295,6 @@ export const MAIN_NAV: NavSection[] = [
         children: [
           { type: "link", label: "Current Semester Results", route: "/exams/current-semester-results", domain: "erp", access: "B" },
           { type: "link", label: "Earlier Semester Results", route: "/exams/earlier-semester-results", domain: "erp", access: "B" },
-          { type: "link", label: "Exam Essentials", route: "/exams/essentials", domain: "erp", access: "B" },
         ],
       },
       {
@@ -291,36 +305,41 @@ export const MAIN_NAV: NavSection[] = [
         children: [
           { type: "link", label: "Fees Dues", route: "/finance/fee-dues", domain: "erp", access: "B" },
           { type: "link", label: "Fees Paid", route: "/finance/fee-paid", domain: "erp", access: "B" },
-          { type: "link", label: "Bank Details", route: "/finance/bank-details", domain: "erp", access: "B" },
         ],
       },
+
       {
         type: "group",
-        label: "Transport & Hostel",
-        icon: "/src/assets/Icons/Library.png",
-        domain: "campus",
-        children: [
-          { type: "link", label: "Rooms Details", route: "/transport-hostel/room-details", domain: "campus", access: "B" },
-          { type: "link", label: "Routes Details", route: "/transport-hostel/route-details", domain: "campus", access: "B" },
-          { type: "link", label: "FAQs", route: "/transport-hostel/faqs", domain: "campus", access: "B" },
-          { type: "link", label: "Refund & Change Requests", route: "/transport-hostel/refund-change-requests", domain: "campus", access: "A" },
-          { type: "link", label: "Outing & Maintenance", route: "/transport-hostel/outing-maintenance", domain: "campus", access: "A" },
-        ],
-      },
-      {
-        type: "group",
-        label: "Registration",
-        icon: "/src/assets/Icons/Menu-icon.png",
+        label: "Feedback",
+        icon: "/src/assets/Icons/NotificationIcon.png",
         domain: "mixed",
         children: [
-          { type: "link", label: "Course Registration", route: "/registration/course-registration", domain: "erp", access: "A" },
-          { type: "link", label: "Minor / OE Registration", route: "/registration/minor-oe-registration", domain: "erp", access: "A" },
-          { type: "link", label: "Events Registration", route: "/registration/events-registration", domain: "campus", access: "A" },
-          { type: "link", label: "Exam Registration", route: "/registration/exam-registration", domain: "erp", access: "A" },
-          { type: "link", label: "Hostel Registration", route: "/registration/hostel-registration", domain: "campus", access: "A" },
-          { type: "link", label: "Transport Registration", route: "/registration/transport-registration", domain: "campus", access: "A" },
-          { type: "link", label: "SAP Registration", route: "/registration/sap-registration", domain: "erp", access: "A" },
-          { type: "link", label: "Registration Tracker", route: "/registration/registration-tracker", domain: "erp", access: "A" },
+          { type: "link", label: "Course Feedback", route: "/feedback/course-feedback", domain: "erp", access: "A" },
+          { type: "link", label: "Events Feedback", route: "/feedback/events-feedback", domain: "campus", access: "A" },
+          { type: "link", label: "Hostel & Mess Feedback", route: "/feedback/hostel-mess-feedback", domain: "campus", access: "A" },
+          { type: "link", label: "Transport Feedback", route: "/feedback/transport-feedback", domain: "campus", access: "A" },
+        ],
+      },
+      {
+        type: "group",
+        label: "Academic Tracker",
+        icon: "/src/assets/Icons/Placements.png",
+        domain: "lms",
+        children: [
+          { type: "link", label: "Progress Overview", route: "/academic-tracker/progress-overview", domain: "lms", access: "B" },
+          { type: "link", label: "Academic Insights", route: "/academic-tracker/academic-insights", domain: "lms", access: "B" },
+          { type: "link", label: "Unified Insights", route: "/academic-tracker/unified-insights", domain: "lms", access: "B" },
+        ],
+      },
+      {
+        type: "group",
+        label: "Helpdesk",
+        icon: "/src/assets/Icons/SearchIcon.png",
+        domain: "campus",
+        children: [
+          { type: "link", label: "Raise a Ticket", route: "/helpdesk/raise-ticket", domain: "campus", access: "A" },
+          { type: "link", label: "FAQs", route: "/helpdesk/faqs", domain: "campus", access: "B" },
+          { type: "link", label: "Track & Escalate", route: "/helpdesk/track-escalate", domain: "campus", access: "A" },
         ],
       },
     ],
@@ -358,34 +377,6 @@ export const MAIN_NAV: NavSection[] = [
           { type: "link", label: "Create Event", route: "/events/create", domain: "campus", access: "A" },
           { type: "link", label: "My Created Events", route: "/events/my-created", domain: "campus", access: "A" },
           { type: "link", label: "Event Attendance", route: "/events/attendance", domain: "erp", access: "A" },
-        ],
-      },
-    ],
-  },
-  {
-    section: "CAMPUS SERVICES",
-    icon: "/src/assets/Icons/Events.png",
-    items: [
-      {
-        type: "group",
-        label: "Academic Tracker",
-        icon: "/src/assets/Icons/Placements.png",
-        domain: "lms",
-        children: [
-          { type: "link", label: "Progress Overview", route: "/academic-tracker/progress-overview", domain: "lms", access: "B" },
-          { type: "link", label: "Academic Insights", route: "/academic-tracker/academic-insights", domain: "lms", access: "B" },
-        ],
-      },
-      {
-        type: "group",
-        label: "Feedback",
-        icon: "/src/assets/Icons/NotificationIcon.png",
-        domain: "mixed",
-        children: [
-          { type: "link", label: "Course Feedback", route: "/feedback/course-feedback", domain: "erp", access: "A" },
-          { type: "link", label: "Events Feedback", route: "/feedback/events-feedback", domain: "campus", access: "A" },
-          { type: "link", label: "Hostel & Mess Feedback", route: "/feedback/hostel-mess-feedback", domain: "campus", access: "A" },
-          { type: "link", label: "Transport Feedback", route: "/feedback/transport-feedback", domain: "campus", access: "A" },
         ],
       },
     ],
@@ -490,23 +481,6 @@ export const MAIN_NAV: NavSection[] = [
       },
     ],
   },
-  {
-    section: "SUPPORT",
-    icon: "/src/assets/Icons/SearchIcon.png",
-    items: [
-      {
-        type: "group",
-        label: "Helpdesk",
-        icon: "/src/assets/Icons/SearchIcon.png",
-        domain: "campus",
-        children: [
-          { type: "link", label: "Raise a Ticket", route: "/helpdesk/raise-ticket", domain: "campus", access: "A" },
-          { type: "link", label: "FAQs", route: "/helpdesk/faqs", domain: "campus", access: "B" },
-          { type: "link", label: "Track & Escalate", route: "/helpdesk/track-escalate", domain: "campus", access: "A" },
-        ],
-      },
-    ],
-  },
 ];
 
 export const BOTTOM_NAV: SidebarLeafItem[] = [
@@ -549,6 +523,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
+    transform: "timetable",
     renderer: "timetable",
     loadingMessage: "Loading time table...",
   },
@@ -583,7 +558,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "sap-scholarships",
     loadingMessage: "Loading SAP and scholarship details...",
   },
 
@@ -655,7 +630,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "bank-details",
     loadingMessage: "Loading bank details...",
   },
 
@@ -666,7 +641,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "room-details",
     loadingMessage: "Loading room details...",
   },
   "/transport-hostel/route-details": {
@@ -685,7 +660,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "faqs",
     loadingMessage: "Loading FAQs...",
   },
   "/transport-hostel/refund-change-requests": {
@@ -695,7 +670,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "refund-change",
     loadingMessage: "Loading refund and change requests...",
   },
   "/transport-hostel/outing-maintenance": {
@@ -715,7 +690,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading course registration...",
   },
   "/registration/minor-oe-registration": {
@@ -725,16 +700,16 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading minor/OE registration...",
   },
   "/registration/events-registration": {
     route: "/registration/events-registration",
     heading: "Events Registration",
-    fetchKeys: ["registration/events-registration"],
+    fetchKeys: [],
     domain: "campus",
-    sourceMode: "external",
-    integrationState: "summary",
+    sourceMode: "internal",
+    integrationState: "native",
     renderer: "generic",
     loadingMessage: "Loading events registration...",
   },
@@ -745,7 +720,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading exam registration...",
   },
   "/registration/hostel-registration": {
@@ -755,7 +730,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading hostel registration...",
   },
   "/registration/transport-registration": {
@@ -765,17 +740,17 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading transport registration...",
   },
   "/registration/sap-registration": {
     route: "/registration/sap-registration",
     heading: "SAP Registration",
-    fetchKeys: ["sap/sap-process", "sap/withdraw"],
+    fetchKeys: ["sap/sap-process"],
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading SAP registration...",
   },
   "/registration/registration-tracker": {
@@ -1080,6 +1055,16 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     renderer: "generic",
     loadingMessage: "Loading academic insights...",
   },
+  "/academic-tracker/unified-insights": {
+    route: "/academic-tracker/unified-insights",
+    heading: "Unified Insights",
+    fetchKeys: ["academic-tracker/unified-insights"],
+    domain: "lms",
+    sourceMode: "internal",
+    integrationState: "native",
+    renderer: "generic",
+    loadingMessage: "Loading unified insights...",
+  },
 
   "/career": {
     route: "/career",
@@ -1250,7 +1235,7 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "erp",
     sourceMode: "erp",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "document",
     loadingMessage: "Loading settings...",
   },
   "/profile": {
@@ -1283,6 +1268,26 @@ export const PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     integrationState: "native",
     renderer: "generic",
     loadingMessage: "Loading content management...",
+  },
+  "/admin/campus-feedback": {
+    route: "/admin/campus-feedback",
+    heading: "Campus Feedback Moderation",
+    fetchKeys: [],
+    domain: "admin",
+    sourceMode: "internal",
+    integrationState: "native",
+    renderer: "generic",
+    loadingMessage: "Loading campus feedback...",
+  },
+  "/admin/lms-moderation": {
+    route: "/admin/lms-moderation",
+    heading: "LMS Moderation",
+    fetchKeys: [],
+    domain: "admin",
+    sourceMode: "internal",
+    integrationState: "native",
+    renderer: "generic",
+    loadingMessage: "Loading LMS moderation...",
   },
   "/admin/system-controls": {
     route: "/admin/system-controls",

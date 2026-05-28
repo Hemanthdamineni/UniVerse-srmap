@@ -1,5 +1,14 @@
 import { matchPath } from "react-router-dom";
-import { BOTTOM_NAV, MAIN_NAV, PAGE_BLUEPRINTS, type Domain, type NavItem, type NavSection, type SidebarItem } from "./erpBlueprints";
+import {
+  BOTTOM_NAV,
+  MAIN_NAV,
+  NAV_HIDDEN_ROUTES,
+  PAGE_BLUEPRINTS,
+  type Domain,
+  type NavItem,
+  type NavSection,
+  type SidebarItem,
+} from "./erpBlueprints";
 import { getNavigationExtensions } from "./navigationExtensions";
 
 export type RouteCatalogEntry = {
@@ -28,6 +37,8 @@ export const ADMIN_NAV_SECTION: NavSection = {
         { type: "link", label: "Events Management", route: "/admin/events-management", domain: "admin", access: "B" },
         { type: "link", label: "Event Approvals", route: "/admin/event-approvals", domain: "admin", access: "B" },
         { type: "link", label: "Content Management", route: "/admin/content-management", domain: "admin", access: "B" },
+        { type: "link", label: "Campus Feedback", route: "/admin/campus-feedback", domain: "admin", access: "B" },
+        { type: "link", label: "LMS Moderation", route: "/admin/lms-moderation", domain: "admin", access: "B" },
         { type: "link", label: "Certificate Templates", route: "/admin/certificate-templates", domain: "admin", access: "B" },
         { type: "link", label: "Department Performance", route: "/admin/department-performance", domain: "admin", access: "B" },
         { type: "link", label: "Helpdesk Tickets", route: "/admin/helpdesk-tickets", domain: "admin", access: "B" },
@@ -55,6 +66,7 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
   { route: "/resources/browse", label: "Browse catalog", group: "Learning Management", domain: "lms" },
   { route: "/resources/explore", label: "Explore", group: "Learning Management", domain: "lms" },
   { route: "/resources/add", label: "Contribute resource", group: "Learning Management", domain: "lms" },
+  { route: "/resources/contributors/:userId", label: "Publisher profile", group: "Learning Management", domain: "lms" },
   { route: "/resources/guides", label: "Guides", group: "Learning Management", domain: "lms" },
   { route: "/resources/guides/new", label: "New guide", group: "Learning Management", domain: "lms" },
   { route: "/resources/roadmaps", label: "Roadmaps", group: "Learning Management", domain: "lms" },
@@ -169,6 +181,7 @@ export function getRouteCatalog(options: NavViewOptions = {}): RouteCatalogEntry
   }
 
   for (const bp of Object.values(PAGE_BLUEPRINTS)) {
+    if (NAV_HIDDEN_ROUTES.has(bp.route)) continue;
     if (map.has(bp.route)) continue;
     map.set(bp.route, {
       route: bp.route,
@@ -207,7 +220,7 @@ export function getRouteCatalog(options: NavViewOptions = {}): RouteCatalogEntry
     }
   }
 
-  const all = Array.from(map.values());
+  const all = Array.from(map.values()).filter((entry) => !NAV_HIDDEN_ROUTES.has(entry.route));
   if (options.isAdmin) {
     return all;
   }
@@ -243,7 +256,19 @@ export function resolveCatalogRoute(pathname: string, options: NavViewOptions = 
       if (!best || entry.route.length > best.route.length) best = entry;
     }
   }
-  return best;
+  if (best) return best;
+
+  const direct = PAGE_BLUEPRINTS[pathname as keyof typeof PAGE_BLUEPRINTS];
+  if (direct) {
+    return {
+      route: direct.route,
+      label: direct.heading,
+      group: "All pages",
+      domain: direct.domain,
+      keywords: `${direct.heading} ${direct.route}`,
+    };
+  }
+  return null;
 }
 
 export function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
