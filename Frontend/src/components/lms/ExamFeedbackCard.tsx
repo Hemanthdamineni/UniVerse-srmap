@@ -26,7 +26,7 @@ export default function ExamFeedbackCard({
         </button>
         <button
           className={`rounded-full px-4 py-2 text-sm font-semibold ${
-            value === false ? "bg-rose-600 text-white" : "bg-rose-100 text-rose-700"
+            value === false ? "bg-[var(--error)] text-white" : "bg-[color-mix(in_srgb,var(--error)_15%,transparent)] text-[var(--error)]"
           }`}
           onClick={() => onChange(false)}
         >
