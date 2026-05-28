@@ -10,21 +10,25 @@ import {
   applyToCareerOpportunity,
   createCareerOpportunity,
   deleteCareerOpportunity,
+  listPendingSubmissions,
   listCareerOpportunities,
+  reviewCareerSubmission,
   saveCareerOpportunity,
+  type CareerSubmission,
   type CareerOpportunity,
   unsaveCareerOpportunity,
   updateCareerOpportunity,
 } from "../../lib/careerApi";
 
-const ALL_TYPES = ["Internship", "Hackathon", "Research", "Workshop", "Scholarship"] as const;
+const ALL_TYPES = ["internship", "hackathon", "competition", "workshop", "job", "fellowship"] as const;
 
 const TYPE_COLORS: Record<string, string> = {
-  Internship: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
-  Hackathon: "border-purple-200 bg-purple-50 text-purple-800",
-  Research: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
-  Workshop: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
-  Scholarship: "border-rose-200 bg-rose-50 text-rose-800",
+  internship: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
+  hackathon: "border-purple-200 bg-purple-50 text-purple-800",
+  competition: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
+  workshop: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
+  job: "border-[color-mix(in_srgb,var(--comp-accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-text-primary)]",
+  fellowship: "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]",
 };
 
 export default function Opportunities({ adminMode = false }: { adminMode?: boolean }) {
@@ -32,11 +36,13 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
   const [opportunities, setOpportunities] = useState<CareerOpportunity[]>([]);
   const [filterType, setFilterType] = useState<string>("All");
   const [search, setSearch] = useState("");
+  const [submissions, setSubmissions] = useState<CareerSubmission[]>([]);
+  const [reviewReasons, setReviewReasons] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [form, setForm] = useState({
     title: "",
-    type: "Internship",
+    type: "internship",
     organization: "",
     deadline: "",
     description: "",
@@ -64,9 +70,26 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
     }
   }
 
+  async function loadSubmissions() {
+    if (!adminMode || !admin.unlocked) return;
+    try {
+      const data = await listPendingSubmissions(admin.adminHeaders);
+      setSubmissions(data.items || []);
+    } catch (error) {
+      setBanner({
+        tone: "warning",
+        text: error instanceof Error ? error.message : "Failed to load submission queue.",
+      });
+    }
+  }
+
   useEffect(() => {
     void loadOpportunities();
   }, [admin.adminHeaders, admin.unlocked, adminMode, filterType, search]);
+
+  useEffect(() => {
+    void loadSubmissions();
+  }, [admin.adminHeaders, admin.unlocked, adminMode]);
 
   const filtered = useMemo(() => opportunities, [opportunities]);
 
@@ -89,6 +112,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
     const payload = {
       title: form.title.trim(),
       type: form.type,
+      company: form.organization.trim(),
       organization: form.organization.trim(),
       deadline: form.deadline,
       description: form.description.trim(),
@@ -97,6 +121,8 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
         .map((item) => item.trim())
         .filter(Boolean),
       link: form.link.trim(),
+      applyUrl: form.link.trim(),
+      sourceUrl: form.link.trim(),
       status: form.status,
       featured: form.featured,
     };
@@ -116,7 +142,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
     setEditingId("");
     setForm({
       title: "",
-      type: "Internship",
+      type: "internship",
       organization: "",
       deadline: "",
       description: "",
@@ -125,6 +151,20 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
       status: "published",
       featured: false,
     });
+  }
+
+  async function decideSubmission(submission: CareerSubmission, decision: "approve" | "reject") {
+    const reason = reviewReasons[submission.id]?.trim();
+    if (!reason) {
+      setBanner({ tone: "warning", text: "Review reason is required before deciding a submission." });
+      return;
+    }
+    await runAction(
+      () => reviewCareerSubmission(submission.id, { decision, reason }, admin.adminHeaders),
+      decision === "approve" ? "Submission approved and published." : "Submission rejected with reason."
+    );
+    setReviewReasons((current) => ({ ...current, [submission.id]: "" }));
+    await loadSubmissions();
   }
 
   return (
@@ -266,7 +306,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                     setEditingId("");
                     setForm({
                       title: "",
-                      type: "Internship",
+                      type: "internship",
                       organization: "",
                       deadline: "",
                       description: "",
@@ -286,12 +326,79 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
         </SectionCard>
       ) : null}
 
+      {adminMode && admin.unlocked ? (
+        <SectionCard title="Submission Review Queue">
+          {submissions.length === 0 ? (
+            <p className="text-sm text-[var(--text-secondary)]">No pending submissions.</p>
+          ) : (
+            <div className="space-y-3">
+              {submissions.map((submission) => (
+                <article key={submission.id} className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4">
+                  <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{submission.title}</h3>
+                        <span className="rounded-full bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2 py-1 text-xs font-semibold text-[var(--warning)]">
+                          {submission.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        {submission.company || submission.organizer || "Unknown organization"} • {submission.type}
+                      </p>
+                      <p className="text-sm text-[var(--text-secondary)]">{submission.description}</p>
+                      <div className="flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+                        <span>Submitted by {submission.submittedBy}</span>
+                        <span>Deadline {submission.deadline || "Not set"}</span>
+                        <a className="text-[var(--info)]" href={submission.applyUrl} target="_blank" rel="noreferrer">
+                          Source
+                        </a>
+                      </div>
+                      {submission.audit?.[0] ? (
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          Latest audit: {submission.audit[0].action} by {submission.audit[0].actorId}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <textarea
+                        className="min-h-24 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                        value={reviewReasons[submission.id] || ""}
+                        onChange={(event) => setReviewReasons((current) => ({ ...current, [submission.id]: event.target.value }))}
+                        placeholder="Review reason"
+                        aria-label={`Review reason for ${submission.id}`}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          className="rounded-full bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white"
+                          onClick={() => void decideSubmission(submission, "approve")}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)]"
+                          onClick={() => void decideSubmission(submission, "reject")}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      ) : null}
+
       <SectionCard title="Browse Opportunities">
         <div className="grid gap-3 md:grid-cols-2">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by title, organization, or keyword..."
+            aria-label="Search opportunities"
             className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
           />
           <div className="flex flex-wrap gap-2 pt-1">
@@ -449,7 +556,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                           "Opportunity deleted."
                         )
                       }
-                      className="rounded-full border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                      className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                     >
                       Delete
                     </button>

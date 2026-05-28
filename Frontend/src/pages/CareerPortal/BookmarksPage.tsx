@@ -1,6 +1,6 @@
 // Bookmarks: PageHeader, SkeletonCard loading, EmptyState + tokens; listOpportunities filter unchanged.
 import React, { useEffect, useState } from "react";
-import { listOpportunities, type CareerOpportunity } from "../../lib/careerApi";
+import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { Bookmark } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -26,6 +26,19 @@ const BookmarksPage: React.FC = () => {
     void fetchBookmarks();
   }, []);
 
+  const handleBookmarkToggle = async (id: string) => {
+    // Optimistically remove it from the list
+    setBookmarks(prev => prev.filter(o => o.id !== id));
+    try {
+      await bookmarkOpportunity(id);
+    } catch (err) {
+      console.error(err);
+      // Re-fetch on failure to restore state
+      const data = await listOpportunities();
+      setBookmarks(data.items.filter((opp) => opp.isBookmarked));
+    }
+  };
+
   return (
     <PageContainer className="space-y-6">
       <PageHeader
@@ -50,7 +63,7 @@ const BookmarksPage: React.FC = () => {
       ) : bookmarks.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {bookmarks.map((opp) => (
-            <OpportunityCard key={opp.id} opportunity={opp} />
+            <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
           ))}
         </div>
       ) : (

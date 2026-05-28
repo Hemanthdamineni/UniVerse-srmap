@@ -25,7 +25,7 @@ const TYPE_COLORS: Record<string, string> = {
   HR: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
   "Group Discussion": "border-purple-200 bg-purple-50 text-purple-800",
   "Technical + HR": "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
-  "Coding Round": "border-rose-200 bg-rose-50 text-rose-800",
+  "Coding Round": "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]",
   "System Design": "border-cyan-200 bg-cyan-50 text-cyan-800",
 };
 
@@ -253,7 +253,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                           "Interview booking cancelled."
                         )
                       }
-                      className="rounded-full border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                      className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                     >
                       Cancel
                     </button>
@@ -324,7 +324,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
                             "Interview slot deleted."
                           )
                         }
-                        className="rounded-full border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                        className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                       >
                         Delete
                       </button>

@@ -370,7 +370,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                           "Alumni profile deleted."
                         )
                       }
-                      className="rounded-full border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                      className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                     >
                       Delete
                     </button>

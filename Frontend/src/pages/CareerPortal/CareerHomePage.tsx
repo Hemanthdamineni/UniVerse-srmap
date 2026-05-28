@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listOpportunities, getPersonalizedFeed, type CareerOpportunity } from '../../lib/careerApi';
+import { listOpportunities, getPersonalizedFeed, bookmarkOpportunity, type CareerOpportunity } from '../../lib/careerApi';
 import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
 import { PlusCircle, Search, Clock, Briefcase, GraduationCap, Code, Trophy, Sparkles } from 'lucide-react';
@@ -32,6 +32,28 @@ const CareerHomePage: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleBookmarkToggle = async (id: string) => {
+    // Optimistic update
+    const updateOpps = (prev: CareerOpportunity[]) => prev.map(o => o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o);
+    setLatestOpps(updateOpps);
+    setPersonalizedOpps(updateOpps);
+    setExpiringOpps(updateOpps);
+    
+    try {
+      const result = await bookmarkOpportunity(id);
+      const confirmOpps = (prev: CareerOpportunity[]) => prev.map(o => o.id === id ? { ...o, isBookmarked: result.bookmarked } : o);
+      setLatestOpps(confirmOpps);
+      setPersonalizedOpps(confirmOpps);
+      setExpiringOpps(confirmOpps);
+    } catch (err) {
+      console.error(err);
+      // Revert optimism
+      setLatestOpps(updateOpps);
+      setPersonalizedOpps(updateOpps);
+      setExpiringOpps(updateOpps);
+    }
+  };
+
   const typeFilters = [
     { label: 'All', icon: <Search className="w-4 h-4" />, type: '' },
     { label: 'Jobs', icon: <Briefcase className="w-4 h-4" />, type: 'job' },
@@ -47,11 +69,18 @@ const CareerHomePage: React.FC = () => {
           <h1 className="page-title">Career Portal</h1>
           <p className="body-text mt-1">Autonomous opportunity discovery and tracker</p>
         </div>
-        <Link to="/career/submit">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Submit Opportunity
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/academic-tracker/unified-insights">
+            <Button variant="outline">
+              <Sparkles className="mr-2 h-4 w-4" /> Unified Insights
+            </Button>
+          </Link>
+          <Link to="/career/submit">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Submit Opportunity
+            </Button>
+          </Link>
+        </div>
       </header>
 
       {/* Quick Filters */}
@@ -82,7 +111,7 @@ const CareerHomePage: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {personalizedOpps.map(opp => (
-              <OpportunityCard key={opp.id} opportunity={opp} />
+              <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
           </div>
         </section>
@@ -97,7 +126,7 @@ const CareerHomePage: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {expiringOpps.map(opp => (
-              <OpportunityCard key={opp.id} opportunity={opp} />
+              <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
           </div>
         </section>
@@ -121,7 +150,7 @@ const CareerHomePage: React.FC = () => {
         ) : latestOpps.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {latestOpps.map(opp => (
-              <OpportunityCard key={opp.id} opportunity={opp} />
+              <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
           </div>
         ) : (

@@ -194,7 +194,8 @@ const CareerProfilePage: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input 
-                  placeholder="e.g. Python, React, AWS" 
+                  placeholder="e.g. Python, React, AWS"
+                  aria-label="Skills"
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addSkill()}
@@ -247,7 +248,8 @@ const CareerProfilePage: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold flex items-center gap-2"><MapPin className="h-4 w-4" /> Preferred Locations</label>
                   <Input 
-                    placeholder="e.g. Remote, Bangalore, Mumbai" 
+                    placeholder="e.g. Remote, Bangalore, Mumbai"
+                    aria-label="Preferred Locations"
                     value={profile?.preferredLocations.join(', ')}
                     onChange={(e) => setProfile(prev => prev ? { ...prev, preferredLocations: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : null)}
                   />
@@ -258,7 +260,8 @@ const CareerProfilePage: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4" /> Min Stipend / Salary</label>
                   <Input 
-                    placeholder="e.g. ₹20,000/mo" 
+                    placeholder="e.g. ₹20,000/mo"
+                    aria-label="Minimum Stipend"
                     value={profile?.minStipend}
                     onChange={(e) => setProfile(prev => prev ? { ...prev, minStipend: e.target.value } : null)}
                   />
@@ -268,7 +271,8 @@ const CareerProfilePage: React.FC = () => {
                   <Input 
                     type="number" 
                     step="0.01" 
-                    placeholder="e.g. 8.5" 
+                    placeholder="e.g. 8.5"
+                    aria-label="CGPA"
                     value={profile?.cgpa || ''}
                     onChange={(e) => setProfile(prev => prev ? { ...prev, cgpa: parseFloat(e.target.value) } : null)}
                   />
@@ -287,7 +291,8 @@ const CareerProfilePage: React.FC = () => {
                   <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                   <Input 
                     className="pl-9" 
-                    placeholder="LinkedIn URL" 
+                    placeholder="LinkedIn URL"
+                    aria-label="LinkedIn URL"
                     value={profile?.linkedinUrl}
                     onChange={(e) => setProfile(prev => prev ? { ...prev, linkedinUrl: e.target.value } : null)}
                   />
@@ -296,7 +301,8 @@ const CareerProfilePage: React.FC = () => {
                   <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                   <Input 
                     className="pl-9" 
-                    placeholder="GitHub URL" 
+                    placeholder="GitHub URL"
+                    aria-label="GitHub URL"
                     value={profile?.githubUrl}
                     onChange={(e) => setProfile(prev => prev ? { ...prev, githubUrl: e.target.value } : null)}
                   />
@@ -306,7 +312,8 @@ const CareerProfilePage: React.FC = () => {
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--comp-text-muted)]" />
                 <Input 
                   className="pl-9" 
-                  placeholder="Portfolio / Website URL" 
+                  placeholder="Portfolio / Website URL"
+                  aria-label="Portfolio URL"
                   value={profile?.portfolioUrl}
                   onChange={(e) => setProfile(prev => prev ? { ...prev, portfolioUrl: e.target.value } : null)}
                 />

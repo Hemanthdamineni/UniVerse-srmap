@@ -184,7 +184,7 @@ export default function ResumeProfile() {
             <span className="font-medium text-[var(--comp-text-primary)]">Profile Strength</span>
             <span className="font-semibold text-[var(--comp-text-primary)]">{profile.completionPercent}%</span>
           </div>
-          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
             <div
               className={`h-full rounded-full transition-all ${
                 profile.completionPercent === 100
@@ -212,6 +212,7 @@ export default function ResumeProfile() {
                 void persist({ ...profile, headline: event.target.value }, "Headline updated.")
               }
               placeholder="e.g. Full-stack developer focused on ERP systems and ML"
+              aria-label="Headline"
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
             <textarea
@@ -222,6 +223,7 @@ export default function ResumeProfile() {
               }
               rows={5}
               placeholder="Write a short summary about your skills, interests, and preferred opportunities."
+              aria-label="Summary"
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
             <div className="grid gap-3 md:grid-cols-2">
@@ -234,6 +236,7 @@ export default function ResumeProfile() {
                   void persist({ ...profile, resumeFileName: event.target.value }, "Resume label updated.")
                 }
                 placeholder="Resume file name"
+                aria-label="Resume file name"
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
               <input
@@ -245,6 +248,7 @@ export default function ResumeProfile() {
                   void persist({ ...profile, resumeUrl: event.target.value }, "Resume link updated.")
                 }
                 placeholder="Resume URL"
+                aria-label="Resume URL"
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
@@ -283,11 +287,13 @@ export default function ResumeProfile() {
               value={newSkill}
               onChange={(event) => setNewSkill(event.target.value)}
               placeholder="Add a skill..."
+              aria-label="Add a skill"
               className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
             <select
               value={newSkillLevel}
               onChange={(event) => setNewSkillLevel(event.target.value)}
+              aria-label="Skill level"
               className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm outline-none"
             >
               {LEVELS.map((level) => (
@@ -353,7 +359,7 @@ export default function ResumeProfile() {
                         "Project removed."
                       )
                     }
-                    className="text-xs text-[var(--text-secondary)] hover:text-rose-600"
+                    className="text-xs text-[var(--text-secondary)] hover:text-[var(--error)]"
                   >
                     Remove
                   </button>
