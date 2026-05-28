@@ -6,6 +6,15 @@ const { DatabaseSync } = require("node:sqlite");
 const CONTENT_TYPES = new Set(["event", "learning_material", "announcement", "page"]);
 const RESOURCE_KINDS = new Set(["pdf", "ppt", "image", "video", "link", "doc"]);
 const LEARNING_MATERIAL_GROUPS = new Set(["pyq-mid", "pyq-sem", "slides", "notes", "links", "videos", "roadmaps"]);
+const CONTENT_LIFECYCLE_STATES = new Set(["draft", "review", "published", "unpublished", "archived", "deleted"]);
+const CONTENT_TRANSITIONS = {
+  submit_review: { from: ["draft", "unpublished"], to: "review", label: "Submit for review" },
+  publish: { from: ["draft", "review", "unpublished", "archived"], to: "published", label: "Publish" },
+  unpublish: { from: ["published", "review"], to: "unpublished", label: "Unpublish" },
+  archive: { from: ["published", "unpublished", "review", "draft"], to: "archived", label: "Archive" },
+  delete: { from: ["draft", "review", "published", "unpublished", "archived"], to: "deleted", label: "Delete" },
+  restore: { from: ["deleted", "archived"], to: "published", label: "Restore" },
+};
 const LEARNING_MATERIAL_GROUP_LABELS = {
   "pyq-mid": "PYQ Mid",
   "pyq-sem": "PYQ Semester",
@@ -88,6 +97,47 @@ function normalizeContentType(value) {
     throw error;
   }
   return type;
+}
+
+function normalizeLifecycleState(value, fallback = "published") {
+  const state = toSafeString(value || fallback).toLowerCase();
+  if (!CONTENT_LIFECYCLE_STATES.has(state)) {
+    const error = new Error("Invalid lifecycle state.");
+    error.status = 400;
+    throw error;
+  }
+  return state;
+}
+
+function normalizeActor(actor = {}) {
+  if (typeof actor === "string") {
+    return { actorId: toSafeString(actor) || "admin", actorRole: "admin" };
+  }
+  return {
+    actorId: toSafeString(actor.actorId || actor.userId || actor.registerNo) || "admin",
+    actorRole: toSafeString(actor.actorRole || actor.role) || "admin",
+  };
+}
+
+function stableJson(value) {
+  if (value === undefined) return null;
+  return JSON.stringify(value ?? null);
+}
+
+function calculateDiff(before, after) {
+  const previous = before || {};
+  const next = after || {};
+  const keys = Array.from(new Set([...Object.keys(previous), ...Object.keys(next)]));
+  const changes = {};
+  for (const key of keys) {
+    if (JSON.stringify(previous[key] ?? null) !== JSON.stringify(next[key] ?? null)) {
+      changes[key] = {
+        before: previous[key] ?? null,
+        after: next[key] ?? null,
+      };
+    }
+  }
+  return changes;
 }
 
 function normalizeMetadata(type, metadata) {
@@ -206,6 +256,10 @@ class ContentStore {
         end_date TEXT,
         location TEXT,
         metadata_json TEXT,
+        lifecycle_state TEXT DEFAULT 'published',
+        version INTEGER DEFAULT 1,
+        deleted_at TEXT,
+        last_actor TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -226,19 +280,46 @@ class ContentStore {
     `);
 
     this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_content_type ON content(type);
-      CREATE INDEX IF NOT EXISTS idx_content_category ON content(category);
-      CREATE INDEX IF NOT EXISTS idx_resources_content_id ON resources(content_id);
+      CREATE TABLE IF NOT EXISTS content_audit (
+        id TEXT PRIMARY KEY,
+        content_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        actor_id TEXT NOT NULL,
+        actor_role TEXT DEFAULT 'admin',
+        reason TEXT DEFAULT '',
+        before_json TEXT,
+        after_json TEXT,
+        diff_json TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE
+      )
     `);
 
+    // Run migrations before creating indexes
     const contentColumns = this.db.prepare("PRAGMA table_info(content)").all();
-    const hasMetadataColumn = contentColumns.some((column) => String(column?.name || "") === "metadata_json");
-    if (!hasMetadataColumn) {
-      this.db.exec("ALTER TABLE content ADD COLUMN metadata_json TEXT");
-    }
+    const columnNames = new Set(contentColumns.map((column) => String(column?.name || "")));
+    const addColumn = (name, ddl) => {
+      if (!columnNames.has(name)) this.db.exec(`ALTER TABLE content ADD COLUMN ${ddl}`);
+    };
+    addColumn("metadata_json", "metadata_json TEXT");
+    addColumn("lifecycle_state", "lifecycle_state TEXT DEFAULT 'published'");
+    addColumn("version", "version INTEGER DEFAULT 1");
+    addColumn("deleted_at", "deleted_at TEXT");
+    addColumn("last_actor", "last_actor TEXT");
+    this.db.exec("UPDATE content SET lifecycle_state = 'published' WHERE lifecycle_state IS NULL OR lifecycle_state = ''");
+    this.db.exec("UPDATE content SET version = 1 WHERE version IS NULL OR version < 1");
+
+    // Now create indexes after migrations
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_content_type ON content(type);
+      CREATE INDEX IF NOT EXISTS idx_content_category ON content(category);
+      CREATE INDEX IF NOT EXISTS idx_content_state ON content(lifecycle_state);
+      CREATE INDEX IF NOT EXISTS idx_content_audit_content_time ON content_audit(content_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_resources_content_id ON resources(content_id);
+    `);
   }
 
-  listContent({ type, category } = {}) {
+  listContent({ type, category, lifecycleState, includeAllStates = false, includeDeleted = false, page = 1, limit = 100 } = {}) {
     const params = [];
     const where = [];
 
@@ -252,7 +333,18 @@ class ContentStore {
       params.push(toSafeString(category));
     }
 
+    if (lifecycleState !== undefined && lifecycleState !== null && String(lifecycleState).trim() !== "") {
+      where.push("lifecycle_state = ?");
+      params.push(normalizeLifecycleState(lifecycleState));
+    } else if (!includeAllStates) {
+      where.push("lifecycle_state = 'published'");
+    } else if (!includeDeleted) {
+      where.push("lifecycle_state != 'deleted'");
+    }
+
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const lim = Math.max(1, Math.min(500, Number.parseInt(String(limit || ""), 10) || 100));
+    const pg = Math.max(1, Number.parseInt(String(page || ""), 10) || 1);
     const rows = this.db
       .prepare(
         `
@@ -266,6 +358,10 @@ class ContentStore {
             c.end_date AS endDate,
             c.location,
             c.metadata_json AS metadataJson,
+            c.lifecycle_state AS lifecycleState,
+            c.version,
+            c.deleted_at AS deletedAt,
+            c.last_actor AS lastActor,
             c.created_at AS createdAt,
             c.updated_at AS updatedAt,
             COUNT(r.id) AS resourceCount
@@ -274,23 +370,26 @@ class ContentStore {
           ${whereClause}
           GROUP BY c.id
           ORDER BY c.updated_at DESC, c.created_at DESC
+          LIMIT ? OFFSET ?
         `
       )
-      .all(...params);
+      .all(...params, lim, (pg - 1) * lim);
 
     return rows.map((row) => {
       const { metadataJson, ...rest } = row;
       return {
         ...rest,
         metadata: parseMetadataJson(metadataJson),
+        version: Number(row.version || 1),
         resourceCount: Number(row.resourceCount || 0),
       };
     });
   }
 
-  getContent(id) {
+  getContent(id, { includeDeleted = false } = {}) {
     const contentId = toSafeString(id);
     if (!contentId) return null;
+    const whereDeleted = includeDeleted ? "" : "AND lifecycle_state != 'deleted'";
     const row = this.db
       .prepare(
         `
@@ -304,10 +403,14 @@ class ContentStore {
             end_date AS endDate,
             location,
             metadata_json AS metadataJson,
+            lifecycle_state AS lifecycleState,
+            version,
+            deleted_at AS deletedAt,
+            last_actor AS lastActor,
             created_at AS createdAt,
             updated_at AS updatedAt
           FROM content
-          WHERE id = ?
+          WHERE id = ? ${whereDeleted}
         `
       )
       .get(contentId);
@@ -317,12 +420,75 @@ class ContentStore {
     return {
       ...rest,
       metadata: parseMetadataJson(metadataJson),
+      version: Number(row.version || 1),
     };
   }
 
-  createContent(payload) {
+  _recordAudit({ contentId, action, actor, reason = "", before = null, after = null }) {
+    const auditId = randomUUID();
+    const normalizedActor = normalizeActor(actor);
+    this.db
+      .prepare(
+        `
+          INSERT INTO content_audit (
+            id, content_id, action, actor_id, actor_role, reason,
+            before_json, after_json, diff_json, created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+      .run(
+        auditId,
+        contentId,
+        toSafeString(action),
+        normalizedActor.actorId,
+        normalizedActor.actorRole,
+        toSafeString(reason),
+        stableJson(before),
+        stableJson(after),
+        stableJson(calculateDiff(before, after)),
+        nowIso()
+      );
+    return auditId;
+  }
+
+  listContentHistory(id, { limit = 25 } = {}) {
+    const contentId = toSafeString(id);
+    if (!contentId) return [];
+    const lim = Math.max(1, Math.min(100, Number.parseInt(String(limit || ""), 10) || 25));
+    return this.db
+      .prepare(
+        `
+          SELECT id, content_id AS contentId, action, actor_id AS actorId, actor_role AS actorRole,
+                 reason, before_json AS beforeJson, after_json AS afterJson, diff_json AS diffJson, created_at AS createdAt
+          FROM content_audit
+          WHERE content_id = ?
+          ORDER BY created_at DESC
+          LIMIT ?
+        `
+      )
+      .all(contentId, lim)
+      .map((row) => ({
+        id: row.id,
+        contentId: row.contentId,
+        action: row.action,
+        actorId: row.actorId,
+        actorRole: row.actorRole,
+        reason: row.reason || "",
+        before: parseMetadataJson(row.beforeJson) || JSON.parse(row.beforeJson || "null"),
+        after: parseMetadataJson(row.afterJson) || JSON.parse(row.afterJson || "null"),
+        diff: parseMetadataJson(row.diffJson) || JSON.parse(row.diffJson || "{}"),
+        createdAt: row.createdAt,
+      }));
+  }
+
+  createContent(payload, options = {}) {
     const createdAt = nowIso();
     const type = normalizeContentType(payload?.type);
+    const lifecycleState = normalizeLifecycleState(
+      payload?.lifecycleState || payload?.lifecycle_state || (payload?.category === "resource-recommendation" ? "review" : "published")
+    );
+    const actor = normalizeActor(options.actor);
     const content = {
       id: randomUUID(),
       type,
@@ -333,6 +499,10 @@ class ContentStore {
       endDate: toNullableIsoDate(payload?.endDate, "endDate"),
       location: toSafeString(payload?.location),
       metadata: normalizeMetadata(type, payload?.metadata),
+      lifecycleState,
+      version: 1,
+      deletedAt: null,
+      lastActor: actor.actorId,
       createdAt,
       updatedAt: createdAt,
     };
@@ -347,9 +517,10 @@ class ContentStore {
       .prepare(
         `
           INSERT INTO content (
-            id, type, title, description, category, start_date, end_date, location, metadata_json, created_at, updated_at
+            id, type, title, description, category, start_date, end_date, location, metadata_json,
+            lifecycle_state, version, deleted_at, last_actor, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
       )
       .run(
@@ -362,6 +533,10 @@ class ContentStore {
         content.endDate,
         content.location || null,
         content.metadata ? JSON.stringify(content.metadata) : null,
+        content.lifecycleState,
+        content.version,
+        content.deletedAt,
+        content.lastActor,
         content.createdAt,
         content.updatedAt
       );
@@ -370,11 +545,20 @@ class ContentStore {
       this.replaceResources(content.id, payload.resources);
     }
 
-    return this.getContent(content.id);
+    const created = this.getContent(content.id, { includeDeleted: true });
+    this._recordAudit({
+      contentId: content.id,
+      action: options.action || "create",
+      actor,
+      reason: options.reason || "Content created",
+      before: null,
+      after: created,
+    });
+    return created;
   }
 
-  updateContent(id, payload) {
-    const existing = this.getContent(id);
+  updateContent(id, payload, options = {}) {
+    const existing = this.getContent(id, { includeDeleted: true });
     if (!existing) {
       const error = new Error("Content not found");
       error.status = 404;
@@ -382,6 +566,7 @@ class ContentStore {
     }
 
     const nextType = payload?.type !== undefined ? normalizeContentType(payload.type) : existing.type;
+    const actor = normalizeActor(options.actor);
     const next = {
       ...existing,
       type: nextType,
@@ -397,6 +582,13 @@ class ContentStore {
         payload && Object.prototype.hasOwnProperty.call(payload, "metadata")
           ? normalizeMetadata(nextType, payload.metadata)
           : (existing.metadata || null),
+      lifecycleState:
+        payload?.lifecycleState !== undefined
+          ? normalizeLifecycleState(payload.lifecycleState)
+          : existing.lifecycleState,
+      version: Number(existing.version || 1) + 1,
+      deletedAt: existing.deletedAt || null,
+      lastActor: actor.actorId,
       updatedAt: nowIso(),
     };
 
@@ -410,7 +602,9 @@ class ContentStore {
       .prepare(
         `
           UPDATE content
-          SET type = ?, title = ?, description = ?, category = ?, start_date = ?, end_date = ?, location = ?, metadata_json = ?, updated_at = ?
+          SET type = ?, title = ?, description = ?, category = ?, start_date = ?, end_date = ?,
+              location = ?, metadata_json = ?, lifecycle_state = ?, version = ?,
+              deleted_at = ?, last_actor = ?, updated_at = ?
           WHERE id = ?
         `
       )
@@ -423,6 +617,10 @@ class ContentStore {
         next.endDate,
         next.location || null,
         next.metadata ? JSON.stringify(next.metadata) : null,
+        next.lifecycleState,
+        next.version,
+        next.deletedAt,
+        next.lastActor,
         next.updatedAt,
         existing.id
       );
@@ -431,7 +629,16 @@ class ContentStore {
       this.replaceResources(existing.id, Array.isArray(payload.resources) ? payload.resources : []);
     }
 
-    return this.getContent(existing.id);
+    const updated = this.getContent(existing.id, { includeDeleted: true });
+    this._recordAudit({
+      contentId: existing.id,
+      action: options.action || "edit",
+      actor,
+      reason: options.reason || "Content updated",
+      before: existing,
+      after: updated,
+    });
+    return updated;
   }
 
   upsertContent(payload) {
@@ -449,6 +656,7 @@ class ContentStore {
 
     const createdAt = nowIso();
     const type = normalizeContentType(payload?.type);
+    const lifecycleState = normalizeLifecycleState(payload?.lifecycleState || payload?.lifecycle_state || "published");
     const content = {
       id,
       type,
@@ -459,6 +667,10 @@ class ContentStore {
       endDate: toNullableIsoDate(payload?.endDate, "endDate"),
       location: toSafeString(payload?.location),
       metadata: normalizeMetadata(type, payload?.metadata),
+      lifecycleState,
+      version: 1,
+      deletedAt: null,
+      lastActor: "system",
       createdAt,
       updatedAt: createdAt,
     };
@@ -473,9 +685,10 @@ class ContentStore {
       .prepare(
         `
           INSERT INTO content (
-            id, type, title, description, category, start_date, end_date, location, metadata_json, created_at, updated_at
+            id, type, title, description, category, start_date, end_date, location, metadata_json,
+            lifecycle_state, version, deleted_at, last_actor, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
       )
       .run(
@@ -488,6 +701,10 @@ class ContentStore {
         content.endDate,
         content.location || null,
         content.metadata ? JSON.stringify(content.metadata) : null,
+        content.lifecycleState,
+        content.version,
+        content.deletedAt,
+        content.lastActor,
         content.createdAt,
         content.updatedAt
       );
@@ -496,18 +713,187 @@ class ContentStore {
       this.replaceResources(content.id, payload.resources);
     }
 
-    return this.getContent(content.id);
+    const created = this.getContent(content.id, { includeDeleted: true });
+    this._recordAudit({
+      contentId: content.id,
+      action: "upsert_create",
+      actor: { actorId: "system", actorRole: "system" },
+      reason: "Content seeded or upserted",
+      before: null,
+      after: created,
+    });
+    return created;
   }
 
-  deleteContent(id) {
+  getWorkflowSpec() {
+    return {
+      states: Array.from(CONTENT_LIFECYCLE_STATES),
+      transitions: Object.entries(CONTENT_TRANSITIONS).map(([action, config]) => ({
+        action,
+        label: config.label,
+        from: config.from,
+        to: config.to,
+        requiresReason: ["archive", "delete", "restore", "unpublish"].includes(action),
+      })),
+      permissions: {
+        admin: ["create", "edit", ...Object.keys(CONTENT_TRANSITIONS), "bulk_preview", "bulk_execute", "history"],
+        student: ["recommend_resource"],
+      },
+      bulkSafety: {
+        previewRequired: true,
+        maxItems: 200,
+        rollback: "Bulk execution runs in one SQLite transaction after preview validation.",
+      },
+    };
+  }
+
+  _resolveRestoreState(contentId) {
+    const lastDelete = this.listContentHistory(contentId, { limit: 20 }).find((entry) =>
+      ["delete", "archive"].includes(entry.action)
+    );
+    const previousState = toSafeString(lastDelete?.before?.lifecycleState);
+    return CONTENT_LIFECYCLE_STATES.has(previousState) && !["deleted", "archived"].includes(previousState)
+      ? previousState
+      : "published";
+  }
+
+  _previewTransition(content, action) {
+    const transition = CONTENT_TRANSITIONS[action];
+    if (!transition) {
+      return { valid: false, reason: "Unsupported lifecycle action." };
+    }
+    if (!transition.from.includes(content.lifecycleState)) {
+      return {
+        valid: false,
+        reason: `${action} is not allowed from ${content.lifecycleState}.`,
+      };
+    }
+    return {
+      valid: true,
+      from: content.lifecycleState,
+      to: action === "restore" ? this._resolveRestoreState(content.id) : transition.to,
+      reason: "",
+    };
+  }
+
+  previewBulkLifecycle({ ids = [], action } = {}) {
+    const normalizedIds = Array.from(new Set((Array.isArray(ids) ? ids : []).map(toSafeString).filter(Boolean)));
+    if (!normalizedIds.length) {
+      const error = new Error("At least one content id is required.");
+      error.status = 400;
+      throw error;
+    }
+    if (normalizedIds.length > 200) {
+      const error = new Error("Bulk operations are limited to 200 items.");
+      error.status = 400;
+      throw error;
+    }
+
+    const items = normalizedIds.map((id) => {
+      const content = this.getContent(id, { includeDeleted: true });
+      if (!content) {
+        return { id, valid: false, reason: "Content not found." };
+      }
+      const preview = this._previewTransition(content, toSafeString(action));
+      return {
+        id,
+        title: content.title,
+        type: content.type,
+        currentState: content.lifecycleState,
+        nextState: preview.to || content.lifecycleState,
+        valid: preview.valid,
+        reason: preview.reason,
+      };
+    });
+
+    return {
+      action: toSafeString(action),
+      valid: items.every((item) => item.valid),
+      items,
+      invalidCount: items.filter((item) => !item.valid).length,
+    };
+  }
+
+  transitionContent(id, { action, reason = "" } = {}, actor = {}) {
     const contentId = toSafeString(id);
-    const result = this.db.prepare("DELETE FROM content WHERE id = ?").run(contentId);
-    if (!Number(result.changes || 0)) {
+    const existing = this.getContent(contentId, { includeDeleted: true });
+    if (!existing) {
       const error = new Error("Content not found");
       error.status = 404;
       throw error;
     }
-    return { deleted: true, id: contentId };
+    const normalizedAction = toSafeString(action).toLowerCase();
+    const preview = this._previewTransition(existing, normalizedAction);
+    if (!preview.valid) {
+      const error = new Error(preview.reason || "Invalid lifecycle transition.");
+      error.status = 400;
+      throw error;
+    }
+    const normalizedActor = normalizeActor(actor);
+    const nextState = preview.to;
+    const now = nowIso();
+    this.db
+      .prepare(
+        `
+          UPDATE content
+          SET lifecycle_state = ?, deleted_at = ?, version = ?, last_actor = ?, updated_at = ?
+          WHERE id = ?
+        `
+      )
+      .run(
+        nextState,
+        nextState === "deleted" ? now : null,
+        Number(existing.version || 1) + 1,
+        normalizedActor.actorId,
+        now,
+        existing.id
+      );
+    const updated = this.getContent(existing.id, { includeDeleted: true });
+    const auditId = this._recordAudit({
+      contentId: existing.id,
+      action: normalizedAction,
+      actor: normalizedActor,
+      reason: reason || `${CONTENT_TRANSITIONS[normalizedAction].label} content`,
+      before: existing,
+      after: updated,
+    });
+    return {
+      ...updated,
+      auditId,
+    };
+  }
+
+  bulkTransitionContent({ ids = [], action, reason = "" } = {}, actor = {}) {
+    const preview = this.previewBulkLifecycle({ ids, action });
+    if (!preview.valid) {
+      const error = new Error("Bulk preview has invalid items. Fix the selection before executing.");
+      error.status = 400;
+      error.preview = preview;
+      throw error;
+    }
+
+    const results = [];
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const item of preview.items) {
+        results.push(this.transitionContent(item.id, { action, reason }, actor));
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+
+    return {
+      action: toSafeString(action),
+      updated: results.length,
+      items: results,
+    };
+  }
+
+  deleteContent(id, actor = {}) {
+    const updated = this.transitionContent(id, { action: "delete", reason: "Soft delete requested" }, actor);
+    return { deleted: true, id: updated.id, lifecycleState: updated.lifecycleState, auditId: updated.auditId };
   }
 
   deleteContentIfExists(id) {
