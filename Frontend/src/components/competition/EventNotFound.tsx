@@ -13,7 +13,7 @@ interface EventNotFoundProps {
 export function EventNotFound({ eventId, message }: EventNotFoundProps) {
   return (
     <div
-      role="alert"
+      role="alert" aria-live="polite"
       aria-label="Event not found"
       style={{
         display: 'flex',

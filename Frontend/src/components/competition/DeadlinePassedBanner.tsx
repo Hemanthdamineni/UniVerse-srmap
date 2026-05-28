@@ -18,7 +18,7 @@ export function DeadlinePassedBanner({
 }: DeadlinePassedBannerProps) {
   return (
     <div
-      role="alert"
+      role="alert" aria-live="polite"
       style={{
         background: 'var(--status-live-bg)',
         border: '1px solid var(--status-live-border)',

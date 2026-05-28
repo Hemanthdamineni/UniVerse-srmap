@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { Award, BarChart3, CheckCircle2, Clock, Rocket } from 'lucide-react';
 
 interface NotificationItem {
   id: string;
@@ -20,12 +21,12 @@ interface NotificationItem {
   read: boolean;
 }
 
-const TYPE_ICON: Record<NotificationItem['type'], string> = {
-  shortlisted: '🏆',
-  'results-published': '📊',
-  'submission-confirmed': '✅',
-  'deadline-reminder': '⏰',
-  'round-opened': '🚀',
+const TYPE_ICON: Record<NotificationItem['type'], React.ReactNode> = {
+  shortlisted: <Award size={16} aria-hidden="true" />,
+  'results-published': <BarChart3 size={16} aria-hidden="true" />,
+  'submission-confirmed': <CheckCircle2 size={16} aria-hidden="true" />,
+  'deadline-reminder': <Clock size={16} aria-hidden="true" />,
+  'round-opened': <Rocket size={16} aria-hidden="true" />,
 };
 
 function getNotificationMessage(n: NotificationItem): string {
@@ -134,24 +135,7 @@ export function NotificationCenter(_props: NotificationToastProps) {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              background: 'var(--status-live-text)',
-              color: '#fff',
-              borderRadius: '50%',
-              width: 16,
-              height: 16,
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <span aria-hidden="true" className="notif-badge">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -207,7 +191,7 @@ export function NotificationCenter(_props: NotificationToastProps) {
                   alignItems: 'flex-start',
                 }}
               >
-                <span style={{ fontSize: '1rem', marginTop: 1 }} aria-hidden="true">
+                <span style={{ marginTop: 1 }}>
                   {TYPE_ICON[n.type]}
                 </span>
                 <div style={{ flex: 1 }}>

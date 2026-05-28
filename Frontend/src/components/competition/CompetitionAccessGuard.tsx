@@ -43,7 +43,7 @@ export function RequireCompetitionAccess({
       title="You do not have access to this workspace"
       subtitle="Organizer and judging tools are limited to event owners, assigned curators, judges, and the platform admin."
     >
-      <div className="competition-access-panel" role="alert">
+      <div className="competition-access-panel" role="alert" aria-live="polite">
         <ShieldAlert size={38} />
         <p>
           Current role: <strong>{userState?.role ?? "visitor"}</strong>
