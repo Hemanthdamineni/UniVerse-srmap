@@ -1,8 +1,22 @@
+"""
+Career scraper scheduler.
+
+Runs each scraper source with:
+  - Exponential backoff retry
+  - Per-source circuit breaker (from DB health table)
+  - Full isolation (one source failing never kills another)
+  - Structured logging with timing
+"""
+
+import asyncio
 import logging
 import time
-import schedule
-import asyncio
+import traceback
 from datetime import datetime
+from typing import Callable, Optional
+
+import schedule
+
 import config
 from db import CareerDB
 from scrapers.jobspy_scraper import run_jobspy
@@ -10,72 +24,219 @@ from scrapers.devfolio_scraper import run_devfolio
 from scrapers.unstop_scraper import run_unstop
 from scrapers.internshala_scraper import run_internshala
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger("Scheduler")
 
-def run_with_circuit_breaker(source: str, fn, db: CareerDB):
+import logging.handlers
+
+# ── Logging Setup ─────────────────────────────────────────────────────────────
+import os
+os.makedirs("logs", exist_ok=True)
+
+logger = logging.getLogger("Scheduler")
+logger.setLevel(getattr(logging, config.LOG_LEVEL, logging.INFO))
+
+# Add RotatingFileHandler to prevent unbounded log growth
+file_handler = logging.handlers.RotatingFileHandler(
+    "logs/scraper.log", maxBytes=10 * 1024 * 1024, backupCount=5
+)
+file_handler.setFormatter(logging.Formatter(config.LOG_FORMAT))
+
+# Add console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter(config.LOG_FORMAT))
+
+# Configure root logger
+logging.basicConfig(level=getattr(logging, config.LOG_LEVEL, logging.INFO), handlers=[file_handler, console_handler])
+
+
+# ── Retry with Exponential Backoff ────────────────────────────────────────────
+
+def _run_with_retry(
+    source: str,
+    fn: Callable,
+    db: CareerDB,
+    max_retries: int = config.MAX_RETRIES,
+) -> tuple[Optional[dict], Optional[Exception]]:
+    """Execute a scraper function with exponential backoff retries.
+
+    Returns (counts, None) on success, (None, exception) on total failure.
+    The caller decides what to do with total failure.
+    """
+    last_exc: Optional[Exception] = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            if asyncio.iscoroutinefunction(fn):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    # Guard async scrapers with a hard timeout
+                    counts = loop.run_until_complete(
+                        asyncio.wait_for(fn(db), timeout=config.SCRAPER_TIMEOUT_SECONDS)
+                    )
+                finally:
+                    loop.close()
+                    asyncio.set_event_loop(None)
+            else:
+                counts = fn(db)
+
+            if attempt > 1:
+                logger.info(f"[{source}] Succeeded on attempt {attempt}/{max_retries}")
+            return counts, None
+
+        except Exception as exc:
+            last_exc = exc
+            wait = config.RETRY_BACKOFF_BASE * (2 ** (attempt - 1))
+            if attempt < max_retries:
+                logger.warning(
+                    f"[{source}] Attempt {attempt}/{max_retries} failed: {exc}. "
+                    f"Retrying in {wait:.0f}s..."
+                )
+                time.sleep(wait)
+            else:
+                logger.error(
+                    f"[{source}] All {max_retries} attempts failed. Last error: {exc}"
+                )
+
+    return None, last_exc
+
+
+# ── Circuit Breaker + Driver ──────────────────────────────────────────────────
+
+def run_with_circuit_breaker(source: str, fn: Callable, db: CareerDB) -> None:
+    """Run a scraper with circuit breaker protection.
+
+    Checks DB health to see if source is blocked. If blocked, skip.
+    On total failure, updates health (incrementing consecutive fails).
+    On success, resets health.
+    """
     health = db.get_source_health(source)
-    
-    # Check if blocked
+
     if health.get("isBlocked"):
-        last_attempt = datetime.fromisoformat(health["lastAttempt"])
-        hours_since = (datetime.now() - last_attempt).total_seconds() / 3600
-        if hours_since < 24:
-            logger.warning(f"Source {source} is currently blocked. Skipping. (Blocked {hours_since:.1f}h ago)")
-            return
+        last_attempt = health.get("lastAttempt")
+        if last_attempt:
+            try:
+                last_dt = datetime.fromisoformat(last_attempt)
+                hours_since = (datetime.now() - last_dt).total_seconds() / 3600
+                if hours_since < config.CIRCUIT_BREAKER_COOLDOWN_HOURS:
+                    logger.warning(
+                        f"[{source}] Circuit breaker OPEN. "
+                        f"Blocked {hours_since:.1f}h ago. Skipping for now."
+                    )
+                    return
+                else:
+                    # Cooldown expired — reset block and try again
+                    logger.info(f"[{source}] Circuit breaker cooldown expired. Attempting recovery.")
+            except (ValueError, TypeError):
+                pass
 
     run_id = db.start_run(source)
     if not run_id:
+        logger.error(f"[{source}] Failed to register run in DB. Skipping.")
         return
 
-    try:
-        if asyncio.iscoroutinefunction(fn):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            counts = loop.run_until_complete(fn(db))
-            loop.close()
-        else:
-            counts = fn(db)
-            
-        db.complete_run(run_id, status="completed", counts=counts)
+    start_ts = time.monotonic()
+    logger.info(f"[{source}] ── Starting scraper run (run_id={run_id}) ──")
+
+    counts, exc = _run_with_retry(source, fn, db)
+
+    elapsed_ms = int((time.monotonic() - start_ts) * 1000)
+
+    if exc is not None:
+        # Total failure after all retries
+        logger.error(
+            f"[{source}] FAILED after all retries ({elapsed_ms}ms). "
+            f"Error: {exc}\n{traceback.format_exc()}"
+        )
+        db.complete_run(run_id, status="failed", error=str(exc), duration_ms=elapsed_ms)
+        db.update_source_health(source, success=False, notes=str(exc))
+    else:
+        counts = counts or {}
+        logger.info(
+            f"[{source}] ✓ Completed in {elapsed_ms}ms — "
+            f"new={counts.get('new', 0)}, "
+            f"updated={counts.get('updated', 0)}, "
+            f"skipped={counts.get('skipped', 0)}, "
+            f"errors={counts.get('errors', 0)}"
+        )
+        db.complete_run(run_id, status="completed", counts=counts, duration_ms=elapsed_ms)
         db.update_source_health(source, success=True)
-        logger.info(f"Successfully finished run for {source}")
-    except Exception as e:
-        logger.error(f"Error during run for {source}: {e}")
-        db.complete_run(run_id, status="failed", error=str(e))
-        db.update_source_health(source, success=False, notes=str(e))
 
-def job():
-    logger.info("--- Starting Scheduled Scraper Run ---")
+
+# ── Scheduled Job ─────────────────────────────────────────────────────────────
+
+def job() -> None:
+    """Run all scrapers, isolating failures per source."""
+    run_start = time.monotonic()
+    logger.info("=" * 60)
+    logger.info("SCRAPER PIPELINE: Starting scheduled run")
+    logger.info(f"  DB path: {config.DB_PATH}")
+    logger.info(f"  Timestamp: {datetime.now().isoformat()}")
+    logger.info("=" * 60)
+
     db = CareerDB()
-    
-    # Run scrapers
-    run_with_circuit_breaker("jobspy", run_jobspy, db)
-    run_with_circuit_breaker("devfolio", run_devfolio, db)
-    run_with_circuit_breaker("unstop", run_unstop, db)
-    run_with_circuit_breaker("internshala", run_internshala, db)
-    
-    # Expiry logic
-    logger.info("Running expiry logic...")
-    db.expire_old_opportunities()
-    
-    db.close()
-    logger.info("--- Scheduled Scraper Run Finished ---")
+    try:
+        sources = [
+            ("jobspy", run_jobspy),
+            ("devfolio", run_devfolio),
+            ("unstop", run_unstop),
+            ("internshala", run_internshala),
+        ]
 
-def start_scheduler():
-    logger.info(f"Starting scheduler. Runs every {config.RUN_INTERVAL_HOURS} hours.")
-    
-    # Run once immediately on start
+        for source_name, scraper_fn in sources:
+            try:
+                run_with_circuit_breaker(source_name, scraper_fn, db)
+            except Exception as e:
+                # Should never reach here (circuit breaker catches), but belt-and-suspenders
+                logger.critical(
+                    f"[{source_name}] Uncaught exception escaped circuit breaker: {e}",
+                    exc_info=True,
+                )
+
+        # Expiry pass
+        logger.info("Running opportunity expiry pass...")
+        expired = db.expire_old_opportunities()
+        logger.info(f"Expiry pass complete: {expired} opportunities deactivated")
+
+    finally:
+        db.close()
+
+    total_ms = int((time.monotonic() - run_start) * 1000)
+    logger.info("=" * 60)
+    logger.info(f"SCRAPER PIPELINE: Run complete in {total_ms}ms")
+    logger.info("=" * 60)
+
+
+# ── Scheduler Loop ────────────────────────────────────────────────────────────
+
+def start_scheduler() -> None:
+    """Start the scheduler loop. Runs job once immediately, then on interval."""
+    logger.info("=" * 60)
+    logger.info("SCRAPER SERVICE STARTING")
+    logger.info(f"  Run interval: every {config.RUN_INTERVAL_HOURS} hours")
+    logger.info(f"  Max retries per source: {config.MAX_RETRIES}")
+    logger.info(f"  Circuit breaker threshold: {config.CIRCUIT_BREAKER_THRESHOLD} consecutive fails")
+    logger.info(f"  DB: {config.DB_PATH}")
+    logger.info("=" * 60)
+
+    # Run immediately on startup
     job()
-    
+
+    # Schedule subsequent runs
     schedule.every(config.RUN_INTERVAL_HOURS).hours.do(job)
-    
+    logger.info(f"Next run scheduled in {config.RUN_INTERVAL_HOURS} hours")
+
     while True:
-        schedule.run_pending()
-        time.sleep(60)
+        try:
+            schedule.run_pending()
+            time.sleep(60)
+        except KeyboardInterrupt:
+            logger.info("Scheduler stopped by user (KeyboardInterrupt)")
+            break
+        except Exception as e:
+            logger.critical(f"Scheduler loop crashed unexpectedly: {e}", exc_info=True)
+            logger.info("Recovering scheduler loop in 30 seconds...")
+            time.sleep(30)
+
 
 if __name__ == "__main__":
     start_scheduler()
