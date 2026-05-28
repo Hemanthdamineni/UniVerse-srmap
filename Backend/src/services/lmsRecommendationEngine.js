@@ -12,8 +12,9 @@ class LmsRecommendationEngine {
     this.defaultWeights = normalizeWeights({
       subjectMatch: 0.25,
       typePreference: 0.15,
-      qualityScore: 0.2,
-      recency: 0.1,
+      qualityScore: 0.18,
+      engagementScore: 0.12,
+      recency: 0.08,
       effectivenessScore: 0.1,
       topicGapScore: 0.1,
       examProvenScore: 0.1,
@@ -36,11 +37,31 @@ class LmsRecommendationEngine {
         factors.subjectMatch * weights.subjectMatch +
         factors.typePreference * weights.typePreference +
         factors.qualityScore * weights.qualityScore +
+        factors.engagementScore * weights.engagementScore +
         factors.recency * weights.recency +
         factors.effectivenessScore * weights.effectivenessScore +
         factors.topicGapScore * weights.topicGapScore +
         factors.examProvenScore * weights.examProvenScore;
-      return { ...resource, recommendationScore: Number(score.toFixed(6)), _factors: factors };
+      return {
+        ...resource,
+        recommendationScore: Number(score.toFixed(6)),
+        confidence: Number(clamp(0.45 + score * 0.55, 0, 1).toFixed(3)),
+        reasons: this.buildReasons(factors),
+        inputsUsed: {
+          algorithmKey: "ranking-v2",
+          factors,
+          moderationState: Number(resource.moderationState || 0),
+          flagCount: Number(resource.flagCount || 0),
+          userInteraction: resource.userInteraction?.action || null,
+          publisherTrustScore: resource.publisher?.trustScore ?? null,
+        },
+        rankingPolicy: {
+          algorithmKey: "ranking-v2",
+          eligible: Boolean(resource.moderation?.recommendationEligible ?? true),
+          filters: ["not_deleted", "moderation_clear", "no_open_flags"],
+        },
+        _factors: factors,
+      };
     });
 
     const sorted = scored.sort((left, right) => right.recommendationScore - left.recommendationScore);
@@ -55,7 +76,7 @@ class LmsRecommendationEngine {
       await this.lmsStore.logShadowRanking({
         userId,
         resourceId: item.id,
-        algorithmKey: "ranking-v1",
+        algorithmKey: "ranking-v2",
         shadowScore: item.recommendationScore,
         displayedScore: item.recommendationScore,
       });
@@ -68,20 +89,52 @@ class LmsRecommendationEngine {
     const subjectWeights = ensureObject(parseJson(preferences?.subjectWeights, {}));
     const typeWeights = ensureObject(parseJson(preferences?.typeWeights, {}));
     const resourceTopics = Array.isArray(resource.topics) ? resource.topics : [];
-    const gapScores = resourceTopics.map((topicId) => 1 - Number(masteryMap[topicId] || 0));
+    const gapScores = resourceTopics.map((topic) => {
+      const topicId = typeof topic === "string" ? topic : topic?.id;
+      return 1 - Number(masteryMap[topicId] || 0);
+    });
     const avgGap = gapScores.length
       ? gapScores.reduce((sum, value) => sum + value, 0) / gapScores.length
       : 0.4;
+    const engagementRaw =
+      Math.log1p(Number(resource.upvotes || 0)) * 0.3 +
+      Math.log1p(Number(resource.bookmarkCount || 0)) * 0.25 +
+      Math.log1p(Number(resource.commentCount || 0)) * 0.2 +
+      Math.log1p(Number(resource.viewCount || 0)) * 0.15 +
+      Number(resource.publisher?.trustScore || 0) / 100 * 0.1;
 
     return {
       subjectMatch: clamp(Number(subjectWeights[resource.subjectCode] || (resource.userEnrolled ? 1 : 0.35)), 0, 1),
       typePreference: clamp(Number(typeWeights[resource.type] || 0.5), 0, 1),
       qualityScore: clamp(Number(resource.qualityScore || 0) / 10, 0, 1),
+      engagementScore: clamp(engagementRaw, 0, 1),
       recency: clamp(recencyScore(resource.uploadedAt), 0, 1),
       effectivenessScore: clamp(Number(resource.effectivenessScore || 0) / 5, 0, 1),
       topicGapScore: clamp(avgGap, 0, 1),
       examProvenScore: clamp(Number(resource.examProvenScore || 0) / 5, 0, 1),
     };
+  }
+
+  buildReasons(factors) {
+    const ranked = [
+      ["subjectMatch", factors.subjectMatch, "Matches your subject focus"],
+      ["typePreference", factors.typePreference, "Fits your resource format preference"],
+      ["qualityScore", factors.qualityScore, "Strong learner quality signals"],
+      ["engagementScore", factors.engagementScore, "High community engagement"],
+      ["effectivenessScore", factors.effectivenessScore, "Effective for practice outcomes"],
+      ["topicGapScore", factors.topicGapScore, "Targets topics with room to improve"],
+      ["examProvenScore", factors.examProvenScore, "Useful for exam preparation"],
+      ["recency", factors.recency, "Recently updated"],
+    ];
+    return ranked
+      .filter(([, value]) => Number(value) >= 0.45)
+      .sort((left, right) => Number(right[1]) - Number(left[1]))
+      .slice(0, 3)
+      .map(([code, value, label]) => ({
+        code,
+        label,
+        weight: Number(Number(value).toFixed(3)),
+      }));
   }
 
   async recordFeedback({ userId, resourceId, action }) {

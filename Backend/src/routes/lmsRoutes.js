@@ -85,7 +85,7 @@ async function renderGuidePdf(guide) {
     await page.setContent(
       `
         <html>
-          <body style="font-family: Arial, sans-serif; padding: 32px;">
+          <body style="font-family: 'Georgia', 'Times New Roman', serif; padding: 32px;">
             <h1 style="font-size: 28px; margin-bottom: 8px;">${guide.title}</h1>
             <p style="font-size: 14px; color: #555; margin-bottom: 24px;">${guide.description || ""}</p>
             ${sections}
@@ -171,15 +171,50 @@ function createLmsRoutes({
     router.get("/lms/tracker/overview", (req, res, next) =>
       createHandle(req, res, next, async () => {
         const sessionId = resolveSessionId(req);
-        return lmsTrackerService.getOverview({ sessionId });
+        return lmsTrackerService.getOverview({ sessionId, user: req.userContext });
       })
     );
 
     router.get("/lms/tracker/insights", (req, res, next) =>
       createHandle(req, res, next, async () => {
         const sessionId = resolveSessionId(req);
-        return lmsTrackerService.getInsights({ sessionId });
+        return lmsTrackerService.getInsights({ sessionId, user: req.userContext });
       })
+    );
+
+    router.get("/lms/tracker/unified-insights", (req, res, next) =>
+      createHandle(req, res, next, async () => {
+        const sessionId = resolveSessionId(req);
+        return lmsTrackerService.getUnifiedInsights({ sessionId, user: req.userContext });
+      })
+    );
+
+    router.get("/lms/tracker/history", (req, res, next) =>
+      createHandle(req, res, next, async () =>
+        lmsTrackerService.getHistory({
+          user: req.userContext,
+          snapshotType: req.query.type,
+          limit: req.query.limit,
+        })
+      )
+    );
+
+    router.get("/lms/tracker/recommendation-events", (req, res, next) =>
+      createHandle(req, res, next, async () =>
+        lmsTrackerService.getRecommendationEvents({
+          user: req.userContext,
+          limit: req.query.limit,
+        })
+      )
+    );
+
+    router.post("/lms/tracker/recommendation-events", (req, res, next) =>
+      createHandle(req, res, next, async () =>
+        lmsTrackerService.recordRecommendationEvent({
+          user: req.userContext,
+          payload: req.body || {},
+        })
+      )
     );
   }
 
@@ -820,6 +855,25 @@ function createLmsRoutes({
 
   router.get("/lms/contributors/:userId", (req, res, next) =>
     createHandle(req, res, next, async () => lmsStore.getContributorProfile(req.params.userId))
+  );
+
+  router.get("/lms/admin/resource-flags", ensureAdmin, (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.getResourceModerationQueue({
+        state: req.query.state,
+        query: req.query.query,
+        page: req.query.page,
+        limit: req.query.limit,
+      })
+    )
+  );
+
+  router.patch("/lms/admin/resources/:id/moderation", ensureAdmin, (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.moderateResource(req.params.id, req.body || {}, {
+        userId: req.userContext.userId,
+      })
+    )
   );
 
   router.get("/lms/me/export/:guideId", async (req, res, next) => {
