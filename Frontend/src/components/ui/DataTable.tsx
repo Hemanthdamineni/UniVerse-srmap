@@ -76,7 +76,7 @@ export function DataTable<T>({
           <thead className="erp-table-head">
             <tr className="erp-table-row">
               {columns.map((col, i) => (
-                <th key={i} className={cn("erp-table-head-cell label-text", stickyHeader ? "sticky top-0 z-[1] bg-[var(--comp-surface)]" : "", col.className)}>
+                <th key={i} className={cn("erp-table-head-cell label-text", stickyHeader ? "sticky top-0 z-[1] bg-[var(--comp-accent)]" : "", col.className)}>
                   {col.header}
                 </th>
               ))}

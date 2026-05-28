@@ -48,10 +48,10 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
         <Button
           variant="ghost"
           size="icon"
-          className={isBookmarked ? 'text-amber-500 fill-amber-500' : 'text-[var(--comp-text-muted)]'}
+          className={isBookmarked ? 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_15%,transparent)] hover:bg-[color-mix(in_srgb,var(--warning)_20%,transparent)]' : 'text-[var(--comp-text-muted)] hover:text-[var(--text-primary)]'}
           onClick={() => onBookmarkToggle?.(id)}
         >
-          <Bookmark className="h-5 w-5" />
+          <Bookmark className={isBookmarked ? "h-5 w-5 fill-current" : "h-5 w-5"} />
         </Button>
       </CardHeader>
 
