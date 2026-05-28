@@ -32,6 +32,13 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
     next();
   }
 
+  function adminActor(req) {
+    return {
+      actorId: req.userContext?.userId || req.adminContext?.registerNo || req.get("x-admin-actor") || "admin",
+      actorRole: req.userContext?.role || "admin",
+    };
+  }
+
   router.use(userContext);
   router.use(ensureAuthenticated);
   const upload = multer({
@@ -131,7 +138,14 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
       const query = toSafeString(req.query.query).toLowerCase();
 
       const items = contentStore
-        .listContent({ type: "learning_material" })
+        .listContent({
+          type: "learning_material",
+          lifecycleState: req.query.lifecycleState,
+          includeAllStates: true,
+          includeDeleted: req.query.includeDeleted === "true",
+          page: req.query.page,
+          limit: req.query.limit || 100,
+        })
         .filter((item) => {
           const metadata = item.metadata || {};
           if (year && String(metadata.year || "") !== year) return false;
@@ -161,7 +175,10 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
         ...(req.body || {}),
         type: "learning_material",
       };
-      const data = contentStore.createContent(payload);
+      const data = contentStore.createContent(payload, {
+        actor: adminActor(req),
+        reason: "Admin published learning material",
+      });
       return sendApiSuccess(res, req, {
         ...data,
         resources: contentStore.listResources(data.id),
@@ -178,7 +195,10 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
         ...(req.body || {}),
         type: "learning_material",
       };
-      const data = contentStore.updateContent(req.params.contentId, payload);
+      const data = contentStore.updateContent(req.params.contentId, payload, {
+        actor: adminActor(req),
+        reason: "Admin edited learning material",
+      });
       return sendApiSuccess(res, req, {
         ...data,
         resources: contentStore.listResources(data.id),
@@ -191,7 +211,67 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
   router.delete("/resources/items/:contentId", (req, res) => {
     try {
       assertAdminAccess(req, adminPassword);
-      const data = contentStore.deleteContent(req.params.contentId);
+      const data = contentStore.deleteContent(req.params.contentId, adminActor(req));
+      return sendApiSuccess(res, req, data);
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  });
+
+  router.get("/resources/items/:contentId/history", (req, res) => {
+    try {
+      assertAdminAccess(req, adminPassword);
+      return sendApiSuccess(res, req, {
+        items: contentStore.listContentHistory(req.params.contentId, { limit: req.query.limit }),
+      });
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  });
+
+  router.patch("/resources/items/:contentId/lifecycle", (req, res) => {
+    try {
+      assertAdminAccess(req, adminPassword);
+      const data = contentStore.transitionContent(
+        req.params.contentId,
+        {
+          action: req.body?.action,
+          reason: req.body?.reason || "Admin lifecycle transition",
+        },
+        adminActor(req)
+      );
+      return sendApiSuccess(res, req, {
+        ...data,
+        resources: contentStore.listResources(data.id),
+      });
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  });
+
+  router.post("/resources/admin/items/bulk-preview", (req, res) => {
+    try {
+      assertAdminAccess(req, adminPassword);
+      return sendApiSuccess(res, req, contentStore.previewBulkLifecycle({
+        ids: req.body?.ids,
+        action: req.body?.action,
+      }));
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  });
+
+  router.post("/resources/admin/items/bulk-execute", (req, res) => {
+    try {
+      assertAdminAccess(req, adminPassword);
+      const data = contentStore.bulkTransitionContent(
+        {
+          ids: req.body?.ids,
+          action: req.body?.action,
+          reason: req.body?.reason || "Bulk resource lifecycle update",
+        },
+        adminActor(req)
+      );
       return sendApiSuccess(res, req, data);
     } catch (error) {
       return sendApiError(res, req, error);
@@ -209,32 +289,43 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
         throw error;
       }
 
-      const record = contentStore.createContent({
-        type: "page",
-        title,
-        description: toSafeString(payload.description),
-        category: "resource-recommendation",
-        metadata: {
-          status: "pending",
-          year: payload.year,
-          courseCode: payload.courseCode,
-          courseName: payload.courseName,
-          subjectCode: payload.subjectCode,
-          subjectName: payload.subjectName,
-          resourceGroup: payload.resourceGroup || "links",
-          recommenderUserId: req.userContext.userId,
-          recommenderName: req.userContext.name,
-          recommenderEmail: req.userContext.email,
-          reviewerNotes: "",
-        },
-        resources: [
-          {
-            kind: payload.kind || "link",
-            title,
-            url_or_path: url,
+      const record = contentStore.createContent(
+        {
+          type: "page",
+          title,
+          description: toSafeString(payload.description),
+          category: "resource-recommendation",
+          lifecycleState: "review",
+          metadata: {
+            status: "pending",
+            year: payload.year,
+            courseCode: payload.courseCode,
+            courseName: payload.courseName,
+            subjectCode: payload.subjectCode,
+            subjectName: payload.subjectName,
+            resourceGroup: payload.resourceGroup || "links",
+            recommenderUserId: req.userContext.userId,
+            recommenderName: req.userContext.name,
+            recommenderEmail: req.userContext.email,
+            reviewerNotes: "",
           },
-        ],
-      });
+          resources: [
+            {
+              kind: payload.kind || "link",
+              title,
+              url_or_path: url,
+            },
+          ],
+        },
+        {
+          actor: {
+            actorId: req.userContext.userId,
+            actorRole: "student",
+          },
+          action: "submit_review",
+          reason: "Student submitted resource recommendation",
+        }
+      );
 
       return sendApiSuccess(res, req, record);
     } catch (error) {
@@ -246,7 +337,7 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
     try {
       assertAdminAccess(req, adminPassword);
       const items = contentStore
-        .listContent({ type: "page", category: "resource-recommendation" })
+        .listContent({ type: "page", category: "resource-recommendation", includeAllStates: true })
         .map((item) => ({
           ...item,
           resources: contentStore.listResources(item.id),
@@ -275,14 +366,23 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
         throw error;
       }
 
-      const next = contentStore.updateContent(req.params.contentId, {
-        metadata: {
-          ...(existing.metadata || {}),
-          status,
-          reviewerNotes: toSafeString(req.body?.reviewerNotes),
-          reviewedAt: new Date().toISOString(),
+      const next = contentStore.updateContent(
+        req.params.contentId,
+        {
+          lifecycleState: status === "approved" ? "published" : status === "rejected" ? "archived" : "review",
+          metadata: {
+            ...(existing.metadata || {}),
+            status,
+            reviewerNotes: toSafeString(req.body?.reviewerNotes),
+            reviewedAt: new Date().toISOString(),
+          },
         },
-      });
+        {
+          actor: adminActor(req),
+          action: "review_resource_recommendation",
+          reason: req.body?.reviewerNotes || `Recommendation marked ${status}`,
+        }
+      );
 
       return sendApiSuccess(res, req, next);
     } catch (error) {
