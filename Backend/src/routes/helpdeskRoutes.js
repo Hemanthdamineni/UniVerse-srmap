@@ -25,8 +25,13 @@ function createHelpdeskRoutes({ helpdeskStore, sessionStore, adminPassword = "" 
         filters: {
           query: req.query.query,
           status: req.query.status,
+          queue: req.query.queue,
           category: req.query.category,
           priority: req.query.priority,
+          owner: req.query.owner,
+          team: req.query.team,
+          limit: req.query.limit,
+          offset: req.query.offset,
         },
       });
       return sendApiSuccess(res, req, data);
@@ -38,6 +43,17 @@ function createHelpdeskRoutes({ helpdeskStore, sessionStore, adminPassword = "" 
   router.post("/helpdesk/tickets", (req, res) => {
     try {
       const data = helpdeskStore.createTicket(req.body || {}, { user: req.userContext });
+      return sendApiSuccess(res, req, data);
+    } catch (error) {
+      return sendApiError(res, req, error);
+    }
+  });
+
+  router.patch("/helpdesk/tickets/bulk", (req, res) => {
+    try {
+      const data = helpdeskStore.bulkUpdateTickets(req.body || {}, {
+        user: req.userContext,
+      });
       return sendApiSuccess(res, req, data);
     } catch (error) {
       return sendApiError(res, req, error);
