@@ -82,13 +82,13 @@ function EngagementChart() {
                 width: 14, borderRadius: '4px 4px 0 0',
                 background: 'var(--comp-accent)',
                 height: `${(eventsData[i] / maxVal) * 100}%`,
-                transition: 'height 0.3s ease',
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
               }} />
               <div style={{
                 width: 14, borderRadius: '4px 4px 0 0',
                 background: 'var(--comp-accent-light)',
                 height: `${(attendanceData[i] / maxVal) * 100}%`,
-                transition: 'height 0.3s ease',
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
               }} />
             </div>
             <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--comp-text-muted)' }}>{m}</span>

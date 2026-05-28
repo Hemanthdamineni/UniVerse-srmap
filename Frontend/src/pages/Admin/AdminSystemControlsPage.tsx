@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
-import { useAdminMode } from "../../context/AdminModeContext";
+import { useAdminMode } from "../../contexts/AdminModeContext";
 
 export default function AdminSystemControlsPage() {
   const admin = useAdminMode();

@@ -122,7 +122,7 @@ export default function AdminDeptPerformancePage() {
               aria-label={`${dept.name} performance overview`}
               style={{
                 background: 'var(--comp-surface)', border: '1px solid var(--comp-border)',
-                borderLeft: `3px solid ${idx === 0 ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
+                borderLeft: `1px solid ${idx === 0 ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
                 borderRadius: 10, padding: 'var(--space-md)',
                 display: 'grid',
                 alignItems: 'center', gap: 'var(--space-md)',

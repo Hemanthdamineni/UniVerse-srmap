@@ -122,7 +122,7 @@ export default function AdminEventApprovalsPage() {
                 role="listitem"
                 style={{
                   background: 'var(--comp-surface)', border: '1px solid var(--comp-border)',
-                  borderLeft: `3px solid ${item.status === 'approved' ? 'var(--status-open-text)' : item.status === 'rejected' ? 'var(--status-live-text)' : 'var(--status-pending-border)'}`,
+                  borderLeft: `1px solid ${item.status === 'approved' ? 'var(--status-open-text)' : item.status === 'rejected' ? 'var(--status-live-text)' : 'var(--status-pending-border)'}`,
                   borderRadius: 10, padding: 'var(--space-md)',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   flexWrap: 'wrap', gap: 'var(--space-sm)',
