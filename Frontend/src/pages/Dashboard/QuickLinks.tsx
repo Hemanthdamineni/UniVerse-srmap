@@ -30,6 +30,11 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
       path: "/resources"
     },
     {
+      name: "Unified Insights",
+      color: "dashboard-subcard",
+      path: "/academic-tracker/unified-insights"
+    },
+    {
       name: "Feedback Assistant",
       color: feedbackPendingCount > 0 ? "dashboard-subcard ring-2 ring-amber-300" : "dashboard-subcard",
       path: "/feedback/course-feedback"

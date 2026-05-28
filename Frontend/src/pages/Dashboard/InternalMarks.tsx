@@ -1,204 +1,128 @@
-// Dashboard widget: StatCard summary row + existing chart/course grid; pipeline unchanged.
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useMemo, useState } from "react";
-import { executePipeline, type InternalMarksModel, type InternalMarkSubject } from "../../lib/erpTransformers";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { executePipeline, type InternalMarksModel } from "../../lib/erpTransformers";
 import { EmptyState } from "../../components/ui/EmptyState";
 
-function InternalMarks({ marksData }: { marksData?: any }) {
-  const [selectedCourse, setSelectedCourse] = useState<InternalMarkSubject | null>(null);
+function getTierColor(pct: number) {
+  if (pct < 20) return "var(--error)";
+  if (pct < 40) return "var(--warning)";
+  if (pct < 75) return null;
+  return "var(--success)";
+}
 
-  const processedData = useMemo(() => {
-    const pipelineResult = executePipeline("internal-marks", marksData);
-    if (!pipelineResult?.isValid || !pipelineResult.data) return null;
+const STATUS_ORDER: Record<string, number> = {
+  "needs-improvement": 0,
+  good: 1,
+  excellent: 2,
+};
 
-    const { subjects, averagePercentage } = pipelineResult.data as InternalMarksModel;
+export default function InternalMarks({ marksData }: { marksData?: any }) {
+  const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
 
-    const pieData = [
-      {
-        name: "Excellent (>=80%)",
-        value: subjects.filter((subject) => subject.percentage >= 80).length,
-        color: "var(--success)",
-      },
-      {
-        name: "Good (60-79%)",
-        value: subjects.filter((subject) => subject.percentage >= 60 && subject.percentage < 80).length,
-        color: "var(--warning)",
-      },
-      {
-        name: "Needs Improvement (<60%)",
-        value: subjects.filter((subject) => subject.percentage < 60).length,
-        color: "var(--error)",
-      },
-    ].filter((item) => item.value > 0);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 30);
+    return () => clearTimeout(t);
+  }, []);
 
-    return {
-      subjects,
-      pieData,
-      averagePercentage,
-      detailTables: marksData?.Examination?.["Internal Mark Details"]?.tables || marksData?.Academic?.["Internal Mark Details"]?.tables || [],
-    };
+  const processed = useMemo(() => {
+    const result = executePipeline("internal-marks", marksData);
+    if (!result?.isValid || !result.data) return null;
+    return result.data as InternalMarksModel;
   }, [marksData]);
-  if (!processedData) {
+
+  if (!processed || processed.subjects.length === 0) {
     return (
-      <div className="h-full p-4 flex flex-col justify-center items-center text-center">
+      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
         <EmptyState title="Internal Marks" description="No internal marks data available for this semester." />
       </div>
     );
   }
 
-  const { subjects, pieData, averagePercentage } = processedData;
-  const atRiskCount = subjects.filter((subject) => subject.percentage < 60).length;
-
-  const getStatusColor = (status: "excellent" | "good" | "needs-improvement") => {
-    switch (status) {
-      case "excellent": return "var(--success)";
-      case "good": return "var(--warning)";
-      case "needs-improvement": return "var(--error)";
-    }
-  };
+  const { subjects: rawSubjects, averagePercentage } = processed;
+  const subjects = [...rawSubjects].sort(
+    (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+  );
+  const atRiskCount = rawSubjects.filter((s) => s.percentage < 60).length;
 
   return (
-    <div className="h-full flex flex-col p-4">
-      <header className="mb-3 flex shrink-0 items-center justify-between">
-        <h2 className="card-title flex items-center gap-2 font-bold">Internal Marks</h2>
-      </header>
-
-      <div className="flex min-h-0 flex-1 gap-4">
-        {/* Left Area: 1. Donut Chart & 2. Legend */}
-        <div className="w-[140px] shrink-0 flex flex-col h-full">
-          <div className="relative aspect-square max-h-[140px] flex items-center justify-center">
-            {subjects.length > 0 && (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={65}
-                      dataKey="value"
-                      stroke="none"
-                      paddingAngle={1}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`pie-cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-bold leading-tight" style={{ color: 'var(--comp-text-primary)' }}>{averagePercentage.toFixed(0)}%</span>
-                  <span className="text-[7px] font-medium" style={{ color: 'var(--comp-text-secondary)' }}>average</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="shrink-0 flex flex-col gap-1 mt-auto">
-            <div className="flex items-center justify-between rounded px-2 py-1" style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', border: '1px solid var(--comp-border)' }}>
-              <div className="flex items-center gap-1.5 overflow-hidden">
-                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: 'var(--error)' }} />
-                <span className="text-[9px] font-medium truncate" style={{ color: 'var(--comp-text-secondary)' }}>Needs Improvement (&lt;60%)</span>
-              </div>
-              <span className="text-[10px] font-bold ml-1" style={{ color: 'var(--comp-text-primary)' }}>{atRiskCount}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Area: 3. Dynamic Grid of Course Cards (or Details) */}
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          {selectedCourse ? (
-            <div className="flex flex-col h-full rounded-xl p-3 shadow-sm" style={{ background: 'color-mix(in srgb, var(--comp-surface) 30%, transparent)', border: '1px solid var(--comp-border)' }}>
-              <div className="flex items-center justify-between shrink-0 mb-3">
-                <h3 className="label-text">Course Details</h3>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCourse(null)}
-                  className="btn-secondary min-h-0 px-2 py-0.5 text-[9px] font-bold"
-                >
-                  Back
-                </button>
-              </div>
-
-              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1">
-                <div className="mb-3 text-center">
-                  <p className="text-sm font-bold leading-snug" style={{ color: 'var(--comp-text-primary)' }}>{selectedCourse.code}</p>
-                  <p className="text-[10px] leading-tight" style={{ color: 'var(--comp-text-secondary)' }}>{selectedCourse.description}</p>
-                </div>
-                
-                {/* 4. Details displayed generically from tables instead of hardcoded mid/cla1/etc */}
-                <div className="flex flex-col gap-1.5">
-                  {(processedData.detailTables.length > selectedCourse.detailTableIndex && Array.isArray(processedData.detailTables[selectedCourse.detailTableIndex]) 
-                    ? processedData.detailTables[selectedCourse.detailTableIndex] 
-                    : []
-                  ).map((row: any, idx: number) => {
-                    const label = String(row?.Name ?? row?.["Subject Code"] ?? "");
-                    const value = String(row?.["Mark Secured(Conducted)"] ?? row?.["Subject Description"] ?? "");
-                    
-                    if (!label || label.toLowerCase().includes("name") || label.length < 2) return null;
-                    
-                    const isMissing = value.trim().toLowerCase() === "not available" || value.trim() === "" || value.trim() === "-";
-                    return (
-                      <div
-                        key={`${label}-${idx}`}
-                        className="flex items-center justify-between rounded px-2.5 py-2 flex-1 min-h-[28px]"
-                        style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', border: '1px solid var(--comp-border)' }}
-                      >
-                        <span className="text-[10px] font-medium truncate mr-2" style={{ color: 'var(--comp-text-secondary)' }}>{label}</span>
-                        <span className={`text-[11px] font-bold truncate ${isMissing ? "italic" : ""}`} style={{ color: isMissing ? 'var(--comp-text-muted)' : 'var(--comp-text-primary)' }}>
-                          {isMissing ? "N/A" : value}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-              {/* Dynamic responsive grid: 2 cols on small, 3 cols on medium/large widgets */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 auto-rows-max">
-                {subjects.map((subject, index) => (
-                  <button
-                    type="button"
-                    key={`${subject.code}-${index}`}
-                    onClick={() => setSelectedCourse(subject)}
-                    className="flex flex-col rounded-lg p-2.5 text-left w-full group"
-                    style={{
-                      background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)',
-                      border: '1px solid var(--comp-border)',
-                      transition: `all var(--transition-fast)`,
-                    }}
-                  >
-                    <span className="truncate text-xs font-bold mb-1" style={{ color: 'var(--comp-text-primary)' }}>
-                      {subject.code}
-                    </span>
-                    
-                    <div className="flex items-end justify-between w-full mb-1">
-                      <span className="text-[10px] font-bold" style={{ color: 'var(--comp-text-primary)' }}>
-                        {subject.marksObtained}<span className="text-[8px]" style={{ color: 'var(--comp-text-secondary)' }}>/{subject.maxMarks}</span>
-                      </span>
-                      <span className="text-[10px] font-bold shrink-0" style={{ color: getStatusColor(subject.status) }}>
-                        {subject.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    
-                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--comp-border)' }}>
-                      <div
-                        className="h-full rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
-                        style={{ width: `${Math.max(0, Math.min(100, subject.percentage))}%`, backgroundColor: getStatusColor(subject.status) }}
-                      />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+    <div className="flex h-full flex-col p-4">
+      <div className="mb-2 flex shrink-0 items-center justify-between">
+        <h2 className="section-title font-bold">Internal Marks</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex items-center rounded-full bg-[var(--comp-surface-hover)] px-2 py-0.5 text-[10px] font-medium text-[var(--comp-text-secondary)]">
+            {averagePercentage.toFixed(0)}% avg
+          </span>
+          {atRiskCount > 0 && (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--error) 12%, var(--comp-surface))",
+                color: "var(--error)",
+              }}
+            >
+              {atRiskCount} at risk
+            </span>
           )}
+          <span className="inline-flex items-center rounded-full bg-[var(--comp-surface-hover)] px-2 py-0.5 text-[10px] font-medium text-[var(--comp-text-secondary)]">
+            {subjects.length} {subjects.length === 1 ? "course" : "courses"}
+          </span>
         </div>
+      </div>
+
+      <div className={`grid min-h-0 flex-1 content-center gap-2 ${subjects.length > 10 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {subjects.map((subject, index) => {
+          const pct = subject.percentage;
+          const tierColor = getTierColor(pct);
+          const barColor = tierColor || "var(--comp-text-secondary)";
+
+          return (
+            <button
+              key={subject.code}
+              type="button"
+              onClick={() => navigate("/exams/current-semester-results")}
+              className="group flex flex-col justify-center gap-1 rounded-lg border border-[var(--comp-border)] px-2.5 py-1 text-left transition-colors hover:border-[var(--comp-border-strong)] hover:bg-[var(--comp-surface-hover)] overflow-hidden"
+              style={{
+                opacity: mounted ? 1 : 0,
+                transition: `opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)`,
+                transitionDelay: mounted ? `${index * 60}ms` : "0ms",
+              }}
+            >
+              <div className="flex items-center justify-between gap-2 leading-tight">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-xs font-medium text-[var(--text-primary)]">
+                    {subject.code}
+                  </span>
+                </div>
+                <span className="shrink-0 text-sm font-bold tabular-nums text-[var(--text-primary)]">
+                  {Number(subject.marksObtained.toFixed(1))}/{subject.maxMarks}
+                </span>
+              </div>
+
+              <div
+                className="relative h-[5px] overflow-hidden rounded-full"
+                style={{
+                  background: `linear-gradient(90deg,
+                    color-mix(in srgb, ${barColor} 40%, transparent) ${pct}%,
+                    color-mix(in srgb, var(--border) 35%, transparent) ${pct}%
+                  )`,
+                }}
+              >
+                <span
+                  className="absolute top-1/2 -translate-y-1/2 rounded-full transition-transform duration-150 group-hover:scale-150"
+                  style={{
+                    left: `${pct}%`,
+                    width: 7,
+                    height: 7,
+                    backgroundColor: barColor,
+                    boxShadow: `0 0 0 2px color-mix(in srgb, ${barColor} 25%, transparent)`,
+                  }}
+                />
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
-
-export default InternalMarks;
