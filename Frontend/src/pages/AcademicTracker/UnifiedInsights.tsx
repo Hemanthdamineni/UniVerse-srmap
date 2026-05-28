@@ -1,0 +1,305 @@
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { CheckCircle2, MousePointerClick, Route, ShieldCheck, Target } from "lucide-react";
+import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import {
+  getLmsUnifiedInsights,
+  recordLmsTrackerRecommendationEvent,
+  type UnifiedInsights as UnifiedInsightsModel,
+} from "../../lib/lmsApi";
+
+function pct(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
+
+function ScoreBar({ value, max }: { value: number; max: number }) {
+  const width = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  return (
+    <div className="h-2 overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
+      <div className="h-full rounded-full bg-[var(--comp-accent)]" style={{ width: `${width}%` }} />
+    </div>
+  );
+}
+
+function StatusPill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warning" }) {
+  const toneClass =
+    tone === "success"
+      ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+      : tone === "warning"
+        ? "border-[color-mix(in_srgb,var(--warning)_28%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]"
+        : "border-[var(--border)] bg-[var(--background)] text-[var(--text-secondary)]";
+
+  return <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneClass}`}>{children}</span>;
+}
+
+export default function UnifiedInsights() {
+  const [insights, setInsights] = useState<UnifiedInsightsModel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    getLmsUnifiedInsights()
+      .then((response) => {
+        if (!active) return;
+        setInsights(response);
+      })
+      .catch((loadError) => {
+        if (!active) return;
+        setError(loadError instanceof Error ? loadError.message : "Failed to load unified insights.");
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const kpis = useMemo(() => {
+    if (!insights) return [];
+    return [
+      { label: "ATS Score", value: `${Math.round(insights.atsScore.score)}%` },
+      { label: "Next Skills", value: String(insights.nextSkills.length) },
+      { label: "Eligible Matches", value: String(insights.opportunityRecommendations.length) },
+      { label: "Explainability", value: pct(insights.qualityMonitoring.metrics.explainabilityCoverage) },
+    ];
+  }, [insights]);
+
+  async function recordFeedback(recommendation: { id: string; title: string; confidence: number }, eventType: string) {
+    setFeedbackStatus("");
+    try {
+      await recordLmsTrackerRecommendationEvent({
+        eventType,
+        sourceDomain: "unified_insights",
+        recommendationId: recommendation.id,
+        recommendationTitle: recommendation.title,
+        confidence: recommendation.confidence,
+        action: eventType,
+      });
+      setFeedbackStatus("Feedback saved. Future rankings can use this signal.");
+    } catch (feedbackError) {
+      setFeedbackStatus(feedbackError instanceof Error ? feedbackError.message : "Feedback could not be saved.");
+    }
+  }
+
+  return (
+    <ErpPageShell
+      title="Unified Insights"
+      source="Internal API"
+      isLoading={loading}
+      loadingMessage="Scoring academic and career signals..."
+    >
+      {error ? <StatusBanner message={{ id: "unified-error", tone: "warning", text: error }} /> : null}
+      {feedbackStatus ? <StatusBanner message={{ id: "unified-feedback", tone: "info", text: feedbackStatus }} /> : null}
+
+      {insights ? (
+        <>
+          <KpiGrid items={kpis} />
+
+          <SectionCard title="Profile Graph">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {insights.profileGraph.nodes.map((node) => (
+                <article key={node.id} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{node.label}</h3>
+                      <p className="mt-1 text-xs text-[var(--text-secondary)]">{node.value}</p>
+                    </div>
+                    <StatusPill tone={node.status === "ready" ? "success" : node.status === "missing" ? "warning" : "neutral"}>
+                      {node.status.replace("_", " ")}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 text-xs text-[var(--text-secondary)]">Confidence {pct(node.confidence)}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {node.inputsUsed.slice(0, 3).map((input) => (
+                      <span key={input} className="rounded-md bg-[var(--background)] px-2 py-1 text-[11px] text-[var(--text-secondary)]">
+                        {input}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {insights.profileGraph.edges.map((edge) => (
+                <div key={`${edge.from}-${edge.to}`} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+                  <span className="font-semibold text-[var(--comp-text-primary)]">{edge.from}</span> to{" "}
+                  <span className="font-semibold text-[var(--comp-text-primary)]">{edge.to}</span>: {edge.signal}
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <SectionCard title="ATS Rubric">
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-[var(--text-secondary)]">Resume score</p>
+                    <p className="text-3xl font-semibold text-[var(--comp-text-primary)]">{Math.round(insights.atsScore.score)}%</p>
+                  </div>
+                  <StatusPill tone={insights.atsScore.hasResume ? "success" : "warning"}>
+                    {insights.atsScore.hasResume ? "resume attached" : "resume missing"}
+                  </StatusPill>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {insights.atsScore.rubric.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                      <span className="font-semibold text-[var(--comp-text-primary)]">{item.label}</span>
+                      <span className="text-[var(--text-secondary)]">
+                        {item.score}/{item.max}
+                      </span>
+                    </div>
+                    <ScoreBar value={item.score} max={item.max} />
+                    <p className="mt-2 text-xs text-[var(--text-secondary)]">{item.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Next Skill Demand">
+              <div className="space-y-3">
+                {insights.nextSkills.map((skill) => (
+                  <article key={skill.id} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{skill.title}</h3>
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          {skill.opportunityDemand} active match{skill.opportunityDemand === 1 ? "" : "es"} need this skill
+                        </p>
+                      </div>
+                      <StatusPill>{pct(skill.confidence)} confidence</StatusPill>
+                    </div>
+                    <ul className="mt-3 space-y-1 text-xs text-[var(--text-secondary)]">
+                      {skill.reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => recordFeedback(skill, "clicked")}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)]"
+                    >
+                      <MousePointerClick className="h-3.5 w-3.5" />
+                      Mark useful
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </SectionCard>
+          </div>
+
+          <SectionCard title="Eligible Opportunity Recommendations">
+            <div className="grid gap-3 lg:grid-cols-2">
+              {insights.opportunityRecommendations.map((opportunity) => (
+                <article key={opportunity.id} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{opportunity.title}</h3>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        {opportunity.organization || opportunity.type} · deadline {opportunity.deadline || "not listed"}
+                      </p>
+                    </div>
+                    <StatusPill tone="success">
+                      <ShieldCheck className="mr-1 inline h-3 w-3" />
+                      eligible
+                    </StatusPill>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-xs text-[var(--text-secondary)] sm:grid-cols-2">
+                    <p>Matched: {opportunity.matchedSkills.join(", ") || "profile signals"}</p>
+                    <p>Close gaps: {opportunity.missingSkills.join(", ") || "none detected"}</p>
+                  </div>
+                  <ul className="mt-3 space-y-1 text-xs text-[var(--text-secondary)]">
+                    {opportunity.reasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => recordFeedback(opportunity, "clicked")}
+                      className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)]"
+                    >
+                      <MousePointerClick className="h-3.5 w-3.5" />
+                      Viewed
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => recordFeedback(opportunity, "applied")}
+                      className="inline-flex items-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--success)_35%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--success)] transition hover:bg-[color-mix(in_srgb,var(--success)_8%,transparent)]"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Applied
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </SectionCard>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <SectionCard title="Unified Action Plan">
+              <div className="space-y-3">
+                {insights.actionPlan.map((action) => (
+                  <article key={action.id} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{action.title}</h3>
+                        <p className="mt-1 text-sm text-[var(--text-secondary)]">{action.description}</p>
+                      </div>
+                      <StatusPill tone={action.priority === "high" ? "warning" : "neutral"}>
+                        {action.domain} · {action.priority}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                      Why: {action.reasons[0] || "Derived from profile graph signals."}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Quality Monitoring">
+              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                {insights.qualityMonitoring.dashboardCards.map((card) => (
+                  <div key={card.label} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <p className="text-xs text-[var(--text-secondary)]">{card.label}</p>
+                    <p className="mt-1 text-xl font-semibold text-[var(--comp-text-primary)]">{card.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+                  <Target className="h-4 w-4 text-[var(--comp-accent)]" />
+                  Offline baseline
+                </div>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  {insights.qualityMonitoring.baseline} · {insights.qualityMonitoring.measuredLatencyMs}ms measured response
+                </p>
+              </div>
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+                  <Route className="h-4 w-4 text-[var(--comp-accent)]" />
+                  Feedback loop
+                </div>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">{insights.feedbackLoop.modelInfluence}</p>
+                <div className="mt-3 space-y-2">
+                  {insights.feedbackLoop.recentEvents.slice(0, 3).map((event) => (
+                    <div key={event.id} className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+                      {event.eventType} · {event.recommendationTitle}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+        </>
+      ) : null}
+    </ErpPageShell>
+  );
+}

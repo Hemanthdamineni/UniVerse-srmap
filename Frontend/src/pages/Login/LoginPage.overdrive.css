@@ -1,0 +1,293 @@
+/* ── @property: Identity Panel Mesh Orbs ── */
+@property --mesh-c1 { syntax: '<color>'; inherits: false; initial-value: oklch(0.30 0.07 195); }
+@property --mesh-c2 { syntax: '<color>'; inherits: false; initial-value: oklch(0.22 0.09 210); }
+@property --mesh-c3 { syntax: '<color>'; inherits: false; initial-value: oklch(0.36 0.06 178); }
+@property --mesh-c4 { syntax: '<color>'; inherits: false; initial-value: oklch(0.18 0.11 205); }
+
+/* ── @property: Page Background Blobs ── */
+@property --page-blob-a { syntax: '<color>'; inherits: false; initial-value: oklch(0.93 0.020 192); }
+@property --page-blob-b { syntax: '<color>'; inherits: false; initial-value: oklch(0.91 0.017 208); }
+@property --page-blob-c { syntax: '<color>'; inherits: false; initial-value: oklch(0.94 0.013 182); }
+
+@keyframes page-drift {
+  0%   { --page-blob-a: oklch(0.93 0.020 192); --page-blob-b: oklch(0.91 0.017 208); --page-blob-c: oklch(0.94 0.013 182); }
+  33%  { --page-blob-a: oklch(0.91 0.024 207); --page-blob-b: oklch(0.93 0.015 188); --page-blob-c: oklch(0.92 0.019 198); }
+  66%  { --page-blob-a: oklch(0.94 0.015 185); --page-blob-b: oklch(0.90 0.022 215); --page-blob-c: oklch(0.93 0.016 195); }
+  100% { --page-blob-a: oklch(0.93 0.020 192); --page-blob-b: oklch(0.91 0.017 208); --page-blob-c: oklch(0.94 0.013 182); }
+}
+
+/* ── @property: Form Panel Blobs ── */
+@property --form-blob-a { syntax: '<color>'; inherits: false; initial-value: oklch(0.96 0.016 192); }
+@property --form-blob-b { syntax: '<color>'; inherits: false; initial-value: oklch(0.97 0.011 208); }
+@property --form-blob-c { syntax: '<color>'; inherits: false; initial-value: oklch(0.98 0.008 180); }
+
+@keyframes form-breathe {
+  0%   { --form-blob-a: oklch(0.96 0.016 192); --form-blob-b: oklch(0.97 0.011 208); --form-blob-c: oklch(0.98 0.008 180); }
+  33%  { --form-blob-a: oklch(0.97 0.012 207); --form-blob-b: oklch(0.95 0.018 188); --form-blob-c: oklch(0.97 0.013 196); }
+  66%  { --form-blob-a: oklch(0.98 0.009 185); --form-blob-b: oklch(0.96 0.014 214); --form-blob-c: oklch(0.96 0.016 200); }
+  100% { --form-blob-a: oklch(0.96 0.016 192); --form-blob-b: oklch(0.97 0.011 208); --form-blob-c: oklch(0.98 0.008 180); }
+}
+
+@keyframes mesh-drift {
+  0%   { --mesh-c1: oklch(0.30 0.07 195); --mesh-c2: oklch(0.22 0.09 210); --mesh-c3: oklch(0.36 0.06 178); --mesh-c4: oklch(0.18 0.11 205); }
+  25%  { --mesh-c1: oklch(0.28 0.10 212); --mesh-c2: oklch(0.25 0.07 188); --mesh-c3: oklch(0.33 0.08 198); --mesh-c4: oklch(0.20 0.09 215); }
+  50%  { --mesh-c1: oklch(0.34 0.06 188); --mesh-c2: oklch(0.20 0.11 218); --mesh-c3: oklch(0.38 0.05 183); --mesh-c4: oklch(0.16 0.12 200); }
+  75%  { --mesh-c1: oklch(0.27 0.09 202); --mesh-c2: oklch(0.24 0.08 196); --mesh-c3: oklch(0.31 0.07 190); --mesh-c4: oklch(0.21 0.10 208); }
+  100% { --mesh-c1: oklch(0.30 0.07 195); --mesh-c2: oklch(0.22 0.09 210); --mesh-c3: oklch(0.36 0.06 178); --mesh-c4: oklch(0.18 0.11 205); }
+}
+
+.login-identity-panel {
+  position: relative;
+  background:
+    radial-gradient(ellipse 65% 55% at 15% 25%, var(--mesh-c1), transparent 70%),
+    radial-gradient(ellipse 55% 60% at 85% 75%, var(--mesh-c2), transparent 65%),
+    radial-gradient(ellipse 75% 50% at 55% 55%, var(--mesh-c3), transparent 60%),
+    radial-gradient(ellipse 45% 70% at 75% 20%, var(--mesh-c4), transparent 70%),
+    oklch(0.23 0.065 195);
+  animation: mesh-drift 12s ease-in-out infinite;
+  overflow: hidden;
+}
+
+/* ── Cursor Ripple ── */
+.login-cursor-ripple {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 240px at var(--cx, -200px) var(--cy, -200px),
+    oklch(0.65 0.12 192 / 0.20),
+    transparent 70%
+  );
+  transition: background 0.05s linear;
+  z-index: 1;
+}
+
+/* ── Identity Panel: content above ripple ── */
+.login-identity-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── Staggered Entry ── */
+@keyframes login-enter-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes login-enter-left {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes login-spin { to { transform: rotate(360deg); } }
+@keyframes login-fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes login-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes login-shake {
+  0%,100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(1px); }
+}
+@keyframes login-check-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.login-identity-enter { animation: login-enter-left 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+.login-id-d0 { animation-delay: 0ms; }
+.login-id-d1 { animation-delay: 80ms; }
+.login-id-d2 { animation-delay: 160ms; }
+.login-id-d3 { animation-delay: 240ms; }
+.login-id-d4 { animation-delay: 310ms; }
+
+.login-form-enter { animation: login-enter-up 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+.login-f-d0 { animation-delay: 100ms; }
+.login-f-d1 { animation-delay: 160ms; }
+.login-f-d2 { animation-delay: 220ms; }
+.login-f-d3 { animation-delay: 280ms; }
+.login-f-d4 { animation-delay: 340ms; }
+.login-f-d5 { animation-delay: 390ms; }
+.login-f-d6 { animation-delay: 430ms; }
+
+.login-form-shake { animation: login-shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+
+/* ── Spring Focus Field ── */
+.login-spring-field {
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
+  transform-origin: center;
+}
+.login-spring-field.login-field-focused {
+  transform: scaleY(1.012);
+  z-index: 2;
+}
+.login-spring-field.login-field-dimmed {
+  opacity: 0.65;
+  transform: scaleY(0.995);
+}
+
+/* ── Submit Button ── */
+.login-btn-primary {
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--comp-accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s cubic-bezier(0.16,1,0.3,1), box-shadow 0.15s ease, opacity 0.2s ease;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.login-btn-primary:hover:not(:disabled) {
+  background: var(--comp-accent-hover);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--comp-accent) 35%, transparent);
+  transform: translateY(-1px);
+}
+.login-btn-primary:active:not(:disabled) { transform: translateY(0); }
+.login-btn-primary:disabled { opacity: 0.52; cursor: not-allowed; }
+.login-btn-primary.login-btn-success {
+  background: var(--success);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--success) 30%, transparent);
+}
+.login-btn-check { animation: login-check-in 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ── Loading Dots ── */
+@keyframes login-dot-bounce {
+  0%,80%,100% { transform: scaleY(0.6); opacity: 0.4; }
+  40% { transform: scaleY(1); opacity: 1; }
+}
+.login-loading-dots { display: flex; align-items: center; gap: 4px; }
+.login-loading-dots span {
+  width: 4px; height: 14px; border-radius: 2px; background: currentColor;
+  animation: login-dot-bounce 1s ease-in-out infinite;
+}
+.login-loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.login-loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── Animated Page Background ── */
+.login-page-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 20px;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 72% 60% at 8% 18%,  var(--page-blob-a), transparent 58%),
+    radial-gradient(ellipse 58% 72% at 92% 82%, var(--page-blob-b), transparent 55%),
+    radial-gradient(ellipse 60% 48% at 72% 14%, var(--page-blob-c), transparent 52%),
+    radial-gradient(ellipse 50% 55% at 28% 88%, oklch(0.92 0.014 200), transparent 55%),
+    oklch(0.97 0.005 196);
+  animation: page-drift 20s ease-in-out infinite;
+}
+
+/* Dot grid overlay */
+.login-page-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle 1.2px at 1px 1px, oklch(0.65 0.08 192 / 0.18) 1px, transparent 0);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+}
+
+/* ── Glass depth: card ── */
+.login-card {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  width: 100%;
+  max-width: 920px;
+  min-height: 600px;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--comp-accent) 22%, transparent),
+    0 32px 100px rgba(10,38,42,0.28),
+    0 8px 24px rgba(10,38,42,0.14),
+    0 2px 4px rgba(10,38,42,0.08);
+}
+
+/* ── Form Panel: animated mesh background ── */
+.login-form-panel {
+  position: relative;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.06);
+  background:
+    radial-gradient(ellipse 75% 55% at 95% 5%,  var(--form-blob-a), transparent 55%),
+    radial-gradient(ellipse 60% 65% at 5%  92%, var(--form-blob-b), transparent 55%),
+    radial-gradient(ellipse 55% 50% at 50% 50%, var(--form-blob-c), transparent 60%),
+    oklch(0.99 0.003 196);
+  animation: form-breathe 16s ease-in-out infinite;
+}
+
+/* ── Field focus ring glow ── */
+.login-input-focused {
+  border-color: var(--comp-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08) !important;
+}
+.login-input-error {
+  border-color: color-mix(in srgb, var(--error) 60%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 14%, transparent) !important;
+}
+
+/* ── Dark mode ── */
+[data-theme="dark"] .login-identity-panel {
+  background:
+    radial-gradient(ellipse 65% 55% at 15% 25%, oklch(0.22 0.08 195 / 0.9), transparent 70%),
+    radial-gradient(ellipse 55% 60% at 85% 75%, oklch(0.15 0.10 210 / 0.9), transparent 65%),
+    radial-gradient(ellipse 75% 50% at 55% 55%, oklch(0.28 0.07 178 / 0.8), transparent 60%),
+    radial-gradient(ellipse 45% 70% at 75% 20%, oklch(0.12 0.12 205 / 0.9), transparent 70%),
+    oklch(0.16 0.065 195);
+  animation: mesh-drift 12s ease-in-out infinite;
+}
+[data-theme="dark"] .login-form-panel {
+  background:
+    radial-gradient(ellipse 75% 55% at 95% 5%,  oklch(0.22 0.045 192), transparent 55%),
+    radial-gradient(ellipse 60% 65% at 5%  92%, oklch(0.19 0.038 210), transparent 55%),
+    radial-gradient(ellipse 55% 50% at 50% 50%, oklch(0.20 0.030 185), transparent 60%),
+    oklch(0.17 0.028 196);
+  animation: form-breathe 16s ease-in-out infinite;
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.04);
+}
+[data-theme="dark"] .login-page-shell {
+  background:
+    radial-gradient(ellipse 72% 60% at 8% 18%,  oklch(0.18 0.042 195), transparent 58%),
+    radial-gradient(ellipse 58% 72% at 92% 82%, oklch(0.15 0.050 210), transparent 55%),
+    radial-gradient(ellipse 60% 48% at 72% 14%, oklch(0.20 0.035 185), transparent 52%),
+    radial-gradient(ellipse 50% 55% at 28% 88%, oklch(0.16 0.040 200), transparent 55%),
+    oklch(0.13 0.028 196);
+  animation: page-drift 20s ease-in-out infinite;
+}
+[data-theme="dark"] .login-card {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #34AEBE 20%, transparent),
+    0 32px 100px rgba(0,0,0,0.5),
+    0 8px 24px rgba(0,0,0,0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-identity-panel { animation: none !important; }
+  .login-form-panel { animation: none !important; }
+  .login-page-shell { animation: none !important; }
+  .login-identity-enter, .login-form-enter { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .login-spring-field { transition: none !important; transform: none !important; }
+  .login-loading-dots span { animation: none !important; }
+}
