@@ -424,7 +424,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
               {
                 header: "Grade",
                 accessor: (row) => (
-                  <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
+                  <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-[var(--comp-surface-hover)] px-2 py-1 font-bold text-[var(--comp-text-primary)]">
                     {row.grade}
                   </span>
                 ),

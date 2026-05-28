@@ -117,29 +117,78 @@ export default function FeeDuesPage({ blueprint }: Props) {
               ) : null}
             </div>
           ) : (
-            <div className="erp-table-shell">
-              <table className="erp-table text-left">
-                <thead className="erp-table-head">
-                  <tr>
-                    <th className="erp-table-head-cell label-text">Fee Category</th>
-                    <th className="erp-table-head-cell label-text">Fee Head</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-right">Due Amount (INR)</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-right">Collected (INR)</th>
-                    <th className="erp-table-head-cell label-text erp-table-align-right">To be Paid (INR)</th>
-                  </tr>
-                </thead>
-                <tbody className="erp-table-body">
-                  {data.records.map((r, i) => (
-                    <tr key={i} className="erp-table-row">
-                      <td className="erp-table-cell erp-table-cell-strong">{r.category}</td>
-                      <td className="erp-table-cell">{r.head}</td>
-                      <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: 'var(--comp-text-primary)' }}>{r.dueAmount}</td>
-                      <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: 'var(--comp-text-primary)' }}>{r.collectedAmount}</td>
-                      <td className="erp-table-cell erp-table-align-right font-bold" style={{ color: 'var(--success)' }}>{r.toBePaidAmount}</td>
+            <div className="space-y-8">
+              <div className="erp-table-shell">
+                <table className="erp-table text-left">
+                  <thead className="erp-table-head">
+                    <tr>
+                      <th className="erp-table-head-cell label-text">Fee Category</th>
+                      <th className="erp-table-head-cell label-text">Fee Head</th>
+                      <th className="erp-table-head-cell label-text erp-table-align-right">Due Amount (INR)</th>
+                      <th className="erp-table-head-cell label-text erp-table-align-right">Collected (INR)</th>
+                      <th className="erp-table-head-cell label-text erp-table-align-right">To be Paid (INR)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="erp-table-body">
+                    {data.records.map((r, i) => {
+                      const isTotalRow = /total/i.test(r.category) && !r.head;
+                      return (
+                        <tr key={i}
+                          className={`erp-table-row${isTotalRow ? ' erp-table-row-total' : ''}`}
+                          style={isTotalRow ? { background: 'color-mix(in srgb, var(--comp-accent) 8%, transparent)', borderTop: '1.5px solid color-mix(in srgb, var(--comp-accent) 40%, transparent)' } : {}}
+                        >
+                          <td className={`erp-table-cell erp-table-cell-strong${isTotalRow ? ' font-bold' : ''}`}
+                            style={isTotalRow ? { color: 'var(--comp-accent)' } : {}}
+                          >{r.category}</td>
+                          <td className="erp-table-cell">{r.head}</td>
+                          <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: isTotalRow ? 'var(--comp-accent)' : 'var(--comp-text-primary)' }}>{r.dueAmount}</td>
+                          <td className="erp-table-cell erp-table-align-right font-medium" style={{ color: isTotalRow ? 'var(--comp-accent)' : 'var(--comp-text-primary)' }}>{r.collectedAmount}</td>
+                          <td className="erp-table-cell erp-table-align-right font-bold" style={{ color: isTotalRow ? 'var(--comp-accent)' : 'var(--success)' }}>{r.toBePaidAmount}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="space-y-5 border-t border-[color-mix(in_srgb,var(--border)_40%,transparent)] pt-6">
+                <div className="flex items-start gap-4 rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] p-5">
+                  <div className="mt-0.5 shrink-0" style={{ color: 'var(--comp-accent)' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--comp-accent)' }}>
+                      Action Required: Official Portal Checkout
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-6" style={{ color: 'var(--comp-text-secondary)' }}>
+                      To ensure secure transaction processing, all online fee payments must be completed through the official university ERP portal. Please log in to the main website to clear your outstanding dues.
+                    </p>
+                  </div>
+                </div>
+
+                {notes.length > 0 && (
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {notes.map((note, index) => (
+                      <div
+                        key={`${index}-${note.slice(0, 32)}`}
+                        data-page-contrast="true"
+                        className="page-contrast-fg rounded-xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-4 py-4 text-sm leading-6 shadow-sm"
+                      >
+                        {note}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {notes.length === 0 && (
+                  <div className="rounded-xl p-4 text-sm leading-6 shadow-sm" style={{ background: 'color-mix(in srgb, var(--comp-text-primary) 3%, transparent)', color: 'var(--comp-text-secondary)', border: '1px solid color-mix(in srgb, var(--comp-text-primary) 8%, transparent)' }}>
+                    <p className="font-medium" style={{ color: 'var(--comp-text-primary)' }}>Important Note on Payments</p>
+                    <p className="mt-1">
+                      You will be allowed to make the Tuition Fees payment once the other old dues are cleared. To verify the current status of your online Payment Gateway transaction, where the status was not updated and amount was deducted from your bank account, please go through the navigation: <strong style={{ color: 'var(--comp-text-primary)' }}>Finance &raquo; Online Payment Verification</strong>.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>

@@ -1,18 +1,20 @@
 // ErpPageShell section-card; current results / planner structure unchanged.
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 import {
   executePipeline,
   type CourseRegistrationModel,
   type CurrentResultModel,
   type CurriculumModel,
+  type InternalMarksModel,
+  type InternalMarkSubject,
 } from "../../lib/erpTransformers";
 import { getErpBatch } from "../../lib/erpApi";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/InlineError";
-import { DataTable, type Column } from "../../components/ui/DataTable";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -159,6 +161,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
     semesterNumber: null,
   });
   const [plannerSubjects, setPlannerSubjects] = useState<PlannerSubject[]>([]);
+  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
   const [isManualMode, setIsManualMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,7 +181,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
           throw new Error("No data found for the current semester results.");
         }
 
-        const resultModel = executePipeline("results-current", resultPayload);
+        const resultModel = executePipeline("results-current", batch);
         if (!resultModel.isValid || !resultModel.data) {
           throw new Error("Validation failed for results data.");
         }
@@ -271,6 +274,23 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
     setPlannerSubjects(isManualMode ? [] : autoSubjects);
   };
 
+  const internalMarksByCode = useMemo(() => {
+    const entries = data?.internalMarks?.subjects || [];
+    return new Map(entries.map((subject) => [subject.code.replace(/\s+/g, "").toUpperCase(), subject]));
+  }, [data]);
+
+  const toggleSubjectExpansion = (subjectCode: string) => {
+    setExpandedSubjects((current) => {
+      const next = new Set(current);
+      if (next.has(subjectCode)) {
+        next.delete(subjectCode);
+      } else {
+        next.add(subjectCode);
+      }
+      return next;
+    });
+  };
+
   return (
     <ErpPageShell
       title={blueprint.heading}
@@ -315,39 +335,169 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
               <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Subject Results</h3>
             </div>
             <div className="px-5 pb-5">
-              <DataTable
-                data={data.subjects}
-                stickyHeader
-                ariaLabel="Current semester subject results"
-                emptyTitle="No subject results found."
-                keyExtractor={(subject, index) => `${subject.subjectCode}-${index}`}
-                columns={[
-                  { header: "Code", accessor: (s) => <span className="font-semibold">{s.subjectCode}</span> },
-                  { header: "Description", accessor: (s) => s.subjectDescription },
-                  { header: "Semester", accessor: (s) => s.semester, className: "text-center" },
-                  { header: "Credits", accessor: (s) => <span className="font-medium text-[var(--comp-text-secondary)]">{s.credit}</span>, className: "text-center" },
-                  {
-                    header: "Grade",
-                    accessor: (s) => (
-                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-slate-100 px-2 py-1 font-bold text-[var(--comp-text-primary)]">
-                        {s.grade}
-                      </span>
-                    ),
-                    className: "text-center",
-                  },
-                  {
-                    header: "Result",
-                    accessor: (s) => (
-                      <span className={`erp-status-pill ${s.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
-                        {s.result}
-                      </span>
-                    ),
-                    className: "text-center",
-                  },
-                ] as Column<CurrentResultModel["subjects"][number]>[]}
-              />
+              <div className="erp-table-shell hidden overflow-auto md:block">
+                <table className="erp-table" aria-label="Current semester subject results">
+                  <thead className="erp-table-head">
+                    <tr className="erp-table-row">
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] w-10 bg-[var(--comp-accent)]"> </th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)]">Code</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)]">Description</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)] text-center">Semester</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)] text-center">Credits</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)] text-center">Grade</th>
+                      <th className="erp-table-head-cell label-text sticky top-0 z-[1] bg-[var(--comp-accent)] text-center">Result</th>
+                    </tr>
+                  </thead>
+                  <tbody className="erp-table-body">
+                    {data.subjects.length === 0 ? (
+                      <tr className="erp-table-row">
+                        <td colSpan={7} className="erp-table-cell py-8 text-center text-sm italic text-[var(--comp-text-muted)]">
+                          No subject results found.
+                        </td>
+                      </tr>
+                    ) : (
+                      data.subjects.map((subject, index) => {
+                        const subjectKey = `${subject.subjectCode}-${index}`;
+                        const normalizedCode = subject.subjectCode.replace(/\s+/g, "").toUpperCase();
+                        const internalMark = internalMarksByCode.get(normalizedCode);
+                        const isExpanded = expandedSubjects.has(subjectKey);
+
+                        return (
+                          <Fragment key={subjectKey}>
+                            <tr className="erp-table-row bg-[color:var(--comp-surface)] hover:bg-[color:var(--comp-surface-hover)]">
+                              <td className="erp-table-cell">
+                                {internalMark ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSubjectExpansion(subjectKey)}
+                                    aria-label={`${isExpanded ? "Hide" : "Show"} internal marks for ${subject.subjectCode}`}
+                                    aria-expanded={isExpanded}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--comp-accent)]"
+                                  >
+                                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                  </button>
+                                ) : null}
+                              </td>
+                              <td className="erp-table-cell font-semibold">{subject.subjectCode}</td>
+                              <td className="erp-table-cell">{subject.subjectDescription}</td>
+                              <td className="erp-table-cell text-center">{subject.semester}</td>
+                              <td className="erp-table-cell text-center font-medium text-[var(--comp-text-secondary)]">{subject.credit}</td>
+                              <td className="erp-table-cell text-center">
+                                <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-[var(--comp-surface-hover)] px-2 py-1 font-bold text-[var(--comp-text-primary)]">
+                                  {subject.grade}
+                                </span>
+                              </td>
+                              <td className="erp-table-cell text-center">
+                                <span className={`erp-status-pill ${subject.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
+                                  {subject.result}
+                                </span>
+                              </td>
+                            </tr>
+                            {isExpanded && internalMark ? (
+                              <tr className="erp-table-row bg-[color:var(--comp-surface)]">
+                                <td colSpan={7} className="erp-table-cell">
+                                  <div className="grid gap-3 rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] p-4 sm:grid-cols-4">
+                                    <div>
+                                      <p className="label-text">Internal Marks</p>
+                                      <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">
+                                        {internalMark.marksObtained.toFixed(2)} / {internalMark.maxMarks.toFixed(2)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="label-text">Percentage</p>
+                                      <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">
+                                        {internalMark.percentage.toFixed(2)}%
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="label-text">Signal</p>
+                                      <p className="mt-1 text-sm font-semibold capitalize text-[var(--comp-text-primary)]">
+                                        {internalMark.status.replace("-", " ")}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="label-text">Source Row</p>
+                                      <p className="mt-1 text-sm font-semibold text-[var(--comp-text-primary)]">
+                                        {internalMark.detailTableIndex}
+                                      </p>
+                                    </div>
+                                    {internalMark.assessments && internalMark.assessments.length > 0 ? (
+                                      <div className="sm:col-span-4">
+                                        <AssessmentBreakdownTable subject={internalMark} />
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : null}
+                          </Fragment>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="space-y-3 md:hidden">
+                {data.subjects.length === 0 ? (
+                  <p className="rounded-xl border border-[var(--comp-border)] p-4 text-center text-sm italic text-[var(--comp-text-muted)]">
+                    No subject results found.
+                  </p>
+                ) : (
+                  data.subjects.map((subject, index) => {
+                    const subjectKey = `${subject.subjectCode}-${index}`;
+                    const internalMark = internalMarksByCode.get(subject.subjectCode.replace(/\s+/g, "").toUpperCase());
+                    const isExpanded = expandedSubjects.has(subjectKey);
+
+                    return (
+                      <div key={subjectKey} className="rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-[var(--comp-text-primary)]">{subject.subjectCode}</p>
+                            <p className="mt-1 text-sm text-[var(--comp-text-secondary)]">{subject.subjectDescription}</p>
+                          </div>
+                          {internalMark ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleSubjectExpansion(subjectKey)}
+                              aria-label={`${isExpanded ? "Hide" : "Show"} internal marks for ${subject.subjectCode}`}
+                              aria-expanded={isExpanded}
+                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--comp-accent)]"
+                            >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                          <span className="text-[var(--comp-text-secondary)]">Semester: {subject.semester}</span>
+                          <span className="text-[var(--comp-text-secondary)]">Credits: {subject.credit}</span>
+                          <span className="font-semibold text-[var(--comp-text-primary)]">Grade: {subject.grade}</span>
+                          <span className="font-semibold text-[var(--comp-text-primary)]">Result: {subject.result}</span>
+                        </div>
+                        {isExpanded && internalMark ? (
+                          <div className="mt-4 rounded-xl bg-[var(--comp-surface-hover)] p-3 text-sm">
+                            <p className="font-semibold text-[var(--comp-text-primary)]">
+                              {internalMark.marksObtained.toFixed(2)} / {internalMark.maxMarks.toFixed(2)}
+                            </p>
+                            <p className="mt-1 text-[var(--comp-text-secondary)]">
+                              {internalMark.percentage.toFixed(2)}%, {internalMark.status.replace("-", " ")}
+                            </p>
+                            {internalMark.assessments && internalMark.assessments.length > 0 ? (
+                              <div className="mt-3">
+                                <AssessmentBreakdownTable subject={internalMark} compact />
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </section>
+
+          {data.internalMarks ? <InternalMarksBundledSection model={data.internalMarks} /> : null}
 
           <SectionCard title="SGPA / CGPA Predictor">
             <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
@@ -468,7 +618,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                             onClick={() =>
                               setPlannerSubjects((current) => current.filter((item) => item.id !== subject.id))
                             }
-                            className="rounded-xl border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                            className="rounded-xl border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-sm font-medium text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                           >
                             Remove
                           </button>
@@ -497,5 +647,171 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
         </>
       )}
     </ErpPageShell>
+  );
+}
+
+function AssessmentBreakdownTable({
+  subject,
+  compact = false,
+}: {
+  subject: InternalMarkSubject;
+  compact?: boolean;
+}) {
+  const assessments = subject.assessments || [];
+  if (assessments.length === 0) return null;
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-[var(--comp-border)]">
+      <table className="w-full text-sm" aria-label={`${subject.code} internal assessment breakdown`}>
+        <thead className="bg-[var(--comp-surface)]">
+          <tr>
+            <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-[var(--comp-text-secondary)]">Assessment</th>
+            <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-[var(--comp-text-secondary)]">Conducted</th>
+            <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-[var(--comp-text-secondary)]">Converted</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[var(--comp-border)]">
+          {assessments.map((assessment, index) => (
+            <tr key={`${subject.code}-${assessment.name}-${index}`}>
+              <td className="px-3 py-2.5 text-[var(--comp-text-primary)]">{assessment.name}</td>
+              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--comp-text-secondary)]">
+                {assessment.conducted || "-"}
+              </td>
+              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--comp-text-secondary)]">
+                {assessment.converted || "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!compact ? (
+        <div className="border-t border-[var(--comp-border)] bg-[color-mix(in_srgb,var(--comp-surface)_60%,transparent)] px-3 py-2 text-right text-xs font-semibold text-[var(--comp-text-secondary)]">
+          Total: {subject.marksObtained.toFixed(2)} / {subject.maxMarks.toFixed(0)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function InternalMarksBundledSection({ model }: { model: InternalMarksModel }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (code: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  };
+
+  return (
+    <section className="dashboard-card p-0">
+      <div className="border-b border-[var(--border)] px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold text-[var(--comp-text-primary)]">Internal Mark Details</h2>
+          <span className="rounded-full bg-[var(--comp-surface-hover)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)]">
+            {model.averagePercentage.toFixed(2)}% average
+          </span>
+        </div>
+      </div>
+
+      {model.subjects.length === 0 ? (
+        <div className="px-5 py-12 text-center text-sm italic text-[var(--comp-text-muted)]">
+          No internal mark details found.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
+          {model.subjects.map((subject) => {
+            const isOpen = expanded.has(subject.code);
+            const hasAssessments = subject.assessments && subject.assessments.length > 0;
+            const pct = subject.maxMarks > 0 ? (subject.marksObtained / subject.maxMarks) * 100 : 0;
+            const pctColor = pct >= 75 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--error)";
+
+            return (
+              <div
+                key={subject.code}
+                className="flex flex-col overflow-hidden rounded-xl border border-[var(--comp-border)] bg-[var(--background)] transition-shadow hover:shadow-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => hasAssessments && toggle(subject.code)}
+                  aria-expanded={hasAssessments ? isOpen : undefined}
+                  aria-label={hasAssessments ? `${isOpen ? "Collapse" : "Expand"} ${subject.code}` : undefined}
+                  className={`w-full px-5 py-4 text-left transition-colors ${hasAssessments ? "cursor-pointer hover:bg-[var(--comp-surface-hover)]" : "cursor-default"}`}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
+                        {/* Teal code badge */}
+                        <span className="shrink-0 rounded-md bg-[var(--comp-accent-light)] px-2.5 py-1 text-xs font-bold tracking-wide text-[var(--comp-accent)] tabular-nums">
+                          {subject.code}
+                        </span>
+                        <span className="truncate text-sm font-medium text-[var(--comp-text-primary)]">
+                          {subject.description}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-5">
+                      {/* Marks + progress bar */}
+                      <div className="text-right">
+                        <p className="text-sm tabular-nums">
+                          <span className="font-bold text-[var(--comp-accent)]">
+                            {subject.marksObtained.toFixed(2)}
+                          </span>
+                          <span className="mx-0.5 text-[var(--comp-text-muted)]">/</span>
+                          <span className="text-xs text-[var(--comp-text-muted)]">
+                            {subject.maxMarks.toFixed(0)}
+                          </span>
+                        </p>
+                        {/* Mini progress bar */}
+                        <div className="mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(pct, 100)}%`,
+                              background: pctColor,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Percentage pill */}
+                      <span
+                        className={`erp-status-pill tabular-nums text-xs font-bold ${
+                          pct >= 75
+                            ? "erp-status-pill-success"
+                            : pct >= 50
+                              ? "erp-status-pill-warning"
+                              : "erp-status-pill-error"
+                        }`}
+                      >
+                        {pct.toFixed(1)}%
+                      </span>
+
+                      {hasAssessments ? (
+                        <ChevronDown
+                          className="h-4 w-4 shrink-0 text-[var(--comp-text-muted)] transition-transform duration-200"
+                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        />
+                      ) : (
+                        <div className="w-4" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+
+                {isOpen && hasAssessments ? (
+                  <div className="border-t border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-5 py-4">
+                    <AssessmentBreakdownTable subject={subject} />
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
