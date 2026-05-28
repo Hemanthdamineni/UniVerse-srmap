@@ -9,6 +9,7 @@ const {
   EXTERNAL_DB_PATH,
   CONTENT_DB_PATH,
   LMS_DB_PATH,
+  LMS_TRACKER_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
@@ -16,12 +17,15 @@ const {
   EVENTS_DATA_DIR,
   EVENTS_DB_PATH,
   HELPDESK_DB_PATH,
+  CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
   FEEDBACK_AUTOMATION_ENABLED,
   UPLOADS_DIR,
   LMS_FILES_DIR,
 } = require("./config/env");
 const { EXTERNAL_PAGE_SEED_DATA } = require("./data/externalSeedData");
+const path = require("path");
+const fs = require("fs");
 const scrapeTargets = require("./config/scrapeTargets");
 const { createApp } = require("./app");
 const { DiscoveryRepository } = require("./services/discoveryRepository");
@@ -44,8 +48,10 @@ const { PagePolicyStore } = require("./services/pagePolicyStore");
 const { EventsStore } = require("./services/eventsStore");
 const { createCompetitionStore } = require("./services/competitionStore");
 const { HelpdeskStore } = require("./services/helpdeskStore");
+const { CampusFeedbackStore } = require("./services/campusFeedbackStore");
 const { CareerStore } = require("./services/careerStore");
 const { LmsTrackerService } = require("./services/lmsTrackerService");
+const { LmsTrackerStore } = require("./services/lmsTrackerStore");
 const { LmsStore } = require("./services/lmsStore");
 const { LmsModerationService } = require("./services/lmsModerationService");
 const { LmsRevisionScheduler } = require("./services/lmsRevisionScheduler");
@@ -84,6 +90,22 @@ async function createErpCacheStore(redisClient) {
 }
 
 async function startServer() {
+  const isDebugMode = process.argv.includes("--debug");
+  if (isDebugMode) {
+    process.env.ERP_DEBUG_MODE = "1";
+  }
+
+  const isCaptureMode = process.argv.includes("--capture");
+  if (isCaptureMode) {
+    const { setCaptureDir } = require("./services/erpClient");
+    const { ErpDumpService } = require("./services/erpDumpService");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const captureDir = path.join(ErpDumpService.getBaseDir(), timestamp);
+    fs.mkdirSync(path.join(captureDir, "raw"), { recursive: true });
+    setCaptureDir(captureDir);
+    log({ level: "info", msg: `Capture mode: saving responses to ${captureDir}` });
+  }
+
   const redisClient = await getRedisClient();
   const discoveryRepository = new DiscoveryRepository(DISCOVERY_FILE_CANDIDATES);
   const externalDataStore = new ExternalDataStore(EXTERNAL_DB_PATH);
@@ -91,6 +113,15 @@ async function startServer() {
   const sessionStore = await createSessionStore(redisClient);
   const erpCacheStore = await createErpCacheStore(redisClient);
   const pagePolicyStore = new PagePolicyStore(ERP_PAGE_POLICY_FILE);
+  const { ErpDumpService } = require("./services/erpDumpService");
+  const erpDumpService = isDebugMode
+    ? (ErpDumpService.resolveLatest()
+        ? new ErpDumpService(ErpDumpService.resolveLatest())
+        : null)
+    : null;
+  if (isDebugMode && !erpDumpService) {
+    log({ level: "warn", msg: "Debug mode: no dump found. Run `npm run dump:erp` first." });
+  }
   const uiMapStore = new ErpUiMapStore({
     uiMapFile: ERP_UI_MAP_FILE,
     scrapeTargets,
@@ -99,6 +130,7 @@ async function startServer() {
     sessionStore,
     discoveryRepository,
     scrapeTargets,
+    erpDumpService,
   });
   const feedbackService = new FeedbackAutomationService({
     sessionStore,
@@ -130,6 +162,9 @@ async function startServer() {
   const helpdeskStore = new HelpdeskStore({
     dbPath: HELPDESK_DB_PATH,
   });
+  const campusFeedbackStore = new CampusFeedbackStore({
+    dbPath: CAMPUS_FEEDBACK_DB_PATH,
+  });
   const careerStore = new CareerStore({
     dbPath: CAREER_DB_PATH,
   });
@@ -140,6 +175,9 @@ async function startServer() {
     filesDir: LMS_FILES_DIR,
     moderationService: lmsModerationService,
     revisionScheduler: lmsRevisionScheduler,
+  });
+  const lmsTrackerStore = new LmsTrackerStore({
+    dbPath: LMS_TRACKER_DB_PATH,
   });
   const lmsReadingTimeEstimator = new LmsReadingTimeEstimator();
   const lmsDuplicateDetector = new LmsDuplicateDetector({ lmsStore });
@@ -156,6 +194,10 @@ async function startServer() {
   });
   const lmsTrackerService = new LmsTrackerService({
     erpAggregationService,
+    careerStore,
+    trackerStore: lmsTrackerStore,
+    lmsStore,
+    recommendationEngine: lmsRecommendationEngine,
   });
   const lmsExamFeedbackService = new LmsExamFeedbackService({
     lmsStore,
@@ -182,6 +224,7 @@ async function startServer() {
     feedbackService,
     eventsStore,
     helpdeskStore,
+    campusFeedbackStore,
     careerStore,
     competitionStore,
     lmsStore,
@@ -199,6 +242,7 @@ async function startServer() {
     pagePolicyStore,
     redisClient,
     integrityService,
+    erpDumpService,
     uploadsDir: UPLOADS_DIR,
   });
   const reminderTicker = setInterval(() => {

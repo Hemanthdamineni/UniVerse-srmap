@@ -7,6 +7,7 @@ const compression = require("compression");
 const cookieParser = require("cookie-parser");
 const { createHealthRoutes } = require("./routes/healthRoutes");
 const { createAuthRoutes } = require("./routes/authRoutes");
+const { createDebugRoutes } = require("./routes/debugRoutes");
 const { createExternalRoutes } = require("./routes/externalRoutes");
 const { createContentRoutes } = require("./routes/contentRoutes");
 const { createResourceRoutes } = require("./routes/resourceRoutes");
@@ -15,6 +16,7 @@ const { createScrapeRoutes } = require("./routes/scrapeRoutes");
 const { createErpV2Routes } = require("./routes/erpV2Routes");
 const { createEventsRoutes } = require("./routes/eventsRoutes");
 const { createHelpdeskRoutes } = require("./routes/helpdeskRoutes");
+const { createCampusFeedbackRoutes } = require("./routes/campusFeedbackRoutes");
 const { createCareerRoutes } = require("./routes/careerRoutes");
 const { createCompetitionRoutes } = require("./routes/competitionRoutes");
 const { createLmsRoutes } = require("./routes/lmsRoutes");
@@ -37,6 +39,7 @@ function createApp({
   feedbackService,
   eventsStore,
   helpdeskStore,
+  campusFeedbackStore,
   careerStore,
   competitionStore,
   lmsStore,
@@ -54,6 +57,7 @@ function createApp({
   pagePolicyStore,
   redisClient,
   integrityService,
+  erpDumpService,
   uploadsDir,
 }) {
   const app = express();
@@ -94,7 +98,10 @@ function createApp({
   );
   app.use("/api", createMetricsRoutes());
   app.use("/api", createTelemetryRoutes());
-  app.use("/api", createAuthRoutes({ sessionStore }));
+  if (erpDumpService) {
+    app.use("/api", createDebugRoutes({ erpDumpService }));
+  }
+  app.use("/api", createAuthRoutes({ sessionStore, erpDumpService }));
   app.use("/api", createAdminRoutes({ sessionStore, adminPassword: contentAdminPassword }));
   if (FEATURE_ERP_V2_API) {
     app.use("/api", createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor }));
@@ -134,6 +141,16 @@ function createApp({
       })
     );
   }
+  if (campusFeedbackStore) {
+    app.use(
+      "/api",
+      createCampusFeedbackRoutes({
+        campusFeedbackStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
   if (careerStore) {
     app.use(
       "/api",
@@ -141,6 +158,7 @@ function createApp({
         careerStore,
         sessionStore,
         adminPassword: contentAdminPassword,
+        lmsTrackerService,
         eventsStore,
         redisClient,
       })

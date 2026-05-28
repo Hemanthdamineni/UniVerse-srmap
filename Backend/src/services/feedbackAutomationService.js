@@ -199,14 +199,17 @@ class FeedbackAutomationService {
     const { payload } = await this._loadLandingPage(sessionId);
     const landing = parseFeedbackLandingPage(payload.rawHtml || "");
 
+    const isFeedbackNotEnabled = /Feedback Not Enabled/i.test(landing.pageText);
+
     return {
-      enabled: this.enabled,
+      enabled: this.enabled && !isFeedbackNotEnabled,
       pendingSubjects: landing.pendingSubjects,
       submittedSubjects: landing.submittedSubjects,
       totalPending: landing.pendingSubjects.length,
       defaultOption: 5,
       templateAvailable: readFeedbackTemplates().length > 0,
       alreadySubmitted: landing.alreadySubmitted,
+      disabledMessage: isFeedbackNotEnabled ? "Feedback Not Enabled By Administrator" : null,
     };
   }
 

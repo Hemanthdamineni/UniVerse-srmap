@@ -44,7 +44,7 @@ function buildDemoProfileData(username) {
   };
 }
 
-function createAuthRoutes({ sessionStore }) {
+function createAuthRoutes({ sessionStore, erpDumpService }) {
   const router = express.Router();
 
   async function handleCaptcha(req, res) {
@@ -164,7 +164,13 @@ function createAuthRoutes({ sessionStore }) {
     try {
       const username = String(req.body?.username || DEMO_ADMIN_REG_NO).trim().toUpperCase();
       const sessionId = await sessionStore.create({ cookies: [], origins: [] });
-      const profileData = buildDemoProfileData(username);
+
+      let profileData;
+      if (process.env.ERP_DEBUG_MODE === "1" && erpDumpService?.getProfile()) {
+        profileData = erpDumpService.getProfile();
+      } else {
+        profileData = buildDemoProfileData(username);
+      }
 
       await sessionStore.update(sessionId, {
         loggedIn: true,
