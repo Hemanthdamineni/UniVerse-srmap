@@ -12,6 +12,67 @@ import StipendChip from '../../components/career/StipendChip';
 import EligibilityBadge from '../../components/career/EligibilityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/card';
 import { useSession } from '../../hooks/useSession';
+import { PageContainer } from '../../components/layout/PageLayouts';
+import { cn } from '../../lib/utils';
+
+const AdaptiveTextRenderer = ({ text }: { text: string }) => {
+  if (!text) return <span className="text-[var(--comp-text-muted)] italic">No content provided.</span>;
+
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: string[] = [];
+
+  const flushList = () => {
+    if (currentList.length > 0) {
+      const useGrid = currentList.length > 6;
+      elements.push(
+        <ul className={cn("list-disc pl-5 my-4 space-y-2", useGrid ? "sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-2 sm:space-y-0" : "")} key={`list-${elements.length}`}>
+          {currentList.map((item, i) => (
+            <li key={i} className="text-[var(--comp-text-secondary)] leading-relaxed">{item.replace(/^[\*\-\•]\s*/, '')}</li>
+          ))}
+        </ul>
+      );
+      currentList = [];
+    }
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushList();
+      elements.push(<div key={`space-${index}`} className="h-2" />);
+      return;
+    }
+
+    // Detect common section headers
+    const isHeader = 
+      /^(key responsibilities|responsibilities|requirements|what you'll do|what you'll learn|benefits|skills|about the role|about company|tech stack|functional .* qa|performance .* testing)/i.test(trimmed) && trimmed.length < 60;
+    
+    const isBullet = /^[\*\-\•]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed);
+
+    if (isHeader) {
+      flushList();
+      elements.push(
+        <h3 key={`h-${index}`} className="text-lg font-semibold text-[var(--comp-text-primary)] mt-8 mb-4 border-b border-[var(--comp-border)] pb-2">
+          {trimmed.replace(/:$/, '').replace(/\\&/g, '&')}
+        </h3>
+      );
+    } else if (isBullet) {
+      currentList.push(trimmed.replace(/\\&/g, '&'));
+    } else {
+      flushList();
+      elements.push(
+        <p key={`p-${index}`} className="my-3 leading-relaxed text-[var(--comp-text-secondary)]">
+          {trimmed.replace(/\\&/g, '&')}
+        </p>
+      );
+    }
+  });
+
+  flushList();
+
+  return <div className="adaptive-content">{elements}</div>;
+};
 
 const OpportunityDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +110,37 @@ const OpportunityDetailPage: React.FC = () => {
       setBookmarked(result.bookmarked);
     } catch (err) {
       console.error('Failed to bookmark', err);
+    }
+  };
+
+  const handleSimilarBookmarkToggle = async (similarId: string) => {
+    if (!opp || !opp.similar) return;
+    
+    // Optimistic update
+    setOpp({
+      ...opp,
+      similar: opp.similar.map(s => s.id === similarId ? { ...s, isBookmarked: !s.isBookmarked } : s)
+    });
+    
+    try {
+      const result = await bookmarkOpportunity(similarId);
+      setOpp(prev => {
+        if (!prev || !prev.similar) return prev;
+        return {
+          ...prev,
+          similar: prev.similar.map(s => s.id === similarId ? { ...s, isBookmarked: result.bookmarked } : s)
+        };
+      });
+    } catch (err) {
+      console.error(err);
+      // Revert optimism on failure
+      setOpp(prev => {
+        if (!prev || !prev.similar) return prev;
+        return {
+          ...prev,
+          similar: prev.similar.map(s => s.id === similarId ? { ...s, isBookmarked: !s.isBookmarked } : s)
+        };
+      });
     }
   };
 
@@ -105,8 +197,16 @@ const OpportunityDetailPage: React.FC = () => {
     opp.eligibleYears.length === 0 ||
     (studentYear !== null && opp.eligibleYears.includes(studentYear));
 
+  // Determine layout density
+  const contentDensity = 
+    (opp.description?.length || 0) + 
+    (opp.requirements?.length || 0) + 
+    (opp.skills.length * 50);
+  const isSparse = contentDensity < 1200;
+  const containerMaxWidth = isSparse ? "max-w-5xl" : "";
+
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8">
+    <PageContainer className={`space-y-8 ${containerMaxWidth}`}>
       <Button 
         variant="ghost" 
         onClick={() => navigate(-1)} 
@@ -115,31 +215,29 @@ const OpportunityDetailPage: React.FC = () => {
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Header Info */}
-          <header className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <TypeBadge type={opp.type} className="text-sm px-3 py-1" />
-              <ModeChip mode={opp.mode} className="text-sm px-3 py-1" />
-              <DeadlineCountdown deadline={opp.deadline} className="text-sm px-3 py-1" />
+      {/* Hero Section - Full Width */}
+      <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-[var(--comp-border)]">
+        <div className="space-y-6 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <TypeBadge type={opp.type} className="text-sm px-3 py-1" />
+            <ModeChip mode={opp.mode} className="text-sm px-3 py-1" />
+            <DeadlineCountdown deadline={opp.deadline} className="text-sm px-3 py-1" />
+          </div>
+          
+          <h1 className="page-title">{opp.title}</h1>
+          
+          <div className="body-text flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-1.5 font-medium">
+              <Briefcase className="h-5 w-5" />
+              {opp.company || opp.organizer || 'University Opportunity'}
             </div>
-            
-            <h1 className="page-title">{opp.title}</h1>
-            
-            <div className="body-text flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-center gap-1.5 font-medium">
-                <Briefcase className="h-5 w-5" />
-                {opp.company || opp.organizer || 'University Opportunity'}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-5 w-5" />
-                {opp.location || (opp.isPanIndia ? 'Pan India' : 'Remote / Online')}
-              </div>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-5 w-5" />
+              {opp.location || (opp.isPanIndia ? 'Pan India' : 'Remote / Online')}
             </div>
-          </header>
+          </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 pt-2">
             <Button 
               className="flex-1 sm:flex-none h-12 px-8 text-lg"
               onClick={handleApply}
@@ -158,65 +256,87 @@ const OpportunityDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className={bookmarked ? "h-12 w-12 text-amber-500 fill-amber-500" : "h-12 w-12 text-[var(--comp-text-muted)]"}
+              className={bookmarked ? "h-12 w-12 text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] border border-[color-mix(in_srgb,var(--warning)_20%,transparent)]" : "h-12 w-12 text-[var(--comp-text-muted)]"}
               onClick={handleBookmark}
             >
-              <Bookmark className="h-6 w-6" />
+              <Bookmark className={bookmarked ? "h-6 w-6 fill-current" : "h-6 w-6"} />
             </Button>
           </div>
+        </div>
+        
+        {/* Right side Image / Icon */}
+        <div className="hidden md:flex flex-shrink-0 items-center justify-center w-40 h-40 lg:w-48 lg:h-48 rounded-3xl bg-[var(--comp-surface-hover)] border border-[var(--comp-border)] overflow-hidden shadow-sm mr-4 lg:mr-12">
+          {opp.logoUrl || opp.imageUrl ? (
+            <img src={opp.logoUrl || opp.imageUrl} alt={opp.company || "Company Logo"} className="w-full h-full object-contain p-4" />
+          ) : (
+            <Briefcase className="w-16 h-16 lg:w-20 lg:h-20 text-[var(--comp-text-muted)] opacity-50" />
+          )}
+        </div>
+      </header>
 
+      {/* Structured Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <section className="max-w-none text-[var(--comp-text-secondary)]">
-            <h2 className="section-title border-b border-[var(--comp-border)] pb-2 mb-4">Description</h2>
-            <div className="body-text whitespace-pre-wrap leading-relaxed">
-              {opp.description || 'No detailed description provided.'}
-            </div>
-          </section>
+          <Card>
+            <CardHeader className="border-b border-[var(--comp-border)] pb-4">
+              <CardTitle className="text-lg">Description</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <AdaptiveTextRenderer text={opp.description || ''} />
+            </CardContent>
+          </Card>
 
           {/* Requirements */}
           {opp.requirements && (
-            <section>
-              <h2 className="section-title border-b border-[var(--comp-border)] pb-2 mb-4">Requirements</h2>
-              <div className="body-text whitespace-pre-wrap leading-relaxed">
-                {opp.requirements}
-              </div>
-            </section>
+            <Card>
+              <CardHeader className="border-b border-[var(--comp-border)] pb-4">
+                <CardTitle className="text-lg">Requirements</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <AdaptiveTextRenderer text={opp.requirements} />
+              </CardContent>
+            </Card>
           )}
 
           {/* Skills & Tags */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--comp-border)] pb-2 mb-2">
-              <h2 className="section-title">Required Skills</h2>
+          <Card>
+            <CardHeader className="border-b border-[var(--comp-border)] pb-4 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-lg">Required Skills</CardTitle>
               {opp.skillMatch && (
                 <span className="text-sm font-medium text-[var(--comp-text-muted)]">
                   {opp.skillMatch.percent}% Match
                 </span>
               )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {opp.skills.map(skill => {
-                const isMatched = opp.skillMatch?.matched.some(s => s.toLowerCase() === skill.toLowerCase());
-                return (
-                  <span 
-                    key={skill} 
-                    className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
-                      isMatched 
-                        ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_24%,transparent)]' 
-                        : 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] border-[var(--comp-border)]'
-                    }`}
-                  >
-                    {isMatched && <CheckCircle2 className="h-3.5 w-3.5" />}
-                    {skill}
-                  </span>
-                );
-              })}
-            </div>
-            {opp.skillMatch && opp.skillMatch.missing.length > 0 && (
-              <p className="text-xs text-[var(--comp-text-muted)] italic">
-                Missing skills: {opp.skillMatch.missing.join(', ')}
-              </p>
-            )}
-          </section>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {opp.skills.map(skill => {
+                  const isMatched = opp.skillMatch?.matched.some(s => s.toLowerCase() === skill.toLowerCase());
+                  return (
+                    <span 
+                      key={skill} 
+                      className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
+                        isMatched 
+                          ? 'bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_24%,transparent)]' 
+                          : 'bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] border-[var(--comp-border)]'
+                      }`}
+                    >
+                      {isMatched && <CheckCircle2 className="h-3.5 w-3.5" />}
+                      {skill}
+                    </span>
+                  );
+                })}
+              </div>
+              {opp.skillMatch && opp.skillMatch.missing.length > 0 && (
+                <p className="text-xs text-[var(--comp-text-muted)] italic">
+                  Missing skills: {opp.skillMatch.missing.join(', ')}
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar */}
@@ -301,12 +421,12 @@ const OpportunityDetailPage: React.FC = () => {
           <p className="body-text">Same type as this listing, explore related openings.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {opp.similar.map((s) => (
-              <OpportunityCard key={s.id} opportunity={s} />
+              <OpportunityCard key={s.id} opportunity={s} onBookmarkToggle={handleSimilarBookmarkToggle} />
             ))}
           </div>
         </section>
       ) : null}
-    </div>
+    </PageContainer>
   );
 };
 

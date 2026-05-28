@@ -6,6 +6,26 @@ import SubmitOpportunityPage from "./SubmitOpportunityPage";
 
 vi.mock("../../lib/careerApi", () => ({
   submitOpportunity: vi.fn(() => Promise.resolve({ id: "s1", status: "pending" })),
+  listMyOpportunitySubmissions: vi.fn(() =>
+    Promise.resolve({
+      items: [
+        {
+          id: "sub-rejected",
+          title: "Unverified Internship",
+          status: "rejected",
+          reviewReason: "Company posting could not be verified.",
+          submittedBy: "student-1",
+          type: "internship",
+          skills: [],
+          tags: [],
+          eligibleBranches: [],
+          eligibleYears: [],
+          applyUrl: "https://example.com/unverified",
+          createdAt: "2026-05-25T10:00:00.000Z",
+        },
+      ],
+    })
+  ),
 }));
 
 describe("SubmitOpportunityPage", () => {
@@ -21,6 +41,8 @@ describe("SubmitOpportunityPage", () => {
         <SubmitOpportunityPage />
       </MemoryRouter>
     );
+    expect(await screen.findByText("Your Submission Status")).toBeInTheDocument();
+    expect(screen.getByText("Review reason: Company posting could not be verified.")).toBeInTheDocument();
     await user.type(
       screen.getByPlaceholderText(/Software Engineering Intern/i),
       "Summer Research Internship"
@@ -33,5 +55,6 @@ describe("SubmitOpportunityPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/Successfully Submitted/i)).toBeInTheDocument();
     });
+    expect(screen.getByText(/will stay out of the public feed until admin approval/i)).toBeInTheDocument();
   });
 });

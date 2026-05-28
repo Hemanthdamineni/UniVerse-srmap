@@ -1,6 +1,6 @@
 // Opportunities: PageHeader, FilterBar, SkeletonCard loading, EmptyState; listOpportunities unchanged.
 import React, { useEffect, useState, useCallback } from "react";
-import { listOpportunities, type CareerOpportunity } from "../../lib/careerApi";
+import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -73,6 +73,17 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
     });
   };
 
+  const handleBookmarkToggle = async (id: string) => {
+    setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o));
+    try {
+      const result = await bookmarkOpportunity(id);
+      setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: result.bookmarked } : o));
+    } catch (err) {
+      console.error(err);
+      setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o));
+    }
+  };
+
   return (
     <PageContainer className="space-y-6">
       <PageHeader title="Opportunities" subtitle="Find your next step" />
@@ -128,7 +139,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
       ) : opportunities.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {opportunities.map((opp) => (
-            <OpportunityCard key={opp.id} opportunity={opp} />
+            <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
           ))}
         </div>
       ) : (
