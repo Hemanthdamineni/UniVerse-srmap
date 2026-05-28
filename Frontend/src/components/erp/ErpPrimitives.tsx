@@ -51,6 +51,7 @@ interface ErpPageShellProps {
   loadingMessage?: string;
   onRefresh?: () => void;
   headerActions?: ReactNode;
+  surface?: "card" | "flat";
   children: ReactNode;
 }
 
@@ -89,6 +90,7 @@ export function ErpPageShell({
   loadingMessage = "Loading...",
   onRefresh,
   headerActions,
+  surface = "card",
   children,
 }: ErpPageShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +104,7 @@ export function ErpPageShell({
   );
 
   return (
-    <PageContainer className="relative">
+    <PageContainer className="relative" surface={surface}>
       <div ref={shellRef}>
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
