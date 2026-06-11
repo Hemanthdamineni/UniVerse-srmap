@@ -124,7 +124,7 @@ class LmsTrackerStore {
       .prepare(
         `SELECT * FROM lms_tracker_snapshots
          WHERE ${clauses.join(" AND ")}
-         ORDER BY created_at DESC
+         ORDER BY created_at DESC, rowid DESC
          LIMIT ?`
       )
       .all(...params, normalizeLimit(limit))
@@ -208,7 +208,7 @@ class LmsTrackerStore {
       .prepare(
         `SELECT * FROM lms_tracker_recommendation_events
          WHERE user_id = ?
-         ORDER BY created_at DESC
+         ORDER BY created_at DESC, rowid DESC
          LIMIT ?`
       )
       .all(normalizedUserId, normalizeLimit(limit, 25, 200))

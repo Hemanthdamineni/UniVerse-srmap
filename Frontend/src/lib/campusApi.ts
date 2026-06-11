@@ -23,6 +23,7 @@ export type EventSummary = {
   registrationCount?: number;
   seatsAvailable?: number;
   maxCapacity?: number | null;
+  registrationDeadline?: string;
   prizes?: string | null;
   eligibility?: string | null;
   isCompetition?: boolean;

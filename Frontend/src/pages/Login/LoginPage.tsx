@@ -5,8 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
-  normalizeRegistrationNumber,
-  validateRegistrationNumber,
 } from "../../lib/auth";
 import { hasSessionAuth, storeSessionAuth } from "../../lib/session";
 import { isDebugMode, checkBackendDebugMode } from "../../lib/debugModeEnv";
@@ -73,11 +71,6 @@ function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
   );
 }
 
-function formatExpiry(v: string) {
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 const LABEL: React.CSSProperties = { display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--comp-text-secondary)", marginBottom: "7px" };
 const INPUT: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "11px 14px", fontSize: "0.875rem", borderRadius: "10px", border: "1px solid color-mix(in srgb, var(--border) 90%, transparent)", background: "var(--background)", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", transition: "border-color 0.2s ease, box-shadow 0.2s ease" };
 
@@ -92,7 +85,6 @@ export default function LoginPage() {
   const [sessionId, setSessionId] = useState("");
   const [captchaBase64, setCaptchaBase64] = useState("");
   const [captchaDisplaySrc, setCaptchaDisplaySrc] = useState("");
-  const [captchaExpiresAt, setCaptchaExpiresAt] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [showPassword, setShowPassword] = useState(false);
@@ -101,9 +93,8 @@ export default function LoginPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [formShake, setFormShake] = useState(false);
 
-  const usernameError = useMemo(() => validateRegistrationNumber(form.username), [form.username]);
   const submitting = submitPhase === "loading";
-  const canSubmit = !submitting && submitPhase !== "success" && !captchaLoading && Boolean(sessionId) && Boolean(form.password.trim()) && Boolean(form.captcha.trim()) && !usernameError;
+  const canSubmit = !submitting && submitPhase !== "success" && !captchaLoading && Boolean(sessionId) && Boolean(form.username.trim()) && Boolean(form.password.trim()) && Boolean(form.captcha.trim());
 
   // ── Canvas auto-crop: trim right-side whitespace from captcha ──
   useEffect(() => {
@@ -188,7 +179,6 @@ export default function LoginPage() {
       const r = await axios.get("/api/captcha");
       setCaptchaBase64(normalizeCaptchaImageSource(r.data?.captchaBase64));
       setSessionId(String(r.data?.sessionId || ""));
-      setCaptchaExpiresAt(String(r.data?.expiresAt || ""));
       setForm((c) => ({ ...c, captcha: "" }));
       if (nextMessage) { setStatusTone("neutral"); setStatusMessage(nextMessage); }
     } catch (e: unknown) {
@@ -208,12 +198,12 @@ export default function LoginPage() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((c) => ({ ...c, [name]: name === "username" ? normalizeRegistrationNumber(value) : value }));
+    setForm((c) => ({ ...c, [name]: value }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (usernameError) { setStatusTone("error"); setStatusMessage(usernameError); triggerShake(); return; }
+    if (!form.username.trim()) { setStatusTone("error"); setStatusMessage("Registration number is required."); triggerShake(); return; }
     if (!form.password.trim()) { setStatusTone("error"); setStatusMessage("Password is required."); triggerShake(); return; }
     if (!form.captcha.trim()) { setStatusTone("error"); setStatusMessage("Enter the captcha to continue."); triggerShake(); return; }
     if (!sessionId) { setStatusTone("error"); setStatusMessage("Captcha session missing. Refresh and try again."); triggerShake(); return; }
@@ -223,7 +213,7 @@ export default function LoginPage() {
     setStatusMessage("Verifying credentials...");
 
     try {
-      const r = await axios.post("/api/login", { username: normalizeRegistrationNumber(form.username), password: form.password, captcha: form.captcha, sessionId });
+      const r = await axios.post("/api/login", { username: form.username, password: form.password, captcha: form.captcha, sessionId });
       if (!r.data?.success) {
         setSubmitPhase("idle");
         setStatusTone("error");
@@ -273,8 +263,6 @@ export default function LoginPage() {
     ...INPUT,
     ...(hasError ? {} : focusedField === field ? {} : {}),
   });
-
-  const showUsernameError = Boolean(form.username && usernameError);
 
   return (
     <div className="login-page-shell">
@@ -356,15 +344,12 @@ export default function LoginPage() {
                 value={form.username} onChange={handleChange}
                 onFocus={() => setFocusedField("username")}
                 onBlur={() => setFocusedField(null)}
-                placeholder="AP24110000000"
-                autoComplete="username" autoCapitalize="characters" spellCheck={false}
-                style={inputStyle("username", showUsernameError)}
-                className={focusedField === "username" ? "login-input-focused" : showUsernameError ? "login-input-error" : ""}
+                placeholder="Your registration number"
+                autoComplete="username" autoCapitalize="none" spellCheck={false}
+                style={inputStyle("username", false)}
+                className={focusedField === "username" ? "login-input-focused" : ""}
               />
-              {showUsernameError
-                ? <p role="alert" style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--error)", fontWeight: 500 }}>{usernameError}</p>
-                : <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>AP-prefixed, 13 characters (e.g. AP24110000000)</p>
-              }
+              <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>Enter your university registration number</p>
             </div>
 
             {/* Password */}
@@ -419,7 +404,6 @@ export default function LoginPage() {
                   style={{ flex: 1, padding: "11px 14px", fontSize: "0.875rem", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                 />
               </div>
-              {captchaExpiresAt && <p style={{ margin: "5px 0 0", fontSize: "0.72rem", color: "var(--text-secondary)" }}>Valid until {formatExpiry(captchaExpiresAt)}</p>}
             </div>
 
             {/* Forgot */}

@@ -55,12 +55,11 @@ export const ADMIN_NAV_SECTION: NavSection = {
 
 /** Routes that exist in the SPA but are not declared in PAGE_BLUEPRINTS (command palette + breadcrumbs). */
 export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
-  { route: "/events", label: "Explore Events", group: "Competition Platform", domain: "campus", keywords: "events competitions discovery" },
+  { route: "/events", label: "Discover", group: "Competition Platform", domain: "campus", keywords: "events competitions discovery" },
   { route: "/events/create", label: "Create Event", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-activity", label: "My Activity", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-teams", label: "My Teams", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-created", label: "My Created Events", group: "Competition Platform", domain: "campus" },
-  { route: "/events/notifications", label: "Notifications", group: "Competition Platform", domain: "campus" },
   { route: "/events/attendance", label: "Event Attendance", group: "Competition Platform", domain: "erp" },
   { route: "/resources", label: "Learning home", group: "Learning Management", domain: "lms", keywords: "lms home hub" },
   { route: "/resources/browse", label: "Browse catalog", group: "Learning Management", domain: "lms" },

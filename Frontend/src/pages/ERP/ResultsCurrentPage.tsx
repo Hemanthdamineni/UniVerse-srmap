@@ -372,7 +372,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                                     onClick={() => toggleSubjectExpansion(subjectKey)}
                                     aria-label={`${isExpanded ? "Hide" : "Show"} internal marks for ${subject.subjectCode}`}
                                     aria-expanded={isExpanded}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--comp-accent)]"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none"
                                   >
                                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                   </button>
@@ -462,7 +462,7 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
                               onClick={() => toggleSubjectExpansion(subjectKey)}
                               aria-label={`${isExpanded ? "Hide" : "Show"} internal marks for ${subject.subjectCode}`}
                               aria-expanded={isExpanded}
-                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--comp-accent)]"
+                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)] hover:text-[var(--comp-text-primary)] focus:outline-none"
                             >
                               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </button>

@@ -1,0 +1,188 @@
+/* Competition Platform — Event Detail */
+
+.event-detail-hero {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--background) 94%, var(--surface) 6%);
+  padding: 24px;
+  box-shadow: var(--dash-card-shadow);
+}
+
+.event-detail-hero > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.event-detail-hero h1 {
+  max-width: 920px;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.event-detail-hero p {
+  max-width: 820px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+.event-detail-meta,
+.event-detail-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 26px;
+  color: var(--text-primary);
+}
+
+.event-detail-meta span,
+.event-detail-facts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-detail-layout {
+  margin-top: 34px;
+}
+
+.event-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+.event-detail-nav {
+  padding: 24px;
+  background: var(--dash-subcard-bg);
+}
+
+.event-detail-nav h2,
+.event-detail-panel h2,
+.event-round-card h2 {
+  margin: 0 0 16px;
+  color: var(--text-primary);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.event-detail-nav button {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0 14px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.event-detail-nav button.is-active {
+  background: var(--background);
+  color: var(--text-primary);
+  box-shadow: 0 8px 18px rgba(15, 45, 76, 0.04);
+}
+
+.event-detail-main,
+.event-round-list {
+  display: grid;
+  gap: 22px;
+}
+
+.event-detail-panel,
+.event-round-card {
+  padding: 34px;
+}
+
+.event-detail-panel p,
+.event-round-card p {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.event-round-card {
+  display: grid;
+  gap: 12px;
+}
+
+.event-timeline {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-timeline li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.event-timeline li span {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--text-primary);
+  margin-top: 6px;
+}
+
+.event-detail-notice {
+  margin-top: 18px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--success) 16%, var(--background) 84%);
+  color: color-mix(in srgb, var(--success) 74%, var(--text-primary) 26%);
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+.event-detail-action-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-detail-action-status strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.event-detail-action-status span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.event-detail-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-detail-action-buttons button {
+  width: 100%;
+}

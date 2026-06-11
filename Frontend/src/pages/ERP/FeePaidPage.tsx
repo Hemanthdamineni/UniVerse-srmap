@@ -188,7 +188,7 @@ export default function FeePaidPage({ blueprint }: Props) {
                     <thead className="erp-table-head">
                       <tr>
                         {dataCols.map((col) => (
-                          <th key={col.key} className="erp-table-head-cell label-text">
+                          <th key={col.key} className="erp-table-head-cell label-text whitespace-nowrap px-4">
                             {col.label}
                           </th>
                         ))}
@@ -201,7 +201,7 @@ export default function FeePaidPage({ blueprint }: Props) {
                       {section.rows.map((row, ri) => (
                         <tr key={row.stableKey || ri} className="erp-table-row">
                           {dataCols.map((col) => (
-                            <td key={col.key} className="erp-table-cell">
+                            <td key={col.key} className="erp-table-cell whitespace-nowrap px-4">
                               {row.cells[col.key] || ""}
                             </td>
                           ))}

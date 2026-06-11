@@ -4,7 +4,7 @@ import { CompetitionCard, CompetitionPageShell } from "../../components/competit
 
 const paths = [
   {
-    title: "Explore events",
+    title: "Discover",
     body: "Browse active platform events and register from the event detail page.",
     href: "/events",
     action: "Open events",

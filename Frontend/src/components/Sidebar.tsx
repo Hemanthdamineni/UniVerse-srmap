@@ -208,7 +208,11 @@ export default function Sidebar() {
 
                   const groupKey = `${section.section}:${item.label}`;
                   const isOpen = openGroup === groupKey;
-                  const activeChild = item.children.some((child) => isActiveRoute(child.route));
+                  const visibleChildren = item.children.filter((child) => showAdvanced || child.access === "B");
+                  
+                  if (visibleChildren.length === 0) return null;
+                  
+                  const activeChild = visibleChildren.some((child) => isActiveRoute(child.route));
 
                   return (
                     <div key={item.label} className="m-0 p-0">
@@ -248,20 +252,18 @@ export default function Sidebar() {
                         }`}
                       >
                         <div className="space-y-1">
-                          {item.children
-                            .filter((child) => showAdvanced || child.access === "B")
-                            .map((child) => (
-                              <Link
-                                data-page-contrast="true"
-                                key={child.route}
-                                to={child.route}
-                                className={`sidebar-item-muted sidebar-item-hover block rounded px-2 py-1 text-left text-sm ${
-                                  isActiveRoute(child.route) ? "sidebar-item sidebar-item-active font-semibold" : ""
-                                }`}
-                              >
-                                <SidebarContrastText text={child.label} />
-                              </Link>
-                            ))}
+                          {visibleChildren.map((child) => (
+                            <Link
+                              data-page-contrast="true"
+                              key={child.route}
+                              to={child.route}
+                              className={`sidebar-item-muted sidebar-item-hover block rounded px-2 py-1 text-left text-sm ${
+                                isActiveRoute(child.route) ? "sidebar-item sidebar-item-active font-semibold" : ""
+                              }`}
+                            >
+                              <SidebarContrastText text={child.label} />
+                            </Link>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -288,7 +290,7 @@ export default function Sidebar() {
                       : "sidebar-item-muted sidebar-item-hover"
                   }`}
                 >
-                  <SidebarContrastText text="Basic" />
+                  <SidebarContrastText text="Essential" />
                 </button>
                 <button
                   type="button"
@@ -300,7 +302,7 @@ export default function Sidebar() {
                       : "sidebar-item-muted sidebar-item-hover"
                   }`}
                 >
-                  <SidebarContrastText text="Advanced" />
+                  <SidebarContrastText text="Full Menu" />
                 </button>
               </div>
             ) : null}
@@ -335,6 +337,16 @@ export default function Sidebar() {
             )
           )}
         </nav>
+
+        {!sidebarClosed ? (
+          <div className="mt-auto px-6 py-6 pb-2 text-[0.65rem] text-[var(--sidebar-item-muted)]">
+            <div className="mb-2 flex items-center gap-3">
+              <a href="/privacy-policy" className="sidebar-item-hover transition no-underline">Privacy</a>
+              <a href="/terms-of-service" className="sidebar-item-hover transition no-underline">Terms</a>
+            </div>
+            <div>© 2025 UniVerse — SRMAP Edition</div>
+          </div>
+        ) : null}
       </div>
 
       <div className={`border-t p-2 flex ${sidebarClosed ? "flex-col items-center gap-2" : "items-center justify-between"}`} style={{ borderColor: "var(--border)" }}>
