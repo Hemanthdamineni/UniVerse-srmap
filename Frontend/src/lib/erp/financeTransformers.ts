@@ -265,7 +265,36 @@ function buildSectionColumnDefs(
 ): FeePaidColumn[] {
   if (rows.length === 0) return [];
 
+  let bestLabelRow: Record<string, unknown> | undefined;
+  let maxColLabels = 1; // Require at least 2 col labels to consider it a header row
+
+  for (const row of rows) {
+    const colLabelsCount = Object.entries(row)
+      .filter(([k, v]) => k.startsWith("col") && typeof v === "string" && v.trim().length > 0 && v.length < 30 && !/\d/.test(v))
+      .length;
+    
+    if (colLabelsCount > maxColLabels) {
+      maxColLabels = colLabelsCount;
+      bestLabelRow = row;
+    }
+  }
+
+  const labelRow = bestLabelRow;
+
   const keysInOrder = new Map<string, number>();
+  
+  // Prefer the label row for column ordering, or fallback to a row that has data
+  const baseOrderRow = labelRow || rows.find(r => Object.values(r).some(v => typeof v === 'string' && /\d/.test(v))) || rows[0];
+
+  if (baseOrderRow) {
+    for (const key of Object.keys(baseOrderRow)) {
+      if (!keysInOrder.has(key)) {
+        keysInOrder.set(key, keysInOrder.size);
+      }
+    }
+  }
+
+  // Add any remaining keys
   for (const row of rows) {
     for (const key of Object.keys(row)) {
       if (!keysInOrder.has(key)) {
@@ -274,14 +303,10 @@ function buildSectionColumnDefs(
     }
   }
 
-  const labelRow = rows.find((row) => {
-    const colValues = Object.entries(row)
-      .filter(([k]) => k.startsWith("col"))
-      .map(([, v]) => String(v || ""));
-    return colValues.some((v) => v && v.length < 30 && !/\d/.test(v));
-  });
-
   const excludedKeys = new Set(["rawHtml", "document"]);
+
+  // Deduplicate column labels, particularly for multiple 'Amount' columns
+  const usedLabels = new Set<string>();
 
   return Array.from(keysInOrder.entries())
     .filter(([key]) => !excludedKeys.has(key))
@@ -299,9 +324,20 @@ function buildSectionColumnDefs(
         typeof labelRowValue === "string" &&
         labelRowValue.trim() &&
         labelRowValue.trim() !== key;
+      
+      let baseLabel = hasLabel ? labelRowValue!.trim() : key;
+      
+      // Attempt to deduplicate identical labels (e.g., 'Amount' and 'Amount')
+      let finalLabel = baseLabel;
+      let suffix = 1;
+      while (usedLabels.has(finalLabel.toLowerCase())) {
+         finalLabel = `${baseLabel} ${++suffix}`;
+      }
+      usedLabels.add(finalLabel.toLowerCase());
+
       return {
         key,
-        label: hasLabel ? labelRowValue!.trim() : key,
+        label: finalLabel,
       };
     });
 }
@@ -381,22 +417,28 @@ export function transformFeesPaid(rawData: unknown): Partial<FeesPaidModel> {
       sourceWarnings.push(`${source.label} returned zero rows.`);
     }
 
+    const dataRows = rawRows.filter((row) => {
+      const hasDigit = Object.values(row).some((v) => typeof v === "string" && /\d/.test(v));
+      const print = readPrintAction(row);
+      return hasDigit || print.receiptId || print.actionId;
+    });
+
     sources.push({
       sourcePageKey: source.pageKey,
       sourceLabel: source.label,
-      status: !section ? "missing" : rowCount === 0 ? "empty" : "loaded",
+      status: !section ? "missing" : dataRows.length === 0 ? "empty" : "loaded",
       tableCount: tables.length,
       rowCount,
-      extractedCount: rowCount,
-      droppedRowCount: 0,
+      extractedCount: dataRows.length,
+      droppedRowCount: rowCount - dataRows.length,
       warnings: sourceWarnings,
     });
     warnings.push(...sourceWarnings);
 
-    if (rawRows.length === 0) continue;
-
+    if (dataRows.length === 0) continue;
+    
     const columns = buildSectionColumnDefs(rawRows);
-    const sectionRows: FeePaidSectionRow[] = rawRows.map((row) =>
+    const sectionRows: FeePaidSectionRow[] = dataRows.map((row) =>
       extractFeePaidSectionRow(row)
     );
 
@@ -406,7 +448,7 @@ export function transformFeesPaid(rawData: unknown): Partial<FeesPaidModel> {
       columns,
       rows: sectionRows,
       tableCount: tables.length,
-      extractedCount: rawRows.length,
+      extractedCount: dataRows.length,
     });
   }
 

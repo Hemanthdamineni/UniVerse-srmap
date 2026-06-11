@@ -1,407 +1,370 @@
-# University-ERP Codebase Audit (Verified)
+# Backend Audit: University-ERP
 
-> Compiled from live filesystem analysis of the `chore/selected-diff-bootstrap-import` branch.
-> Updated on 2026-05-28 after implementation phases 4, 5, and 7 — see status markers below.
-
-## 2026-05-28 Implementation Update
-
-- `main.tsx` is now a 10-line bootstrap file, with providers/router moved to `App.tsx` and routes split under `src/routes/`.
-- `LmsPagesShared.tsx` is now a 24-line compatibility barrel, with LMS pages split into per-page files and subfolders.
-- `lmsApi.ts`, `erpTransformers.ts`, and `styles.css` are now compatibility facades; implementations moved to `src/lib/lms/`, `src/lib/erp/`, and `src/styles/`.
-- Static prototype and debug helpers moved to `src/lib/prototype/`.
-- `ErpDocumentRenderer.tsx` is now a 411-line shell. Renderer model/actions/display/form/table logic moved to `src/components/erp/documentRenderer/`, with every new leaf under 500 LOC.
-- ERP document fallback now builds renderable documents from parsed `data` sections (`title`, `text`, and `tables`) when the backend/fixture does not include an embedded `document` tree. This fixed status-only registration pages and Student Attendance visibility in the bundled fixture.
-- Validation after the split: `npm run build`, `npm test` (37 files, 113 tests), and `npx madge --extensions ts,tsx --circular src` all passed.
-- Remaining oversized frontend leaves include `useBlueprintPageData.ts`, `erpBlueprints.ts`, `LearningMaterialsPage.tsx`, `lms/types.ts`, `erp/financeTransformers.ts`, `lms/resourcesApi.ts`, and `styles/events.css`.
+Generated: 2026-05-30
 
 ---
 
-## At a Glance
+## 2026-05-31 Backend Refactor Update
 
-| Metric | Value |
-|---|---|
-| Frontend `.ts/.tsx` total lines | ~47,600 |
-| Backend `.js` total lines | ~28,000 |
-| Frontend god files (>500 LOC) | **Several remain; Phase 4/5 monoliths split** |
-| Backend god files (>500 LOC) | **10 files** |
-| `main.tsx` (router monolith) | ✅ **10-line bootstrap** |
-| `styles.css` (single CSS file) | ✅ **1-line facade** importing `src/styles/index.css` |
-| Root-level scratch/debris files | **12 files** that don't belong |
-| ~~Empty page directories~~ | ~~6 directories~~ ✅ **Deleted** |
-| ~~Duplicate context folders~~ | ~~`context/` vs `contexts/`~~ ✅ **Merged** |
-| LMS micro-services | **8 wired implementations; keep** |
-| Backend scripts (one-off tooling) | **15 files** |
+The backend maintainability phase is complete for the planned service and route splits. All files under `Backend/src` are now below the 500 LOC target; the largest backend source file is currently `Backend/src/services/lmsMigrations/baseSchemaSql.js` at 487 LOC.
 
----
+Completed facade/module splits:
+- `lmsStore.js`, `careerStore.js`, `erpClient.js`, `competitionStore.js`, `eventsStore.js`, `lmsTrackerService.js`
+- `contentStore.js`, `erpAggregationService.js`, `helpdeskStore.js`, `erpDocumentBuilder.js`
+- `campusFeedbackStore.js`, `erpPayloadNormalizer.js`, `erpActionExecutor.js`, `lmsMigrations.js`, `erpUiMapStore.js`
+- `routes/lmsRoutes.js`
 
-## Part 1: God Files — The Biggest Problem
+Verification:
+- `rg --files Backend/src | rg '\.js$' | xargs -n 1 node --check` passed.
+- `cd Backend && npm test` passed outside the sandbox: 127 tests, 127 passing.
+- Non-escalated backend route tests can fail in this environment because the sandbox blocks local `127.0.0.1` server binding; the same tests passed when run with the required bind permission.
 
-These files are too large to reason about, too large for agents to understand in one shot, and almost certainly contain mixed concerns.
-
-### Frontend God Files
-
-| File | Lines | Problem |
-|---|---|---|
-| [erpTransformers.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/lib/erpTransformers.ts) | ✅ **1-line facade** | Split into `src/lib/erp/` by domain |
-| [lmsApi.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/lib/lmsApi.ts) | ✅ **1-line facade** | Split into `src/lib/lms/` by domain |
-| [ErpDocumentRenderer.tsx](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/components/erp/ErpDocumentRenderer.tsx) | ✅ **411-line shell** | Split into `src/components/erp/documentRenderer/` model/actions/display/controls/table leaves |
-| [useBlueprintPageData.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/pages/Shared/useBlueprintPageData.ts) | **1,605** | God hook with all data-fetching logic — split by blueprint type |
-| [erpBlueprints.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/config/erpBlueprints.ts) | **1,411** | Config data + logic mixed — pure data config should be JSON/separate |
-| [LmsPagesShared.tsx](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/pages/LMS/LmsPagesShared.tsx) | ✅ **24-line barrel** | Page components split under `src/pages/LMS/` |
-| [main.tsx](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/main.tsx) | ✅ **10** | Entry file now only renders `<App />` |
-| [styles.css](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/styles.css) | ✅ **1-line facade** | Split into `src/styles/` feature files; `events.css` still needs a second split |
-| [campusApi.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/lib/campusApi.ts) | **776** | Mixed helpdesk + feedback + campus APIs |
-| [competitionsApi.ts](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/lib/competitionsApi.ts) | **705** | Fine if scoped well, review for dead exports |
-
-### Backend God Files
-
-| File | Lines | Problem |
-|---|---|---|
-| [lmsStore.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/lmsStore.js) | **2,681** | Everything LMS in one store — split by concern |
-| [careerStore.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/careerStore.js) | **1,995** | All career DB ops in one file |
-| [erpClient.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/erpClient.js) | **1,805** | ERP HTTP client + parsing + caching all mixed |
-| [competitionStore.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/competitionStore.js) | **1,771** | All competition DB ops in one file |
-| [eventsStore.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/eventsStore.js) | **1,458** | All events logic + DB in one file |
-| [lmsTrackerService.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/lmsTrackerService.js) | **1,391** | Tracker + analytics + scheduling mixed |
-| [contentStore.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/contentStore.js) | **1,356** | All content/resource DB ops |
-| [erpAggregationService.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/services/erpAggregationService.js) | **1,023** | |
-| [lmsRoutes.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/routes/lmsRoutes.js) | **915** | Routes file shouldn't have business logic |
-| [server.js](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Backend/src/server.js) | **361** | Wires up ~20 services manually — messy but functional |
+Interesting findings fixed during the backend phase:
+- LMS moderation audit and tracker recommendation-event queries needed deterministic ordering for same-millisecond writes. They now sort by timestamp and `rowid`, which removed intermittent test failures under fast parallel execution.
+- `erpDocumentBuilder` still had debug `console.warn`/`console.log` output in sanitizer paths. Those logs were removed while preserving the object-leak blanking behavior.
+- The safest extraction pattern for the CommonJS services was a thin compatibility facade plus domain modules attached to the existing exported class/prototype shape. That kept route and test imports stable while cutting the file sizes down.
 
 ---
 
-## Part 2: The LMS Page Architecture — Your Specific Question
+## 1. Academic / ERP Core
 
-**The `LmsPagesShared.tsx` anti-pattern** (1,220 lines, 20+ components exported from one file) is a classic vibe-coding artifact. Here's the honest answer to "one file vs many files":
+### API Endpoints
 
-### ✅ Recommended: Hybrid "Barrel + Co-located" Model
+| Method | Path | File:Line | Description |
+|--------|------|-----------|-------------|
+| GET | `/v2/erp/page/:category/:page` | erpV2Routes.js:48 | Fetch an ERP page by category and page name |
+| GET | `/v2/erp/page/:pageKey` | erpV2Routes.js:53 | Fetch an ERP page by combined key |
+| POST | `/v2/erp/batch` | erpV2Routes.js:57 | Batch-fetch multiple ERP pages |
+| GET | `/v2/erp/ui/:category/:page` | erpV2Routes.js:78 | Get UI hints (field labels, layout metadata) |
+| GET | `/v2/erp/ui/:pageKey` | erpV2Routes.js:90 | Get UI hints by combined key |
+| GET | `/v2/erp/schema/:category/:page` | erpV2Routes.js:101 | Get render schema |
+| GET | `/v2/erp/schema/:pageKey` | erpV2Routes.js:113 | Get render schema by combined key |
+| POST | `/v2/erp/action/execute` | erpV2Routes.js:124 | Execute registered ERP action |
+| POST | `/attendance/mark` | attendanceRoutes.js:11 | Submit 7-char attendance code |
+| GET | `/captcha` | authRoutes.js:84 | Fetch captcha image + bootstrap form |
+| GET | `/auth/captcha` | authRoutes.js:85 | Alias for /captcha |
+| POST | `/login` | authRoutes.js:153 | Login with username, password, captcha |
+| POST | `/auth/login` | authRoutes.js:154 | Alias for /login |
+| POST | `/dev/login` | authRoutes.js:197 | Dev login (skips captcha) |
+| POST | `/auth/dev-login` | authRoutes.js:198 | Alias for /dev/login |
+| POST | `/forgot` | authRoutes.js:292 | Initiate or complete password reset |
+| POST | `/auth/forgot` | authRoutes.js:293 | Alias for /forgot |
+| POST | `/logout` | authRoutes.js:300 | Clear session cookie |
+| POST | `/auth/logout` | authRoutes.js:301 | Alias for /logout |
+| GET | `/profile` | authRoutes.js:356 | Get cached or refetch ERP profile |
+| GET | `/auth/profile` | authRoutes.js:357 | Alias for /profile |
+| GET | `/scrape/:pageKey` | scrapeRoutes.js:36 | Scrape ERP page by key |
+| GET | `/scrape/:category/:page` | scrapeRoutes.js:40 | Scrape by category and page |
+| GET | `/scrape/examination/earlier-internal-marks/semester/:semester` | scrapeRoutes.js:45 | Scrape earlier internal marks for semester |
+| GET | `/:category/:page` | scrapeRoutes.js:87 | Backward-compat legacy scrape |
+| GET | `/:pageKey` | scrapeRoutes.js:92 | Backward-compat scrape |
+| GET | `/feedback/end-semester/status` | feedbackRoutes.js:12 | Get end-semester feedback status |
+| GET | `/feedback/end-semester/templates/random` | feedbackRoutes.js:25 | Get random feedback template |
+| POST | `/feedback/end-semester/submit` | feedbackRoutes.js:34 | Submit end-semester feedback |
+| POST | `/content/admin/verify` | contentRoutes.js:31 | Verify admin password |
+| GET | `/content` | contentRoutes.js:36 | List content with filters |
+| POST | `/content` | contentRoutes.js:48 | Create content (admin) |
+| GET | `/content/admin/workflow` | contentRoutes.js:53 | Get lifecycle workflow spec |
+| POST | `/content/bulk/preview` | contentRoutes.js:58 | Preview bulk lifecycle |
+| POST | `/content/bulk/execute` | contentRoutes.js:66 | Execute bulk lifecycle |
+| GET | `/content/:id` | contentRoutes.js:78 | Get single content item |
+| PUT | `/content/:id` | contentRoutes.js:90 | Update content (admin) |
+| GET | `/content/:id/history` | contentRoutes.js:98 | Get audit history |
+| PATCH | `/content/:id/lifecycle` | contentRoutes.js:103 | Transition lifecycle state |
+| DELETE | `/content/:id` | contentRoutes.js:115 | Soft-delete content |
+| GET | `/content/:id/resources` | contentRoutes.js:120 | List resources for content |
+| POST | `/content/:id/resources` | contentRoutes.js:130 | Add resource to content (admin) |
+| POST | `/uploads` | resourceRoutes.js:56 | Upload file (returns URL) |
+| GET | `/resources/catalog` | resourceRoutes.js:74 | Get learning material catalog |
+| GET | `/resources/subjects` | resourceRoutes.js:90 | Get subjects for year + course |
+| GET | `/resources/library` | resourceRoutes.js:109 | Get learning material library |
+| GET | `/resources/admin/items` | resourceRoutes.js:132 | Admin list materials |
+| POST | `/resources/items` | resourceRoutes.js:171 | Admin create material |
+| PUT | `/resources/items/:contentId` | resourceRoutes.js:191 | Admin update material |
+| DELETE | `/resources/items/:contentId` | resourceRoutes.js:211 | Admin delete material |
+| GET | `/resources/items/:contentId/history` | resourceRoutes.js:221 | Admin get audit history |
+| PATCH | `/resources/items/:contentId/lifecycle` | resourceRoutes.js:232 | Admin transition lifecycle |
+| POST | `/resources/admin/items/bulk-preview` | resourceRoutes.js:252 | Admin preview bulk |
+| POST | `/resources/admin/items/bulk-execute` | resourceRoutes.js:264 | Admin execute bulk |
+| POST | `/resources/recommendations` | resourceRoutes.js:281 | Submit recommendation |
+| GET | `/resources/recommendations` | resourceRoutes.js:336 | Admin list recommendations |
+| PATCH | `/resources/recommendations/:contentId` | resourceRoutes.js:352 | Admin approve/reject recommendation |
 
-```
-pages/LMS/
-├── index.ts                    ← barrel: re-exports everything (for main.tsx imports)
-├── LmsHomePage.tsx             ← standalone, >100 LOC or has own state
-├── BrowsePage.tsx
-├── ExplorePage.tsx
-├── ResourceDetailPage.tsx
-├── SubjectOverviewPage.tsx
-├── guides/
-│   ├── GuidesListPage.tsx
-│   ├── GuideEditorPage.tsx
-│   └── GuideReaderPage.tsx
-├── quiz/
-│   ├── QuizModePage.tsx
-│   └── FlashcardModePage.tsx
-├── me/                         ← "my" pages that share state/hooks
-│   ├── MyProgressPage.tsx
-│   ├── MyContributionsPage.tsx
-│   ├── SavedResourcesPage.tsx
-│   └── RevisionQueuePage.tsx
-└── _shared/                    ← tiny shared UI between LMS pages only
-    └── LmsPageShell.tsx
-```
+### Database Tables
 
-**Rules of thumb:**
-- **One file per page** when the page has its own data fetching, state, or is >80 LOC
-- **Bundle into one file** only when pages are truly trivial (<30 LOC each) AND share identical structure (e.g., 5 stub placeholder pages)
-- **`index.ts` barrel** solves the import ergonomics — `main.tsx` only needs `import { BrowsePage, ExplorePage } from './pages/LMS'`
-- Your current `LmsPagesShared.tsx` should be **split** — `main.tsx` already imports 20 named exports from it, showing it's 20 separate pages crammed in one file
+| Table | File | Fields | Description |
+|-------|------|--------|-------------|
+| `content` | contentStore.js:249 | id, type, title, description, category, start_date, end_date, location, metadata_json, lifecycle_state, version, deleted_at, last_actor, created_at, updated_at | Unified content store |
+| `resources` | contentStore.js:269 | id, content_id, kind, title, url_or_path, mime_type, size_bytes, created_at | Content attachments |
+| `content_audit` | contentStore.js:283 | id, content_id, action, actor_id, actor_role, reason, before_json, after_json, diff_json, created_at | Audit log |
 
----
+### Key Services
 
-## Part 3: Structural Dead Weight
+> File references below are the original audit baseline. The 2026-05-31 backend update above records the completed service splits and current verification status.
 
-### ✅ DONE — Duplicate Context Folders (Fixed)
+| Service | File | Description |
+|---------|------|-------------|
+| ErpAggregationService | erpAggregationService.js | Orchestrates ERP data with cache-first/live-first, circuit breaker, semaphore, Redis lock, request coalescing, stale-refresh |
+| erpClient | erpClient.js | Playwright HTTP client for SRM ERP: captcha, login, profile, attendance, generic endpoints |
+| ErpLiveService | erpLiveService.js | High-level live-scraping with concurrency, grouped results, special handlers |
+| ErpCacheStore | erpCacheStore.js | TTL-based cache (in-memory Map or Redis) |
+| erpPayloadNormalizer | erpPayloadNormalizer.js | Post-processes scraped HTML into normalized tables |
+| ContentStore | contentStore.js | SQLite CRUD with lifecycle, soft-delete, audit, learning material queries |
+| cgpaSummary | cgpaSummary.js | Extracts CGPA from HTML via cheerio |
 
-Previously you had two folders:
-- `src/contexts/` — `EventContext.tsx`
-- `src/context/` — `AdminModeContext.tsx`
+### Scraped ERP Page Keys
 
-**Status:** `AdminModeContext.tsx` moved to `src/contexts/`, 9 import sites updated (8 source + 1 test), old `context/` folder deleted.
-
-### ✅ DONE — Empty Page Directories (Deleted)
-
-Removed 6 ghost directories: `Academic/`, `Exams&Results/`, `Finance/`, `Notifications/`, `Registration/`, `Transport&Hostel/`
-
-### 🔴 NEW — Root-Level Clutter
-
-The project root contains **12 files that don't belong in a clean repo**:
-
-| File | Size | What it is | Action |
-|---|---|---|---|
-| `ast_output.json` | 0 bytes | Empty scratch file | Delete |
-| `output.txt` | 0 bytes | Empty scratch file | Delete |
-| `scratch.ts` | 350 bytes | Agent scratch code | Delete |
-| `scratch.tsx` | 689 bytes | Agent scratch code | Delete |
-| `scratch_output.json` | 70 bytes | Agent scratch output | Delete |
-| `top_left_paths.json` | 229KB | Debug artifact | Delete |
-| `view_jpeg.html` | 230 bytes | Debug artifact | Delete |
-| `test-transform-timetable.js` | 4.6KB | One-off test | Delete |
-| `graph.svg` | 309KB | Madge output — regenerate on demand | Delete |
-| `impeccable-output.txt` | 276KB | Agent output dump | Delete |
-| `competition_platform_flow_architecture_updated.md` | 33KB | Move to `docs/plans/` |
-| `unicurator_master_architecture_flow_map_v2.md` | 5.8KB | Move to `docs/plans/` |
-| `implementation_consolidation_plan.md` | 3KB | Move to `docs/plans/` |
-| `FRONTEND-ARCHITECTURE-THEORY-v2.md` | 16KB | Move to `docs/` |
-| `AUDIT_REPORT.md` | 21KB | Move to `docs/` or delete (superseded by this audit) |
-| `Stitch Design.zip` | **207MB** | Design asset ZIP — should be in `.gitignore` or LFS |
-
-> [!CAUTION]
-> The 207MB `Stitch Design.zip` is likely bloating your git history. If it's tracked, every clone downloads it forever.
-
-### ✅ DONE — `main.tsx` Router Monolith
-
-[main.tsx](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/Frontend/src/main.tsx) is now a 10-line bootstrap file. Routes are split under `src/routes/` and providers/router setup moved to `App.tsx`.
-
-```
-src/
-├── main.tsx              ← just: createRoot + render(<App />)
-├── App.tsx               ← AppProviders + RouterProvider
-└── routes/
-    ├── index.ts          ← createBrowserRouter([...all route groups])
-    ├── erpRoutes.ts      ← blueprint-based routes
-    ├── eventRoutes.ts    ← event routes (already partially extracted)
-    ├── lmsRoutes.ts      ← LMS routes
-    ├── careerRoutes.ts   ← career routes
-    └── adminRoutes.ts    ← admin routes
-```
-
-### ✅ DONE — `styles.css` Monolith Split
-
-`styles.css` is now a 1-line compatibility facade. Feature CSS lives under `src/styles/`; `events.css` remains the largest leaf and should be split again later.
-
-```
-src/styles/
-├── base.css              ← CSS reset, variables, typography
-├── layout.css            ← sidebar, header, page shell
-├── erp.css               ← ERP document/table styles
-├── events.css            ← events/competition UI
-├── lms.css               ← LMS-specific styles
-└── index.css             ← @import all of the above
-```
-
-### 🟡 Solo-File Directories (Keep as-is)
-
-| Directory | Contents | Verdict |
-|---|---|---|
-| `src/test/setupTests.ts` | Referenced by `vitest.config.ts` | ✅ Keep — vitest convention |
-| `src/design/tokens.ts` | **Zero imports** in the codebase | 🟡 Delete if CSS variables cover it, or wire it in |
-
-### 🟢 Backend LMS Micro-Services (CORRECTED — Keep)
-
-My initial grep was wrong. The LMS services are real implementations wired through `server.js` dependency injection and used by the LMS routes/store layer. Do not delete them as stubs:
-- `lmsModerationService`
-- `lmsRevisionScheduler`
-- `lmsInteractionTracker`
-- `lmsInteractionQueue`
-- `lmsDuplicateDetector`
-- `lmsExamFeedbackService`
-- `lmsFeatureFlagService`
-- `lmsReadingTimeEstimator`
-
-### 🟡 `staticPrototype*` Files in `src/lib/`
-
-Prototype/demo mode files now live under `src/lib/prototype/`:
-- `staticPrototypeEnv.ts`
-- `staticPrototypeProfileData.ts`
-- `staticPrototypeSession.ts`
-- `erpStaticPrototypeFixtures.ts`
-- `debugModeEnv.ts`
+Academic: time-table, attendance-details, student-wise-subjects, course-registration, od-ml-details, student-attendance, minor-program-registration, cgpa-summary, sap-scholarships
+Examination: current-semester-results, earlier-internal-marks, exam-mark-details, internal-mark-details, exam-registration
+Finance: fee-due-details, fee-paid-details, payment-acknowledgment, online-payment-verification, bank-account-details
+Hostel: room-details, hostel-layout-faqs, hostel-refund-policy, hostel-booking
+Transport: transport-faqs, transport-registration, registration-acknowledgment, transport-refund-policy
+SAP: attachments, details, feedback, sap-process, withdraw
+Other: event-attendance, end-semester-feedback, mobile-verification, announcements, settings, logout, dashboard, profile
 
 ---
 
-## Part 4: The Tooling Toolkit
+## 2. Events & Competitions
 
-Here's your multi-tool approach, ordered by how much they do automatically:
+### API Endpoints
 
-### Tool 1: **Knip** — Dead Code & Unused Exports ★★★★★
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/events` | List events with filters |
+| GET | `/events/calendar` | Events for calendar view |
+| GET | `/events/my-registrations` | Current user's registrations |
+| GET | `/events/my-registered` | Alias |
+| GET | `/events/my-created` | Events created by user |
+| GET | `/events/analytics` | Aggregate analytics |
+| GET | `/events/notifications` | User notifications |
+| POST | `/events/notifications/reminders` | Create reminders |
+| PATCH | `/events/notifications/:id/read` | Mark notification read |
+| POST | `/events` | Create event |
+| POST | `/events/bulk-action` | Bulk publish/unpublish/delete |
+| GET | `/events/:eventId` | Get event detail |
+| PUT | `/events/:eventId` | Update event |
+| PUT | `/events/:eventId/co-organizers` | Update co-organizers |
+| DELETE | `/events/:eventId` | Delete event |
+| POST | `/events/:eventId/duplicate` | Duplicate as draft |
+| PATCH | `/events/:eventId/status` | Transition status |
+| PATCH | `/events/:eventId/approval` | Approve/reject |
+| POST | `/events/:eventId/register` | Register user |
+| POST | `/events/:eventId/cancel-registration` | Cancel registration |
+| POST | `/events/:eventId/check-in` | Check in attendee |
+| GET | `/events/:eventId/attendees.csv` | Export CSV |
+| POST | `/events/:eventId/messages` | Bulk message attendees |
+| POST | `/events/:eventId/feedback` | Submit feedback |
+| POST | `/events/:eventId/gallery` | Add gallery photo |
+| GET | `/events/:eventId/ical` | Export iCal |
+| GET | `/competitions/:eventId/config` | Competition config with rounds |
+| GET | `/competitions/:eventId/my-role` | User role/permissions |
+| GET | `/competitions/:eventId/roles` | List roles |
+| POST | `/competitions/:eventId/roles` | Assign role |
+| DELETE | `/competitions/:eventId/roles/:regNo` | Remove role |
+| GET | `/competitions/:eventId/certificate-template` | Get template config |
+| PUT | `/competitions/:eventId/certificate-template` | Save template |
+| POST | `/competitions/:eventId/certificate-template/image` | Upload template image |
+| GET | `/competitions/:eventId/analytics` | Competition analytics |
+| POST | `/competitions/:eventId/rounds/:roundId/submit` | Submit for round |
+| GET | `/competitions/:eventId/rounds/:roundId/my-submission` | My latest submission |
+| GET | `/competitions/:eventId/rounds/:roundId/my-result` | My result |
+| GET | `/competitions/:eventId/rounds/:roundId/submissions` | List submissions (evaluators) |
+| PUT | `/competitions/:eventId/rounds/:roundId/submissions/:id/evaluate` | Evaluate submission |
+| GET | `/competitions/:eventId/rounds/:roundId/submissions/:id/evaluations` | Get evaluations |
+| PUT | `/competitions/:eventId/rounds/:roundId/submissions/:id/flag` | Flag/unflag submission |
+| POST | `/competitions/:eventId/rounds/:roundId/shortlist` | Apply shortlist |
+| POST | `/competitions/:eventId/rounds/:roundId/publish` | Publish results |
+| GET | `/competitions/:eventId/rounds/:roundId/leaderboard` | Get leaderboard |
+| POST | `/competitions/:eventId/rounds/:roundId/certificates/generate` | Generate PDFs |
+| GET | `/competitions/:eventId/rounds/:roundId/certificates/me` | My certificate metadata |
+| GET | `/competitions/:eventId/rounds/:roundId/certificates/me/download` | Download PDF |
+| POST | `/competitions/reminders/run` | Process reminders |
+| POST | `/competitions/:eventId/announce` | Send announcement |
+| POST | `/competitions/:eventId/teams` | Create team |
+| GET | `/competitions/:eventId/teams/my-team` | Get my team |
+| POST | `/competitions/:eventId/teams/:teamId/invite` | Invite member |
+| DELETE | `/competitions/:eventId/teams/:teamId/invite/:regNo` | Cancel invitation |
+| PUT | `/competitions/:eventId/teams/:teamId/leader` | Transfer leadership |
+| DELETE | `/competitions/:eventId/teams/:teamId/members/me` | Leave team |
+| DELETE | `/competitions/:eventId/teams/:teamId` | Delete team |
+| POST | `/competitions/:eventId/invitations/:id/accept` | Accept invitation |
+| POST | `/competitions/:eventId/invitations/:id/decline` | Decline invitation |
+| GET | `/competitions/:eventId/invitations/my-invitations` | My pending invitations |
+| GET | `/campus-feedback/governance` | Governance metadata |
+| GET | `/campus-feedback/:type/options` | Feedback target options |
+| POST | `/campus-feedback/:type/options` | Create option (admin) |
+| POST | `/campus-feedback/:type/submissions` | Submit feedback |
+| POST | `/campus-feedback/:type/legacy-import` | Bulk-import legacy |
+| GET | `/campus-feedback/me/submissions` | My submissions |
+| GET | `/campus-feedback/admin/submissions` | All submissions (admin) |
+| PATCH | `/campus-feedback/admin/submissions/:id` | Moderate entry (admin) |
 
-You already have `knip.json` at the root. Run it properly from the **Frontend** directory:
+### Database Tables
 
-```bash
-cd Frontend
-npx knip --reporter compact 2>&1 | head -100
-```
+| Table | File | Description |
+|-------|------|-------------|
+| `events_state` | eventsStore.js:150 | Key-value store for 6 entity types |
+| `submissions` | competitionStore.js:93 | Competition submissions |
+| `rounds` | competitionStore.js:130 | Competition round definitions |
+| `teams` | competitionStore.js:151 | Competition teams |
+| `team_invitations` | competitionStore.js:162 | Team invitations |
+| `evaluations` | competitionStore.js:177 | Per-evaluator scoring |
+| `reminder_marks` | competitionStore.js:199 | Reminder dedup |
+| `event_roles` | competitionStore.js:210 | Custom role assignments |
+| `certificate_templates` | competitionStore.js:223 | Certificate config |
+| `campus_feedback_options` | campusFeedbackStore.js:140 | Feedback targets |
+| `campus_feedback_entries` | campusFeedbackStore.js:153 | Feedback submissions |
+| `campus_feedback_audit` | campusFeedbackStore.js:175 | Moderation audit trail |
 
-This will find: unused exported functions/types, files imported nowhere, unused dependencies.
+### Key Services
 
-Your current `knip.json` needs upgrading. Create this in `Frontend/`:
-
-```json
-{
-  "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/main.tsx"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignoreDependencies": ["@testing-library/jest-dom"]
-}
-```
-
-### Tool 2: **ts-prune** — Unused TypeScript Exports ★★★★
-
-More focused than Knip for TypeScript specifically:
-
-```bash
-cd Frontend
-npx ts-prune | grep -v ".test.ts" | grep -v "__tests__"
-```
-
-Each line shows an export that is never imported elsewhere.
-
-### Tool 3: **jscpd** — Duplicate Code Detector ★★★★
-
-Finds copy-pasted blocks — the #1 output of vibe coding:
-
-```bash
-npx jscpd Frontend/src --min-lines 10 --min-tokens 50 --reporters "console"
-```
-
-### Tool 4: **Madge** — Circular Dependency Detector ★★★
-
-```bash
-cd Frontend
-npx madge --circular --extensions ts,tsx src/
-# Visual graph:
-npx madge --image graph.svg --extensions ts,tsx src/main.tsx
-```
-
-### Tool 5: **ESLint `no-unused-vars`** ★★★
-
-```bash
-cd Frontend
-npx eslint src --rule '{"no-unused-vars": "warn"}' --ext .ts,.tsx 2>&1 | grep "no-unused"
-```
-
-### Tool 6: **`cloc`** — Lines of Code by Domain ★★
-
-```bash
-sudo apt install cloc
-cloc Frontend/src/pages/LMS/
-cloc Frontend/src/lib/
-cloc Backend/src/services/
-```
-
-### Tool 7: **Grep audit for stale service imports** ★★
-
-```bash
-# Verify which backend services are wired to routes vs only to server.js
-for f in Backend/src/services/lms*.js; do
-  name=$(basename "$f" .js)
-  count=$(grep -r "$name" Backend/src/ --include="*.js" | grep -v "^.*$name.js:" | wc -l)
-  echo "$count external refs: $name"
-done
-```
-
----
-
-## Part 5: Prioritized Action Plan
-
-### ✅ Phase 1 — Safe Structural Cleanup (DONE)
-
-- [x] Deleted 6 empty page directories
-- [x] Merged `context/` → `contexts/` (9 import sites updated)
-- [x] Deleted old `src/context/` folder
-
-### ✅ Phase 2 — Root Cleanup & Config (cleanup complete, commit deferred)
-
-Completed cleanup:
-- Root debris and asset debris were removed.
-- Misplaced docs were moved into `docs/` / `docs/plans/`.
-- `.gitignore` was updated for generated/design outputs.
-- Backend `playwright` was moved from runtime dependencies to dev dependencies.
-
-Deferred:
-- Broad staging/commit of untracked files is still pending because the worktree contains many unrelated user changes.
-
-Original checklist:
-1. **Delete root debris files:**
-   ```bash
-   rm -f ast_output.json output.txt scratch.ts scratch.tsx scratch_output.json \
-         top_left_paths.json view_jpeg.html test-transform-timetable.js \
-         graph.svg impeccable-output.txt
-   ```
-2. **Move architecture docs** into `docs/` or `docs/plans/`:
-   ```bash
-   mv competition_platform_flow_architecture_updated.md docs/plans/
-   mv unicurator_master_architecture_flow_map_v2.md docs/plans/
-   mv implementation_consolidation_plan.md docs/plans/
-   mv FRONTEND-ARCHITECTURE-THEORY-v2.md docs/
-   ```
-3. **Add `Stitch Design.zip` to `.gitignore`** if not already — 207MB should never be in git.
-4. **Move `knip.json`** into `Frontend/` with the upgraded config shown above.
-
-### ✅ Phase 3 — Run Knip & Delete Dead Exports (complete)
-
-Completed:
-- Added `Frontend/knip.json`.
-- Ran Knip, ts-prune, jscpd, and Madge.
-- Deleted confirmed unused `config/designSystem.ts`.
-- Fixed the reported circular dependency.
-
-### ✅ Phase 4/5 — Split Highest-Impact Frontend God Files (complete)
-
-Completed:
-- `main.tsx` → `App.tsx` + `src/routes/`.
-- `LmsPagesShared.tsx` → per-page LMS files + barrel.
-- `styles.css` → `src/styles/`.
-- `erpTransformers.ts` → `src/lib/erp/`.
-- `lmsApi.ts` → `src/lib/lms/`.
-
-Remaining priority order:
-
-1. **`ErpDocumentRenderer.tsx`** → split by renderer type.
-2. **`useBlueprintPageData.ts`** → split by blueprint/domain.
-3. **`erpBlueprints.ts`** → move pure data away from logic.
-4. **`styles/events.css`** → second CSS split for event/competition UI.
-5. **Backend `lmsStore.js`** → extract `lmsSearchStore.js`, `lmsProgressStore.js`, `lmsContentStore.js`.
-
-### Next — Backend Services & Scripts Audit (1 hour)
-
-1. Keep the 8 LMS micro-services; they are wired implementations, not deletion candidates.
-2. Review `Backend/scripts/` — keep scripts in active use (`seed-demo-data.js`, `create-erp-dump.js`, audit/evaluation scripts), archive/delete one-off exploratory scripts only after verifying no package script references them.
-3. Start backend god-file splits from `lmsStore.js`, `careerStore.js`, and `erpClient.js`.
-
-### ✅ Phase 6 — Update CLAUDE.md & Agent Guard Rails (complete)
-
-Completed in [CLAUDE.md](file:///home/zorro-omarchy/Desktop/Coding-Things/Projects/Personal/00_Active/University-ERP/CLAUDE.md):
-- All contexts live in `src/contexts/` (never `context/`)
-- LMS pages use barrel pattern from `pages/LMS/index.ts`
-- Routes defined in `src/routes/` modules, NOT `main.tsx`
-- No file should exceed 500 LOC without a split plan
-- No empty placeholder directories
-- Static prototype utilities belong in `src/lib/prototype/`
+| Service | File | Description |
+|---------|------|-------------|
+| EventsStore | eventsStore.js | Full lifecycle: CRUD, recurrence, registration, check-in, notifications, feedback, gallery, approvals, CSV/iCal, analytics |
+| CompetitionStore | competitionStore.js | Rounds, submissions, evaluations, shortlisting, leaderboard, certificates, teams, roles |
+| CampusFeedbackStore | campusFeedbackStore.js | Options CRUD, submission with dedup, moderation, governance |
 
 ---
 
-## Expected Outcome After All Phases
+## 3. LMS
 
-| Metric | Before | After |
-|---|---|---|
-| Largest frontend file | 2,189 LOC | <500 LOC |
-| `main.tsx` | 380 lines, 100 imports | ~30 lines, 3 imports |
-| `styles.css` | 2,045 lines monolith | 5-6 scoped files, ~300-400 each |
-| Empty dirs / duplicate folders | 8 | 0 |
-| Root debris files | 12 | 0 |
-| Agent confusion surface | Massive | Dramatically reduced |
-| Time for new agent to understand structure | 10-15 min | 2-3 min |
+### API Endpoints (88 total)
+
+Tracker: GET `/lms/tracker/overview`, `/lms/tracker/insights`, `/lms/tracker/unified-insights`, `/lms/tracker/history`, `/lms/tracker/recommendation-events`, POST `/lms/tracker/recommendation-events`
+
+Resources: GET `/lms/resources`, `/lms/resources/check-duplicate`, `/lms/resources/:id`, POST `/lms/resources`, PUT `/lms/resources/:id`, DELETE `/lms/resources/:id`, POST `/lms/resources/:id/restore`, POST `/lms/resources/bulk`
+
+Interactions: POST `/lms/resources/:id/upvote`, `/lms/resources/:id/bookmark`, `/lms/resources/:id/flag`, `/lms/resources/:id/mark-outdated`, `/lms/resources/:id/rate`, `/lms/resources/:id/view`
+
+Comments: GET/POST `/lms/resources/:id/comments`, POST `/lms/comments/:id/helpful`
+
+Annotations: GET/POST `/lms/resources/:id/annotations`, DELETE `/lms/annotations/:id`
+
+PYQ: GET `/lms/pyq/upcoming`, `/lms/pyq/:subjectCode`
+
+Requests: GET/POST `/lms/requests`, POST `/lms/requests/:id/upvote`, POST `/lms/requests/:id/fulfill`, DELETE `/lms/requests/:id`
+
+Exam Feedback: GET `/lms/exam-feedback/pending`, POST `/lms/exam-feedback`
+
+Quiz: POST `/lms/resources/:id/quiz-attempt`, GET `/lms/resources/:id/quiz-attempts`
+
+Question Bank: GET/POST `/lms/question-bank`, POST `/lms/question-bank/:id/upvote`, GET `/lms/question-bank/build-quiz`
+
+Collections: GET/POST `/lms/collections`, GET `/lms/collections/:id`, POST `/lms/collections/:id/items`, DELETE `/lms/collections/:id/items/:resourceId`
+
+Guides: GET/POST `/lms/guides`, GET/PUT/DELETE `/lms/guides/:id`, POST `/lms/guides/:id/sections`, PUT `/lms/guides/:id/sections/:sid`, POST `/lms/guides/:id/sections/:sid/read`, POST `/lms/guides/:id/upvote`, GET `/lms/guides/:id/export`
+
+Roadmaps: GET/POST `/lms/roadmaps`, GET/DELETE `/lms/roadmaps/:id`, POST `/lms/roadmaps/:id/nodes`, POST `/lms/roadmaps/:id/edges`, POST `/lms/roadmaps/:id/nodes/:nid/complete`
+
+Recommendations: GET `/lms/recommendations/next-step`, GET `/lms/recommendations`
+Explore: GET `/lms/explore`
+Subjects: GET `/lms/subjects/:code/overview`, `/lms/subjects/:code/presence`
+Topics: GET `/lms/topics/graph`
+Leaderboard: GET `/lms/leaderboard/weekly`
+
+Progress/Mastery: GET `/lms/progress`, `/lms/progress/:subjectCode`, `/lms/mastery`
+Continue: GET `/lms/continue`
+Revision: GET `/lms/revision`, POST `/lms/revision/:resourceId/review`
+Streak: GET `/lms/streak`
+Session: POST `/lms/session/generate`
+
+My Data: GET `/lms/me/contributions`, `/lms/me/bookmarks`, `/lms/me/activity`, `/lms/me/requests`, `/lms/me/export/:guideId`
+Preferences: PUT `/lms/me/preferences`
+Contributors: GET `/lms/contributors/:userId`
+
+Admin: GET `/lms/admin/resource-flags`, PATCH `/lms/admin/resources/:id/moderation`, GET `/lms/admin/flags`, PUT `/lms/admin/flags/:key`
+
+### Database Tables (45 tables)
+
+lms_resources, lms_upvotes, lms_bookmarks, lms_flags, lms_outdated_marks, lms_comments, lms_comment_helpful, lms_ratings, lms_annotations, lms_collections, lms_collection_items, lms_requests, lms_request_upvotes, lms_exam_feedback, lms_guides, lms_guide_sections, lms_guide_progress, lms_roadmaps, lms_roadmap_nodes, lms_roadmap_edges, lms_roadmap_progress, lms_topics, lms_resource_topics, lms_topic_prerequisites, lms_question_bank, lms_quiz_questions, lms_progress, lms_topic_mastery, lms_subject_mastery, lms_quiz_attempts, lms_revision_queue, lms_streaks, lms_user_interactions, lms_user_preferences, lms_resource_effectiveness, lms_user_storage, lms_resource_versions, lms_guide_versions, lms_ranking_shadow, lms_feature_flags, lms_experiments, lms_schema_version, lms_search (FTS5), lms_resource_moderation_audit, lms_tracker_snapshots, lms_tracker_recommendation_events
+
+### Key Services
+
+LmsStore (4 files, ~120 methods), LmsRecommendationEngine (8-signal scorer), LmsModerationService, LmsRevisionScheduler (spaced repetition), LmsInteractionTracker, LmsInteractionQueue, LmsDuplicateDetector, LmsExamFeedbackService, LmsReadingTimeEstimator, LmsFeatureFlagService, LmsTrackerService (~1390 lines), LmsTrackerStore
 
 ---
 
-## Quick Reference: File Organization Rules
+## 4. Career Portal
 
-```
-✅ One page component per file (unless <30 LOC trivial stub)
-✅ Use index.ts barrels in feature folders to simplify imports  
-✅ API files split by domain: careerApi.ts, lms/resourcesApi.ts
-✅ Services split by concern: lmsSearchStore.js, lmsProgressStore.js
-✅ All contexts in src/contexts/ (one folder, plural)
-✅ Routes defined in src/routes/ modules
-✅ CSS split by feature in src/styles/
-✅ Static/prototype code in src/lib/prototype/ if kept
+### API Endpoints (42 total)
 
-❌ Never: 20 page components in one "shared" file
-❌ Never: Two folders with similar names (context/ vs contexts/)
-❌ Never: Empty directories without a README explaining intent
-❌ Never: Backend scripts mixed into src/services/
-❌ Never: God files >500 LOC without a split plan
-❌ Never: Scratch files in the project root
-❌ Never: 200MB binaries tracked in git
-```
+GET `/career/permissions`, `/career/trending`, `/career/deadline-soon`, `/career/feed`, `/career/insights/unified`, `/career/health`, `/career/stats`
+
+GET/POST `/career/opportunities`, GET/PUT/DELETE `/career/opportunities/:id`
+POST `/career/opportunities/:id/save`, DELETE `/career/opportunities/:id/save`
+POST `/career/opportunities/:id/bookmark`, `/dismiss`, `/view`, `/apply`, `/flag`
+
+GET/PUT `/career/profile`, GET `/career/profile/skill-gaps`, POST `/career/profile/resume`
+
+GET/POST `/career/applications`, PUT/DELETE `/career/applications/:id`
+
+POST `/career/submit`, GET `/career/submit/mine`, `/career/submit/pending`
+POST `/career/submit/:id/approve`, PATCH `/career/submit/:id`
+
+GET/POST `/career/interviews/slots`, PUT/DELETE `/career/interviews/slots/:id`
+GET/POST `/career/interviews/bookings`, DELETE `/career/interviews/bookings/:id`
+
+GET/POST `/career/alumni`, PUT/DELETE `/career/alumni/:id`
+POST `/career/alumni/:id/requests`
+
+### Database Tables (16 + 1 FTS5)
+
+career_opportunities, career_bookmarks, career_applications, career_flags, career_dismissals, career_views, career_submissions, career_submission_audit, career_scraper_runs, career_source_health, career_profiles, career_skill_gaps, career_alumni, career_interview_slots, career_interview_bookings, career_notification_log, career_search (FTS5)
+
+### Key Services
+
+CareerStore (~60 methods), CareerCache (Redis), CareerNotifier (deadline reminders + skill digest), CareerRelevanceEngine (skill/branch/year/preference scoring)
+
+### Rate Limiters
+
+Submit: 20/hour, Review: 60/min, Pending list: 40/min
+
+---
+
+## 5. Helpdesk & Feedback
+
+### API Endpoints
+
+GET/POST `/helpdesk/tickets`, PATCH `/helpdesk/tickets/bulk`
+GET/PATCH `/helpdesk/tickets/:ticketId`
+POST `/helpdesk/tickets/:ticketId/escalate`, `/tickets/:ticketId/replies`
+GET/POST `/helpdesk/faqs`, PUT/DELETE `/helpdesk/faqs/:faqId`
+GET `/feedback/end-semester/status`, `/feedback/end-semester/templates/random`
+POST `/feedback/end-semester/submit`
+
+### Database Tables
+
+helpdesk_state (key-value for tickets, replies, FAQs), campus_feedback_options, campus_feedback_entries, campus_feedback_audit
+
+### Key Services
+
+HelpdeskStore (ticket CRUD, SLA breach, escalation, audit), FeedbackAutomationService (auto-submits via ERP scrape), feedbackTemplates (5 templates)
+
+---
+
+## 6. Admin & Infrastructure
+
+### API Endpoints
+
+GET `/admin/access/status`, POST `/admin/access/unlock`, POST `/admin/access/disable`
+POST `/telemetry/frontend`
+GET `/debug/ping`, `/health`, `/live`, `/ready`
+GET `/external/:category/:page`, `/external/:pageKey`
+
+### Config & Middleware
+
+ADMIN_REGISTER_NUMBERS (1 entry: AP23110010419), adminContext middleware, requestContext middleware (UUID, timing, metrics), hasAdminAccess/assertAdminAccess (session + header + body + query gate), Redis rate limiter
+
+---
+
+## Summary
+
+| Domain | Endpoints | DB Tables | Services |
+|--------|-----------|-----------|----------|
+| Academic / ERP Core | 55 | 3 | 7 |
+| Events & Competitions | 70 | 12 | 3 |
+| LMS | 88 | 45 | 12 |
+| Career Portal | 42 | 17 | 4 |
+| Helpdesk & Feedback | 14 | 4 | 3 |
+| Admin & Infrastructure | 10 | 0 | 3 |
+| **Total** | **279** | **81** | **32** |

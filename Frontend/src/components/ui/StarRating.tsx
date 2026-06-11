@@ -40,7 +40,7 @@ export function StarRating({ value, max = 5, onChange, size = "md", className }:
               className={cn(
                 sizeMap[size],
                 "transition-colors",
-                filled ? "fill-[var(--warning)] text-[var(--warning)]" : "fill-none text-[var(--text-secondary)]"
+                filled ? "fill-yellow-400 text-yellow-500 drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]" : "fill-none text-[var(--text-secondary)]"
               )}
             />
           </span>

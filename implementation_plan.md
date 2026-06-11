@@ -2,13 +2,35 @@
 
 > Based on direct analysis of every flagged file. Phase 1 (context folder merge + empty dirs) is already complete.
 
+## Status Update - 2026-05-31
+
+### Backend Phase Complete
+
+The backend refactor phase is complete. The old backend god files now act as small compatibility facades over domain modules, and every file under `Backend/src` is below the 500 LOC target. The largest backend source file is currently `Backend/src/services/lmsMigrations/baseSchemaSql.js` at 487 LOC.
+
+Completed backend splits:
+- `lmsStore.js`, `careerStore.js`, `erpClient.js`, `competitionStore.js`, `eventsStore.js`, `lmsTrackerService.js`
+- `contentStore.js`, `erpAggregationService.js`, `helpdeskStore.js`, `erpDocumentBuilder.js`
+- `campusFeedbackStore.js`, `erpPayloadNormalizer.js`, `erpActionExecutor.js`, `lmsMigrations.js`, `erpUiMapStore.js`
+- `routes/lmsRoutes.js`
+
+Verification:
+- `rg --files Backend/src | rg '\.js$' | xargs -n 1 node --check` passed.
+- `cd Backend && npm test` passed outside the sandbox: 127 tests, 127 passing.
+- The only non-escalated backend test failure seen during this phase was environmental: the sandbox blocked local `127.0.0.1` binding for `contentRoutes.test.js`. The isolated route test and full suite both passed with the required bind permission.
+
+Interesting backend findings:
+- Same-millisecond writes made LMS moderation audit and tracker recommendation-event ordering flaky under parallel tests. The relevant queries now add `rowid DESC` as a deterministic tie-breaker.
+- `erpDocumentBuilder` had stray debug logging in sanitizer paths; that output is now removed.
+- The lowest-risk backend extraction pattern was to preserve public imports with facade files and move implementation into domain modules, instead of changing route call sites while splitting.
+
 ---
 
 ## Summary Numbers
 
 | Category | Count |
 |---|---|
-| God files (>500 LOC) needing split | **8 frontend + 8 backend = 16** |
+| God files (>500 LOC) needing split | **Frontend follow-ups remain; backend phase complete with 0 `Backend/src` files over 500 LOC** |
 | Confirmed dead files (zero imports) | **2** (`design/tokens.ts`, `localStore.ts`) |
 | Root debris files to delete | **10** |
 | Root docs to relocate | **5** |
@@ -37,6 +59,8 @@
 ---
 
 ### 1B — Backend God Files
+
+> Historical baseline from the original audit. These backend files have since been split; see the 2026-05-31 status update and Phase 10 completion notes.
 
 | File | LOC | Problem |
 |---|---|---|
@@ -211,7 +235,7 @@ Missing rules (see Phase 6 for the full update):
 4. `LmsPagesShared.tsx` — 20 pages in one file
 
 ### 🟠 High (significant maintainability debt)
-5. `lmsStore.js` (2,681 LOC), `careerStore.js` (1,995 LOC), `erpClient.js` (1,805 LOC)
+5. Backend god files listed in 1B — **resolved by Phase 10**; keep watching new backend growth
 6. `styles.css` monolith (2,045 LOC / 197 classes)
 7. `erpTransformers.ts` (2,189 LOC)
 8. `lmsApi.ts` (2,137 LOC)
@@ -614,7 +638,10 @@ Phase 4 ✅ DONE      — Split main.tsx + LmsPagesShared.tsx (3-4 hrs)
 Phase 5 ✅ DONE      — Split god API files + CSS (4-6 hrs, per session)
 Phase 6 ✅ DONE      — Update CLAUDE.md (30 min, do alongside Phase 2)
 Phase 7 ✅ DONE      — Split ErpDocumentRenderer + parsed ERP document fallback
-Phase 8 NEXT         — Split useBlueprintPageData or erpBlueprints, then start backend service splits
+Phase 8 ✅ DONE      — Split useBlueprintPageData into blueprintData modules
+Phase 9 ✅ DONE      — Split erpBlueprints registry into typed, validated modules
+Phase 10 ✅ DONE      — Backend service and LMS route extraction
+Phase 11 ✅ DONE      — Split competition platform CSS
 ```
 
 > [!TIP]
@@ -653,21 +680,117 @@ Verification:
 
 ---
 
-### Phase 8 — Next Frontend Split Candidate
-**Recommended next step**: split `Frontend/src/pages/Shared/useBlueprintPageData.ts`.
+### ✅ Phase 8 — Split `useBlueprintPageData` (COMPLETE)
+**Effort**: 1–2 hours | **Risk**: Medium | **Impact**: High ERP/debug readability
 
-Why this should be next:
-- It is still a 1,600+ LOC god hook.
-- It sits directly on the ERP page loading path, so simplifying it will make fixture/live/debug behavior easier to reason about.
-- The Phase 7 fallback work exposed that renderer, blueprint, and fetch/transform concerns are still too tightly coupled.
+**Completed on 2026-05-28.**
 
-Suggested split:
-```
-Frontend/src/pages/Shared/blueprintData/
-├── index.ts
-├── blueprintFetch.ts
-├── documentData.ts
-├── rendererFallbacks.ts
-├── validation.ts
-└── useBlueprintPageData.ts
-```
+Results:
+- Reduced `Frontend/src/pages/Shared/useBlueprintPageData.ts` from 1,605 LOC to a 123-line React hook.
+- Added `Frontend/src/pages/Shared/blueprintData/`:
+  - `api.ts` — ERP/external fetch + JSON/session error handling.
+  - `normalizers.ts` — external and ERP payload normalization.
+  - `sectionUtils.ts` — leaf collection, section ordering, session profile section, status dedupe.
+  - `tableUtils.ts` — ERP table cleanup, column tuning, finance/result table handling.
+  - `examMarkParser.ts` — historical exam-mark token parser.
+  - `kpis.ts` — renderer-specific KPI derivation.
+  - `valueUtils.ts` — text, cell, and comparison sanitization.
+  - `types.ts` — local state and payload types.
+- All new `blueprintData` leaves are under 500 LOC.
+
+Interesting finding:
+- The generic blueprint loader was doing far more than data fetching. It owned session profile loading, API transport, ERP dump traversal, table cleanup, document-node filtering, status detection, renderer-specific section ordering, KPI derivation, and display summary suppression. This made the earlier "implemented but not visible" problem harder to diagnose because fetch, transform, and display fallbacks were all mixed in one hook.
+
+Verification:
+- `npm run build` → passed.
+- `npm test` → passed: 37 files, 113 tests.
+- `npx madge --extensions ts,tsx --circular src` → processed 349 files, no circular dependency found.
+
+---
+
+### ✅ Phase 9 — Split `erpBlueprints` Registry (COMPLETE)
+**Effort**: 1 hour | **Risk**: Medium | **Impact**: High navigation/ERP registry readability
+
+**Completed on 2026-05-28.**
+
+Results:
+- Reduced `Frontend/src/config/erpBlueprints.ts` from 1,411 LOC to a 184-line public validator/barrel.
+- Added `Frontend/src/config/erpBlueprintTypes.ts` for shared blueprint/nav type definitions.
+- Added `Frontend/src/config/erpBlueprintData.ts` as a 12-line registry aggregator.
+- Added `Frontend/src/config/erpBlueprintRegistry/`:
+  - `navigation.ts` — main nav, bottom nav, dashboard quick links.
+  - `coreBlueprints.ts` — dashboard, academic, exams, finance, hostel/transport, registration blueprints.
+  - `eventBlueprints.ts` — events and feedback blueprints.
+  - `workspaceBlueprints.ts` — LMS, academic tracker, career, helpdesk, profile/settings, admin blueprints.
+- Kept public imports stable through `../config/erpBlueprints`.
+
+Interesting finding:
+- Type-only imports can still create circular-dependency findings in Madge. The first split had registry data importing types back from `erpBlueprints.ts`, which TypeScript accepted, but Madge correctly saw a cycle. Moving types to `erpBlueprintTypes.ts` made the dependency direction clean: `types -> data -> validated public barrel`.
+
+Verification:
+- `npm run build` → passed.
+- `npm test` → passed: 37 files, 113 tests.
+- `npx madge --extensions ts,tsx --circular src` → processed 355 files, no circular dependency found.
+
+---
+
+### ✅ Phase 10 — Backend Service and Route Extraction (COMPLETE)
+**Started on 2026-05-28. Completed on 2026-05-31.**
+
+Results:
+- Split all planned backend service monoliths into compatibility facades plus domain modules:
+  - `lmsStore.js`, `careerStore.js`, `erpClient.js`, `competitionStore.js`, `eventsStore.js`, `lmsTrackerService.js`
+  - `contentStore.js`, `erpAggregationService.js`, `helpdeskStore.js`, `erpDocumentBuilder.js`
+  - `campusFeedbackStore.js`, `erpPayloadNormalizer.js`, `erpActionExecutor.js`, `lmsMigrations.js`, `erpUiMapStore.js`
+- Split `Backend/src/routes/lmsRoutes.js` into focused LMS route modules.
+- Preserved existing public imports and route call sites through facade files.
+- Brought every file under `Backend/src` below 500 LOC.
+
+Verification:
+- `rg --files Backend/src | rg '\.js$' | xargs -n 1 node --check` → passed.
+- `cd Backend && npm test` → passed outside sandbox: 127 tests, 127 passing.
+
+Interesting findings:
+- Method extraction in backend CommonJS classes needs to handle default object parameters like `method(arg, { flag = true } = {})`. A naive brace scanner mistakes the parameter default object for the method body.
+- Fast parallel tests exposed same-millisecond ordering bugs in LMS audit and recommendation-event queries. Those queries now use `rowid DESC` as a deterministic tie-breaker after timestamp ordering.
+- `erpDocumentBuilder` still had sanitizer debug logging; removing it made the test output clean without changing renderer behavior.
+
+---
+
+### ✅ Phase 11 — Split Competition Platform CSS (COMPLETE)
+**Effort**: 30 min | **Risk**: Low | **Impact**: Frontend style maintainability
+
+**Completed on 2026-05-28.**
+
+Results:
+- Replaced `Frontend/src/styles/events.css` with a 5-line import facade.
+- Added `Frontend/src/styles/events/`:
+  - `utilities.css` — shared typography, focus, animation, button, chip, and utility classes.
+  - `shell.css` — competition page shell, cards, grids, empty/access panels, form controls.
+  - `detail.css` — event detail hero/layout/timeline/action bar.
+  - `activity.css` — activity dashboard, created-event summaries, rows, stats.
+  - `create.css` — create-event wizard, choice rows, review/footer cards.
+- Every split CSS leaf is under 500 LOC.
+
+Verification:
+- `npm run build` → passed.
+- `npm test` → passed: 37 files, 113 tests.
+- `npx madge --extensions ts,tsx --circular src` → processed 360 files, no circular dependency found.
+
+---
+
+### Phase 12 — Next Cleanup Candidate
+Current largest frontend leaves:
+- `Frontend/src/pages/Resources/LearningMaterialsPage.tsx` — 1,250 LOC.
+- `Frontend/src/lib/lms/types.ts` — 1,119 LOC.
+- `Frontend/src/pages/ERP/ResultsCurrentPage.tsx` — 817 LOC.
+
+Current largest backend leaves:
+- `Backend/src/services/lmsMigrations/baseSchemaSql.js` — 487 LOC.
+- `Backend/src/services/eventsStore/eventCrud.js` — 430 LOC.
+- `Backend/src/services/lmsStore/moderation.js` — 424 LOC.
+- `Backend/src/services/careerStore/schema.js` — 421 LOC.
+
+Recommended next move:
+- Return to the remaining frontend leaves over 500 LOC, starting with `LearningMaterialsPage.tsx` or `Frontend/src/lib/lms/types.ts`.
+- Keep backend work to targeted behavioral fixes unless a new backend file crosses the 500 LOC threshold.

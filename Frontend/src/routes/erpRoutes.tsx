@@ -2,54 +2,60 @@ import type React from "react";
 import AdminOnlyPage from "../components/AdminOnlyPage";
 import ProtectedPage from "../components/ProtectedPage";
 import { PAGE_BLUEPRINTS, isPlaceholderBlueprint } from "../config/erpBlueprints";
-import AdminCampusFeedbackPage from "../pages/Admin/AdminCampusFeedbackPage";
-import AdminCareerAlumniPage from "../pages/Admin/AdminCareerAlumniPage";
-import AdminCareerInterviewsPage from "../pages/Admin/AdminCareerInterviewsPage";
-import AdminCareerOpportunitiesPage from "../pages/Admin/AdminCareerOpportunitiesPage";
-import AdminCertTemplatesPage from "../pages/Admin/AdminCertTemplatesPage";
-import AdminAuditLogsPage from "../pages/Admin/AdminAuditLogsPage";
-import AdminContentManagementPage from "../pages/Admin/AdminContentManagementPage";
-import AdminDeptPerformancePage from "../pages/Admin/AdminDeptPerformancePage";
-import AdminEventApprovalsPage from "../pages/Admin/AdminEventApprovalsPage";
-import AdminEventsManagementPage from "../pages/Admin/AdminEventsManagementPage";
-import AdminHelpdeskFaqsPage from "../pages/Admin/AdminHelpdeskFaqsPage";
-import AdminHelpdeskTicketsPage from "../pages/Admin/AdminHelpdeskTicketsPage";
-import AdminLmsModerationPage from "../pages/Admin/AdminLmsModerationPage";
-import AdminSystemControlsPage from "../pages/Admin/AdminSystemControlsPage";
-import AcademicInsights from "../pages/AcademicTracker/AcademicInsights";
-import ProgressOverview from "../pages/AcademicTracker/ProgressOverview";
-import UnifiedInsights from "../pages/AcademicTracker/UnifiedInsights";
-import ApplicationTrackerPage from "../pages/CareerPortal/ApplicationTrackerPage";
-import BookmarksPage from "../pages/CareerPortal/BookmarksPage";
-import CareerHomePage from "../pages/CareerPortal/CareerHomePage";
-import CareerProfilePage from "../pages/CareerPortal/CareerProfilePage";
-import OpportunitiesPage from "../pages/CareerPortal/OpportunitiesPage";
-import OpportunityDetailPage from "../pages/CareerPortal/OpportunityDetailPage";
-import SkillGapPage from "../pages/CareerPortal/SkillGapPage";
-import SubmitOpportunityPage from "../pages/CareerPortal/SubmitOpportunityPage";
-import AttendanceDetailsPage from "../pages/ERP/AttendanceDetailsPage";
-import BankDetailsPage from "../pages/ERP/BankDetailsPage";
-import CurriculumPage from "../pages/ERP/CurriculumPage";
-import DocumentErpPage from "../pages/ERP/DocumentErpPage";
-import FaqsPage from "../pages/ERP/FaqsPage";
-import FeeDuesPage from "../pages/ERP/FeeDuesPage";
-import FeePaidPage from "../pages/ERP/FeePaidPage";
-import RefundChangePage from "../pages/ERP/RefundChangePage";
-import ResultsCurrentPage from "../pages/ERP/ResultsCurrentPage";
-import ResultsEarlierPage from "../pages/ERP/ResultsEarlierPage";
-import RoomDetailsPage from "../pages/ERP/RoomDetailsPage";
-import SapScholarshipsPage from "../pages/ERP/SapScholarshipsPage";
-import TimetablePage from "../pages/ERP/TimetablePage";
-import EventsFeedback from "../pages/Feedback/EventsFeedback";
-import HostelMessFeedback from "../pages/Feedback/HostelMessFeedback";
-import TransportFeedback from "../pages/Feedback/TransportFeedback";
-import CourseFeedbackAssistantPage from "../pages/Feedback/CourseFeedbackAssistantPage";
-import EventsRegistrationHub from "../pages/Events/EventsRegistrationHub";
-import HelpdeskFAQs from "../pages/Helpdesk/FAQs";
-import RaiseTicket from "../pages/Helpdesk/RaiseTicket";
-import TrackEscalate from "../pages/Helpdesk/TrackEscalate";
-import LearningMaterialsPage from "../pages/Resources/LearningMaterialsPage";
-import BlueprintPage from "../pages/Shared/BlueprintPage";
+import { lazy } from "react";
+import { SuspenseWrapper } from "../components/SuspenseWrapper";
+
+const AdminCampusFeedbackPage = lazy(() => import("../pages/Admin/AdminCampusFeedbackPage"));
+const AdminCareerAlumniPage = lazy(() => import("../pages/Admin/AdminCareerAlumniPage"));
+const AdminCareerInterviewsPage = lazy(() => import("../pages/Admin/AdminCareerInterviewsPage"));
+const AdminCareerOpportunitiesPage = lazy(() => import("../pages/Admin/AdminCareerOpportunitiesPage"));
+const AdminCertTemplatesPage = lazy(() => import("../pages/Admin/AdminCertTemplatesPage"));
+const AdminAuditLogsPage = lazy(() => import("../pages/Admin/AdminAuditLogsPage"));
+const AdminContentManagementPage = lazy(() => import("../pages/Admin/AdminContentManagementPage"));
+const AdminDeptPerformancePage = lazy(() => import("../pages/Admin/AdminDeptPerformancePage"));
+const AdminEventApprovalsPage = lazy(() => import("../pages/Admin/AdminEventApprovalsPage"));
+const AdminEventsManagementPage = lazy(() => import("../pages/Admin/AdminEventsManagementPage"));
+const AdminHelpdeskFaqsPage = lazy(() => import("../pages/Admin/AdminHelpdeskFaqsPage"));
+const AdminHelpdeskTicketsPage = lazy(() => import("../pages/Admin/AdminHelpdeskTicketsPage"));
+const AdminLmsModerationPage = lazy(() => import("../pages/Admin/AdminLmsModerationPage"));
+const AdminSystemControlsPage = lazy(() => import("../pages/Admin/AdminSystemControlsPage"));
+const AcademicInsights = lazy(() => import("../pages/AcademicTracker/AcademicInsights"));
+const ProgressOverview = lazy(() => import("../pages/AcademicTracker/ProgressOverview"));
+const UnifiedInsights = lazy(() => import("../pages/AcademicTracker/UnifiedInsights"));
+const AlumniConnect = lazy(() => import("../pages/CareerPortal/AlumniConnect"));
+const ApplicationTrackerPage = lazy(() => import("../pages/CareerPortal/ApplicationTrackerPage"));
+const BookmarksPage = lazy(() => import("../pages/CareerPortal/BookmarksPage"));
+const CareerHomePage = lazy(() => import("../pages/CareerPortal/CareerHomePage"));
+const CareerProfilePage = lazy(() => import("../pages/CareerPortal/CareerProfilePage"));
+const InterviewBooking = lazy(() => import("../pages/CareerPortal/InterviewBooking"));
+const OpportunitiesPage = lazy(() => import("../pages/CareerPortal/OpportunitiesPage"));
+const OpportunityDetailPage = lazy(() => import("../pages/CareerPortal/OpportunityDetailPage"));
+const ResumeProfile = lazy(() => import("../pages/CareerPortal/ResumeProfile"));
+const SkillGapPage = lazy(() => import("../pages/CareerPortal/SkillGapPage"));
+const SubmitOpportunityPage = lazy(() => import("../pages/CareerPortal/SubmitOpportunityPage"));
+const AttendanceDetailsPage = lazy(() => import("../pages/ERP/AttendanceDetailsPage"));
+const BankDetailsPage = lazy(() => import("../pages/ERP/BankDetailsPage"));
+const CurriculumPage = lazy(() => import("../pages/ERP/CurriculumPage"));
+const DocumentErpPage = lazy(() => import("../pages/ERP/DocumentErpPage"));
+const FaqsPage = lazy(() => import("../pages/ERP/FaqsPage"));
+const FeeDuesPage = lazy(() => import("../pages/ERP/FeeDuesPage"));
+const FeePaidPage = lazy(() => import("../pages/ERP/FeePaidPage"));
+const RefundChangePage = lazy(() => import("../pages/ERP/RefundChangePage"));
+const ResultsCurrentPage = lazy(() => import("../pages/ERP/ResultsCurrentPage"));
+const ResultsEarlierPage = lazy(() => import("../pages/ERP/ResultsEarlierPage"));
+const RoomDetailsPage = lazy(() => import("../pages/ERP/RoomDetailsPage"));
+const SapScholarshipsPage = lazy(() => import("../pages/ERP/SapScholarshipsPage"));
+const TimetablePage = lazy(() => import("../pages/ERP/TimetablePage"));
+const EventsFeedback = lazy(() => import("../pages/Feedback/EventsFeedback"));
+const HostelMessFeedback = lazy(() => import("../pages/Feedback/HostelMessFeedback"));
+const TransportFeedback = lazy(() => import("../pages/Feedback/TransportFeedback"));
+const CourseFeedbackAssistantPage = lazy(() => import("../pages/Feedback/CourseFeedbackAssistantPage"));
+const EventsRegistrationHub = lazy(() => import("../pages/Events/EventsRegistrationHub"));
+const HelpdeskFAQs = lazy(() => import("../pages/Helpdesk/FAQs"));
+const RaiseTicket = lazy(() => import("../pages/Helpdesk/RaiseTicket"));
+const TrackEscalate = lazy(() => import("../pages/Helpdesk/TrackEscalate"));
+const LearningMaterialsPage = lazy(() => import("../pages/Resources/LearningMaterialsPage"));
+const BlueprintPage = lazy(() => import("../pages/Shared/BlueprintPage"));
 
 const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/helpdesk/raise-ticket": <RaiseTicket />,
@@ -74,6 +80,9 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/career/me/skill-gap": <SkillGapPage />,
   "/career/me/tracker": <ApplicationTrackerPage />,
   "/career/submit": <SubmitOpportunityPage />,
+  "/career/alumni": <AlumniConnect />,
+  "/career/interviews": <InterviewBooking />,
+  "/career/me/resume": <ResumeProfile />,
   "/admin/events-management": <AdminEventsManagementPage />,
   "/admin/content-management": <AdminContentManagementPage />,
   "/admin/system-controls": <AdminSystemControlsPage />,
@@ -147,6 +156,6 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
 
     return {
       path: blueprint.route,
-      element: <ProtectedPage>{routeElement}</ProtectedPage>,
+      element: <ProtectedPage><SuspenseWrapper>{routeElement}</SuspenseWrapper></ProtectedPage>,
     };
   });

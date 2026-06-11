@@ -1,7 +1,10 @@
 import AdminOnlyPage from "../components/AdminOnlyPage";
 import ProtectedPage from "../components/ProtectedPage";
-import AdminEventDetailPage from "../pages/Admin/AdminEventDetailPage";
+import { lazy } from "react";
+import { SuspenseWrapper } from "../components/SuspenseWrapper";
 import { EventProviderWrapper } from "./eventRoutes";
+
+const AdminEventDetailPage = lazy(() => import("../pages/Admin/AdminEventDetailPage"));
 
 export const adminRoutes = [
   {
@@ -10,7 +13,9 @@ export const adminRoutes = [
       <ProtectedPage>
         <AdminOnlyPage>
           <EventProviderWrapper>
-            <AdminEventDetailPage />
+            <SuspenseWrapper>
+              <AdminEventDetailPage />
+            </SuspenseWrapper>
           </EventProviderWrapper>
         </AdminOnlyPage>
       </ProtectedPage>

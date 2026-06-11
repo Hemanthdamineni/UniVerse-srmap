@@ -48,7 +48,7 @@ export default function HomePage() {
           <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
             Session Active
           </span>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
+          <h1 className="mt-6 text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
             Your ERP session is ready.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--text-secondary)]">
@@ -89,7 +89,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-[var(--text-primary)]">
+          <h1 className="mt-6 max-w-4xl text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
             A calmer front door for the same messy ERP underneath.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-[var(--text-secondary)]">

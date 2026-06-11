@@ -1,13 +1,15 @@
 // Dashboard grid unchanged; widgets use SectionCard/SkeletonCard/InlineError from shared UI.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import BasicInfo from "./BasicInfo";
 import Schedule from "./Schedule";
-import Attendance from "./Attendance";
-import InternalMarks from "./InternalMarks";
+const Attendance = lazy(() => import("./Attendance"));
+const InternalMarks = lazy(() => import("./InternalMarks"));
 import QuickLinks from "./QuickLinks";
 import WeekCalendar from "./WeekCalendar";
 import ToDo from "./ToDo";
 import WelcomeCard from "./WelcomeCard";
+import UpcomingEventsWidget from "./UpcomingEventsWidget";
+import CareerWidget from "./CareerWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, getSessionId } from "../../lib/session";
 import { getErpBatch } from "../../lib/erpApi";
@@ -35,7 +37,7 @@ function Dashboard() {
     const sessionId = getSessionId();
 
     if (!sessionId) {
-      setError("Not logged in. Please log in to view the dashboard.");
+      setError("Your session has expired. Please log in to continue.");
       setLoading(false);
       setProfileLoading(false);
       return;
@@ -134,17 +136,31 @@ function Dashboard() {
           <BasicInfo profileData={profileData} />
         </SectionCard>
 
-        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-9">
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-2 md:h-[300px]">
+        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-12">
+          {/* Row 1: Academic Data (7/5 split) */}
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-7 min-h-[320px]">
+            <Suspense fallback={<SkeletonCard className="h-[320px] w-full" />}>
+              <InternalMarks marksData={data} />
+            </Suspense>
+          </SectionCard>
+
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-5 min-h-[320px]">
+            <Suspense fallback={<SkeletonCard className="h-[320px] w-full" />}>
+              <Attendance attendanceData={data} />
+            </Suspense>
+          </SectionCard>
+
+          {/* Row 2: Navigation & Discovery (4/4/4 split) */}
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
             <QuickLinks feedbackPendingCount={feedbackPendingCount} />
           </SectionCard>
 
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 md:h-[300px]">
-            <InternalMarks marksData={data} />
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
+            <UpcomingEventsWidget />
           </SectionCard>
 
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-3 md:h-[300px]">
-            <Attendance attendanceData={data} />
+          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
+            <CareerWidget />
           </SectionCard>
         </div>
 

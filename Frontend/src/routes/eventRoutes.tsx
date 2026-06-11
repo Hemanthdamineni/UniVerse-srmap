@@ -3,29 +3,29 @@ import { useParams } from "react-router-dom";
 import ProtectedPage from "../components/ProtectedPage";
 import { RequireCompetitionAccess } from "../components/competition/CompetitionAccessGuard";
 import { EventProvider } from "../contexts/EventContext";
-import CreateEventPage from "../pages/Events/CreateEventPage";
-import EvaluationPage from "../pages/Events/EvaluationPage";
-import EventAttendance from "../pages/Events/EventAttendance";
-import EventDetailPageNew from "../pages/Events/EventDetailPageNew";
-import {
-  CertificateClaimPage,
-  CertificateTemplatePage,
-  MyTeamsPage,
-  RegistrationFlowPage,
-  RolesPage,
-  TeamDetailPage,
-  TeamFormationPage,
-} from "../pages/Events/EventWorkflowPages";
-import EventsListingPage from "../pages/Events/EventsListingPage";
-import LeaderboardPage from "../pages/Events/LeaderboardPage";
-import MyActivityPage from "../pages/Events/MyActivityPage";
-import MyCreatedEventsPage from "../pages/Events/MyCreatedEventsPage";
-import MyResultsPage from "../pages/Events/MyResultsPage";
-import NotificationsPage from "../pages/Events/NotificationsPage";
-import OrganizerDashboard from "../pages/Events/OrganizerDashboard";
-import ShortlistPage from "../pages/Events/ShortlistPage";
-import SubmissionListPage from "../pages/Events/SubmissionListPage";
-import SubmissionPage from "../pages/Events/SubmissionPage";
+import { lazy } from "react";
+import { SuspenseWrapper } from "../components/SuspenseWrapper";
+
+const CreateEventPage = lazy(() => import("../pages/Events/CreateEventPage"));
+const EvaluationPage = lazy(() => import("../pages/Events/EvaluationPage"));
+const EventAttendance = lazy(() => import("../pages/Events/EventAttendance"));
+const EventDetailPageNew = lazy(() => import("../pages/Events/EventDetailPageNew"));
+const CertificateClaimPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.CertificateClaimPage })));
+const CertificateTemplatePage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.CertificateTemplatePage })));
+const MyTeamsPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.MyTeamsPage })));
+const RegistrationFlowPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.RegistrationFlowPage })));
+const RolesPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.RolesPage })));
+const TeamDetailPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.TeamDetailPage })));
+const TeamFormationPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.TeamFormationPage })));
+const EventsListingPage = lazy(() => import("../pages/Events/EventsListingPage"));
+const LeaderboardPage = lazy(() => import("../pages/Events/LeaderboardPage"));
+const MyActivityPage = lazy(() => import("../pages/Events/MyActivityPage"));
+const MyCreatedEventsPage = lazy(() => import("../pages/Events/MyCreatedEventsPage"));
+const MyResultsPage = lazy(() => import("../pages/Events/MyResultsPage"));
+const OrganizerDashboard = lazy(() => import("../pages/Events/OrganizerDashboard"));
+const ShortlistPage = lazy(() => import("../pages/Events/ShortlistPage"));
+const SubmissionListPage = lazy(() => import("../pages/Events/SubmissionListPage"));
+const SubmissionPage = lazy(() => import("../pages/Events/SubmissionPage"));
 
 export function EventProviderWrapper({ children }: { children: React.ReactNode }) {
   const { eventId = "" } = useParams();
@@ -42,7 +42,7 @@ export const eventRoutes = [
   { path: "/events/my-activity", element: <MyActivityPage /> },
   { path: "/events/my-teams", element: <MyTeamsPage /> },
   { path: "/events/my-created", element: <MyCreatedEventsPage /> },
-  { path: "/events/notifications", element: <NotificationsPage /> },
+
   { path: "/events/attendance", element: <EventAttendance /> },
   { path: "/events/:eventId", element: withEventProvider(<EventDetailPageNew />) },
   { path: "/events/:eventId/register", element: withEventProvider(<RegistrationFlowPage />) },
@@ -102,5 +102,5 @@ export const eventRoutes = [
   },
 ].map((route) => ({
   ...route,
-  element: <ProtectedPage>{route.element}</ProtectedPage>,
+  element: <ProtectedPage><SuspenseWrapper>{route.element}</SuspenseWrapper></ProtectedPage>,
 }));

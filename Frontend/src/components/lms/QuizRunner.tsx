@@ -92,7 +92,7 @@ export default function QuizRunner({
         {questions[0].correctIndex !== undefined && (
           <div className="mb-8 p-6 bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] rounded-xl border border-[var(--border)] w-full max-w-sm">
             <div className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Score</div>
-            <div className="text-4xl font-bold text-[var(--text-primary)]">
+            <div className="text-3xl font-bold text-[var(--text-primary)]">
               {score} <span className="text-lg text-[var(--text-secondary)] font-normal">/ {questions.length}</span>
             </div>
           </div>

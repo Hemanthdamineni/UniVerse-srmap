@@ -5,9 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
-  normalizeRegistrationNumber,
-  validatePasswordReset,
-  validateRegistrationNumber,
 } from "../../lib/auth";
 
 type Step = "initiate" | "change" | "done";
@@ -26,17 +23,7 @@ function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
   return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClasses}`}>{message}</div>;
 }
 
-function formatExpiry(expiresAt: string) {
-  if (!expiresAt) return "";
 
-  const parsed = new Date(expiresAt);
-  if (Number.isNaN(parsed.getTime())) return "";
-
-  return parsed.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -52,14 +39,12 @@ export default function ForgotPasswordPage() {
   });
   const [sessionId, setSessionId] = useState("");
   const [captchaBase64, setCaptchaBase64] = useState("");
-  const [captchaExpiresAt, setCaptchaExpiresAt] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [statusTone, setStatusTone] = useState<Tone>("neutral");
   const [statusMessage, setStatusMessage] = useState("");
 
-  const usernameError = useMemo(() => validateRegistrationNumber(form.username), [form.username]);
-  const passwordError = useMemo(() => validatePasswordReset(form.newPassword), [form.newPassword]);
+
   const confirmPasswordError =
     form.confirmPassword && form.newPassword !== form.confirmPassword
       ? "Passwords do not match."
@@ -89,7 +74,6 @@ export default function ForgotPasswordPage() {
       const response = await axios.get("/api/captcha");
       setCaptchaBase64(normalizeCaptchaImageSource(response.data?.captchaBase64));
       setSessionId(String(response.data?.sessionId || ""));
-      setCaptchaExpiresAt(String(response.data?.expiresAt || ""));
       setForm((current) => ({ ...current, captcha: "" }));
 
       if (nextMessage) {
@@ -107,16 +91,15 @@ export default function ForgotPasswordPage() {
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    const nextValue = name === "username" ? normalizeRegistrationNumber(value) : value;
-    setForm((current) => ({ ...current, [name]: nextValue }));
+    setForm((current) => ({ ...current, [name]: value }));
   };
 
   const handleInitiate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (usernameError) {
+    if (!form.username.trim()) {
       setStatusTone("error");
-      setStatusMessage(usernameError);
+      setStatusMessage("Registration number is required.");
       return;
     }
 
@@ -139,7 +122,7 @@ export default function ForgotPasswordPage() {
     try {
       const response = await axios.post("/api/auth/forgot", {
         type: "initiate",
-        username: normalizeRegistrationNumber(form.username),
+        username: form.username,
         captcha: form.captcha,
         sessionId,
       });
@@ -164,9 +147,9 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (usernameError) {
+    if (!form.username.trim()) {
       setStatusTone("error");
-      setStatusMessage(usernameError);
+      setStatusMessage("Registration number is required.");
       return;
     }
 
@@ -176,9 +159,9 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    if (passwordError) {
+    if (!form.newPassword.trim()) {
       setStatusTone("error");
-      setStatusMessage(passwordError);
+      setStatusMessage("New password is required.");
       return;
     }
 
@@ -195,7 +178,7 @@ export default function ForgotPasswordPage() {
     try {
       const response = await axios.post("/api/auth/forgot", {
         type: "change",
-        username: normalizeRegistrationNumber(form.username),
+        username: form.username,
         otp: form.otp.trim(),
         newPassword: form.newPassword,
       });
@@ -225,7 +208,7 @@ export default function ForgotPasswordPage() {
             </span>
           </div>
 
-          <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
+          <h1 className="max-w-xl text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
             Reset your ERP password without leaving the current session flow.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--text-secondary)]">
@@ -291,9 +274,6 @@ export default function ForgotPasswordPage() {
                     className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="username"
                   />
-                  {form.username && usernameError ? (
-                    <p className="text-xs text-[var(--error)]">{usernameError}</p>
-                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -335,11 +315,6 @@ export default function ForgotPasswordPage() {
                       />
                     </div>
                   </div>
-                  {captchaExpiresAt ? (
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Captcha available until {formatExpiry(captchaExpiresAt)}.
-                    </p>
-                  ) : null}
                 </div>
 
                 <button
@@ -397,9 +372,6 @@ export default function ForgotPasswordPage() {
                     className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="new-password"
                   />
-                  {form.newPassword && passwordError ? (
-                    <p className="text-xs text-[var(--error)]">{passwordError}</p>
-                  ) : null}
                 </div>
 
                 <div className="space-y-2">

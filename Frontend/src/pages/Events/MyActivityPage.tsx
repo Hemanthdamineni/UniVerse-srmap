@@ -112,7 +112,7 @@ export default function MyActivityPage() {
               <CompetitionEmptyPanel
                 title="No active registrations"
                 description="Explore events and register for competitions you want to track here."
-                action={<Link className="comp-btn-primary" to="/events">Explore Events</Link>}
+                action={<Link className="comp-btn-primary" to="/events">Discover</Link>}
               />
             )
           ) : activeTab === "submissions" ? (

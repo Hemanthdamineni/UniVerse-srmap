@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Building2, CalendarDays, MapPin, Users } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
@@ -34,11 +34,48 @@ function eventVenue(event: NonNullable<ReturnType<typeof useEvent>["event"]>) {
 export default function EventDetailPageNew() {
   const { event, config, userState, loading, error, refetch } = useEvent();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<DetailTab>("overview");
+  const [activeSection, setActiveSection] = useState<DetailTab>("overview");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const rounds = useMemo(() => config?.rounds ?? [], [config]);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        // Find the intersecting entry with the highest intersection ratio
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          // Sort by intersection ratio to get the most visible one
+          visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+          setActiveSection(visibleEntries[0].target.id as DetailTab);
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+    );
+
+    Object.values(sectionRefs.current).forEach((ref) => {
+      if (ref) observerRef.current?.observe(ref);
+    });
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
+  }, [loading, event]);
+
+  const scrollToSection = (id: DetailTab) => {
+    setActiveSection(id);
+    const element = document.getElementById(id);
+    if (element) {
+      // Offset by roughly the header height + some padding
+      const yOffset = -100;
+      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
 
   if (loading) return <GlobalLoadingBoundary />;
 
@@ -112,27 +149,8 @@ export default function EventDetailPageNew() {
       {notice ? <div className="event-detail-notice" role="status">{notice}</div> : null}
 
       <div className="competition-grid two event-detail-layout">
-        <CompetitionCard className="event-detail-nav">
-          <h2>Navigation</h2>
-          {[
-            ["overview", "Event Overview"],
-            ["rounds", "Competition Rounds"],
-            ["timeline", "Timeline"],
-            ["rules", "Rules & Guidelines"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              className={tab === id ? "is-active" : ""}
-              onClick={() => setTab(id as DetailTab)}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </CompetitionCard>
-
         <div className="event-detail-main">
-          {tab === "overview" ? (
+          <section id="overview" ref={(el) => { sectionRefs.current.overview = el; }} className="event-detail-section">
             <CompetitionCard className="event-detail-panel">
               <h2>Event Overview</h2>
               <p>{event.description || "Join the competition, collaborate with peers, and follow every round from registration through results."}</p>
@@ -147,9 +165,9 @@ export default function EventDetailPageNew() {
                 </Link>
               ) : null}
             </CompetitionCard>
-          ) : null}
+          </section>
 
-          {tab === "rounds" ? (
+          <section id="rounds" ref={(el) => { sectionRefs.current.rounds = el; }} className="event-detail-section">
             <div className="event-round-list">
               {rounds.length ? rounds.map((round, index) => (
                 <CompetitionCard key={round.roundId} className="event-round-card">
@@ -169,9 +187,9 @@ export default function EventDetailPageNew() {
                 </CompetitionCard>
               )}
             </div>
-          ) : null}
+          </section>
 
-          {tab === "timeline" ? (
+          <section id="timeline" ref={(el) => { sectionRefs.current.timeline = el; }} className="event-detail-section">
             <CompetitionCard className="event-detail-panel">
               <h2>Timeline</h2>
               <ol className="event-timeline">
@@ -182,33 +200,54 @@ export default function EventDetailPageNew() {
                 <li><span /> Results and certificates <strong>After evaluation</strong></li>
               </ol>
             </CompetitionCard>
-          ) : null}
+          </section>
 
-          {tab === "rules" ? (
+          <section id="rules" ref={(el) => { sectionRefs.current.rules = el; }} className="event-detail-section">
             <CompetitionCard className="event-detail-panel">
               <h2>Rules & Guidelines</h2>
               <p>{event.rules || event.eligibility || "Participants must follow organizer instructions, submit original work, and respect all university competition policies."}</p>
               {event.prizes ? <p><strong>Prizes:</strong> {event.prizes}</p> : null}
             </CompetitionCard>
-          ) : null}
+          </section>
         </div>
-      </div>
 
-      <div className="event-detail-action-bar">
-        <div>
-          <strong>{isRegistered ? "You are registered" : "Standard Registration"}</strong>
-          <span>{activeRound ? `Next deadline: ${formatDateTime(activeRound.submissionDeadline)}` : "Competition details available"}</span>
-        </div>
-        <div className="event-detail-action-group">
-          {canRegister ? (
-            <button className="comp-btn-primary" disabled={busy} onClick={() => void runAction("register")}>Register Now</button>
-          ) : null}
-          {isRegistered ? (
-            <button className="comp-btn-ghost" disabled={busy} onClick={() => void runAction("cancel")}>Cancel Registration</button>
-          ) : null}
-          {isStaff ? (
-            <button className="comp-btn-primary" onClick={() => navigate(`/events/${event.id}/manage`)}>Organizer Workspace</button>
-          ) : null}
+        <div className="event-detail-sidebar">
+          <CompetitionCard className="event-detail-nav">
+            <h2>Navigation</h2>
+            {[
+              ["overview", "Event Overview"],
+              ["rounds", "Competition Rounds"],
+              ["timeline", "Timeline"],
+              ["rules", "Rules & Guidelines"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                className={activeSection === id ? "is-active" : ""}
+                onClick={() => scrollToSection(id as DetailTab)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </CompetitionCard>
+
+          <CompetitionCard className="event-detail-action-card">
+            <div className="event-detail-action-status">
+              <strong>{isRegistered ? "You are registered" : "Standard Registration"}</strong>
+              <span>{activeRound ? `Next deadline: ${formatDateTime(activeRound.submissionDeadline)}` : "Competition details available"}</span>
+            </div>
+            <div className="event-detail-action-buttons">
+              {canRegister ? (
+                <button className="comp-btn-primary" disabled={busy} onClick={() => void runAction("register")}>Register Now</button>
+              ) : null}
+              {isRegistered ? (
+                <button className="comp-btn-ghost" disabled={busy} onClick={() => void runAction("cancel")}>Cancel Registration</button>
+              ) : null}
+              {isStaff ? (
+                <button className="comp-btn-primary" onClick={() => navigate(`/events/${event.id}/manage`)}>Organizer Workspace</button>
+              ) : null}
+            </div>
+          </CompetitionCard>
         </div>
       </div>
     </CompetitionPageShell>
