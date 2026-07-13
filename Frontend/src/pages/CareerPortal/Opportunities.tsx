@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -18,9 +18,11 @@ import {
   type CareerOpportunity,
   unsaveCareerOpportunity,
   updateCareerOpportunity,
-} from "../../lib/careerApi";
+} from "../../lib/career/careerApi";
 
 const ALL_TYPES = ["internship", "hackathon", "competition", "workshop", "job", "fellowship"] as const;
+
+const INPUT_CLASS = "min-h-[44px] w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2 text-sm outline-none focus:border-[var(--comp-accent)] text-[var(--text-primary)]";
 
 const TYPE_COLORS: Record<string, string> = {
   internship: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
@@ -29,6 +31,18 @@ const TYPE_COLORS: Record<string, string> = {
   workshop: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   job: "border-[color-mix(in_srgb,var(--comp-accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-text-primary)]",
   fellowship: "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]",
+};
+
+const FORM_INIT = {
+  title: "",
+  type: "internship",
+  organization: "",
+  deadline: "",
+  description: "",
+  tags: "",
+  link: "",
+  status: "published",
+  featured: false,
 };
 
 export default function Opportunities({ adminMode = false }: { adminMode?: boolean }) {
@@ -40,17 +54,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
   const [reviewReasons, setReviewReasons] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
-  const [form, setForm] = useState({
-    title: "",
-    type: "internship",
-    organization: "",
-    deadline: "",
-    description: "",
-    tags: "",
-    link: "",
-    status: "published",
-    featured: false,
-  });
+  const [form, setForm] = useState(FORM_INIT);
 
   async function loadOpportunities() {
     try {
@@ -91,7 +95,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
     void loadSubmissions();
   }, [admin.adminHeaders, admin.unlocked, adminMode]);
 
-  const filtered = useMemo(() => opportunities, [opportunities]);
+  const filtered = opportunities;
 
   async function runAction(action: () => Promise<unknown>, successText: string) {
     setBanner(null);
@@ -140,17 +144,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
     }
 
     setEditingId("");
-    setForm({
-      title: "",
-      type: "internship",
-      organization: "",
-      deadline: "",
-      description: "",
-      tags: "",
-      link: "",
-      status: "published",
-      featured: false,
-    });
+    setForm(FORM_INIT);
   }
 
   async function decideSubmission(submission: CareerSubmission, decision: "approve" | "reject") {
@@ -183,7 +177,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div>
@@ -194,7 +188,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 id="opp-type"
                 value={form.type}
                 onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               >
                 {ALL_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -211,7 +205,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 id="opp-status"
                 value={form.status}
                 onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               >
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
@@ -227,7 +221,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.organization}
                 onChange={(event) => setForm((prev) => ({ ...prev, organization: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div>
@@ -240,7 +234,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.deadline}
                 onChange={(event) => setForm((prev) => ({ ...prev, deadline: event.target.value }))}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div>
@@ -252,7 +246,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.link}
                 onChange={(event) => setForm((prev) => ({ ...prev, link: event.target.value }))}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div className="md:col-span-2">
@@ -265,7 +259,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
                 rows={3}
                 required
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div className="md:col-span-2">
@@ -277,7 +271,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 value={form.tags}
                 onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
                 placeholder="ml, backend, internship"
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className={INPUT_CLASS}
               />
             </div>
             <div className="md:col-span-2 flex items-center gap-2">
@@ -304,17 +298,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                   type="button"
                   onClick={() => {
                     setEditingId("");
-                    setForm({
-                      title: "",
-                      type: "internship",
-                      organization: "",
-                      deadline: "",
-                      description: "",
-                      tags: "",
-                      link: "",
-                      status: "published",
-                      featured: false,
-                    });
+                    setForm(FORM_INIT);
                   }}
                   className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
@@ -399,7 +383,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by title, organization, or keyword..."
             aria-label="Search opportunities"
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+            className={INPUT_CLASS}
           />
           <div className="flex flex-wrap gap-2 pt-1">
             {(["All", ...ALL_TYPES] as const).map((type) => (

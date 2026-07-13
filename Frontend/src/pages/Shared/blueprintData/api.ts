@@ -2,7 +2,7 @@ import {
   getSessionId,
   handleSessionAuthFailure,
   isSessionAuthFailure,
-} from "../../../lib/session";
+} from "../../../lib/core/session";
 import type { ExternalPagePayload, KeyLoadResult } from "./types";
 import { isRecord } from "./valueUtils";
 

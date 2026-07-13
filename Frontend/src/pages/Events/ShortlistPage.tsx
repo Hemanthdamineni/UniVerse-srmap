@@ -10,11 +10,11 @@ import {
   applyCompetitionShortlist,
   getCompetitionSubmissions,
   publishCompetitionResults,
-} from '../../lib/campusApi';
+} from '../../lib/campus/campusApi';
 import { SummaryStatBar } from '../../components/competition/SummaryStatBar';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { EmptyState } from '../../components/competition/EmptyState';
-import { SkeletonTable } from '../../components/competition/Skeletons';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
+import { SkeletonTable } from '../../components/ui/Skeletons';
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
 

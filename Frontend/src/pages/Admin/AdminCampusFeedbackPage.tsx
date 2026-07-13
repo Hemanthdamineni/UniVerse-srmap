@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ErpPageShell, SectionCard, EmptyStateCard } from "../../components/erp/ErpPrimitives";
-import { StarRating } from "../../components/ui/StarRating";
+import { StarRating } from "../../components/ui/Progress";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   getAdminCampusFeedback,
@@ -8,7 +8,7 @@ import {
   type CampusFeedbackEntry,
   type CampusFeedbackStatus,
   type CampusFeedbackType,
-} from "../../lib/campusFeedbackApi";
+} from "../../lib/campus/campusApi";
 
 const TYPE_OPTIONS: Array<{ value: "" | CampusFeedbackType; label: string }> = [
   { value: "", label: "All types" },

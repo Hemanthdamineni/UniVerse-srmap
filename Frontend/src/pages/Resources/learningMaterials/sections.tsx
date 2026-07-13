@@ -5,7 +5,7 @@ import type {
   ResourceCatalogResponse,
   ResourceLibraryResponse,
   ResourceSubjectResponse,
-} from "../../../lib/lmsApi";
+} from "../../../lib/lms/index";
 import { canPreviewResource } from "./constants";
 
 type WorkflowMapProps = {

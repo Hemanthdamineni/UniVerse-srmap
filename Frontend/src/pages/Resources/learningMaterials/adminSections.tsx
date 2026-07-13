@@ -1,5 +1,5 @@
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
-import type { ResourceRecommendation } from "../../../lib/lmsApi";
+import type { ResourceRecommendation } from "../../../lib/lms/index";
 import type { AdminLearningResourceItem, AdminQueueHandlers, AdminQueueState } from "./types";
 
 type AdminResourceQueueProps = AdminQueueState &

@@ -16,7 +16,7 @@ import {
   type InterviewBooking,
   type InterviewSlot,
   updateInterviewSlot,
-} from "../../lib/careerApi";
+} from "../../lib/career/careerApi";
 
 const INTERVIEW_TYPES = ["Technical", "HR", "Group Discussion", "Technical + HR", "Coding Round", "System Design"] as const;
 

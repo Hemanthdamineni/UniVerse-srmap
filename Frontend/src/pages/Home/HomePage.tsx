@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { hasSessionAuth, readStoredProfileData } from "../../lib/session";
+import { hasSessionAuth, readStoredProfileData } from "../../lib/core/session";
 
 const VALUE_PILLARS = [
   {

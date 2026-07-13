@@ -15,7 +15,7 @@ vi.mock("../../contexts/AdminModeContext", () => ({
   }),
 }));
 
-vi.mock("../../lib/lmsApi", () => ({
+vi.mock("../../lib/lms/index", () => ({
   get getLmsResourceModerationQueue() {
     return getLmsResourceModerationQueue;
   },

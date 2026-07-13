@@ -1,4 +1,4 @@
-import { getCurrentProfileName, getCurrentRegNo } from "../../lib/identity";
+import { getCurrentProfileName, getCurrentRegNo } from "../../lib/core/identity";
 
 function WelcomeCard({ profileData }: { profileData?: Record<string, unknown> | null }) {
   const name = getCurrentProfileName(profileData ?? null);

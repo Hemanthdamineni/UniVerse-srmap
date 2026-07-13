@@ -13,7 +13,7 @@ import {
   requestAlumniConnection,
   type AlumniProfile,
   updateAlumniProfile,
-} from "../../lib/careerApi";
+} from "../../lib/career/careerApi";
 
 export default function AlumniConnect({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();

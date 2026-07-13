@@ -4,7 +4,7 @@ import AcademicInsights from "./AcademicInsights";
 
 const getLmsAcademicInsights = vi.fn();
 
-vi.mock("../../lib/lmsApi", () => ({
+vi.mock("../../lib/lms/index", () => ({
   get getLmsAcademicInsights() {
     return getLmsAcademicInsights;
   },

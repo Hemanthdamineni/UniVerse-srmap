@@ -1,13 +1,13 @@
 // Profile UI: PageHeader, SectionCard groups, StatusBadge; executePipeline call unchanged.
 import { useEffect, useMemo, useState } from "react";
-import { fetchSessionProfile } from "../../lib/session";
-import { executePipeline, type StudentProfile } from "../../lib/erpTransformers";
-import { PageHeader } from "../../components/ui/PageHeader";
+import { fetchSessionProfile } from "../../lib/core/session";
+import { executePipeline, type StudentProfile } from "../../lib/erp/erpTransformers";
+import { PageHeader } from "../../components/ui/Layouts";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { PageContainer } from "../../components/layout/PageLayouts";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { InlineError } from "../../components/ui/InlineError";
-import { StatusBadge } from "../../components/ui/StatusBadge";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { InlineError } from "../../components/ui/Feedback";
+import { StatusBadge } from "../../components/ui/Badges";
 
 function ProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);

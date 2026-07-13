@@ -13,7 +13,7 @@ import {
   transitionLearningMaterialLifecycle,
   updateLearningMaterialItem,
   uploadResourceFile,
-} from "../../lib/lmsApi";
+} from "../../lib/lms/index";
 import { AdminResourceQueue, RecommendationQueue } from "./learningMaterials/adminSections";
 import {
   EMPTY_MATERIAL_FORM,

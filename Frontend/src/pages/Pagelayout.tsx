@@ -5,9 +5,9 @@ import Footer from "../components/Footer";
 import NavigationCommandPalette from "../components/NavigationCommandPalette";
 import AppContentChrome from "../components/shell/AppContentChrome";
 import AppKeyboardShortcuts from "../components/AppKeyboardShortcuts";
-import AdminAccessPrompt from "../components/admin/AdminAccessPrompt";
+import { AdminAccessPrompt } from "../components/admin/AdminPanels";
 import { AdminModeProvider } from "../contexts/AdminModeContext";
-import { isStaticPrototype } from "../lib/prototype/staticPrototypeEnv";
+import { isStaticPrototype } from "../lib/core/prototype";
 
 const PUBLIC_ROUTES = new Set(["/", "/login", "/forgot-password"]);
 

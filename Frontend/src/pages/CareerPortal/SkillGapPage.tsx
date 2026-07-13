@@ -1,13 +1,13 @@
 // Skill gap: PageHeader, SectionCard, Tag-style tokens, SkeletonCard loading; listSkillGaps unchanged.
 import React, { useEffect, useState } from "react";
-import { listSkillGaps, type SkillGap } from "../../lib/careerApi";
+import { listSkillGaps, type SkillGap } from "../../lib/career/careerApi";
 import { Award, Zap, TrendingUp, BookOpen, ChevronRight, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import { PageHeader } from "../../components/ui/PageHeader";
+import { PageHeader } from "../../components/ui/Layouts";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { Tag } from "../../components/ui/Tag";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { Tag } from "../../components/ui/Badges";
 
 const SkillGapPage: React.FC = () => {
   const [gaps, setGaps] = useState<SkillGap[]>([]);

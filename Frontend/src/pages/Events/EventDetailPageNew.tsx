@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, CalendarDays, MapPin, Users } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { GlobalLoadingBoundary, useEvent } from "../../contexts/EventContext";
-import { registerForEvent, cancelEventRegistration, type CompetitionRound } from "../../lib/campusApi";
+import { registerForEvent, cancelEventRegistration, type CompetitionRound } from "../../lib/campus/campusApi";
 
 type DetailTab = "overview" | "rounds" | "timeline" | "rules";
 
