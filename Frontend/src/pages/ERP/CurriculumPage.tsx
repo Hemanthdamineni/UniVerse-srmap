@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 // ErpPageShell section-card; curriculum table columns unchanged.
-import { getErpBatch } from "../../lib/erpApi";
-import { executePipeline, type CurriculumModel } from "../../lib/erpTransformers";
+import { getErpBatch } from "../../lib/erp/index";
+import { executePipeline, type CurriculumModel } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 
 interface CurriculumPageProps {
   blueprint: PageBlueprint;
