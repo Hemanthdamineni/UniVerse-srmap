@@ -11,17 +11,16 @@ import WelcomeCard from "./WelcomeCard";
 import UpcomingEventsWidget from "./UpcomingEventsWidget";
 import CareerWidget from "./CareerWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
-import { fetchSessionProfile, getSessionId } from "../../lib/session";
-import { getErpBatch } from "../../lib/erpApi";
-import { getEndSemesterFeedbackStatus } from "../../lib/studentToolsApi";
-import { InlineError } from "../../components/ui/InlineError";
+import { fetchSessionProfile, getSessionId } from "../../lib/core/session";
+import { getErpBatch } from "../../lib/erp/index";
+import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
+import { InlineError } from "../../components/ui/Feedback";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { SkeletonCard } from "../../components/ui/Skeletons";
 import { DashboardLayout } from "../../components/layout/PageLayouts";
 
 function Dashboard() {
   const [data, setData] = useState<any>(null);
-  const [timetableData, setTimetableData] = useState<any>(null);
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -43,16 +42,19 @@ function Dashboard() {
       return;
     }
 
-    // Fetch dashboard data and timetable data
+    // Fetch each widget's data as separate page keys so that the
+    // transformers receive a correctly shaped batch object keyed by
+    // page key (with _extracted embedded by the backend extractor).
     setLoading(true);
-    getErpBatch(["dashboard", "academic/time-table"])
+    getErpBatch([
+      "academic/time-table",
+      "examination/internal-mark-details",
+      "academic/attendance-details",
+    ])
       .then((batch) => {
-        if (batch["dashboard"]) {
-           setData((batch["dashboard"] as any)?.data);
-        }
-        if (batch["academic/time-table"]) {
-           setTimetableData((batch["academic/time-table"] as any)?.data);
-        }
+        // Pass the full batch to setData so widgets can call
+        // readExtractedPage(rawData, "<pageKey>") correctly.
+        setData(batch);
         setLoading(false);
       })
       .catch((err: Error) => { setError(err.message); setLoading(false); });
@@ -175,7 +177,7 @@ function Dashboard() {
         </SectionCard>
 
         <SectionCard interactive className="overflow-hidden p-0">
-          <Schedule scheduleData={timetableData || data} selectedDate={selectedDate} />
+          <Schedule scheduleData={data} selectedDate={selectedDate} />
         </SectionCard>
       </div>
     </div>
