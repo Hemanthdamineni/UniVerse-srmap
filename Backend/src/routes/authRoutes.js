@@ -9,7 +9,7 @@ const {
   fetchProfileViaApi,
   isUsableProfileData,
   buildFallbackProfileData,
-} = require("../services/erpClient");
+} = require("../services/erp/erpClient");
 const {
   resolveSessionId,
   setSessionCookie,

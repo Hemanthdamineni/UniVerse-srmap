@@ -4,7 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const multer = require("multer");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
-const { isAllowedSubmissionMime } = require("../services/competitionStore");
+const { isAllowedSubmissionMime } = require("../services/events/competitionStore");
 
 function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword = "", submissionsDir }) {
   const router = express.Router();
