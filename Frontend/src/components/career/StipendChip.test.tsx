@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import StipendChip from "./StipendChip";
+import { StipendChip } from "./CareerChips";
 
 describe("StipendChip", () => {
   it("shows stipend when provided", () => {

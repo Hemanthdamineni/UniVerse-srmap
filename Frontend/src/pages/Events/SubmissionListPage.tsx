@@ -4,8 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { SectionCard } from "../../components/erp/ErpPrimitives";
 import { CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
-import { InlineError } from "../../components/ui/InlineError";
-import { getCompetitionSubmissions } from "../../lib/campusApi";
+import { InlineError } from "../../components/ui/Feedback";
+import { getCompetitionSubmissions } from "../../lib/campus/campusApi";
 
 export default function SubmissionListPage() {
   const { eventId = "", roundId = "" } = useParams();

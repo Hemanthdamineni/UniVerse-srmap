@@ -66,6 +66,10 @@ const LMS_DB_PATH =
   process.env.LMS_DB_PATH || path.join(__dirname, "../../data/lms.sqlite");
 const LMS_TRACKER_DB_PATH =
   process.env.LMS_TRACKER_DB_PATH || path.join(__dirname, "../../data/lms-tracker.sqlite");
+const UNIFIED_PROFILE_DB_PATH =
+  process.env.UNIFIED_PROFILE_DB_PATH || path.join(__dirname, "../../data/unified-profile.sqlite");
+const COMPANION_ANALYTICS_DB_PATH =
+  process.env.COMPANION_ANALYTICS_DB_PATH || path.join(__dirname, "../../data/companion-analytics.sqlite");
 const ADMIN_CONTENT_PASSWORD =
   process.env.ADMIN_CONTENT_PASSWORD || "asdfghjkl;'";
 const ERP_UI_MAP_FILE = process.env.ERP_UI_MAP_FILE || "";
@@ -160,6 +164,8 @@ module.exports = {
   CONTENT_DB_PATH,
   LMS_DB_PATH,
   LMS_TRACKER_DB_PATH,
+  UNIFIED_PROFILE_DB_PATH,
+  COMPANION_ANALYTICS_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,

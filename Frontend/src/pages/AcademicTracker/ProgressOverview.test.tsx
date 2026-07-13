@@ -4,7 +4,7 @@ import ProgressOverview from "./ProgressOverview";
 
 const getLmsProgressOverview = vi.fn();
 
-vi.mock("../../lib/lmsApi", () => ({
+vi.mock("../../lib/lms/index", () => ({
   get getLmsProgressOverview() {
     return getLmsProgressOverview;
   },

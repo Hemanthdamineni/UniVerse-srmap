@@ -13,7 +13,7 @@ import {
   type ResourceLibraryResponse,
   type ResourceRecommendation,
   type ResourceSubjectResponse,
-} from "../../../lib/lmsApi";
+} from "../../../lib/lms/index";
 import { canPreviewResource } from "./constants";
 import type { AdminLearningResourceItem } from "./types";
 

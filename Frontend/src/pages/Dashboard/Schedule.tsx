@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { sanitizeVisibleText } from "../../components/erp/ErpPrimitives";
-import { executePipeline, type TimetableModel } from "../../lib/erpTransformers";
-import { StatusBadge } from "../../components/ui/StatusBadge";
+import { executePipeline, type TimetableModel } from "../../lib/erp/erpTransformers";
+import { StatusBadge } from "../../components/ui/Badges";
 
 const TIME_SLOTS = [
   { slot: "1", time: "9:00 am" },

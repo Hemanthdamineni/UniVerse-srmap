@@ -29,8 +29,8 @@ vi.mock("../../hooks/useAdminAccess", () => ({
   }),
 }));
 
-vi.mock("../../lib/lmsApi", async () => {
-  const actual = await vi.importActual<typeof import("../../lib/lmsApi")>("../../lib/lmsApi");
+vi.mock("../../lib/lms/index", async () => {
+  const actual = await vi.importActual<typeof import("../../lib/lms/index")>("../../lib/lms/index");
   return {
     ...actual,
     getContentWorkflow: mocks.getContentWorkflow,

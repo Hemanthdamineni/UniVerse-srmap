@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import EligibilityBadge from "./EligibilityBadge";
+import { EligibilityBadge } from "./CareerChips";
 
 describe("EligibilityBadge", () => {
   it("shows eligible state", () => {

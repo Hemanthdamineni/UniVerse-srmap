@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import OpportunityCard from "./OpportunityCard";
-import type { CareerOpportunity } from "../../lib/careerApi";
+import type { CareerOpportunity } from "../../lib/career/careerApi";
 
 const base: CareerOpportunity = {
   id: "o1",

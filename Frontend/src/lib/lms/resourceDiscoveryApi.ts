@@ -1,5 +1,4 @@
 import { buildMultipartForm, isStaticPrototype, requestData, requestMultipart } from "./http";
-import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./fixtures";
 import type {
   LmsCollection,
   LmsModerationAuditEntry,
@@ -7,6 +6,7 @@ import type {
   LmsPagination,
   LmsResource,
 } from "./types";
+import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
 
 export async function listLmsResources(params: Record<string, unknown> = {}) {
   if (isStaticPrototype()) {
@@ -150,6 +150,23 @@ export async function getRecommendations(params: Record<string, unknown> = {}) {
     if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
   });
   return requestData<LmsResource[]>(`/api/lms/recommendations?${search.toString()}`);
+}
+
+export async function getExamPrepRecommendations(params: Record<string, unknown> = {}) {
+  if (isStaticPrototype()) {
+    const limit = Number(params.limit || 8);
+    const examReady = STATIC_LMS_RESOURCES.filter((item) =>
+      item.type === "pyq" ||
+      Number(item.examProvenScore || 0) > 0 ||
+      `${item.title} ${item.description || ""} ${item.tags.join(" ")}`.toLowerCase().includes("exam")
+    );
+    return (examReady.length ? examReady : STATIC_LMS_RESOURCES).slice(0, limit);
+  }
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
+  });
+  return requestData<LmsResource[]>(`/api/lms/recommendations/exam-prep?${search.toString()}`);
 }
 
 export async function getNextStepRecommendation(resourceId: string) {

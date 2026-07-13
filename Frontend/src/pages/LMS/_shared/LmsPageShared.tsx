@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 // LMS shell: InlineError in frame; StatCard momentum row; resource preview uses comp-surface tokens.
 import { ErpPageShell, SectionCard } from "../../../components/erp/ErpPrimitives";
-import { InlineError } from "../../../components/ui/InlineError";
-import { StatCard } from "../../../components/ui/StatCard";
+import { InlineError } from "../../../components/ui/Feedback";
+import { StatCard } from "../../../components/ui/Progress";
 import AnnotationPanel from "../../../components/lms/AnnotationPanel";
-import DuplicateWarning from "../../../components/lms/DuplicateWarning";
+import { DuplicateWarning, OutdatedWarning } from "../../../components/lms/LmsChips";
 import ExamFeedbackCard from "../../../components/lms/ExamFeedbackCard";
 import InteractiveFlashcardDeck from "../../../components/lms/InteractiveFlashcardDeck";
 import GuideSection from "../../../components/lms/GuideSection";
-import OutdatedWarning from "../../../components/lms/OutdatedWarning";
 import QuizRunner from "../../../components/lms/QuizRunner";
 import RecommendationSection from "../../../components/lms/RecommendationSection";
 import RequestCard from "../../../components/lms/RequestCard";
@@ -37,6 +36,7 @@ import {
   generateLearningSession,
   getContinueLearning,
   getContributorProfile,
+  getExamPrepRecommendations,
   getExploreData,
   getGuide,
   getLmsAnnotations,
@@ -51,6 +51,7 @@ import {
   getRecommendations,
   getRevisionQueue,
   getRoadmap,
+  getRoadmapRecommendations,
   getSubjectOverview,
   getWeeklyLeaderboard,
   listGuides,
@@ -79,7 +80,7 @@ import {
   type LmsRequest,
   type LmsResource,
   type LmsRoadmap,
-} from "../../../lib/lmsApi";
+} from "../../../lib/lms/index";
 import { useSession } from "../../../hooks/useSession";
 
 /** Returns true if the profile has an admin/faculty-admin role (backend-driven — no hardcoded IDs). */
@@ -271,11 +272,11 @@ export { ErpPageShell, SectionCard };
 export { InlineError };
 export { StatCard };
 export { default as AnnotationPanel } from "../../../components/lms/AnnotationPanel";
-export { default as DuplicateWarning } from "../../../components/lms/DuplicateWarning";
+export { DuplicateWarning } from "../../../components/lms/LmsChips";
 export { default as ExamFeedbackCard } from "../../../components/lms/ExamFeedbackCard";
 export { default as InteractiveFlashcardDeck } from "../../../components/lms/InteractiveFlashcardDeck";
 export { default as GuideSection } from "../../../components/lms/GuideSection";
-export { default as OutdatedWarning } from "../../../components/lms/OutdatedWarning";
+export { OutdatedWarning } from "../../../components/lms/LmsChips";
 export { default as QuizRunner } from "../../../components/lms/QuizRunner";
 export { default as RecommendationSection } from "../../../components/lms/RecommendationSection";
 export { default as RequestCard } from "../../../components/lms/RequestCard";
@@ -304,6 +305,7 @@ export {
   generateLearningSession,
   getContinueLearning,
   getContributorProfile,
+  getExamPrepRecommendations,
   getExploreData,
   getGuide,
   getLmsAnnotations,
@@ -318,6 +320,7 @@ export {
   getRecommendations,
   getRevisionQueue,
   getRoadmap,
+  getRoadmapRecommendations,
   getSubjectOverview,
   getWeeklyLeaderboard,
   listGuides,
@@ -342,6 +345,6 @@ export {
   updateLmsResource,
   upvoteLmsRequest,
   upvoteQuestionBankItem,
-} from "../../../lib/lmsApi";
-export type { LmsGuide, LmsRequest, LmsResource, LmsRoadmap } from "../../../lib/lmsApi";
+} from "../../../lib/lms/index";
+export type { LmsGuide, LmsRequest, LmsResource, LmsRoadmap } from "../../../lib/lms/index";
 export { useSession } from "../../../hooks/useSession";

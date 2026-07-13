@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ProgressBar } from "../ui/ProgressBar";
+import { ProgressBar } from "../ui/Progress";
 import { CheckCircle2, RotateCcw, ArrowRight } from "lucide-react";
 
 export interface FlashcardData {

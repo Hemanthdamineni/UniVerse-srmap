@@ -1,13 +1,13 @@
 // Opportunities: PageHeader, FilterBar, SkeletonCard loading, EmptyState; listOpportunities unchanged.
 import React, { useEffect, useState, useCallback } from "react";
-import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/careerApi";
+import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { useSearchParams } from "react-router-dom";
-import { PageHeader } from "../../components/ui/PageHeader";
+import { PageHeader } from "../../components/ui/Layouts";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { FilterBar } from "../../components/ui/FilterBar";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { EmptyState } from "../../components/ui/Feedback";
 
 interface OpportunitiesPageProps {
   initialType?: string;

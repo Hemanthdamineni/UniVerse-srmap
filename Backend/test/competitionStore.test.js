@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { EventsStore } = require("../src/services/eventsStore");
-const { createCompetitionStore } = require("../src/services/competitionStore");
+const { EventsStore } = require("../src/services/events/eventsStore");
+const { createCompetitionStore } = require("../src/services/events/competitionStore");
 
 function makeUser(overrides = {}) {
   return {
@@ -30,13 +30,13 @@ function createCompetitionEvent(eventsStore, creator = makeUser({ userId: "org1"
     {
       title: "Competition Event",
       description: "Competition",
-      startAt: "2026-06-01T09:00:00.000Z",
-      endAt: "2026-06-30T11:00:00.000Z",
+      startAt: "2026-08-01T09:00:00.000Z",
+      endAt: "2026-08-30T11:00:00.000Z",
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-06-29T23:59:59.000Z",
+      registrationDeadline: "2026-08-29T23:59:59.000Z",
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({
@@ -70,13 +70,13 @@ function createTwoRoundCompetitionEvent(
     {
       title: "Two Round Competition",
       description: "Competition",
-      startAt: "2026-06-01T09:00:00.000Z",
-      endAt: "2026-06-30T11:00:00.000Z",
+      startAt: "2026-08-01T09:00:00.000Z",
+      endAt: "2026-08-30T11:00:00.000Z",
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-06-29T23:59:59.000Z",
+      registrationDeadline: "2026-08-29T23:59:59.000Z",
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({
@@ -85,7 +85,7 @@ function createTwoRoundCompetitionEvent(
           {
             roundId: "r1",
             title: "Round 1",
-            startTime: "2026-06-02T00:00:00.000Z",
+            startTime: "2026-08-02T00:00:00.000Z",
             submissionDeadline: "2099-01-01T00:00:00.000Z",
             submissionTypes: ["file", "link"],
             maxResubmissions: 2,
@@ -123,13 +123,13 @@ function createTeamScopedCompetitionEvent(
     {
       title: "Team Competition",
       description: "Team scope",
-      startAt: "2026-06-01T09:00:00.000Z",
-      endAt: "2026-06-30T11:00:00.000Z",
+      startAt: "2026-08-01T09:00:00.000Z",
+      endAt: "2026-08-30T11:00:00.000Z",
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-06-29T23:59:59.000Z",
+      registrationDeadline: "2026-08-29T23:59:59.000Z",
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({
@@ -372,6 +372,37 @@ test("team creation/invitation acceptance enforces one-team-per-user and max siz
       }),
     (error) => error?.status === 409
   );
+});
+
+test("team recruitment board exposes open teams and scores available teammates", () => {
+  const { eventsStore, competitionStore } = makeStores();
+  const creator = makeUser({ userId: "org1", role: "admin" });
+  const s1 = makeUser({ userId: "s1", role: "student", department: "CSE" });
+  const s2 = makeUser({ userId: "s2", role: "student", department: "ECE" });
+  const s3 = makeUser({ userId: "s3", role: "student", department: "CSE" });
+  const event = createTeamScopedCompetitionEvent(eventsStore, creator, 3);
+  eventsStore.register(event.id, {}, { user: s1 });
+  eventsStore.register(event.id, { formResponses: [{ answer: "I can handle React UI and demos" }] }, { user: s2 });
+  eventsStore.register(event.id, { formResponses: [{ answer: "React, pitch deck, and TypeScript" }] }, { user: s3 });
+
+  const team = competitionStore.createTeam(event.id, s1.userId, { name: "Alpha" });
+  const post = competitionStore.upsertTeamRecruitmentPost(event.id, s1.userId, {
+    neededSkills: ["React", "Pitch"],
+    description: "Looking for frontend and presentation support.",
+    openSlots: 2,
+  });
+  assert.equal(post.teamId, team.id);
+  assert.deepEqual(post.neededSkills, ["React", "Pitch"]);
+
+  const board = competitionStore.listTeamRecruitmentBoard(event.id, s2);
+  assert.equal(board.length, 1);
+  assert.equal(board[0].team.name, "Alpha");
+  assert.equal(board[0].team.leaderRegNo, s1.userId);
+
+  const matches = competitionStore.listTeamMatches(event.id, s1);
+  assert.equal(matches[0].userId, s3.userId);
+  assert.ok(matches[0].matchScore > matches[1].matchScore);
+  assert.ok(matches[0].matchedSkills.includes("React"));
 });
 
 test("team-scoped submission blocks non-members and non-leaders", () => {

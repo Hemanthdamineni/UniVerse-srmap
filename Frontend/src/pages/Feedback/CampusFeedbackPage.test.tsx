@@ -17,7 +17,7 @@ vi.mock("../../hooks/useAdminAccess", () => ({
   }),
 }));
 
-vi.mock("../../lib/campusFeedbackApi", () => ({
+vi.mock("../../lib/campus/campusApi", () => ({
   get getCampusFeedbackGovernance() {
     return getCampusFeedbackGovernance;
   },

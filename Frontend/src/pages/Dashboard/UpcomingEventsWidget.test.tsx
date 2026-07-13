@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import UpcomingEventsWidget from "./UpcomingEventsWidget";
-import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 
-vi.mock("../../lib/campusApi", () => ({
+vi.mock("../../lib/campus/campusApi", () => ({
   listEvents: vi.fn(),
 }));
 
@@ -13,10 +13,10 @@ function mockEvent(overrides: Partial<EventSummary> = {}): EventSummary {
     id: "evt-default",
     title: "Test Event",
     description: "A test event",
-    startAt: "2026-07-15T09:00:00.000Z",
-    startDate: "2026-07-15",
-    endAt: "2026-07-16T09:00:00.000Z",
-    endDate: "2026-07-16",
+    startAt: "2026-10-15T09:00:00.000Z",
+    startDate: "2026-10-15",
+    endAt: "2026-10-16T09:00:00.000Z",
+    endDate: "2026-10-16",
     category: "Technical",
     department: "CS Department",
     status: "published",
@@ -33,7 +33,7 @@ const mockEvents = [
     id: "evt-1",
     title: "CodeSprint 2026",
     category: "Technical",
-    registrationDeadline: "2026-07-10T23:59:00.000Z",
+    registrationDeadline: "2026-10-10T23:59:00.000Z",
     registeredCount: 45,
     seatsAvailable: 55,
   }),
@@ -41,11 +41,11 @@ const mockEvents = [
     id: "evt-2",
     title: "Cultural Fest 2026 – Dance Competition",
     category: "Cultural",
-    startAt: "2026-07-20T10:00:00.000Z",
-    endAt: "2026-07-20T18:00:00.000Z",
-    startDate: "2026-07-20",
-    endDate: "2026-07-20",
-    registrationDeadline: "2026-07-18T23:59:00.000Z",
+    startAt: "2026-10-20T10:00:00.000Z",
+    endAt: "2026-10-20T18:00:00.000Z",
+    startDate: "2026-10-20",
+    endDate: "2026-10-20",
+    registrationDeadline: "2026-10-18T23:59:00.000Z",
     department: "Student Union",
     registeredCount: 20,
     seatsAvailable: 80,

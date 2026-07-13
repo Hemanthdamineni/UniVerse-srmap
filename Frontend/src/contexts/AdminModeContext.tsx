@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { hasSessionAuth } from "../lib/session";
-import { disableAdminMode, getAdminAccessStatus, unlockAdminMode } from "../lib/adminModeApi";
-import { getAdminHeaders } from "../lib/adminApi";
-import { getCurrentRegNo, isPlatformAdmin } from "../lib/identity";
+import { hasSessionAuth } from "../lib/core/session";
+import { disableAdminMode, getAdminAccessStatus, unlockAdminMode, getAdminHeaders } from "../lib/campus/adminApi";
+import { getCurrentRegNo, isPlatformAdmin } from "../lib/core/identity";
 
 type AdminModeState = {
   potentialAdmin: boolean;

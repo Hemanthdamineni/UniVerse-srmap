@@ -8,7 +8,7 @@ const listApplications = vi.fn();
 const updateApplication = vi.fn(() => Promise.resolve({ updated: true }));
 const deleteApplication = vi.fn(() => Promise.resolve({ deleted: true }));
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   get listApplications() {
     return listApplications;
   },

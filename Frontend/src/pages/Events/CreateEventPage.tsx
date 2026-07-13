@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { CalendarDays, CheckCircle2, Eye, Info, UploadCloud } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { createEvent } from "../../lib/campusApi";
-import { track } from "../../lib/analytics";
+import { createEvent } from "../../lib/campus/campusApi";
+import { track } from "../../lib/core/analytics";
 
 type WizardStep = 1 | 2 | 3 | 4;
 

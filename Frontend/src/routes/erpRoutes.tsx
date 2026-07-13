@@ -10,6 +10,7 @@ const AdminCareerAlumniPage = lazy(() => import("../pages/Admin/AdminCareerAlumn
 const AdminCareerInterviewsPage = lazy(() => import("../pages/Admin/AdminCareerInterviewsPage"));
 const AdminCareerOpportunitiesPage = lazy(() => import("../pages/Admin/AdminCareerOpportunitiesPage"));
 const AdminCertTemplatesPage = lazy(() => import("../pages/Admin/AdminCertTemplatesPage"));
+const AdminCompanionAnalyticsPage = lazy(() => import("../pages/Admin/AdminCompanionAnalyticsPage"));
 const AdminAuditLogsPage = lazy(() => import("../pages/Admin/AdminAuditLogsPage"));
 const AdminContentManagementPage = lazy(() => import("../pages/Admin/AdminContentManagementPage"));
 const AdminDeptPerformancePage = lazy(() => import("../pages/Admin/AdminDeptPerformancePage"));
@@ -30,7 +31,6 @@ const CareerProfilePage = lazy(() => import("../pages/CareerPortal/CareerProfile
 const InterviewBooking = lazy(() => import("../pages/CareerPortal/InterviewBooking"));
 const OpportunitiesPage = lazy(() => import("../pages/CareerPortal/OpportunitiesPage"));
 const OpportunityDetailPage = lazy(() => import("../pages/CareerPortal/OpportunityDetailPage"));
-const ResumeProfile = lazy(() => import("../pages/CareerPortal/ResumeProfile"));
 const SkillGapPage = lazy(() => import("../pages/CareerPortal/SkillGapPage"));
 const SubmitOpportunityPage = lazy(() => import("../pages/CareerPortal/SubmitOpportunityPage"));
 const AttendanceDetailsPage = lazy(() => import("../pages/ERP/AttendanceDetailsPage"));
@@ -82,11 +82,11 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/career/submit": <SubmitOpportunityPage />,
   "/career/alumni": <AlumniConnect />,
   "/career/interviews": <InterviewBooking />,
-  "/career/me/resume": <ResumeProfile />,
   "/admin/events-management": <AdminEventsManagementPage />,
   "/admin/content-management": <AdminContentManagementPage />,
   "/admin/system-controls": <AdminSystemControlsPage />,
   "/admin/campus-feedback": <AdminCampusFeedbackPage />,
+  "/admin/companion-analytics": <AdminCompanionAnalyticsPage />,
   "/admin/lms-moderation": <AdminLmsModerationPage />,
   "/admin/helpdesk-tickets": <AdminHelpdeskTicketsPage />,
   "/admin/helpdesk-faqs": <AdminHelpdeskFaqsPage />,

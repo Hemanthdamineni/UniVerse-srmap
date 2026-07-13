@@ -4,7 +4,7 @@ const os = require("os");
 const path = require("path");
 const { performance } = require("perf_hooks");
 
-const { HelpdeskStore } = require("../src/services/helpdeskStore");
+const { HelpdeskStore } = require("../src/services/campus/helpdeskStore");
 
 function createStore() {
   return new HelpdeskStore({

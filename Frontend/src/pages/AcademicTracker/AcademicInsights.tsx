@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
-import { getLmsAcademicInsights } from "../../lib/lmsApi";
+import { getLmsAcademicInsights } from "../../lib/lms/index";
 
 const RECOMMENDATION_STYLES: Record<string, string> = {
   improvement: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)]",

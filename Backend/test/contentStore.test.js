@@ -4,7 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { ContentStore } = require("../src/services/contentStore");
+const { ContentStore } = require("../src/services/lms/contentStore");
 
 function makeStore() {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "content-store-test-"));

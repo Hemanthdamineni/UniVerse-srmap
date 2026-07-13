@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { LmsRoadmap, LmsRoadmapNode } from "../../lib/lmsApi";
+import type { LmsRoadmap, LmsRoadmapNode } from "../../lib/lms/index";
 
 // Internal view-model for node rendering
 interface NodeState {
@@ -245,17 +245,7 @@ export default function RoadmapGraph({
       <div className="relative">
         {/* Continuous Vertical Spine */}
         {nodeStates.length > 0 && (
-          <div 
-            className="absolute top-8 bottom-12 w-0.5 rounded-full"
-            style={{ 
-              background: 'var(--comp-border)',
-              left: '11px', // w-6 (24px) / 2 - 1px
-              '@media (min-width: 768px)': {
-                left: '15px' // md:w-8 (32px) / 2 - 1px
-              }
-            } as any}
-          >
-            {/* The media query in inline styles isn't strictly valid in React, so we use twin divs to handle responsiveness cleanly */}
+          <div className="absolute top-8 bottom-12 w-0.5 rounded-full">
             <div className="absolute inset-0 block md:hidden" style={{ background: 'var(--comp-border)', width: 2, left: 0 }} />
             <div className="absolute inset-0 hidden md:block" style={{ background: 'var(--comp-border)', width: 2, left: 4 }} />
           </div>

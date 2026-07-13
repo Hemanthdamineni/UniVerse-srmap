@@ -1,9 +1,6 @@
 import { Link } from "react-router-dom";
-import type { LmsResource } from "../../lib/lmsApi";
-import ReadingTimeChip from "./ReadingTimeChip";
-import ExamProvenBadge from "./ExamProvenBadge";
-import CurrentlyStudyingBadge from "./CurrentlyStudyingBadge";
-import ValidityChip from "./ValidityChip";
+import type { LmsResource } from "../../lib/lms/index";
+import { ReadingTimeChip, ExamProvenBadge, CurrentlyStudyingBadge, ValidityChip } from "./LmsChips";
 
 export default function ResourceCard({
   resource,

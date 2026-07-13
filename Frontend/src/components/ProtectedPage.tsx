@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import PageLayout from "../pages/Pagelayout";
-import { hasSessionAuth } from "../lib/session";
+import { hasSessionAuth } from "../lib/core/session";
 
 export default function ProtectedPage({ children }: { children: React.ReactNode }) {
   if (!hasSessionAuth()) {

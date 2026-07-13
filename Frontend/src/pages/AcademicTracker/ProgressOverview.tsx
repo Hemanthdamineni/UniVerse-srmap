@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
-import { getLmsProgressOverview } from "../../lib/lmsApi";
+import { getLmsProgressOverview } from "../../lib/lms/index";
 
 type ProgressOverviewModel = Awaited<ReturnType<typeof getLmsProgressOverview>>;
 

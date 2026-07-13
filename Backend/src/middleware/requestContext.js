@@ -1,5 +1,5 @@
 const { randomUUID } = require("crypto");
-const { recordHttpRequest } = require("../services/metricsService");
+const { recordHttpRequest } = require("../services/campus/feedbackServices");
 const { log } = require("../utils/logger");
 
 function getClientIp(req) {

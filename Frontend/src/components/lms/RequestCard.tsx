@@ -1,4 +1,4 @@
-import type { LmsRequest } from "../../lib/lmsApi";
+import type { LmsRequest } from "../../lib/lms/index";
 
 export default function RequestCard({
   request,

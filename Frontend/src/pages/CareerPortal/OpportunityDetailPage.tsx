@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getOpportunity, trackView, trackApply, bookmarkOpportunity, createApplication, flagOpportunity, type CareerOpportunity } from '../../lib/careerApi';
-import { parseCareerBranchFromProfile, parseCareerYearFromProfile } from '../../lib/erpProfileCareer';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getOpportunity, getOpportunityFit, trackView, trackApply, bookmarkOpportunity, createApplication, flagOpportunity, type CareerOpportunity, type OpportunityFit } from '../../lib/career/careerApi';
+import { parseCareerBranchFromProfile, parseCareerYearFromProfile } from '../../lib/erp/profileCareer';
 import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
-import { ArrowLeft, Bookmark, ExternalLink, Calendar, MapPin, Briefcase, GraduationCap, DollarSign, Award, CheckCircle2, AlertCircle, Share2, Flag } from 'lucide-react';
-import TypeBadge from '../../components/career/TypeBadge';
-import DeadlineCountdown from '../../components/career/DeadlineCountdown';
-import ModeChip from '../../components/career/ModeChip';
-import StipendChip from '../../components/career/StipendChip';
-import EligibilityBadge from '../../components/career/EligibilityBadge';
+import { ArrowLeft, Bookmark, ExternalLink, Calendar, MapPin, Briefcase, GraduationCap, DollarSign, Award, CheckCircle2, AlertCircle, Share2, Flag, Target, TrendingUp } from 'lucide-react';
+import { TypeBadge, DeadlineBadge, ModeChip, StipendChip, EligibilityBadge } from '../../components/career/CareerChips';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/card';
 import { useSession } from '../../hooks/useSession';
 import { PageContainer } from '../../components/layout/PageLayouts';
-import { cn } from '../../lib/utils';
+import { cn } from '../../lib/core/utils';
+import { track } from '../../lib/core/analytics';
 
 const AdaptiveTextRenderer = ({ text }: { text: string }) => {
   if (!text) return <span className="text-[var(--comp-text-muted)] italic">No content provided.</span>;
@@ -83,6 +80,8 @@ const OpportunityDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [fit, setFit] = useState<OpportunityFit | null>(null);
+  const [fitLoading, setFitLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -92,6 +91,24 @@ const OpportunityDetailPage: React.FC = () => {
         setOpp(data);
         setBookmarked(data.isBookmarked || false);
         setApplied(data.hasApplied || false);
+        setFitLoading(true);
+        getOpportunityFit(id)
+          .then((nextFit) => {
+            setFit(nextFit);
+            track('opportunity_fit_viewed', {
+              opportunityId: id,
+              fitScore: nextFit.fitScore,
+              matchedSkillCount: nextFit.matchedSkills.length,
+              missingSkillCount: nextFit.missingSkills.length,
+              eligible: nextFit.eligibility.eligible,
+              hasResumeVersion: Boolean(nextFit.resumeVersionId),
+            });
+          })
+          .catch((fitErr) => {
+            console.warn('Failed to fetch opportunity fit', fitErr);
+            setFit(null);
+          })
+          .finally(() => setFitLoading(false));
         await trackView(id);
       } catch (err) {
         console.error('Failed to fetch opportunity', err);
@@ -221,7 +238,7 @@ const OpportunityDetailPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             <TypeBadge type={opp.type} className="text-sm px-3 py-1" />
             <ModeChip mode={opp.mode} className="text-sm px-3 py-1" />
-            <DeadlineCountdown deadline={opp.deadline} className="text-sm px-3 py-1" />
+            <DeadlineBadge deadline={opp.deadline} className="text-sm px-3 py-1" />
           </div>
           
           <h1 className="page-title">{opp.title}</h1>
@@ -395,6 +412,69 @@ const OpportunityDetailPage: React.FC = () => {
                   eligible={true} // CGPA data might not be in profile yet
                   label={`Minimum ${opp.minCGPA} CGPA`} 
                 />
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-[var(--comp-accent)]" />
+                Profile Fit
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {fitLoading ? (
+                <>
+                  <div className="h-16 rounded-lg bg-[var(--comp-surface-hover)] animate-pulse" />
+                  <div className="h-8 rounded-lg bg-[var(--comp-surface-hover)] animate-pulse" />
+                </>
+              ) : fit ? (
+                <>
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <p className="text-3xl font-semibold text-[var(--comp-text-primary)]">{fit.fitScore}%</p>
+                      <p className="text-xs text-[var(--comp-text-muted)]">
+                        {fit.eligibility.eligible ? 'Eligible' : 'Eligibility needs review'}
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_24%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] p-2">
+                      <TrendingUp className="h-5 w-5 text-[var(--comp-accent)]" />
+                    </div>
+                  </div>
+
+                  {fit.matchedSkills.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--comp-text-muted)]">Matched</p>
+                      <div className="flex flex-wrap gap-2">
+                        {fit.matchedSkills.slice(0, 5).map((skill) => (
+                          <span key={skill} className="rounded-full border border-[color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-2.5 py-1 text-xs font-medium text-[var(--success)]">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {fit.missingSkills.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--comp-text-muted)]">Gaps</p>
+                      <div className="flex flex-wrap gap-2">
+                        {fit.missingSkills.slice(0, 5).map((skill) => (
+                          <span key={skill} className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2.5 py-1 text-xs font-medium text-[var(--comp-text-secondary)]">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {fit.recommendations.length > 0 ? (
+                    <p className="text-sm leading-relaxed text-[var(--comp-text-secondary)]">{fit.recommendations[0]}</p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-sm text-[var(--comp-text-muted)]">Fit analysis is unavailable for this listing.</p>
               )}
             </CardContent>
           </Card>

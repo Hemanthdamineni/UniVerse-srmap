@@ -2,7 +2,7 @@ const express = require("express");
 const {
   createApiContext,
   submitAttendanceCodeViaApi,
-} = require("../services/erpClient");
+} = require("../services/erp/erpClient");
 const { resolveSessionId } = require("../utils/cookies");
 
 function createAttendanceRoutes({ sessionStore }) {

@@ -1,4 +1,4 @@
-const { evaluateUnifiedInsightPayload } = require("../src/services/lmsTrackerService");
+const { evaluateUnifiedInsightPayload } = require("../src/services/lms/lmsTrackerService");
 
 const fixtures = [
   {

@@ -27,6 +27,7 @@
     "load:mixed": "k6 run load-tests/erp-mixed.js",
     "load:career": "k6 run load-tests/career-portal.js",
     "evaluate:unified-insights": "node scripts/evaluate-unified-insights.js",
+    "smoke:companion": "node scripts/companion-platform-smoke.js",
     "seed:career:stress": "node scripts/seed-career-stress-sqlite.mjs --out data/career-stress.sqlite --count 150000 --force"
   },
   "dependencies": {

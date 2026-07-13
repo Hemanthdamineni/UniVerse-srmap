@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import SubmitOpportunityPage from "./SubmitOpportunityPage";
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   submitOpportunity: vi.fn(() => Promise.resolve({ id: "s1", status: "pending" })),
   listMyOpportunitySubmissions: vi.fn(() =>
     Promise.resolve({
@@ -35,7 +35,7 @@ describe("SubmitOpportunityPage", () => {
 
   it("submits valid form and shows success state", async () => {
     const user = userEvent.setup();
-    const { submitOpportunity } = await import("../../lib/careerApi");
+    const { submitOpportunity } = await import("../../lib/career/careerApi");
     render(
       <MemoryRouter>
         <SubmitOpportunityPage />

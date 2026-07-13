@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowRight, Calendar, Clock, RefreshCw } from "lucide-react";
-import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */

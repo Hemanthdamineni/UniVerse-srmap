@@ -1,13 +1,13 @@
 // Header bar uses --comp-accent instead of hardcoded hex for theme parity.
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
-import { hasSessionAuth } from "../lib/session";
+import { hasSessionAuth } from "../lib/core/session";
 
 function Logo() {
     return (
         <Link to="/" className="inline-flex items-center">
             <img
-                src="src/assets/FullSrmLogo.png"
+                src="src/assets/FullSrmlogo.png"
                 alt="Logo of UniVerse — SRMAP Edition"
                 className="w-[120px] h-[60px] m-[2px]"
             />

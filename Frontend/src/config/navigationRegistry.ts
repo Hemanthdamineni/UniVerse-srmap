@@ -38,6 +38,7 @@ export const ADMIN_NAV_SECTION: NavSection = {
         { type: "link", label: "Event Approvals", route: "/admin/event-approvals", domain: "admin", access: "B" },
         { type: "link", label: "Content Management", route: "/admin/content-management", domain: "admin", access: "B" },
         { type: "link", label: "Campus Feedback", route: "/admin/campus-feedback", domain: "admin", access: "B" },
+        { type: "link", label: "Companion Analytics", route: "/admin/companion-analytics", domain: "admin", access: "B" },
         { type: "link", label: "LMS Moderation", route: "/admin/lms-moderation", domain: "admin", access: "B" },
         { type: "link", label: "Certificate Templates", route: "/admin/certificate-templates", domain: "admin", access: "B" },
         { type: "link", label: "Department Performance", route: "/admin/department-performance", domain: "admin", access: "B" },
@@ -80,6 +81,7 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
   { route: "/resources/me/exam-feedback", label: "Exam feedback", group: "Learning Management", domain: "lms" },
   { route: "/profile", label: "Profile", group: "Account", domain: "erp", keywords: "student profile account" },
   { route: "/admin/events-management/:eventId", label: "Event Detail", group: "Administration", domain: "admin", keywords: "admin event detail" },
+  { route: "/admin/companion-analytics", label: "Companion Analytics", group: "Administration", domain: "admin", keywords: "analytics adoption recommendations conversion retention" },
 ];
 
 const DOMAIN_TRAILS: { prefix: string; label: string; href: string; domain: Domain }[] = [
@@ -102,7 +104,7 @@ function cloneSidebarItem(item: SidebarItem): SidebarItem {
   return { ...item };
 }
 
-function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
+export function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
   if (item.type === "link") {
     return {
       label: item.label,

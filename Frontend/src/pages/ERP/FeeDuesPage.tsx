@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { executePipeline, type FeeDuesModel } from "../../lib/erpTransformers";
+import { executePipeline, type FeeDuesModel } from "../../lib/erp/erpTransformers";
 // ErpPageShell section-card; fee table structure unchanged.
-import { getErpBatch } from "../../lib/erpApi";
+import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 
 interface Props {
   blueprint: PageBlueprint;

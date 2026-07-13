@@ -67,6 +67,7 @@ describe("navigationRegistry", () => {
       .flatMap((item) => (item.type === "group" ? item.children.map((child) => child.route) : [item.route]));
 
     expect(adminRoutes).toContain("/admin/event-approvals");
+    expect(adminRoutes).toContain("/admin/companion-analytics");
     expect(adminRoutes).toContain("/admin/certificate-templates");
     expect(adminRoutes).toContain("/admin/audit-logs");
   });

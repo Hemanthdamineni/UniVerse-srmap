@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { EmptyState } from "../../components/competition/EmptyState";
+import { EmptyState } from "../../components/competition/CompetitionEmptyState";
 import { FileUploadZone } from "../../components/competition/FileUploadZone";
-import { SkeletonTable } from "../../components/competition/Skeletons";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
+import { SkeletonTable, SkeletonCard } from "../../components/ui/Skeletons";
 import { CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { useEvent } from "../../contexts/EventContext";
-import { track } from "../../lib/analytics";
+import { track } from "../../lib/core/analytics";
 import {
   acceptInvite,
   assignRole,
@@ -18,18 +17,23 @@ import {
   getEventTeams,
   getMyRegisteredEvents,
   getMyTeam,
+  getTeamMatches,
+  getTeamRecruitmentBoard,
   inviteMember,
   registerForEvent,
   removeRole,
   saveCertificateTemplate,
+  upsertTeamRecruitmentPost,
   uploadCertificateTemplateImage,
   type CertificateField,
   type CertificateTemplate,
   type EventRoleAssignment,
   type EventSummary,
   type Team,
-} from "../../lib/competitionsApi";
-import { getCurrentRegNo } from "../../lib/identity";
+  type TeamMatchCandidate,
+  type TeamRecruitmentPost,
+} from "../../lib/events/competitionsApi";
+import { getCurrentRegNo } from "../../lib/core/identity";
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
 
@@ -49,6 +53,23 @@ function StepPill({ active, label }: { active: boolean; label: string }) {
       {label}
     </span>
   );
+}
+
+async function runStep(
+  setBusy: (v: boolean) => void,
+  setError: (v: string) => void,
+  action: () => Promise<void>,
+  errorMsg: string
+) {
+  setBusy(true);
+  setError("");
+  try {
+    await action();
+  } catch (err) {
+    setError(err instanceof Error ? err.message : errorMsg);
+  } finally {
+    setBusy(false);
+  }
 }
 
 export function RegistrationFlowPage() {
@@ -73,9 +94,7 @@ export function RegistrationFlowPage() {
 
   async function createTeamAndInvite() {
     if (!event || !teamName.trim()) return;
-    setBusy(true);
-    setError("");
-    try {
+    await runStep(setBusy, setError, async () => {
       const created = await createTeam(event.id, teamName.trim());
       setTeam(created);
       track("team_created", { eventId: event.id, teamId: created.id });
@@ -84,26 +103,16 @@ export function RegistrationFlowPage() {
         track("team_invite_sent", { eventId: event.id, teamId: created.id });
       }
       setStep(3);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create team.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Failed to create team.");
   }
 
   async function confirmRegistration() {
     if (!event) return;
-    setBusy(true);
-    setError("");
-    try {
+    await runStep(setBusy, setError, async () => {
       await registerForEvent(event.id);
       refetch();
       setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Registration failed.");
   }
 
   if (!event) {
@@ -203,49 +212,85 @@ export function RegistrationFlowPage() {
 }
 
 export function TeamFormationPage() {
-  const { event, refetch } = useEvent();
+  const { event, config, refetch } = useEvent();
   const [teamName, setTeamName] = useState("");
   const [inviteRegNo, setInviteRegNo] = useState("");
+  const [neededSkills, setNeededSkills] = useState("");
+  const [recruitmentNote, setRecruitmentNote] = useState("");
   const [team, setTeam] = useState<Team | null>(null);
+  const [board, setBoard] = useState<TeamRecruitmentPost[]>([]);
+  const [matches, setMatches] = useState<TeamMatchCandidate[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!event) return;
+    let active = true;
+    Promise.all([
+      getMyTeam(event.id),
+      getTeamRecruitmentBoard(event.id).catch(() => []),
+      getTeamMatches(event.id).catch(() => []),
+    ])
+      .then(([currentTeam, boardItems, matchItems]) => {
+        if (!active) return;
+        setTeam(currentTeam);
+        setBoard(boardItems);
+        setMatches(matchItems);
+      })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof Error ? err.message : "Failed to load team discovery.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [event]);
+
   async function onCreate() {
     if (!event || !teamName.trim()) return;
-    setBusy(true);
-    setError("");
-    try {
+    await runStep(setBusy, setError, async () => {
       const created = await createTeam(event.id, teamName.trim());
       setTeam(created);
       track("team_created", { eventId: event.id, teamId: created.id });
       refetch();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create team.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Failed to create team.");
   }
 
-  async function onInvite() {
-    if (!event || !team || !inviteRegNo.trim()) return;
-    setBusy(true);
-    setError("");
-    try {
-      await inviteMember(event.id, team.id, inviteRegNo.trim().toUpperCase());
+  async function onInvite(regNoOverride?: string) {
+    const targetRegNo = (regNoOverride || inviteRegNo).trim().toUpperCase();
+    if (!event || !team || !targetRegNo) return;
+    await runStep(setBusy, setError, async () => {
+      await inviteMember(event.id, team.id, targetRegNo);
       setTeam({
         ...team,
         members: [
           ...team.members,
-          { regNo: inviteRegNo.trim().toUpperCase(), name: inviteRegNo.trim().toUpperCase(), joinedAt: new Date().toISOString(), status: "pending" },
+          { regNo: targetRegNo, name: targetRegNo, joinedAt: new Date().toISOString(), status: "pending" },
         ],
       });
       track("team_invite_sent", { eventId: event.id, teamId: team.id });
       setInviteRegNo("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to invite member.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Failed to invite member.");
+  }
+
+  async function onPublishRecruitment() {
+    if (!event || !team) return;
+    const skills = neededSkills.split(",").map((item) => item.trim()).filter(Boolean);
+    const maxTeamSize = Math.max(1, Number(config?.maxTeamSize || 4));
+    await runStep(setBusy, setError, async () => {
+      await upsertTeamRecruitmentPost(event.id, {
+        neededSkills: skills,
+        description: recruitmentNote,
+        openSlots: Math.max(1, maxTeamSize - team.members.filter((member) => member.status === "accepted").length),
+        status: "open",
+      });
+      const [boardItems, matchItems] = await Promise.all([
+        getTeamRecruitmentBoard(event.id).catch(() => []),
+        getTeamMatches(event.id).catch(() => []),
+      ]);
+      setBoard(boardItems);
+      setMatches(matchItems);
+      track("team_recruitment_posted", { eventId: event.id, teamId: team.id });
+    }, "Failed to publish recruitment needs.");
   }
 
   return (
@@ -277,6 +322,74 @@ export function TeamFormationPage() {
           </div>
         </div>
       ) : null}
+
+      {team ? (
+        <div className="dashboard-card rounded-xl p-5">
+          <p className="comp-heading-md mt-0">Find teammates</p>
+          <div className="grid gap-3 md:grid-cols-[1fr_1.4fr]">
+            <div className="space-y-3">
+              <label className="comp-label" htmlFor="team-needed-skills">Needed skills</label>
+              <Input
+                id="team-needed-skills"
+                value={neededSkills}
+                onChange={(e) => setNeededSkills(e.target.value)}
+                placeholder="React, pitch, design"
+              />
+              <label className="comp-label" htmlFor="team-recruitment-note">Recruitment note</label>
+              <Input
+                id="team-recruitment-note"
+                value={recruitmentNote}
+                onChange={(e) => setRecruitmentNote(e.target.value)}
+                placeholder="What should a teammate know before joining?"
+              />
+              <button className="comp-btn-primary" disabled={busy || !neededSkills.trim()} onClick={() => void onPublishRecruitment()}>
+                {busy ? "Publishing..." : "Publish team need"}
+              </button>
+            </div>
+            <div className="space-y-2">
+              {matches.length === 0 ? (
+                <p className="comp-body">Matched candidates appear after registered students share relevant skills in their forms.</p>
+              ) : (
+                matches.slice(0, 4).map((candidate) => (
+                  <div key={candidate.userId} className="rounded-xl border border-[var(--comp-border)] bg-[var(--dash-subcard-bg)] p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="m-0 font-semibold">{candidate.name || candidate.userId}</p>
+                      <span className="comp-label">{candidate.matchScore}% fit</span>
+                    </div>
+                    <p className="comp-body m-0">{candidate.department || "Department unavailable"}</p>
+                    {candidate.matchedSkills.length ? (
+                      <p className="comp-body m-0">Matches: {candidate.matchedSkills.join(", ")}</p>
+                    ) : null}
+                    <button className="comp-btn-ghost mt-2" disabled={busy} onClick={() => {
+                      void onInvite(candidate.userId);
+                    }}>
+                      Invite
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="dashboard-card rounded-xl p-5">
+        <p className="comp-heading-md mt-0">Teams looking for members</p>
+        {board.length === 0 ? (
+          <p className="comp-body">No teams have posted open needs yet.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {board.map((post) => (
+              <div key={post.id} className="rounded-xl border border-[var(--comp-border)] bg-[var(--dash-subcard-bg)] p-3">
+                <p className="m-0 font-semibold">{post.team.name}</p>
+                <p className="comp-body m-0">{post.description || "Open to complementary teammates."}</p>
+                <p className="comp-body m-0">Needs: {post.neededSkills.join(", ") || "Any committed teammate"}</p>
+                <span className="comp-label">{post.openSlots} open slot{post.openSlots === 1 ? "" : "s"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </PageStack>
   );
 }
@@ -388,9 +501,7 @@ export function CertificateClaimPage() {
 
   async function onDownload() {
     if (!event) return;
-    setProcessing(true);
-    setError("");
-    try {
+    await runStep(setProcessing, setError, async () => {
       const blob = await downloadMyCertificate(event.id, roundId);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -399,11 +510,7 @@ export function CertificateClaimPage() {
       anchor.click();
       URL.revokeObjectURL(url);
       track("certificate_downloaded", { eventId: event.id, roundId });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Certificate download failed.");
-    } finally {
-      setProcessing(false);
-    }
+    }, "Certificate download failed.");
   }
 
   return (
@@ -590,23 +697,15 @@ export function CertificateTemplatePage() {
 
   async function uploadImage() {
     if (!event || !file) return;
-    setBusy(true);
-    setError("");
-    try {
+    await runStep(setBusy, setError, async () => {
       const result = await uploadCertificateTemplateImage(event.id, file);
       setImagePath(result.path);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload template image.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Failed to upload template image.");
   }
 
   async function saveTemplate() {
     if (!event || !imagePath) return;
-    setBusy(true);
-    setError("");
-    try {
+    await runStep(setBusy, setError, async () => {
       const saved = await saveCertificateTemplate(event.id, {
         id: template?.id,
         eventId: event.id,
@@ -614,11 +713,7 @@ export function CertificateTemplatePage() {
         fields,
       });
       setTemplate(saved);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save template.");
-    } finally {
-      setBusy(false);
-    }
+    }, "Failed to save template.");
   }
 
   const selected = fields.find((item) => item.key === selectedKey) ?? null;

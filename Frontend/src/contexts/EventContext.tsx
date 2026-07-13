@@ -16,12 +16,12 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { getEvent, getCompetitionConfig, type EventDetail, type CompetitionConfig, type CompetitionRound } from '../lib/campusApi';
-import { eventCache } from '../lib/eventCache';
-import { getEventPhase } from '../lib/eventPhase';
-import { getEventUserState, type EventUserState } from '../lib/eventUserState';
-import { getMyRole, getMySubmission, type MyRoleResponse, type Submission } from '../lib/competitionsApi';
-import { getCurrentRegNo, isPlatformAdmin } from '../lib/identity';
+import { getEvent, getCompetitionConfig, type EventDetail, type CompetitionConfig, type CompetitionRound } from '../lib/campus/campusApi';
+import { eventCache } from '../lib/events/eventCache';
+import { getEventPhase } from '../lib/events/eventPhase';
+import { getEventUserState, type EventUserState } from '../lib/events/eventUserState';
+import { getMyRole, getMySubmission, type MyRoleResponse, type Submission } from '../lib/events/competitionsApi';
+import { getCurrentRegNo, isPlatformAdmin } from '../lib/core/identity';
 
 // ─── Context value type ───────────────────────────────────────────────────────
 

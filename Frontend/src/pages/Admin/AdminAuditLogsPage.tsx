@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { ErpPageShell } from '../../components/erp/ErpPrimitives';
-import { EmptyState } from '../../components/competition/EmptyState';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { DataToolbar } from '../../components/data/DataToolbar';
 import { Input } from '../../components/input';

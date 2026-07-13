@@ -6,7 +6,7 @@ const http = require("http");
 const os = require("os");
 const path = require("path");
 
-const { ContentStore } = require("../src/services/contentStore");
+const { ContentStore } = require("../src/services/lms/contentStore");
 const { createContentRoutes } = require("../src/routes/contentRoutes");
 
 function makeStore() {

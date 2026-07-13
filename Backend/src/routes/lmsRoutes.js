@@ -13,7 +13,7 @@ const {
   ensureArray,
   buildFileStoragePath,
   createHttpError,
-} = require("../services/lmsUtils");
+} = require("../services/lms/lmsUtils");
 const { registerTrackerRoutes } = require("./lmsRoutes/trackerRoutes");
 const { registerResourceRoutes } = require("./lmsRoutes/resourceRoutes");
 const { registerGuideRoadmapRoutes } = require("./lmsRoutes/guideRoadmapRoutes");

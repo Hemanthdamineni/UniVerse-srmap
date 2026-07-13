@@ -1,4 +1,4 @@
-import type { LmsResource } from "../../lib/lmsApi";
+import type { LmsResource } from "../../lib/lms/index";
 import ResourceGrid from "./ResourceGrid";
 
 export default function RecommendationSection({
