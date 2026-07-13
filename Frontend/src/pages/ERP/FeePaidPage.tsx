@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { executeErpAction, getErpBatch } from "../../lib/erpApi";
-import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erpTransformers";
+import { executeErpAction, getErpBatch } from "../../lib/erp/index";
+import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erp/erpTransformers";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
