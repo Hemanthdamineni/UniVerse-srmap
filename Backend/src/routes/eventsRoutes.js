@@ -1,6 +1,6 @@
 const express = require("express");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
-const { EVENT_STATES } = require("../services/eventsStore");
+const { EVENT_STATES } = require("../services/events/eventsStore");
 
 function createEventsRoutes({ eventsStore, sessionStore, competitionStore, adminPassword = "" }) {
   const router = express.Router();

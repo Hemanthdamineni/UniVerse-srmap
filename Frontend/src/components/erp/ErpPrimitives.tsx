@@ -1,9 +1,9 @@
 // ErpPageShell: optional section-card layout for ERP data pages; loading uses SkeletonBlock instead of spinners.
 import { useRef, type ReactNode } from "react";
 import { usePageContrast } from "../../hooks/usePageContrast";
-import { sanitizeErpDisplayText } from "../../lib/erpDisplayText";
+import { sanitizeErpDisplayText } from "../../lib/erp/displayText";
 import { PageContainer } from "../layout/PageLayouts";
-import { SkeletonBlock } from "../ui/SkeletonBlock";
+import { SkeletonBlock } from "../ui/Skeletons";
 
 export function sanitizeVisibleText(value: unknown, fallback = "") {
   return sanitizeErpDisplayText(value, fallback);

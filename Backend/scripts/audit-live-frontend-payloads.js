@@ -25,13 +25,13 @@ const { InMemoryErpCacheStore } = require("../src/services/erpCacheStore");
 const { DiscoveryRepository } = require("../src/services/discoveryRepository");
 const { PagePolicyStore } = require("../src/services/pagePolicyStore");
 const { ErpLiveService } = require("../src/services/erpLiveService");
-const { ErpAggregationService } = require("../src/services/erpAggregationService");
+const { ErpAggregationService } = require("../src/services/erp/erpAggregationService");
 const {
   fetchProfileViaApi,
   createApiContext,
   isUsableProfileData,
   buildFallbackProfileData,
-} = require("../src/services/erpClient");
+} = require("../src/services/erp/erpClient");
 
 const DEFAULT_OUTPUT_DIR = path.join(__dirname, "../data/live-page-audit");
 const OUTPUT_DIR = path.resolve(process.argv[2] || process.env.ERP_AUDIT_OUTPUT_DIR || DEFAULT_OUTPUT_DIR);

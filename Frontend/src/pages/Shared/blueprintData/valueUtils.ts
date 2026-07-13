@@ -1,6 +1,6 @@
 import type { PageRenderer } from "../../../config/erpBlueprints";
 import type { StatusMessage } from "../../../components/erp/ErpPrimitives";
-import { sanitizeErpDisplayText } from "../../../lib/erpDisplayText";
+import { sanitizeErpDisplayText } from "../../../lib/erp/displayText";
 
 export const CODE_NOISE_PATTERN =
   /(function\s+[a-z0-9_]+\s*\(|\$\(|\.jsp|validationengine|ajaxparameter|e\.preventdefault|window\.open|@page|^\.[a-z0-9_-]+\s*\{|^input,select\{|^thead\{|^var\s+[a-z0-9_]+\s*=|font-size\s*:|font-family\s*:|background(?:-color)?\s*:|text-align\s*:|font-weight\s*:|padding\s*:|color\s*:|url\s*\(|\.jpg|\.png|subheader)/i;

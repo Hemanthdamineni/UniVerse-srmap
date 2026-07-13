@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getErpBatch, sendErpDocumentRequest } from "../../lib/erpApi";
-import type { ErpDocument, ErpPageResponse } from "../../lib/erpApi";
-import { executePipeline } from "../../lib/erpTransformers";
-import type { AttendanceModel, ErpGenericTable } from "../../lib/erpTransformers";
-import { buildCombinedDocumentForKeys } from "../../lib/erpDocumentUtils";
+import { getErpBatch } from "../../lib/erp/index";
+import type { ErpPageResponse } from "../../lib/erp/index";
+import { executePipeline } from "../../lib/erp/erpTransformers";
+import type { AttendanceModel, ErpGenericTable } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import ErpDocumentRenderer from "../../components/erp/ErpDocumentRenderer";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 
 interface AttendanceDetailsPageProps {
   blueprint: PageBlueprint;
@@ -16,7 +14,6 @@ interface AttendanceDetailsPageProps {
 
 export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPageProps) {
   const [model, setModel] = useState<AttendanceModel | null>(null);
-  const [studentAttendanceDocument, setStudentAttendanceDocument] = useState<ErpDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -33,27 +30,15 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
         const result = batch["academic/attendance-details"];
         if (!result || (result as any).success === false) {
           setError("Attendance data unavailable.");
-          setStudentAttendanceDocument(null);
           setLoading(false);
           return;
         }
 
         const pipelineResult = executePipeline(blueprint, batch);
         if (pipelineResult?.isValid && pipelineResult.data) {
-          const studentAttendanceResult = batch["academic/student-attendance"] as ErpPageResponse | undefined;
           setModel(pipelineResult.data as AttendanceModel);
-          setStudentAttendanceDocument(
-            studentAttendanceResult
-              ? buildCombinedDocumentForKeys(
-                  ["academic/student-attendance"],
-                  { "academic/student-attendance": studentAttendanceResult },
-                  "Student Attendance"
-                )
-              : null
-          );
         } else {
           setError("Invalid attendance data format.");
-          setStudentAttendanceDocument(null);
         }
         setLoading(false);
       })
@@ -80,9 +65,7 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
 
       {model && (
         <>
-          {studentAttendanceDocument && (
-            <StudentAttendanceCard document={studentAttendanceDocument} />
-          )}
+          <StudentAttendanceCard />
 
           {model.studentAttendanceTables && (
             <TodayAttendanceSection tables={model.studentAttendanceTables} />
@@ -161,27 +144,11 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
   );
 }
 
-function StudentAttendanceCard({ document }: { document: ErpDocument }) {
-  let action: any = null;
-  let fieldName: string = "txtCode";
-
-  const scanNode = (node: any) => {
-    if (!node) return;
-    if (node.type === "form" && node.props?.action) action = node.props.action;
-    if (node.type === "button" && node.props?.action && !action) action = node.props.action;
-    if (node.type === "field" && node.props?.name) fieldName = node.props.name;
-    if (Array.isArray(node.children)) node.children.forEach(scanNode);
-  };
-
-  if (document.root) scanNode(document.root);
-  if (Array.isArray((document as any).children)) (document as any).children.forEach(scanNode);
-
+function StudentAttendanceCard() {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  if (!action) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,11 +161,16 @@ function StudentAttendanceCard({ document }: { document: ErpDocument }) {
     setFormError("");
     setSuccess(false);
     try {
-      await sendErpDocumentRequest({
-        url: action.target,
-        method: action.method || "POST",
-        data: { [fieldName]: trimmed },
+      const res = await fetch("/api/attendance/mark", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acode: trimmed }),
       });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error?.message || `Request failed (${res.status})`);
+      }
       setSuccess(true);
       setCode("");
     } catch (err: any) {

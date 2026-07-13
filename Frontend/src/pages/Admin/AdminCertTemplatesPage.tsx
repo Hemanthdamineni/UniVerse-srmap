@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
-import { EmptyState } from '../../components/competition/EmptyState';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 
 /* ---------- Types ---------- */
 

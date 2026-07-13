@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, CalendarClock, Plus, Search, Users } from "lucide-react";
+import { Building2, CalendarClock, Plus, Search, Sparkles, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
+import { getPlatformRecommendations, recordPlatformRecommendationFeedback, type PlatformRecommendation } from "../../lib/career/profileApi";
+import { track } from "../../lib/core/analytics";
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
 
@@ -118,10 +120,92 @@ function EventCard({ event, index }: { event: EventSummary; index: number }) {
   );
 }
 
+function RecommendationRail({
+  recommendations,
+  eventsById,
+}: {
+  recommendations: PlatformRecommendation[];
+  eventsById: Map<string, EventSummary>;
+}) {
+  const visible = recommendations
+    .map((recommendation) => ({
+      recommendation,
+      event: eventsById.get(recommendation.itemId),
+    }))
+    .filter((item): item is { recommendation: PlatformRecommendation; event: EventSummary } => Boolean(item.event))
+    .slice(0, 3);
+
+  if (!visible.length) return null;
+
+  return (
+    <section className="py-1" aria-label="Recommended events">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="m-0 inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+            <Sparkles size={14} />
+            Recommended for you
+          </p>
+          <h2 className="m-0 mt-1 text-lg font-semibold text-[var(--text-primary)]">Campus opportunities matched to your profile</h2>
+        </div>
+        <span className="text-xs font-semibold text-[var(--text-secondary)]">Profile signals</span>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {visible.map(({ recommendation, event }) => (
+          <Link
+            key={recommendation.impressionId || recommendation.itemId}
+            to={recommendation.href || `/events/${encodeURIComponent(recommendation.itemId)}`}
+            className="rounded-lg border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4 text-left no-underline transition hover:border-[color-mix(in_srgb,var(--accent-blue)_35%,var(--border))] hover:bg-[var(--background)]"
+            onClick={() => {
+              track("events_recommendation_clicked", {
+                eventId: recommendation.itemId,
+                impressionId: recommendation.impressionId,
+                score: recommendation.score,
+              });
+              if (recommendation.impressionId) {
+                void recordPlatformRecommendationFeedback({
+                  impressionId: recommendation.impressionId,
+                  action: "clicked",
+                  metadata: { surface: "events_listing" },
+                });
+              }
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                  {recommendation.label || event.category || "Event match"}
+                </p>
+                <h3 className="m-0 mt-1 text-base font-semibold leading-snug text-[var(--text-primary)]">{event.title}</h3>
+              </div>
+              <span className="rounded-full border border-[color-mix(in_srgb,var(--accent-blue)_28%,var(--border))] px-2 py-0.5 text-xs font-semibold text-[var(--accent-blue)]">
+                {Math.round(recommendation.score * 100)}%
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {recommendation.reasons.slice(0, 2).map((reason) => (
+                <span key={reason} className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
+                  {reason}
+                </span>
+              ))}
+            </div>
+            <p className="m-0 mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+              <Building2 size={13} />
+              {event.department || eventVenue(event)}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function EventsListingPage() {
   const [events, setEvents] = useState<EventSummary[]>([]);
+  const [recommendations, setRecommendations] = useState<PlatformRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [recommendationError, setRecommendationError] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(categories[0]);
   const [department, setDepartment] = useState(departments[0]);
@@ -139,6 +223,34 @@ export default function EventsListingPage() {
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  useEffect(() => {
+    let active = true;
+    setRecommendationsLoading(true);
+    setRecommendationError("");
+    getPlatformRecommendations("events")
+      .then((response) => {
+        if (!active) return;
+        setRecommendations(response.items || []);
+        if (response.items?.length) {
+          track("events_recommendations_viewed", {
+            count: response.items.length,
+            topEventId: response.items[0]?.itemId,
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        if (active) setRecommendationError(err instanceof Error ? err.message : "Failed to load event recommendations.");
+      })
+      .finally(() => {
+        if (active) setRecommendationsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const eventsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events]);
 
   const filteredEvents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -212,6 +324,9 @@ export default function EventsListingPage() {
       </section>
 
       {error ? <ErrorMessage message={error} onRetry={loadEvents} /> : null}
+      {!recommendationsLoading && !recommendationError ? (
+        <RecommendationRail recommendations={recommendations} eventsById={eventsById} />
+      ) : null}
 
       {loading ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">

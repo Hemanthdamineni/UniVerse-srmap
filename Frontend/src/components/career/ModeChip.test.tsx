@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import ModeChip from "./ModeChip";
+import { ModeChip } from "./CareerChips";
 
 describe("ModeChip", () => {
   it("renders remote", () => {

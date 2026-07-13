@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
-const { LmsTrackerService } = require("../src/services/lmsTrackerService");
-const { LmsTrackerStore } = require("../src/services/lmsTrackerStore");
+const { LmsTrackerService } = require("../src/services/lms/lmsTrackerService");
+const { LmsTrackerStore } = require("../src/services/lms/lmsTrackerStore");
 
 function createErpAggregationService() {
   const service = {

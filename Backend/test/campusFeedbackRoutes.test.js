@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
-const { CampusFeedbackStore } = require("../src/services/campusFeedbackStore");
+const { CampusFeedbackStore } = require("../src/services/campus/campusFeedbackStore");
 
 function createSession(profileData) {
   return {

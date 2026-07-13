@@ -5,7 +5,7 @@ const {
   extractCgpaSummaryFromHtml,
   extractSemesterNumber,
   buildCgpaSummaryPayload,
-} = require("../src/services/cgpaSummary");
+} = require("../src/services/erp/erpServices");
 
 test("extractCgpaSummaryFromHtml reads CGPA from the exam-mark summary block", () => {
   const html = `

@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { MoreVertical, Plus, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { listEvents, type EventSummary } from "../../lib/campusApi";
-import { getCurrentRegNo, isPlatformAdmin } from "../../lib/identity";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
+import { getCurrentRegNo, isPlatformAdmin } from "../../lib/core/identity";
 
 const MAX_ACTIVE_EVENTS = 5;
 

@@ -5,7 +5,7 @@ import SkillGapPage from "./SkillGapPage";
 
 const listSkillGaps = vi.fn();
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   get listSkillGaps() {
     return listSkillGaps;
   },

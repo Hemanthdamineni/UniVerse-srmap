@@ -1,7 +1,7 @@
 // BasicInfo grid: label-text + card-title tokens only.
 import { sanitizeVisibleText } from "../../components/erp/ErpPrimitives";
-import { executePipeline, type StudentProfile } from "../../lib/erpTransformers";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { executePipeline, type StudentProfile } from "../../lib/erp/erpTransformers";
+import { EmptyState } from "../../components/ui/Feedback";
 
 function BasicInfo({ profileData }: { profileData: any }) {
   // Check if we have the expected SAP data structure
@@ -11,7 +11,6 @@ function BasicInfo({ profileData }: { profileData: any }) {
 
   // Check if we have TableContent (actual scraped structure)
   if (!profileData?.TableContent) {
-    console.log('TableContent not found, available keys:', Object.keys(profileData));
     return <EmptyState title="Loading profile data..." description="Table content is being fetched." />;
   }
 

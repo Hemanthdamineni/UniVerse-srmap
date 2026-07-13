@@ -5,13 +5,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
-import { getCompetitionLeaderboard } from '../../lib/campusApi';
-import { readStoredProfileData } from '../../lib/session';
-import { EmptyState } from '../../components/competition/EmptyState';
+import { getCompetitionLeaderboard } from '../../lib/campus/campusApi';
+import { readStoredProfileData } from '../../lib/core/session';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { SkeletonTable } from '../../components/competition/Skeletons';
-import type { LeaderboardRow } from '../../lib/campusApi';
-import { track } from '../../lib/analytics';
+import { SkeletonTable } from '../../components/ui/Skeletons';
+import type { LeaderboardRow } from '../../lib/campus/campusApi';
+import { track } from '../../lib/core/analytics';
 
 export default function LeaderboardPage() {
   const { eventId = '', roundId = '' } = useParams();

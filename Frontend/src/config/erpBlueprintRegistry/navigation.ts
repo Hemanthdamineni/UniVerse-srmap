@@ -230,6 +230,7 @@ export const MAIN_NAV: NavSection[] = [
         children: [
           { type: "link", label: "My Bookmarks", route: "/career/me/bookmarks", domain: "career", access: "B" },
           { type: "link", label: "Application Tracker", route: "/career/me/tracker", domain: "career", access: "B" },
+          { type: "link", label: "Interview Booking", route: "/career/interviews", domain: "career", access: "A" },
         ],
       },
       {
@@ -240,6 +241,15 @@ export const MAIN_NAV: NavSection[] = [
         children: [
           { type: "link", label: "Career Profile", route: "/career/me/profile", domain: "career", access: "B" },
           { type: "link", label: "Skill Gap Analysis", route: "/career/me/skill-gap", domain: "career", access: "B" },
+        ],
+      },
+      {
+        type: "group",
+        label: "Networking",
+        icon: "/src/assets/Icons/Events.png",
+        domain: "career",
+        children: [
+          { type: "link", label: "Alumni Connect", route: "/career/alumni", domain: "career", access: "B" },
         ],
       },
     ],

@@ -1,5 +1,4 @@
 import { isStaticPrototype, requestData, requestMultipart } from "./http";
-import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./fixtures";
 import type {
   ContentBulkPreview,
   ContentHistoryEntry,
@@ -11,6 +10,7 @@ import type {
   ResourceSubjectResponse,
   UploadedResource,
 } from "./types";
+import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
 
 export async function getLearningMaterialCatalog(year?: number | null) {
   if (isStaticPrototype()) {

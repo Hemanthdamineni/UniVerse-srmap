@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { CareerStore } = require("../src/services/careerStore");
-const CareerRelevanceEngine = require("../src/services/careerRelevanceEngine");
+const { CareerStore } = require("../src/services/career/careerStore");
+const { CareerRelevanceEngine } = require("../src/services/career/careerServices");
 
 function makeStore() {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "career-store-test-"));
@@ -298,6 +298,85 @@ test("getCareerStats returns aggregate counts", () => {
     const stats = store.getCareerStats();
     assert.ok(typeof stats.totalActive === "number");
     assert.ok(Array.isArray(stats.byType));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("resume versions parse skills, score quality, merge to profile, and fit opportunities", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const user = makeUser({ userId: "resume-student", branch: "CSE", year: 3 });
+    store.updateProfile(user, {
+      skills: ["React"],
+      preferredTypes: ["internship"],
+      preferredLocations: ["remote"],
+      bio: "Frontend student",
+      linkedinUrl: "",
+      githubUrl: "",
+      portfolioUrl: "",
+      minStipend: "",
+      cgpa: 8.2,
+    });
+
+    store.db
+      .prepare(
+        `
+      INSERT INTO career_opportunities (
+        id, type, title, company, description, shortDescription, skills, tags,
+        location, mode, source, sourceUrl, applyUrl, scrapedAt, updatedAt,
+        eligibleBranches, eligibleYears, deadline, isActive, moderationState
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)
+    `
+      )
+      .run(
+        "fit-frontend",
+        "internship",
+        "Frontend Platform Intern",
+        "Acme",
+        "Build React and Node.js dashboards with SQL APIs",
+        "Build dashboards",
+        JSON.stringify(["React", "Node.js", "SQL"]),
+        JSON.stringify(["frontend"]),
+        "Remote",
+        "remote",
+        "manual",
+        "https://example.com/fit",
+        "https://example.com/fit/apply",
+        new Date().toISOString(),
+        new Date().toISOString(),
+        JSON.stringify(["CSE"]),
+        JSON.stringify([3]),
+        "2030-12-31T00:00:00.000Z"
+      );
+
+    const resume = store.createResumeVersion(user, {
+      fileName: "resume.txt",
+      extractedText: `
+        Student One
+        https://github.com/student/project
+        https://linkedin.com/in/student
+        Built React dashboards and Node.js APIs for 500 students.
+        Implemented SQL reporting project with 20+ features.
+      `,
+    });
+
+    assert.equal(resume.fileName, "resume.txt");
+    assert.ok(resume.parsedJson.skills.includes("React"));
+    assert.ok(resume.parsedJson.skills.includes("Node.js"));
+    assert.ok(resume.qualityScore > 50);
+    assert.ok(resume.analysis.suggestions.length >= 0);
+
+    const fit = store.getOpportunityFit(user, "fit-frontend", { resumeVersionId: resume.id });
+    assert.ok(fit.fitScore >= 75);
+    assert.deepEqual(fit.matchedSkills.sort(), ["Node.js", "React", "SQL"].sort());
+    assert.equal(fit.eligibility.eligible, true);
+    assert.equal(fit.resumeVersionId, resume.id);
+    assert.ok(fit.reasons.some((reason) => reason.includes("required skill")));
+
+    const merged = store.mergeResumeToProfile(user, resume.id);
+    assert.equal(merged.updated, true);
+    assert.ok(merged.profile.skills.includes("Node.js"));
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { CONTENT_DB_PATH } = require("../src/config/env");
-const { ContentStore } = require("../src/services/contentStore");
+const { ContentStore } = require("../src/services/lms/contentStore");
 const { slugify } = require("../src/utils/text");
 
 function usage() {

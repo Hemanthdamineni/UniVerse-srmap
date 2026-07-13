@@ -14,7 +14,7 @@
 }
 
 /* Base button reset structure */
-.btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+.btn-primary, .btn-secondary, .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -30,7 +30,7 @@
 }
 
 @media (min-width: 768px) {
-  .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+  .btn-primary, .btn-secondary, .btn-ghost {
     min-height: 36px;
     min-width: 0;
   }
@@ -66,16 +66,7 @@
   color: var(--comp-text-primary);
 }
 
-.btn-danger {
-  background: #e11d48; /* safe destruction red */
-  color: #ffffff;
-  border: none;
-}
-.btn-danger:hover {
-  background: #be123c;
-}
-
-.btn-primary:disabled, .btn-secondary:disabled, .btn-ghost:disabled, .btn-danger:disabled {
+.btn-primary:disabled, .btn-secondary:disabled, .btn-ghost:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;

@@ -1,8 +1,7 @@
 import React from 'react';
-import { cn } from '../../lib/utils';
-import { SkeletonBlock } from './SkeletonBlock';
-import { EmptyState } from './EmptyState';
-import { InlineError } from './InlineError';
+import { cn } from '../../lib/core/utils';
+import { SkeletonBlock } from './Skeletons';
+import { EmptyState, InlineError } from './Feedback';
 
 export interface Column<T> {
   header: React.ReactNode;

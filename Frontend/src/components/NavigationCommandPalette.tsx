@@ -20,7 +20,7 @@ import {
 import { useAdminMode } from "../contexts/AdminModeContext"
 
 import { COMMAND_PALETTE_EXTRA_GROUPS, getCommandPaletteGroupOrder, getRouteCatalog } from "../config/navigationRegistry"
-import { logoutSession } from "../lib/session"
+import { logoutSession } from "../lib/core/session"
 import { Button } from "./button"
 import {
   Command,

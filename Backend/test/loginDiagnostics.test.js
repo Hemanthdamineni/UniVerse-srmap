@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const {
   redactSensitiveText,
   sanitizeArtifactPayload,
-} = require("../src/services/loginDiagnostics");
+} = require("../src/services/core/sessionServices");
 
 test("redactSensitiveText removes secrets and common identifiers", () => {
   const sanitized = redactSensitiveText(

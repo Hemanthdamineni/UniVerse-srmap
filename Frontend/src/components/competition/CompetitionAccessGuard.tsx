@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 import { GlobalLoadingBoundary, useEvent } from "../../contexts/EventContext";
-import type { EventUserState } from "../../lib/eventUserState";
+import type { EventUserState } from "../../lib/events/eventUserState";
 import { CompetitionPageShell } from "./CompetitionChrome";
 
 type PermissionKey =

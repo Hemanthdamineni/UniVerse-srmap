@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Clock, AlertCircle, RefreshCw, ArrowRight } from "lucide-react";
-import { fetchOpportunities, type CareerOpportunity } from "../../lib/careerApi";
+import { listOpportunities, listApplications, type CareerOpportunity } from "../../lib/career/careerApi";
 
 function formatTimeUntil(deadline?: string): string {
   if (!deadline) return "No deadline";
@@ -25,11 +25,11 @@ export default function CareerWidget() {
     setError(null);
     try {
       const [ops, apps] = await Promise.all([
-        fetchOpportunities({ type: "all", deadlineSoon: true, limit: 3 }),
-        fetchOpportunities({ status: "applied", limit: 100 }),
+        listOpportunities({ type: "all", deadlineSoon: "true", limit: "3" }),
+        listApplications(),
       ]);
       setOpportunities(ops.items || []);
-      setApplicationCount(apps.items?.length || 0);
+      setApplicationCount((apps as { items?: { length: number } }).items?.length || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {

@@ -1,46 +1,4 @@
-import { extractGenericTables, normalizeRawCell, normalizeRawValue, readBundledPageData } from "./shared";
-import type {
-  AttendanceRecord,
-  ErpGenericTable,
-  AttendanceModel,
-  TimetableSlot,
-  TimetableDay,
-  TimetableSubject,
-  TimetableModel,
-  CourseRegistrationSubject,
-  CourseRegistrationModel,
-  CurriculumSubject,
-  CurriculumModel,
-  CurrentResultSubject,
-  CurrentResultModel,
-  FeeDueRecord,
-  FeeDuesModel,
-  StudentProfile,
-  InternalMarkAssessment,
-  InternalMarkSubject,
-  InternalMarksModel,
-  FieldType,
-  SchemaField,
-  SchemaDefinition,
-  FeePaidRecord,
-  FeePaidSourceSummary,
-  FeePaidColumn,
-  FeePaidSectionRow,
-  FeePaidSection,
-  FeePaidDuplicateConflict,
-  FeePaidIntegritySummary,
-  FeesPaidModel,
-  BankDetailField,
-  BankDetailsModel,
-  RoomDetailField,
-  RoomDetailsModel,
-  SapScholarshipRecord,
-  SapScholarshipsModel,
-  FaqsModel,
-  RefundChangeModel,
-  TransformerFn,
-  TransformerOutput
-} from "./types";
+import type { StudentProfile } from "./types";
 
 const splitField = (field: string, separator: string = " / ") => {
   return field ? field.split(separator).map(item => item.trim()) : ["", ""];

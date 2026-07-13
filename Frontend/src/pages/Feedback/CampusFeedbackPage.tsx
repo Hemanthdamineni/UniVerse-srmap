@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ErpPageShell, SectionCard, EmptyStateCard } from "../../components/erp/ErpPrimitives";
-import { StarRating } from "../../components/ui/StarRating";
+import { StarRating } from "../../components/ui/Progress";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   createCampusFeedbackOption,
@@ -13,7 +13,7 @@ import {
   type CampusFeedbackGovernanceResponse,
   type CampusFeedbackOption,
   type CampusFeedbackType,
-} from "../../lib/campusFeedbackApi";
+} from "../../lib/campus/campusApi";
 
 type CampusFeedbackPageProps<Category extends string> = {
   title: string;

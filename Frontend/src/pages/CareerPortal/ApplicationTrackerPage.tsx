@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { listApplications, updateApplication, deleteApplication, type CareerApplication } from "../../lib/careerApi";
+import { listApplications, updateApplication, deleteApplication, type CareerApplication } from "../../lib/career/careerApi";
 import { Link } from "react-router-dom";
-import { PageHeader } from "../../components/ui/PageHeader";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { PageHeader } from "../../components/ui/Layouts";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { EmptyState } from "../../components/ui/Feedback";
 import { Trash2, Calendar, Building2, GripVertical, Clock, CheckCircle2, XCircle } from "lucide-react";
-import { StatusBadge } from "../../components/ui/StatusBadge";
+import { StatusBadge } from "../../components/ui/Badges";
 
 const COLUMNS: { id: CareerApplication["status"]; label: string }[] = [
   { id: "interested", label: "Interested" },

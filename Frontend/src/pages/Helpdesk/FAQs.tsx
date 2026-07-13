@@ -12,7 +12,7 @@ import {
   listHelpdeskFaqs,
   type CampusFaq,
   updateHelpdeskFaq,
-} from "../../lib/campusApi";
+} from "../../lib/campus/campusApi";
 
 const FAQ_CATEGORIES = ["General", "Academic", "Finance", "Hostel & Transport", "IT & Technical"] as const;
 

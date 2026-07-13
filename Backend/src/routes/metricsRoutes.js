@@ -1,5 +1,5 @@
 const express = require("express");
-const { register } = require("../services/metricsService");
+const { register } = require("../services/campus/feedbackServices");
 
 function createMetricsRoutes() {
   const router = express.Router();

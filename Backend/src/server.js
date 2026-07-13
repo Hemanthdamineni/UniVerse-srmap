@@ -10,6 +10,8 @@ const {
   CONTENT_DB_PATH,
   LMS_DB_PATH,
   LMS_TRACKER_DB_PATH,
+  UNIFIED_PROFILE_DB_PATH,
+  COMPANION_ANALYTICS_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
@@ -28,41 +30,43 @@ const path = require("path");
 const fs = require("fs");
 const scrapeTargets = require("./config/scrapeTargets");
 const { createApp } = require("./app");
-const { DiscoveryRepository } = require("./services/discoveryRepository");
-const { ExternalDataStore } = require("./services/externalDataStore");
-const { ContentStore } = require("./services/contentStore");
-const { SessionStore } = require("./services/sessionStore");
-const { RedisSessionStore } = require("./services/redisSessionStore");
+const { DiscoveryRepository } = require("./services/career/careerServices");
+const { ExternalDataStore } = require("./services/campus/feedbackServices");
+const { ContentStore } = require("./services/lms/contentStore");
+const { SessionStore } = require("./services/core/sessionServices");
+const { RedisSessionStore } = require("./services/core/sessionServices");
 const {
   InMemoryErpCacheStore,
   RedisErpCacheStore,
-} = require("./services/erpCacheStore");
-const { getRedisClient } = require("./services/redisClient");
-const { ErpLiveService } = require("./services/erpLiveService");
-const { FeedbackAutomationService } = require("./services/feedbackAutomationService");
-const { ErpAggregationService } = require("./services/erpAggregationService");
-const { ErpUiMapStore } = require("./services/erpUiMapStore");
-const { ErpActionExecutor } = require("./services/erpActionExecutor");
-const { createApiContext } = require("./services/erpClient");
-const { PagePolicyStore } = require("./services/pagePolicyStore");
-const { EventsStore } = require("./services/eventsStore");
-const { createCompetitionStore } = require("./services/competitionStore");
-const { HelpdeskStore } = require("./services/helpdeskStore");
-const { CampusFeedbackStore } = require("./services/campusFeedbackStore");
-const { CareerStore } = require("./services/careerStore");
-const { LmsTrackerService } = require("./services/lmsTrackerService");
-const { LmsTrackerStore } = require("./services/lmsTrackerStore");
-const { LmsStore } = require("./services/lmsStore");
-const { LmsModerationService } = require("./services/lmsModerationService");
-const { LmsRevisionScheduler } = require("./services/lmsRevisionScheduler");
-const { LmsReadingTimeEstimator } = require("./services/lmsReadingTimeEstimator");
-const { LmsDuplicateDetector } = require("./services/lmsDuplicateDetector");
-const { LmsFeatureFlagService } = require("./services/lmsFeatureFlagService");
-const { LmsRecommendationEngine } = require("./services/lmsRecommendationEngine");
-const { LmsInteractionQueue } = require("./services/lmsInteractionQueue");
-const { LmsInteractionTracker } = require("./services/lmsInteractionTracker");
-const { LmsExamFeedbackService } = require("./services/lmsExamFeedbackService");
-const { ErpIntegrityService } = require("./services/erpIntegrityService");
+} = require("./services/erp/erpServices");
+const { getRedisClient } = require("./services/core/sessionServices");
+const { ErpLiveService } = require("./services/erp/erpServices");
+const { FeedbackAutomationService } = require("./services/campus/feedbackServices");
+const { ErpAggregationService } = require("./services/erp/erpAggregationService");
+const { ErpUiMapStore } = require("./services/erp/erpUiMapStore");
+const { ErpActionExecutor } = require("./services/erp/erpActionExecutor");
+const { createApiContext } = require("./services/erp/erpClient");
+const { PagePolicyStore } = require("./services/core/sessionServices");
+const { EventsStore } = require("./services/events/eventsStore");
+const { createCompetitionStore } = require("./services/events/competitionStore");
+const { HelpdeskStore } = require("./services/campus/helpdeskStore");
+const { CampusFeedbackStore } = require("./services/campus/campusFeedbackStore");
+const { CareerStore } = require("./services/career/careerStore");
+const { LmsTrackerService } = require("./services/lms/lmsTrackerService");
+const { LmsTrackerStore } = require("./services/lms/lmsTrackerStore");
+const { LmsStore } = require("./services/lms/lmsStore");
+const { UnifiedProfileStore } = require("./services/core/unifiedProfileStore");
+const { CompanionAnalyticsStore } = require("./services/career/careerServices");
+const { LmsModerationService } = require("./services/lms/lmsServices");
+const { LmsRevisionScheduler } = require("./services/lms/lmsServices");
+const { LmsReadingTimeEstimator } = require("./services/lms/lmsServices");
+const { LmsDuplicateDetector } = require("./services/lms/lmsServices");
+const { LmsFeatureFlagService } = require("./services/lms/lmsServices");
+const { LmsRecommendationEngine } = require("./services/lms/lmsServices");
+const { LmsInteractionQueue } = require("./services/lms/lmsServices");
+const { LmsInteractionTracker } = require("./services/lms/lmsServices");
+const { LmsExamFeedbackService } = require("./services/lms/lmsServices");
+const { ErpIntegrityService } = require("./services/erp/erpServices");
 const { log, getLogFilePath, shutdownLogger } = require("./utils/logger");
 
 async function createSessionStore(redisClient) {
@@ -97,8 +101,8 @@ async function startServer() {
 
   const isCaptureMode = process.argv.includes("--capture");
   if (isCaptureMode) {
-    const { setCaptureDir } = require("./services/erpClient");
-    const { ErpDumpService } = require("./services/erpDumpService");
+    const { setCaptureDir } = require("./services/erp/erpClient");
+    const { ErpDumpService } = require("./services/erp/erpServices");
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const captureDir = path.join(ErpDumpService.getBaseDir(), timestamp);
     fs.mkdirSync(path.join(captureDir, "raw"), { recursive: true });
@@ -113,7 +117,7 @@ async function startServer() {
   const sessionStore = await createSessionStore(redisClient);
   const erpCacheStore = await createErpCacheStore(redisClient);
   const pagePolicyStore = new PagePolicyStore(ERP_PAGE_POLICY_FILE);
-  const { ErpDumpService } = require("./services/erpDumpService");
+  const { ErpDumpService } = require("./services/erp/erpServices");
   const erpDumpService = isDebugMode
     ? (ErpDumpService.resolveLatest()
         ? new ErpDumpService(ErpDumpService.resolveLatest())
@@ -179,12 +183,23 @@ async function startServer() {
   const lmsTrackerStore = new LmsTrackerStore({
     dbPath: LMS_TRACKER_DB_PATH,
   });
+  const unifiedProfileStore = new UnifiedProfileStore({
+    dbPath: UNIFIED_PROFILE_DB_PATH,
+    lmsStore,
+    careerStore,
+    eventsStore,
+    competitionStore,
+  });
+  const companionAnalyticsStore = new CompanionAnalyticsStore({
+    dbPath: COMPANION_ANALYTICS_DB_PATH,
+  });
   const lmsReadingTimeEstimator = new LmsReadingTimeEstimator();
   const lmsDuplicateDetector = new LmsDuplicateDetector({ lmsStore });
   const lmsFeatureFlagService = new LmsFeatureFlagService({ lmsStore });
   const lmsRecommendationEngine = new LmsRecommendationEngine({
     lmsStore,
     featureFlagService: lmsFeatureFlagService,
+    unifiedProfileStore,
   });
   const lmsInteractionQueue = new LmsInteractionQueue({ lmsStore });
   const lmsInteractionTracker = new LmsInteractionTracker({
@@ -227,6 +242,8 @@ async function startServer() {
     campusFeedbackStore,
     careerStore,
     competitionStore,
+    unifiedProfileStore,
+    companionAnalyticsStore,
     lmsStore,
     lmsTrackerService,
     recommendationEngine: lmsRecommendationEngine,
@@ -258,7 +275,7 @@ async function startServer() {
   }, 5 * 60 * 1000);
   reminderTicker.unref();
 
-  const { runCareerNotificationCycle } = require("./services/careerNotifier");
+  const { runCareerNotificationCycle } = require("./services/career/careerServices");
   const careerNotifyTicker = setInterval(() => {
     try {
       const summary = runCareerNotificationCycle({ careerStore, eventsStore });

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isPlaceholderBlueprint, type PageBlueprint } from "../../config/erpBlueprints";
-import { fetchSessionProfile, readStoredProfileData } from "../../lib/session";
+import { fetchSessionProfile, readStoredProfileData } from "../../lib/core/session";
 import { loadErpKey, loadExternalPage } from "./blueprintData/api";
 import {
   normalizeErpPayloads,

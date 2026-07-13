@@ -6,8 +6,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ErpPageShell } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { EmptyState } from '../../components/competition/EmptyState';
-import { listEvents } from '../../lib/campusApi';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
+import { listEvents } from '../../lib/campus/campusApi';
 import { DataToolbar } from '../../components/data/DataToolbar';
 
 /* ---------- Types ---------- */

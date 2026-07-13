@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { DASHBOARD_QUICK_LINKS } from "../../config/erpBlueprints";
 import {
   DataTable,
   EmptyStateCard,
@@ -9,6 +8,7 @@ import {
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
 import { useBlueprintPageData } from "./useBlueprintPageData";
+import DashboardQuickLinks from "./components/DashboardQuickLinks";
 
 export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint }) {
   const navigate = useNavigate();
@@ -34,22 +34,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
         />
       ) : null}
 
-      {blueprint.renderer === "dashboard" ? (
-        <SectionCard title="Quick Links">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-            {DASHBOARD_QUICK_LINKS.map((link) => (
-              <button
-                key={link.route}
-                type="button"
-                onClick={() => navigate(link.route)}
-                className="dashboard-subcard rounded-lg border border-[color-mix(in_srgb,var(--comp-accent)_20%,transparent)] px-3 py-3 text-left text-sm font-medium text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-        </SectionCard>
-      ) : null}
+      {blueprint.renderer === "dashboard" ? <DashboardQuickLinks /> : null}
 
       {state.statuses.map((status) => (
         <StatusBanner key={status.id} message={status} />

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 // ErpPageShell section-card layout; timetable structure unchanged.
-import { getErpBatch } from "../../lib/erpApi";
-import { executePipeline } from "../../lib/erpTransformers";
-import type { TimetableModel } from "../../lib/erpTransformers";
+import { getErpBatch } from "../../lib/erp/index";
+import { executePipeline } from "../../lib/erp/erpTransformers";
+import type { TimetableModel } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 
 interface TimetablePageProps {
   blueprint: PageBlueprint;

@@ -5,8 +5,8 @@
  * This enforces the single source of truth from getEventUserState().
  */
 
-import type { CompetitionRound } from '../../lib/campusApi';
-import type { RoundUserState } from '../../lib/eventUserState';
+import type { CompetitionRound } from '../../lib/campus/campusApi';
+import type { RoundUserState } from '../../lib/events/eventUserState';
 import { DeadlineCountdown } from './DeadlineCountdown';
 
 interface RoundStatusCardProps {

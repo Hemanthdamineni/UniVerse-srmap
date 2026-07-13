@@ -1,11 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../card';
-import type { CareerOpportunity } from '../../lib/careerApi';
-import TypeBadge from './TypeBadge';
-import DeadlineCountdown from './DeadlineCountdown';
-import StipendChip from './StipendChip';
-import ModeChip from './ModeChip';
-import SourceBadge from './SourceBadge';
+import type { CareerOpportunity } from '../../lib/career/careerApi';
+import { TypeBadge, DeadlineBadge, StipendChip, ModeChip, SourceBadge } from './CareerChips';
 import { Bookmark, ExternalLink, Zap } from 'lucide-react';
 import { Button } from '../button';
 import { Link } from 'react-router-dom';
@@ -84,7 +80,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <DeadlineCountdown deadline={deadline} />
+          <DeadlineBadge deadline={deadline} />
           <ModeChip mode={mode} />
           <StipendChip stipend={stipend} prize={prize} isFree={isFree} />
         </div>

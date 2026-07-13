@@ -1,4 +1,4 @@
-const { toSafeString } = require("../../services/lmsUtils");
+const { toSafeString } = require("../../services/lms/lmsUtils");
 
 function registerLearningAdminRoutes(
   router,
@@ -31,10 +31,35 @@ function registerLearningAdminRoutes(
     })
   );
 
+  router.get("/lms/recommendations/exam-prep", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      recommendationEngine.getExamPrepRecommendations({
+        userId: req.userContext.userId,
+        user: req.userContext,
+        filters: {
+          subjectCode: req.query.subjectCode,
+          type: req.query.type,
+        },
+        limit: req.query.limit,
+      })
+    )
+  );
+
+  router.get("/lms/recommendations/roadmaps", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      recommendationEngine.getRoadmapRecommendations({
+        userId: req.userContext.userId,
+        user: req.userContext,
+        limit: req.query.limit,
+      })
+    )
+  );
+
   router.get("/lms/recommendations", (req, res, next) =>
     createHandle(req, res, next, async () =>
       recommendationEngine.getRecommendations({
         userId: req.userContext.userId,
+        user: req.userContext,
         filters: {
           subjectCode: req.query.subjectCode,
           type: req.query.type,

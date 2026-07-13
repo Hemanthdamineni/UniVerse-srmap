@@ -1,4 +1,4 @@
-import { ErrorState } from "../ui/AsyncState";
+import { ErrorState } from "../ui/Feedback";
 
 interface ErrorMessageProps {
   title?: string;

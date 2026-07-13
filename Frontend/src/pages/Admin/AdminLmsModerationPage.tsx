@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
-import { StatCard } from "../../components/ui/StatCard";
+import { InlineError } from "../../components/ui/Feedback";
+import { StatCard } from "../../components/ui/Progress";
 import { useAdminMode } from "../../contexts/AdminModeContext";
 import {
   getLmsResourceModerationQueue,
   moderateLmsResource,
   type LmsModerationQueueResponse,
   type LmsResource,
-} from "../../lib/lmsApi";
+} from "../../lib/lms/index";
 
 const QUEUE_FILTERS = [
   { id: "all", label: "All" },

@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ErpPageShell } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { listEvents } from '../../lib/campusApi';
+import { listEvents } from '../../lib/campus/campusApi';
 import { Select } from '../../components/select';
 import { DataToolbar } from '../../components/data/DataToolbar';
 

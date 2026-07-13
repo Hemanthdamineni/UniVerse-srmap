@@ -1,4 +1,4 @@
-import type { LmsResource } from "../../lib/lmsApi";
+import type { LmsResource } from "../../lib/lms/index";
 import ResourceCard from "./ResourceCard";
 
 export default function ResourceGrid({ items }: { items: LmsResource[] }) {

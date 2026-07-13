@@ -20,6 +20,9 @@ const { createCampusFeedbackRoutes } = require("./routes/campusFeedbackRoutes");
 const { createCareerRoutes } = require("./routes/careerRoutes");
 const { createCompetitionRoutes } = require("./routes/competitionRoutes");
 const { createLmsRoutes } = require("./routes/lmsRoutes");
+const { createProfileRoutes } = require("./routes/profileRoutes");
+const { createRecommendationRoutes } = require("./routes/recommendationRoutes");
+const { createCompanionAnalyticsRoutes } = require("./routes/companionAnalyticsRoutes");
 const { createAttendanceRoutes } = require("./routes/attendanceRoutes");
 const { createMetricsRoutes } = require("./routes/metricsRoutes");
 const { createTelemetryRoutes } = require("./routes/telemetryRoutes");
@@ -42,6 +45,8 @@ function createApp({
   campusFeedbackStore,
   careerStore,
   competitionStore,
+  unifiedProfileStore,
+  companionAnalyticsStore,
   lmsStore,
   lmsTrackerService,
   recommendationEngine,
@@ -98,6 +103,16 @@ function createApp({
   );
   app.use("/api", createMetricsRoutes());
   app.use("/api", createTelemetryRoutes());
+  if (companionAnalyticsStore) {
+    app.use(
+      "/api",
+      createCompanionAnalyticsRoutes({
+        analyticsStore: companionAnalyticsStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
   if (erpDumpService) {
     app.use("/api", createDebugRoutes({ erpDumpService }));
   }
@@ -169,6 +184,24 @@ function createApp({
       "/api",
       createCompetitionRoutes({
         competitionStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
+  if (unifiedProfileStore) {
+    app.use(
+      "/api",
+      createProfileRoutes({
+        unifiedProfileStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+    app.use(
+      "/api",
+      createRecommendationRoutes({
+        unifiedProfileStore,
         sessionStore,
         adminPassword: contentAdminPassword,
       })

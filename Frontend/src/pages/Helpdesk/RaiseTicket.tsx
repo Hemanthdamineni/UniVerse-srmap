@@ -5,7 +5,7 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
-import { createHelpdeskTicket, listHelpdeskTickets, type CampusTicket } from "../../lib/campusApi";
+import { createHelpdeskTicket, listHelpdeskTickets, type CampusTicket } from "../../lib/campus/campusApi";
 
 type TicketCategory = "IT Support" | "Academic" | "Hostel" | "Finance" | "Transport" | "Other";
 type TicketPriority = "low" | "medium" | "high" | "urgent";

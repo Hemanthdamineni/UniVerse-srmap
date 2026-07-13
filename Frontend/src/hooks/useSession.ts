@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { readStoredProfileData } from '../lib/session';
+import { readStoredProfileData } from '../lib/core/session';
 
 export function useSession() {
   const [profile, setProfile] = useState<any>(null);

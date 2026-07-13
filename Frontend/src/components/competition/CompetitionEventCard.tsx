@@ -3,8 +3,8 @@
  * Keyboard-accessible. Hover lift. Competition cards have teal left border.
  */
 
-import type { EventSummary } from '../../lib/campusApi';
-import { StatusBadge } from './StatusBadge';
+import type { EventSummary } from '../../lib/campus/campusApi';
+import { StatusBadge } from '../ui/Badges';
 import { DeadlineCountdown } from './DeadlineCountdown';
 
 interface CompetitionEventCardProps {
@@ -72,7 +72,7 @@ export function CompetitionEventCard({ event, onClick }: CompetitionEventCardPro
             </span>
           )}
         </div>
-        <StatusBadge status={badgeStatus} size="sm" />
+        <StatusBadge status={badgeStatus} className="text-xs" />
       </div>
 
       {/* Title */}
