@@ -26,13 +26,13 @@ const { InMemoryErpCacheStore } = require("../src/services/erpCacheStore");
 const { DiscoveryRepository } = require("../src/services/discoveryRepository");
 const { PagePolicyStore } = require("../src/services/pagePolicyStore");
 const { ErpLiveService } = require("../src/services/erpLiveService");
-const { ErpAggregationService } = require("../src/services/erpAggregationService");
+const { ErpAggregationService } = require("../src/services/erp/erpAggregationService");
 const {
   fetchProfileViaApi,
   createApiContext,
   isUsableProfileData,
   buildFallbackProfileData,
-} = require("../src/services/erpClient");
+} = require("../src/services/erp/erpClient");
 const { encodeKey } = require("../src/services/erpDumpService");
 
 const DUMP_BASE_DIR = path.join(__dirname, "../data/erp-dump");

@@ -1,6 +1,6 @@
 const express = require("express");
 const { FEATURE_FRONTEND_PERF_TELEMETRY } = require("../config/env");
-const { recordFrontendTelemetry } = require("../services/metricsService");
+const { recordFrontendTelemetry } = require("../services/campus/feedbackServices");
 const { sendApiError } = require("../utils/apiResponse");
 
 function createTelemetryRoutes() {

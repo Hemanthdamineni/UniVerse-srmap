@@ -43,6 +43,7 @@ const MEANINGFUL_TEXT_FALLBACK_PAGE_KEYS = [
 const defaultContract = Object.freeze({
   kind: "default",
   requireTargetSections: true,
+  requireExtractedPayload: false,
   rejectSuspiciousText: true,
   minTableCount: 0,
   allowMeaningfulTextFallback: false,
@@ -52,6 +53,7 @@ const contractOverrides = {
   profile: {
     kind: "profile",
     requireTargetSections: false,
+    requireExtractedPayload: false,
     rejectSuspiciousText: true,
     minTableCount: 0,
     allowMeaningfulTextFallback: false,
@@ -125,6 +127,7 @@ for (const pageKey of TABLE_REQUIRED_PAGE_KEYS) {
   contractOverrides[pageKey] = {
     kind: "default",
     requireTargetSections: true,
+    requireExtractedPayload: true,
     rejectSuspiciousText: true,
     minTableCount: 1,
   };
