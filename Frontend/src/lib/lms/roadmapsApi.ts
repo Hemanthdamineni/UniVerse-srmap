@@ -1,14 +1,4 @@
 import { buildMultipartForm, isStaticPrototype, requestData, requestMultipart } from "./http";
-import {
-  STATIC_ADMIN_LEARNING_ITEM,
-  STATIC_CAREER_READINESS,
-  STATIC_CONTENT_WORKFLOW,
-  STATIC_LMS_PUBLISHER,
-  STATIC_LMS_RESOURCES,
-  STATIC_RECOMMENDATION_EVENTS,
-  STATIC_TRACKER_SNAPSHOT,
-  STATIC_UNIFIED_INSIGHTS,
-} from "./fixtures";
 import type {
   ResourceCatalogCourse,
   ResourceCatalogResponse,
@@ -42,6 +32,8 @@ import type {
   LmsCollection,
   LmsModerationQueueResponse
 } from "./types";
+import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
+import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
 
 export async function listRoadmaps(params: Record<string, unknown> = {}) {
   const search = new URLSearchParams();
@@ -49,6 +41,43 @@ export async function listRoadmaps(params: Record<string, unknown> = {}) {
     if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
   });
   return requestData<LmsRoadmap[]>(`/api/lms/roadmaps?${search.toString()}`);
+}
+
+export async function getRoadmapRecommendations(params: Record<string, unknown> = {}) {
+  const limit = Number(params.limit || 6);
+  if (isStaticPrototype()) {
+    return [
+      {
+        id: "roadmap-static-career",
+        title: "Frontend Internship Readiness",
+        description: "A focused path from React fundamentals to portfolio-ready project work.",
+        skill: "React",
+        authorId: "static",
+        difficulty: "intermediate",
+        estimatedHours: 12,
+        viewCount: 0,
+        upvotes: 0,
+        qualityScore: 8,
+        published: 1,
+        nodes: [],
+        edges: [],
+        userProgress: null,
+        recommendationScore: 0.82,
+        confidence: 0.9,
+        reasons: [
+          { code: "skillGapMatch", label: "Targets a career skill gap", weight: 1 },
+          { code: "nodeCoverage", label: "Has structured milestones", weight: 0.8 },
+        ],
+        inputsUsed: { algorithmKey: "roadmap-ranking-v1-cross-domain" },
+        rankingPolicy: { algorithmKey: "roadmap-ranking-v1-cross-domain" },
+      },
+    ].slice(0, limit) as LmsRoadmap[];
+  }
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
+  });
+  return requestData<LmsRoadmap[]>(`/api/lms/recommendations/roadmaps?${search.toString()}`);
 }
 
 export async function createRoadmap(payload: Record<string, unknown>) {

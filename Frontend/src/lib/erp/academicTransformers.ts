@@ -1,210 +1,161 @@
-import { extractGenericTables, normalizeRawCell, normalizeRawValue, readBundledPageData } from "./shared";
+import { readExtracted, readExtractedPage } from "./shared";
 import type {
-  AttendanceRecord,
-  ErpGenericTable,
-  AttendanceModel,
   TimetableSlot,
   TimetableDay,
   TimetableSubject,
   TimetableModel,
-  CourseRegistrationSubject,
   CourseRegistrationModel,
-  CurriculumSubject,
   CurriculumModel,
-  CurrentResultSubject,
-  CurrentResultModel,
-  FeeDueRecord,
-  FeeDuesModel,
-  StudentProfile,
-  InternalMarkAssessment,
-  InternalMarkSubject,
-  InternalMarksModel,
-  FieldType,
-  SchemaField,
-  SchemaDefinition,
-  FeePaidRecord,
-  FeePaidSourceSummary,
-  FeePaidColumn,
-  FeePaidSectionRow,
-  FeePaidSection,
-  FeePaidDuplicateConflict,
-  FeePaidIntegritySummary,
-  FeesPaidModel,
-  BankDetailField,
-  BankDetailsModel,
-  RoomDetailField,
-  RoomDetailsModel,
-  SapScholarshipRecord,
-  SapScholarshipsModel,
-  FaqsModel,
-  RefundChangeModel,
-  TransformerFn,
-  TransformerOutput
 } from "./types";
 
-function looksLikeLtpc(value: string) {
-  return /^\d+\s*-\s*\d+\s*-\s*\d+\s*-\s*\d+$/i.test(normalizeRawValue(value));
-}
-
-function looksLikeRoom(value: string) {
-  const normalized = normalizeRawValue(value);
-  if (!normalized) return false;
-  return /(?:\(|\b)([A-Z]{1,3}\s*\d{2,4})(?:\)|\b)/i.test(normalized);
-}
-
-export function transformTimetable(rawData: unknown): TimetableModel {
-  const empty: TimetableModel = { timeSlots: [], days: [], subjects: [] };
-
-  const data = rawData as Record<string, unknown>;
-  const section = (data?.Academic as Record<string, unknown>)?.["Time Table"] as Record<string, unknown>;
-  if (!section?.tables || !Array.isArray(section.tables) || section.tables.length < 2) return empty;
-
-  const scheduleTable = section.tables[0] as Record<string, unknown>[];
-  const subjectTable = section.tables[1] as Record<string, unknown>[];
-
-  const timeHeaderRow =
-    scheduleTable.find((row) => {
-      const numericKeys = Object.keys(row || {}).filter((key) => /^\d+$/.test(key));
-      if (!numericKeys.length) return false;
-      return numericKeys.some((key) => normalizeRawValue(row[key]).includes(":"));
-    }) ||
-    scheduleTable.find((row) => Object.keys(row || {}).some((key) => /^\d+$/.test(key))) ||
-    {};
-  const timeSlotKeys = Object.keys(timeHeaderRow).filter(k => /^\d+$/.test(k));
-  const timeSlots = timeSlotKeys.map(k => normalizeRawValue(timeHeaderRow[k])).filter(Boolean);
-
-  const days: TimetableDay[] = [];
-  for (const row of scheduleTable) {
-    const dayName = normalizeRawValue(row.col1 ?? row.col2 ?? row["Day"]);
-    if (!dayName || dayName === "-") continue;
-
-    const slots: TimetableSlot[] = timeSlotKeys.map((key, idx) => ({
-      time: timeSlots[idx] ?? `Period ${idx + 1}`,
-      classDetails: normalizeRawValue(row[key]) === "-" ? "" : normalizeRawValue(row[key]),
-    }));
-
-    days.push({ day: dayName, slots });
+function requireExtracted(
+  pageData: unknown,
+  expectedType: string,
+  pageKey: string,
+): Record<string, unknown> {
+  const extracted = readExtracted(pageData);
+  if (!extracted) {
+    throw new Error(
+      `MISSING_EXTRACTED_PAYLOAD [${pageKey}]: _extracted field is absent. ` +
+        `The ERP page structure may have changed. Add or fix the backend extractor.`,
+    );
   }
+  if (extracted.type !== expectedType) {
+    throw new Error(
+      `UNEXPECTED_PAYLOAD_TYPE [${pageKey}]: expected "${expectedType}", got "${extracted.type}". ` +
+        `The backend extractor output type has changed or the wrong extractor is mapped.`,
+    );
+  }
+  return extracted;
+}
 
-  const subjects: TimetableSubject[] = [];
-  const seen = new Set<string>();
-
-  for (let i = 0; i < subjectTable.length; i++) {
-    const row = subjectTable[i];
-
-    // Handle both cases: normalized (with "Subject Code") and shifted (code in "Subjects Description")
-    let code: string;
-    let name: string;
-    let ltpc: string;
-    let faculty: string;
-    let roomCandidate: string;
-
-    if (row["Subjects Description"] && !row["Subject Code"]) {
-      // Shifted case (backend normalization not applied)
-      code = normalizeRawValue(row["Subjects Description"]);
-      name = normalizeRawValue(row["L-T-P-C"]);
-      ltpc = normalizeRawValue(row["Faculty Name"]);
-      faculty = normalizeRawValue(row["Class Room Name"]);
-      roomCandidate = normalizeRawValue(row.col5);
-    } else {
-      // Normal case
-      code = normalizeRawValue(row["Subject Code"] || row["Code"] || row.col1);
-      name = normalizeRawValue(
-        row["Subject Description"] || row["Subject Desc"] || row["Subject Name"] || row["Description"] || row.col2
-      );
-      ltpc = normalizeRawValue(row["L-T-P-C"] || row["LTPC"] || row.col3);
-      faculty = normalizeRawValue(
-        row["Faculty Name"] || row["Faculty"] || row["Staff Name"] || row.col4
-      );
-      roomCandidate = normalizeRawValue(
-        row["Class Room Name"] || row["Room"] || row["Class Room"] || row.col5
+/**
+ * Read _extracted from a page within a batched ERP response, falling back
+ * to treating rawData as the page-level payload if the batch key is absent.
+ * Returns null when the batch explicitly reports an error for this page key
+ * (backend returned { success: false }), so the caller can return empty data
+ * gracefully instead of throwing.
+ */
+function requireExtractedPage(
+  rawData: unknown,
+  pageKey: string,
+  expectedType: string,
+): Record<string, unknown> | null {
+  const pageExtracted = readExtractedPage(rawData, pageKey);
+  if (pageExtracted !== null) {
+    if (pageExtracted.type !== expectedType) {
+      throw new Error(
+        `UNEXPECTED_PAYLOAD_TYPE [${pageKey}]: expected "${expectedType}", got "${pageExtracted.type}". ` +
+          `The backend extractor output type has changed or the wrong extractor is mapped.`,
       );
     }
-
-    if (!code || code === "-" || code.toLowerCase() === "subject code" || code.toLowerCase() === "subjects description") continue;
-    if (seen.has(code)) continue;
-    seen.add(code);
-
-    const room = looksLikeRoom(roomCandidate) ? roomCandidate : "";
-
-    subjects.push({
-      code,
-      name: name || code,
-      ltpc: looksLikeLtpc(ltpc) ? ltpc : "",
-      faculty: faculty || "",
-      room,
-    });
+    return pageExtracted;
   }
+
+  // Batch entry has an explicit error — don't throw, let caller return empty data.
+  const root = rawData as Record<string, unknown> | undefined;
+  const entry = root?.[pageKey] as Record<string, unknown> | undefined;
+  if (entry?.success === false) {
+    return null;
+  }
+
+  return requireExtracted(rawData, expectedType, pageKey);
+}
+
+// ---------------------------------------------------------------------------
+// TIMETABLE
+// Backend extractor: extractTimetable → type "timetable"
+// Shape: { type, title, timeSlots: string[], schedule: [{day, periods: string[]}],
+//          subjects: [{code, description, ltpc, faculty, classroom}] }
+// ---------------------------------------------------------------------------
+
+export function transformTimetable(rawData: unknown): TimetableModel {
+  // Accept both the full batch response (from Dashboard) and the page-level
+  // payload (from individual timetable page fetch).
+  const extracted = requireExtractedPage(rawData, "academic/time-table", "timetable");
+  if (!extracted) {
+    // Backend returned an error for this page — return empty model gracefully.
+    return { timeSlots: [], days: [], subjects: [] };
+  }
+  const timeSlots = (extracted.timeSlots as string[] | undefined) ?? [];
+  const scheduleRaw = (extracted.schedule as Record<string, unknown>[] | undefined) ?? [];
+  const subjectsRaw = (extracted.subjects as Record<string, unknown>[] | undefined) ?? [];
+
+  const days: TimetableDay[] = scheduleRaw.map((s) => ({
+    day: String(s.day ?? ""),
+    slots: ((s.periods as string[]) ?? []).map((text, idx): TimetableSlot => ({
+      time: timeSlots[idx] ?? `Period ${idx + 1}`,
+      classDetails: text,
+    })),
+  })).filter((d) => d.day);
+
+  const seen = new Set<string>();
+  const subjects: TimetableSubject[] = subjectsRaw
+    .filter((s) => {
+      const code = String(s.code ?? "");
+      if (!code || seen.has(code)) return false;
+      seen.add(code);
+      return true;
+    })
+    .map((s) => ({
+      code: String(s.code ?? ""),
+      name: String(s.description ?? s.code ?? ""),
+      ltpc: String(s.ltpc ?? ""),
+      faculty: String(s.faculty ?? ""),
+      room: String(s.classroom ?? ""),
+    }));
 
   return { timeSlots, days, subjects };
 }
 
-export function transformCourseRegistration(rawData: unknown): CourseRegistrationModel {
-  const empty: CourseRegistrationModel = { subjects: [] };
-  const data = rawData as Record<string, unknown>;
-  const section = (data?.Academic as Record<string, unknown>)?.["Course Registration"] as Record<string, unknown>;
-  const tables = section?.tables as Array<Array<Record<string, unknown>>> | undefined;
+// ---------------------------------------------------------------------------
+// COURSE REGISTRATION
+// Backend extractor: genericFor("COURSE REGISTRATION") → type "generic-table"
+// Shape: { type, title, tables: [{columns, rows}], text }
+// ---------------------------------------------------------------------------
 
-  if (!tables || tables.length === 0 || !Array.isArray(tables[0])) {
-    return empty;
+export function transformCourseRegistration(rawData: unknown): CourseRegistrationModel {
+  const extracted = requireExtracted(rawData, "generic-table", "academic/course-registration");
+  const tables = (extracted.tables as Array<{ columns: string[]; rows: Record<string, unknown>[] }>) ?? [];
+  const table = tables[0];
+
+  if (!table || table.rows.length === 0) {
+    return { subjects: [] };
   }
 
-  const subjects = tables[0]
-    .filter((row) => row && typeof row === "object")
+  const subjects = table.rows
     .map((row) => ({
-      semester: normalizeRawValue(row["Semester"]),
-      code: normalizeRawValue(row["Subject Code"] || row["Code"]),
-      description: normalizeRawValue(row["Subject Desc"] || row["Description"] || row["Subject Description"]),
-      credit: normalizeRawValue(row["Credit"]),
-      group: normalizeRawValue(row["Group"]),
-      subjectPart: normalizeRawValue(row["Subject Part"]),
+      semester: String(row["Semester"] ?? row["semester"] ?? ""),
+      code: String(row["Subject Code"] ?? row["Code"] ?? row["code"] ?? ""),
+      description: String(row["Subject Desc"] ?? row["Description"] ?? row["Subject Description"] ?? ""),
+      credit: String(row["Credit"] ?? row["credit"] ?? ""),
+      group: String(row["Group"] ?? row["group"] ?? ""),
+      subjectPart: String(row["Subject Part"] ?? row["subjectPart"] ?? ""),
     }))
-    .filter((row) => row.code && row.code.toLowerCase() !== "subject code");
+    .filter((s) => s.code);
 
   return { subjects };
 }
 
 // ---------------------------------------------------------------------------
-// 3b. CURRICULUM TRANSFORMER
+// CURRICULUM (Student Wise Subjects)
+// Backend extractor: extractSubjects → type "subjects"
+// Shape: { type, title, records: [{semester, code, name, credit, ltpc}] }
 // ---------------------------------------------------------------------------
 
 export function transformCurriculum(rawData: unknown): CurriculumModel {
-  const empty: CurriculumModel = { subjects: [] };
-  const data = rawData as Record<string, unknown>;
-  
-  // Try to find the subjects table
-  // Based on context, it's often under Academic -> "Student Wise Subjects"
-  const section = (data?.Academic as Record<string, unknown>)?.["Student Wise Subjects"] as Record<string, unknown>;
-  const tables = section?.tables as Array<Array<Record<string, unknown>>> | undefined;
-  
-  if (!tables || tables.length === 0) return empty;
+  const extracted = requireExtracted(rawData, "subjects", "academic/curriculum");
+  const records = (extracted.records as Record<string, unknown>[]) ?? [];
 
-  const subjectsTable = tables[0];
-  const subjects: CurriculumSubject[] = [];
-
-  for (let i = 0; i < subjectsTable.length; i++) {
-    const row = subjectsTable[i];
-    const semester = normalizeRawValue(row["Semester"] || row.col1);
-    const code = normalizeRawValue(row["Code"] || row.col2);
-    const description = normalizeRawValue(row["Description"] || row.col3);
-    const credit = normalizeRawValue(row["Credit"] || row.col4);
-    const group = normalizeRawValue(row["Group"] || row.col5);
-
-    // Skip headers
-    if (!code || code.toLowerCase() === "code" || code === "-") continue;
-
-    subjects.push({
-      semester,
-      code,
-      description,
-      credit,
-      group
-    });
-  }
+  const subjects = records
+    .map((r) => ({
+      semester: String(r.semester ?? ""),
+      code: String(r.code ?? ""),
+      description: String(r.name ?? ""),
+      credit: String(r.credit ?? ""),
+      group: String(r.ltpc ?? ""),
+    }))
+    .filter((s) => s.code);
 
   return { subjects };
 }
-
-// ---------------------------------------------------------------------------
-// 3b. CURRENT RESULTS TRANSFORMER
-// ---------------------------------------------------------------------------
