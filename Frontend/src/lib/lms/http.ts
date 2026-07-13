@@ -1,5 +1,5 @@
-import { requestData, requestMultipart } from "../apiClient";
-import { isStaticPrototype } from "../prototype/staticPrototypeEnv";
+import { requestData, requestMultipart } from "../core/apiClient";
+import { isStaticPrototype } from "../core/prototype";
 
 export { requestData, requestMultipart, isStaticPrototype };
 

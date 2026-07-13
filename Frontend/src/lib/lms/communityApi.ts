@@ -1,14 +1,4 @@
 import { buildMultipartForm, isStaticPrototype, requestData, requestMultipart } from "./http";
-import {
-  STATIC_ADMIN_LEARNING_ITEM,
-  STATIC_CAREER_READINESS,
-  STATIC_CONTENT_WORKFLOW,
-  STATIC_LMS_PUBLISHER,
-  STATIC_LMS_RESOURCES,
-  STATIC_RECOMMENDATION_EVENTS,
-  STATIC_TRACKER_SNAPSHOT,
-  STATIC_UNIFIED_INSIGHTS,
-} from "./fixtures";
 import type {
   ResourceCatalogCourse,
   ResourceCatalogResponse,
@@ -42,6 +32,8 @@ import type {
   LmsCollection,
   LmsModerationQueueResponse
 } from "./types";
+import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
+import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
 
 export async function toggleResourceUpvote(id: string) {
   return requestData<{ active: boolean }>(`/api/lms/resources/${encodeURIComponent(id)}/upvote`, {
