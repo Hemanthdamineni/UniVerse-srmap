@@ -3,7 +3,7 @@ import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
 
-import { cn } from "../lib/utils"
+import { cn } from "../lib/core/utils"
 import { Dialog, DialogContent, DialogTitle } from "./dialog"
 
 function CommandDialog({ children, ...props }: DialogProps) {

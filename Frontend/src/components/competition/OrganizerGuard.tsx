@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { EventDetail } from '../../lib/campusApi';
+import type { EventDetail } from '../../lib/campus/campusApi';
 
 interface OrganizerGuardProps {
   event: EventDetail;

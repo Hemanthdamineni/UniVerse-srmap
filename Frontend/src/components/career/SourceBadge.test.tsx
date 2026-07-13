@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import SourceBadge from "./SourceBadge";
+import { SourceBadge } from "./CareerChips";
 
 describe("SourceBadge", () => {
   it("renders manual source", () => {

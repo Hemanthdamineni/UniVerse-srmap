@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
-import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/session";
+import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { useAdminMode } from "../contexts/AdminModeContext";
 
 function SidebarContrastText({ text, className = "" }: { text: string; className?: string }) {
@@ -114,7 +114,7 @@ export default function Sidebar() {
   const profilePhoto =
     typeof profileData?.photo === "string"
       ? profileData.photo
-      : "https://cdn.builder.io/api/v1/image/assets/TEMP/fe2259c93f68b89dfbd7622fc3b2505b0f165279?placeholderIfAbsent=true";
+      : "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%2334AEBE%27 rx=%278%27/%3E%3Ctext x=%2720%27 y=%2724%27 text-anchor=%27middle%27 fill=%27white%27 font-size=%2718%27 font-family=%27sans-serif%27 font-weight=%27600%27%3E%3F%3C/text%3E%3C/svg%3E";
   const tableContent =
     profileData && typeof profileData.TableContent === "object" && profileData.TableContent
       ? (profileData.TableContent as Record<string, unknown>)

@@ -1,153 +1,95 @@
-import React, { useRef, useState } from "react";
-import { cn } from "../../lib/utils";
-import { UploadCloud, File as FileIcon, X } from "lucide-react";
+import { Upload, FileCheck2, Loader2, AlertCircle } from "lucide-react";
+import { useId, useState } from "react";
+import { cn } from "../../lib/core/utils";
 
-export interface UploadedFileDescriptor {
+type CurrentFile = {
   name: string;
   size: number;
-  uploadedAt: string;
-}
+  uploadedAt?: string;
+};
 
-export interface FileUploadZoneProps {
-  className?: string;
-  accept?: string | string[];
-  onFileSelect?: (file: File | null) => void;
-  onFile?: (file: File) => void;
-  selectedFile?: File | null;
-  currentFile?: UploadedFileDescriptor;
-  maxSizeMb?: number;
+type FileUploadZoneProps = {
+  onFile: (file: File) => void;
+  accept: string[];
+  maxSizeMb: number;
+  currentFile?: CurrentFile;
   error?: string;
   isUploading?: boolean;
   label?: string;
   description?: string;
+  className?: string;
+};
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
-export function FileUploadZone({ 
-  className, 
-  accept, 
-  onFileSelect, 
+export function FileUploadZone({
   onFile,
-  selectedFile,
-  currentFile,
+  accept,
   maxSizeMb,
+  currentFile,
   error,
   isUploading = false,
-  label = "Upload file",
-  description = "Click or drag and drop"
+  label = "Choose a file",
+  description,
+  className,
 }: FileUploadZoneProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [clientError, setClientError] = useState<string | null>(null);
+  const inputId = useId();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const acceptValue = accept.join(",");
+  const shownError = error || localError;
 
-  const acceptList = Array.isArray(accept) ? accept : accept ? accept.split(",").map((item) => item.trim()) : [];
-  const selectedOrCurrent = selectedFile ?? currentFile;
-
-  const notifySelect = (file: File) => {
-    onFileSelect?.(file);
-    onFile?.(file);
-  };
-
-  const validateAndSetFile = (file: File) => {
-    setClientError(null);
-    if (acceptList.length > 0) {
-      const lowerName = file.name.toLowerCase();
-      const valid = acceptList.some((entry) => {
-        const normalized = entry.toLowerCase();
-        if (normalized.startsWith(".")) return lowerName.endsWith(normalized);
-        if (normalized.includes("/")) return file.type === normalized;
-        return lowerName.endsWith(normalized.replace("*", ""));
-      });
-      if (!valid) {
-        setClientError(`Unsupported file type. Accepted: ${acceptList.join(", ")}`);
-        return;
-      }
-    }
-    if (maxSizeMb && file.size > maxSizeMb * 1024 * 1024) {
-      setClientError(`File too large. Max size: ${maxSizeMb} MB.`);
+  function handleFile(file: File | undefined) {
+    if (!file) return;
+    const maxBytes = maxSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setLocalError(`File must be ${maxSizeMb} MB or smaller.`);
       return;
     }
-    notifySelect(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (isUploading) return;
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-  
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (isUploading) return;
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      validateAndSetFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  if (selectedOrCurrent) {
-    return (
-      <div className={cn("flex items-center justify-between p-4 rounded-xl border border-[var(--comp-accent)] bg-[var(--comp-accent-light)]", className)} aria-live="polite">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <FileIcon className="w-5 h-5 text-[var(--comp-accent)] shrink-0" />
-          <span className="text-sm font-medium text-[var(--comp-text-primary)] truncate">{selectedOrCurrent.name}</span>
-        </div>
-        <button type="button" onClick={() => onFileSelect?.(null)} className="shrink-0 text-[var(--comp-text-secondary)] hover:text-[var(--comp-text-primary)]">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    );
+    setLocalError(null);
+    onFile(file);
   }
 
   return (
-    <div
-      onClick={() => !isUploading && inputRef.current?.click()}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      role="button"
-      tabIndex={0}
-      aria-busy={isUploading}
-      aria-label={label}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (!isUploading) inputRef.current?.click();
-        }
-      }}
+    <label
+      htmlFor={inputId}
       className={cn(
-        "cursor-pointer flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-colors",
-        isDragOver ? "border-[var(--comp-accent)] bg-[var(--comp-accent-light)]" : "border-[var(--comp-border-strong)] bg-[var(--comp-surface)] hover:bg-[var(--comp-surface-hover)]",
+        "flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[var(--comp-border)] bg-[var(--comp-surface)] p-5 text-center transition hover:border-[var(--comp-accent)] hover:bg-[color-mix(in_srgb,var(--comp-accent)_5%,transparent)]",
+        shownError && "border-[var(--error)] bg-[color-mix(in_srgb,var(--error)_7%,transparent)]",
+        isUploading && "cursor-wait opacity-80",
         className
       )}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        handleFile(event.dataTransfer.files?.[0]);
+      }}
     >
-      <input type="file" ref={inputRef} className="hidden" accept={Array.isArray(accept) ? accept.join(",") : accept} onChange={(e) => {
-        if (e.target.files && e.target.files.length > 0) {
-          validateAndSetFile(e.target.files[0]);
-        }
-      }} />
-      {isUploading ? (
-        <div className="w-full space-y-3">
-          <div className="h-1.5 rounded-full bg-[var(--comp-border)] overflow-hidden">
-            <div className="h-full w-2/3 bg-[var(--comp-accent)] animate-pulse" />
-          </div>
-          <p className="text-xs text-[var(--comp-text-muted)] text-center">Uploading...</p>
-        </div>
-      ) : (
-        <>
-          <UploadCloud className="w-8 h-8 text-[var(--comp-text-muted)] mb-3" />
-          <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">{label}</h4>
-          <p className="text-xs text-[var(--comp-text-muted)] mt-1">{description}</p>
-          {acceptList.length > 0 ? (
-            <p className="text-[11px] text-[var(--comp-text-muted)] mt-1">{acceptList.join(", ")}{maxSizeMb ? ` · max ${maxSizeMb} MB` : ""}</p>
-          ) : null}
-        </>
-      )}
-      {(clientError || error) ? <p className="mt-2 text-xs text-[var(--error)]">{clientError ?? error}</p> : null}
-    </div>
+      <input
+        id={inputId}
+        type="file"
+        accept={acceptValue}
+        className="sr-only"
+        disabled={isUploading}
+        onChange={(event) => handleFile(event.target.files?.[0])}
+      />
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-accent)]">
+        {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : currentFile ? <FileCheck2 className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
+      </span>
+      <span className="text-sm font-semibold text-[var(--comp-text-primary)]">{currentFile?.name || label}</span>
+      <span className="max-w-md text-xs text-[var(--comp-text-muted)]">
+        {currentFile ? `${formatBytes(currentFile.size)} uploaded` : description || `Accepted: ${accept.join(", ")}. Max ${maxSizeMb} MB.`}
+      </span>
+      {shownError ? (
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--error)]">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {shownError}
+        </span>
+      ) : null}
+    </label>
   );
 }
