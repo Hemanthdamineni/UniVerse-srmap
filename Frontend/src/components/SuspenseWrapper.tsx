@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { SkeletonCard } from "./ui/SkeletonCard";
+import { SkeletonCard } from "./ui/Skeletons";
 import { DashboardLayout } from "./layout/PageLayouts";
 
 function PageLoader() {

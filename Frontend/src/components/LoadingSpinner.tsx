@@ -1,5 +1,5 @@
 // Loading placeholder uses SkeletonBlock + tokens (no indigo spinners).
-import { SkeletonBlock } from "./ui/SkeletonBlock";
+import { SkeletonBlock } from "./ui/Skeletons";
 
 interface LoadingSpinnerProps {
   message: string;

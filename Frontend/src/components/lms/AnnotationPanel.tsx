@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { LmsAnnotation } from "../../lib/lmsApi";
+import type { LmsAnnotation } from "../../lib/lms/index";
 
 export default function AnnotationPanel({
   annotations,

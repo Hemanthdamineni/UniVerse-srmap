@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import ResourceCard from "./ResourceCard";
-import type { LmsResource } from "../../lib/lmsApi";
+import type { LmsResource } from "../../lib/lms/index";
 
 const resource: LmsResource = {
   id: "res-1",

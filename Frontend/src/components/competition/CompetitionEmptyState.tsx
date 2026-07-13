@@ -1,5 +1,5 @@
 import React from "react";
-import { EmptyView } from "../ui/AsyncState";
+import { EmptyView } from "../ui/Feedback";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;

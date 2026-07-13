@@ -1,4 +1,4 @@
-import type { LmsGuideSection } from "../../lib/lmsApi";
+import type { LmsGuideSection } from "../../lib/lms/index";
 
 export default function GuideSection({
   section,
