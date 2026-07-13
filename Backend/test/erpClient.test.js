@@ -9,7 +9,7 @@ const {
   loginWithCaptcha,
   parseLoginBootstrap,
   buildLoginPayload,
-} = require("../src/services/erpClient");
+} = require("../src/services/erp/erpClient");
 
 function makeApiResponse(body, status = 200) {
   return {
@@ -75,19 +75,100 @@ test("shared ERP endpoint fetch throws SESSION_EXPIRED for login HTML", async ()
   );
 });
 
-test("shared ERP endpoint fetch preserves normal parsed payloads", async () => {
+test("shared ERP endpoint fetch throws UNREGISTERED_ERP_PAGE for unknown pages", async () => {
+  // Unregistered pages now throw a hard error instead of silently falling back
+  // to the generic DOM walker pipeline (which caused silent data loss).
   const api = {
     async post() {
       return makeApiResponse(`
         <html>
           <body>
             <div id="divContent">
-              <h1>TIME TABLE</h1>
+              <h2>FEEDBACK</h2>
               <table>
                 <tr><th>Day</th><th>Slot</th></tr>
                 <tr><td>Monday</td><td>09:00</td></tr>
               </table>
             </div>
+          </body>
+        </html>
+      `);
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      callEndpointViaApi(
+        api,
+        {
+          method: "POST",
+          url: "students/report/studentreportresources.jsp",
+          paramsTemplate: { ids: "10" },
+        },
+        { dropdown: "Academic", subitem: "Timetable Feedback" }
+      ),
+    (error) => {
+      assert.equal(error.code, "UNREGISTERED_ERP_PAGE");
+      assert.equal(error.status, 500);
+      return true;
+    }
+  );
+});
+
+test("calling without menuItem throws UNREGISTERED_ERP_PAGE", async () => {
+  // The generic DOM walker fallback has been removed.
+  // All real callers supply a registered dropdown/subitem.
+  // Passing null menuItem is now a hard error by design.
+  const api = {
+    async post() {
+      return makeApiResponse(`<html><body><div id="divContent"><h2>SOME DATA</h2></div></body></html>`);
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      callEndpointViaApi(
+        api,
+        {
+          method: "POST",
+          url: "students/report/studentreportresources.jsp",
+          paramsTemplate: { ids: "10" },
+        },
+        null
+      ),
+    (error) => {
+      assert.equal(error.code, "UNREGISTERED_ERP_PAGE");
+      assert.equal(error.status, 500);
+      return true;
+    }
+  );
+});
+
+test("targeted extractor is used for registered pages", async () => {
+  // Timetable page now hits the targeted extractor and returns _extracted
+  const api = {
+    async post() {
+      return makeApiResponse(`
+        <html>
+          <body>
+            <h2>TIME TABLE</h2>
+            <table id="tblClassTimetable">
+              <tr class="timetablehead"><td>&nbsp;</td></tr>
+              <tr class="subheader"><td>&nbsp;</td><td>09:00 To 09:50</td></tr>
+              <tr>
+                <td class="subheader">Monday</td>
+                <td class="timetabledetails" title="AUTOMATA">CSE 304(C 705)</td>
+              </tr>
+            </table>
+            <table id="tblSubjectList">
+              <tr>
+                <td class="subheader">Code</td>
+                <td class="subheader">Description</td>
+                <td class="subheader">L-T-P-C</td>
+                <td class="subheader">Faculty</td>
+                <td class="subheader">Room</td>
+              </tr>
+            </table>
           </body>
         </html>
       `);
@@ -104,9 +185,11 @@ test("shared ERP endpoint fetch preserves normal parsed payloads", async () => {
     { dropdown: "Academic", subitem: "Time Table" }
   );
 
-  assert.equal(result.title, "TIME TABLE");
+  // Targeted extractor embeds typed data in _extracted
+  assert.ok(result._extracted, "targeted extractor should populate _extracted");
+  assert.equal(result._extracted.type, "timetable");
+  assert.equal(result.meta?.usedTargetedExtractor, true);
   assert.equal(Array.isArray(result.tables), true);
-  assert.equal(result.tables[0][0].Day, "Monday");
 });
 
 test("extractLoginFieldTargets resolves legacy login inputs", () => {

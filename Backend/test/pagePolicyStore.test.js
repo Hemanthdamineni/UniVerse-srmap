@@ -4,7 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { PagePolicyStore } = require("../src/services/pagePolicyStore");
+const { PagePolicyStore } = require("../src/services/core/sessionServices");
 
 function makePolicyFile(content) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "policy-test-"));

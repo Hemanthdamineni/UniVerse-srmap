@@ -10,6 +10,8 @@ const {
   CONTENT_DB_PATH,
   LMS_DB_PATH,
   LMS_TRACKER_DB_PATH,
+  UNIFIED_PROFILE_DB_PATH,
+  COMPANION_ANALYTICS_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
@@ -99,8 +101,8 @@ async function startServer() {
 
   const isCaptureMode = process.argv.includes("--capture");
   if (isCaptureMode) {
-    const { setCaptureDir } = require("./services/erpClient");
-    const { ErpDumpService } = require("./services/erpDumpService");
+    const { setCaptureDir } = require("./services/erp/erpClient");
+    const { ErpDumpService } = require("./services/erp/erpServices");
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const captureDir = path.join(ErpDumpService.getBaseDir(), timestamp);
     fs.mkdirSync(path.join(captureDir, "raw"), { recursive: true });
@@ -115,7 +117,7 @@ async function startServer() {
   const sessionStore = await createSessionStore(redisClient);
   const erpCacheStore = await createErpCacheStore(redisClient);
   const pagePolicyStore = new PagePolicyStore(ERP_PAGE_POLICY_FILE);
-  const { ErpDumpService } = require("./services/erpDumpService");
+  const { ErpDumpService } = require("./services/erp/erpServices");
   const erpDumpService = isDebugMode
     ? (ErpDumpService.resolveLatest()
         ? new ErpDumpService(ErpDumpService.resolveLatest())
@@ -181,12 +183,23 @@ async function startServer() {
   const lmsTrackerStore = new LmsTrackerStore({
     dbPath: LMS_TRACKER_DB_PATH,
   });
+  const unifiedProfileStore = new UnifiedProfileStore({
+    dbPath: UNIFIED_PROFILE_DB_PATH,
+    lmsStore,
+    careerStore,
+    eventsStore,
+    competitionStore,
+  });
+  const companionAnalyticsStore = new CompanionAnalyticsStore({
+    dbPath: COMPANION_ANALYTICS_DB_PATH,
+  });
   const lmsReadingTimeEstimator = new LmsReadingTimeEstimator();
   const lmsDuplicateDetector = new LmsDuplicateDetector({ lmsStore });
   const lmsFeatureFlagService = new LmsFeatureFlagService({ lmsStore });
   const lmsRecommendationEngine = new LmsRecommendationEngine({
     lmsStore,
     featureFlagService: lmsFeatureFlagService,
+    unifiedProfileStore,
   });
   const lmsInteractionQueue = new LmsInteractionQueue({ lmsStore });
   const lmsInteractionTracker = new LmsInteractionTracker({
@@ -229,6 +242,8 @@ async function startServer() {
     campusFeedbackStore,
     careerStore,
     competitionStore,
+    unifiedProfileStore,
+    companionAnalyticsStore,
     lmsStore,
     lmsTrackerService,
     recommendationEngine: lmsRecommendationEngine,
@@ -260,7 +275,7 @@ async function startServer() {
   }, 5 * 60 * 1000);
   reminderTicker.unref();
 
-  const { runCareerNotificationCycle } = require("./services/careerNotifier");
+  const { runCareerNotificationCycle } = require("./services/career/careerServices");
   const careerNotifyTicker = setInterval(() => {
     try {
       const summary = runCareerNotificationCycle({ careerStore, eventsStore });

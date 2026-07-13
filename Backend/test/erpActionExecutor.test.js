@@ -4,8 +4,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { ErpUiMapStore } = require("../src/services/erpUiMapStore");
-const { ErpActionExecutor } = require("../src/services/erpActionExecutor");
+const { ErpUiMapStore } = require("../src/services/erp/erpUiMapStore");
+const { ErpActionExecutor } = require("../src/services/erp/erpActionExecutor");
 
 function makeUiMapFile(payload) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "erp-action-exec-"));

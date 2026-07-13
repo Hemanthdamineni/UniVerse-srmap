@@ -1,11 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const {
   ErpIntegrityService,
   evaluateIntegrityStatic,
-} = require("../src/services/erpIntegrityService");
+} = require("../src/services/erp/erpServices");
 
 const baseFixtureDir = path.join(__dirname, "fixtures", "integrity");
 
@@ -13,8 +15,29 @@ const scrapeTargets = {
   "academic/time-table": [{ dropdown: "Academic", subitem: "Time Table" }],
 };
 
+function makeFreshPassFixture() {
+  const sourceDir = path.join(baseFixtureDir, "pass");
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "erp-integrity-pass-"));
+  for (const fileName of [
+    "endpoint-discovery.json",
+    "erp-ui-map.json",
+    "erpBlueprints.fixture",
+  ]) {
+    fs.copyFileSync(path.join(sourceDir, fileName), path.join(tempDir, fileName));
+  }
+
+  for (const fileName of ["endpoint-discovery.json", "erp-ui-map.json"]) {
+    const filePath = path.join(tempDir, fileName);
+    const json = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    json.generatedAt = new Date().toISOString();
+    fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
+  }
+
+  return tempDir;
+}
+
 test("integrity checker passes on complete fresh fixture set", () => {
-  const fixtureDir = path.join(baseFixtureDir, "pass");
+  const fixtureDir = makeFreshPassFixture();
   const report = evaluateIntegrityStatic({
     scrapeTargets,
     externalSeedData: {

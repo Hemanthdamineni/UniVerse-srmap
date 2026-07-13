@@ -33,6 +33,11 @@ function makeMockCareerStore() {
     updateProfile: () => ({ updated: true }),
     getSkillGaps: () => [],
     updateResume: () => ({ updated: true }),
+    listResumeVersions: () => [],
+    createResumeVersion: () => ({ id: "rv1", qualityScore: 75 }),
+    analyzeResumeVersion: () => ({ score: 75, rubric: [] }),
+    mergeResumeToProfile: () => ({ updated: true }),
+    getOpportunityFit: () => ({ fitScore: 80, reasons: [] }),
   };
 }
 
@@ -58,6 +63,11 @@ test("career router exposes feed, deadline-soon, opportunities, profile, and sta
     "/career/opportunities",
     "/career/opportunities/:id",
     "/career/profile",
+    "/career/resumes",
+    "/career/resumes/:resumeVersionId/analysis",
+    "/career/resumes/:resumeVersionId/merge-to-profile",
+    "/career/resumes/:resumeVersionId/fit/:opportunityId",
+    "/career/opportunities/:id/fit",
     "/career/stats",
     "/career/health",
     "/career/permissions",

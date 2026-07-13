@@ -192,6 +192,12 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     decorateOpportunity(careerStore.createOpportunity(req.body || {}, req.userContext))
   ));
 
+  router.get("/career/opportunities/:id/fit", wrap((req) =>
+    careerStore.getOpportunityFit(req.userContext, req.params.id, {
+      resumeVersionId: req.query.resumeVersionId,
+    })
+  ));
+
   router.get("/career/opportunities/:id", wrap((req) => {
     const opportunity = careerStore.getOpportunity(req.params.id, req.userContext);
     if (!opportunity) {
@@ -246,9 +252,39 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     items: careerStore.getSkillGaps(req.userContext),
   })));
 
+  router.get("/career/resumes", wrap((req) => ({
+    items: careerStore.listResumeVersions(req.userContext),
+  })));
+
+  router.post("/career/resumes", wrap((req) =>
+    careerStore.createResumeVersion(req.userContext, req.body || {})
+  ));
+
+  router.get("/career/resumes/:resumeVersionId/analysis", wrap((req) =>
+    careerStore.analyzeResumeVersion(req.userContext, req.params.resumeVersionId)
+  ));
+
+  router.post("/career/resumes/:resumeVersionId/merge-to-profile", wrap((req) =>
+    careerStore.mergeResumeToProfile(req.userContext, req.params.resumeVersionId)
+  ));
+
+  router.post("/career/resumes/:resumeVersionId/fit/:opportunityId", wrap((req) =>
+    careerStore.getOpportunityFit(req.userContext, req.params.opportunityId, {
+      resumeVersionId: req.params.resumeVersionId,
+    })
+  ));
+
   router.post("/career/profile/resume", wrap((req) => {
     const fileName = String(req.body?.fileName || "uploaded-resume.pdf");
     const url = `/uploads/resumes/${encodeURIComponent(req.userContext.userId)}-${Date.now()}.pdf`;
+    if (req.body?.extractedText || req.body?.resumeText || req.body?.text) {
+      const resume = careerStore.createResumeVersion(req.userContext, {
+        ...req.body,
+        fileName,
+        filePath: url,
+      });
+      return { url, fileName, resumeVersionId: resume.id, qualityScore: resume.qualityScore };
+    }
     careerStore.updateResume(req.userContext.userId, url, fileName);
     return { url, fileName };
   }));

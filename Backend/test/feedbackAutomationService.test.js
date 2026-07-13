@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const {
   parseFeedbackLandingPage,
   validateOptionNumber,
-} = require("../src/services/feedbackAutomationService");
+} = require("../src/services/campus/feedbackServices");
 
 test("parseFeedbackLandingPage extracts pending subjects and completion state", () => {
   const html = `

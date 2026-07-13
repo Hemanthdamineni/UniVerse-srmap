@@ -299,14 +299,39 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
 
   router.post("/competitions/:eventId/teams", wrap((req) => {
     ensureAuthenticated(req);
-    return competitionStore.createTeam(req.params.eventId, req.userContext.userId, {
+    const team = competitionStore.createTeam(req.params.eventId, req.userContext.userId, {
       name: req.body?.name,
     });
+    return competitionStore._publicTeam(team);
+  }));
+
+  router.get("/competitions/:eventId/teams", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.listEventTeams(req.params.eventId, req.userContext);
+  }));
+
+  router.get("/competitions/:eventId/teams/recruitment", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.listTeamRecruitmentBoard(req.params.eventId, req.userContext);
+  }));
+
+  router.put("/competitions/:eventId/teams/recruitment", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.upsertTeamRecruitmentPost(
+      req.params.eventId,
+      req.userContext.userId,
+      req.body || {}
+    );
+  }));
+
+  router.get("/competitions/:eventId/teams/matches", wrap((req) => {
+    ensureAuthenticated(req);
+    return competitionStore.listTeamMatches(req.params.eventId, req.userContext);
   }));
 
   router.get("/competitions/:eventId/teams/my-team", wrap((req) => {
     ensureAuthenticated(req);
-    return competitionStore.getMyTeam(req.params.eventId, req.userContext.userId);
+    return competitionStore._publicTeam(competitionStore.getMyTeam(req.params.eventId, req.userContext.userId));
   }));
 
   router.post("/competitions/:eventId/teams/:teamId/invite", wrap((req) => {

@@ -96,7 +96,7 @@ test("scrape route clears auth cookie when ERP session expires", async () => {
 });
 
 test("profile route clears auth cookie when ERP profile refresh sees session expiry", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalCreateApiContext = erpClient.createApiContext;
   const originalFetchProfileViaApi = erpClient.fetchProfileViaApi;
 
