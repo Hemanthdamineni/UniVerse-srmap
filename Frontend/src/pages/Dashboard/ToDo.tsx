@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "../../components/popover";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { EmptyState } from "../../components/ui/Feedback";
 
 interface Task {
   id: string;

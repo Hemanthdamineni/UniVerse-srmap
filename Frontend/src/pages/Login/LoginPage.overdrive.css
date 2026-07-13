@@ -101,7 +101,6 @@
 .login-id-d0 { animation-delay: 0ms; }
 .login-id-d1 { animation-delay: 80ms; }
 .login-id-d2 { animation-delay: 160ms; }
-.login-id-d3 { animation-delay: 240ms; }
 .login-id-d4 { animation-delay: 310ms; }
 
 .login-form-enter { animation: login-enter-up 0.55s cubic-bezier(0.16,1,0.3,1) both; }
@@ -243,11 +242,6 @@
   border-color: var(--comp-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08) !important;
 }
-.login-input-error {
-  border-color: color-mix(in srgb, var(--error) 60%, transparent) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 14%, transparent) !important;
-}
-
 /* ── Dark mode ── */
 [data-theme="dark"] .login-identity-panel {
   background:

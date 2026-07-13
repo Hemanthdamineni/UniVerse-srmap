@@ -1,11 +1,11 @@
 // Submit opportunity: SkeletonBlock replaces submit spinner; submit handler unchanged.
 import React, { useEffect, useState } from "react";
-import { listMyOpportunitySubmissions, submitOpportunity, type CareerSubmission } from "../../lib/careerApi";
+import { listMyOpportunitySubmissions, submitOpportunity, type CareerSubmission } from "../../lib/career/careerApi";
 import { Button } from "../../components/button";
 import { Input } from "../../components/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/card";
 import { AlertCircle, CheckCircle2, PlusCircle, Globe } from "lucide-react";
-import { SkeletonBlock } from "../../components/ui/SkeletonBlock";
+import { SkeletonBlock } from "../../components/ui/Skeletons";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { useNavigate } from 'react-router-dom';
 

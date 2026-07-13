@@ -15,7 +15,7 @@ vi.mock("../../hooks/useAdminAccess", () => ({
   useAdminAccess: () => ({ unlocked: true, adminHeaders }),
 }));
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   get listCareerOpportunities() {
     return listCareerOpportunities;
   },

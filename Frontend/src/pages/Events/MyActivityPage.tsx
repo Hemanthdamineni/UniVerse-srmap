@@ -3,8 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Award, CalendarClock, FileCheck2, Trophy } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { listEvents, type EventSummary } from "../../lib/campusApi";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 
 const tabs = [
   { id: "registered", label: "Registered Events" },

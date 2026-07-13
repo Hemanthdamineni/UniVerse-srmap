@@ -13,11 +13,11 @@ import {
   getCompetitionConfig,
   getCompetitionSubmissions,
   getSubmissionEvaluations,
-} from '../../lib/campusApi';
+} from '../../lib/campus/campusApi';
 import { EvaluationCriteriaTable } from '../../components/competition/EvaluationCriteriaTable';
-import { AuditHistoryPanel } from '../../components/competition/AuditHistoryPanel';
+import { AuditHistoryPanel } from '../../components/competition/CompetitionPanels';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { track } from '../../lib/analytics';
+import { track } from '../../lib/core/analytics';
 import { useOptimistic } from '../../hooks/useOptimistic';
 import { Input } from "../../components/input";
 import { Textarea } from "../../components/textarea";

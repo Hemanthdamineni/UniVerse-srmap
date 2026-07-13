@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { CheckCircle2, MousePointerClick, Route, ShieldCheck, Target } from "lucide-react";
+import { CheckCircle2, MousePointerClick, Route, ShieldCheck, Target, UserRoundCog } from "lucide-react";
 import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import {
   getLmsUnifiedInsights,
   recordLmsTrackerRecommendationEvent,
   type UnifiedInsights as UnifiedInsightsModel,
-} from "../../lib/lmsApi";
+} from "../../lib/lms/index";
+import {
+  getPlatformRecommendations,
+  getUnifiedProfile,
+  recordPlatformRecommendationFeedback,
+  type PlatformRecommendation,
+  type UnifiedProfile,
+} from "../../lib/career/profileApi";
 
 function pct(value: number) {
   return `${Math.round(value * 100)}%`;
@@ -33,16 +40,32 @@ function StatusPill({ children, tone = "neutral" }: { children: ReactNode; tone?
 
 export default function UnifiedInsights() {
   const [insights, setInsights] = useState<UnifiedInsightsModel | null>(null);
+  const [profile, setProfile] = useState<UnifiedProfile | null>(null);
+  const [platformRecommendations, setPlatformRecommendations] = useState<PlatformRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState("");
 
   useEffect(() => {
     let active = true;
-    getLmsUnifiedInsights()
-      .then((response) => {
+    Promise.allSettled([
+      getLmsUnifiedInsights(),
+      getUnifiedProfile(),
+      getPlatformRecommendations("home"),
+    ])
+      .then(([insightsResult, profileResult, recommendationsResult]) => {
         if (!active) return;
-        setInsights(response);
+        if (insightsResult.status === "fulfilled") {
+          setInsights(insightsResult.value);
+        } else {
+          setError(insightsResult.reason instanceof Error ? insightsResult.reason.message : "Failed to load unified insights.");
+        }
+        if (profileResult.status === "fulfilled") {
+          setProfile(profileResult.value);
+        }
+        if (recommendationsResult.status === "fulfilled") {
+          setPlatformRecommendations(recommendationsResult.value.items || []);
+        }
       })
       .catch((loadError) => {
         if (!active) return;
@@ -65,8 +88,11 @@ export default function UnifiedInsights() {
       { label: "Next Skills", value: String(insights.nextSkills.length) },
       { label: "Eligible Matches", value: String(insights.opportunityRecommendations.length) },
       { label: "Explainability", value: pct(insights.qualityMonitoring.metrics.explainabilityCoverage) },
+      ...(profile?.career?.completeness !== undefined
+        ? [{ label: "Profile Quality", value: `${Math.round(profile.career.completeness)}%` }]
+        : []),
     ];
-  }, [insights]);
+  }, [insights, profile]);
 
   async function recordFeedback(recommendation: { id: string; title: string; confidence: number }, eventType: string) {
     setFeedbackStatus("");
@@ -85,6 +111,24 @@ export default function UnifiedInsights() {
     }
   }
 
+  async function recordPlatformFeedback(recommendation: PlatformRecommendation, action: string) {
+    setFeedbackStatus("");
+    try {
+      await recordPlatformRecommendationFeedback({
+        impressionId: recommendation.impressionId,
+        action,
+        metadata: {
+          domain: recommendation.domain,
+          itemType: recommendation.itemType,
+          itemId: recommendation.itemId,
+        },
+      });
+      setFeedbackStatus("Platform feedback saved. Cross-domain rankings can use this signal.");
+    } catch (feedbackError) {
+      setFeedbackStatus(feedbackError instanceof Error ? feedbackError.message : "Feedback could not be saved.");
+    }
+  }
+
   return (
     <ErpPageShell
       title="Unified Insights"
@@ -98,6 +142,79 @@ export default function UnifiedInsights() {
       {insights ? (
         <>
           <KpiGrid items={kpis} />
+
+          <SectionCard title="Platform Spine">
+            <div className="grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
+              <article className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Unified profile</h3>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      LMS, Career, Events, skills, achievements, and privacy signals share one contract.
+                    </p>
+                  </div>
+                  <StatusPill tone={profile?.contractVersion === "unified-profile-v1" ? "success" : "warning"}>
+                    {profile?.contractVersion || "not loaded"}
+                  </StatusPill>
+                </div>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-[var(--background)] p-3">
+                    <p className="text-xs text-[var(--text-secondary)]">Skills</p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{profile?.skills.length || 0}</p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--background)] p-3">
+                    <p className="text-xs text-[var(--text-secondary)]">Achievements</p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{profile?.achievements.length || 0}</p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--background)] p-3">
+                    <p className="text-xs text-[var(--text-secondary)]">Signals</p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{profile?.signals.length || 0}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+                  {Object.entries(profile?.privacy || {}).slice(0, 6).map(([key, value]) => (
+                    <span key={key} className="rounded-md border border-[var(--border)] px-2 py-1">
+                      {key}: {String(value).replace("_", " ")}
+                    </span>
+                  ))}
+                </div>
+              </article>
+
+              <div className="space-y-3">
+                {platformRecommendations.slice(0, 3).map((recommendation) => (
+                  <article key={recommendation.impressionId} className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{recommendation.title}</h3>
+                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                          {recommendation.domain} · {recommendation.label} · {pct(recommendation.score)} match
+                        </p>
+                      </div>
+                      <StatusPill>{recommendation.itemType}</StatusPill>
+                    </div>
+                    <ul className="mt-3 space-y-1 text-xs text-[var(--text-secondary)]">
+                      {recommendation.reasons.slice(0, 2).map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                    {recommendation.missing.length ? (
+                      <p className="mt-2 text-xs text-[var(--warning)]">Close next: {recommendation.missing.join(", ")}</p>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => recordPlatformFeedback(recommendation, "clicked")}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:bg-[var(--comp-surface-hover)]"
+                    >
+                      <UserRoundCog className="h-3.5 w-3.5" />
+                      Use this signal
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </SectionCard>
 
           <SectionCard title="Profile Graph">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

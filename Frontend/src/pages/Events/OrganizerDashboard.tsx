@@ -15,10 +15,10 @@ import {
   getEvent,
   sendCompetitionAnnouncement,
   updateEventCoOrganizers,
-} from '../../lib/campusApi';
+} from '../../lib/campus/campusApi';
 import { SummaryStatBar } from '../../components/competition/SummaryStatBar';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import type { EventDetail, CompetitionConfig } from '../../lib/campusApi';
+import type { EventDetail, CompetitionConfig } from '../../lib/campus/campusApi';
 import { Input } from '../../components/input';
 import { Textarea } from '../../components/textarea';
 

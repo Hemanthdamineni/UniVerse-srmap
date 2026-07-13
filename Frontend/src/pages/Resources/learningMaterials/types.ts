@@ -1,4 +1,4 @@
-import type { ContentBulkPreview, ContentHistoryEntry, LearningResourceItem } from "../../../lib/lmsApi";
+import type { ContentBulkPreview, ContentHistoryEntry, LearningResourceItem } from "../../../lib/lms/index";
 import type { EMPTY_MATERIAL_FORM, EMPTY_RECOMMENDATION_FORM } from "./constants";
 
 export type BannerState = {

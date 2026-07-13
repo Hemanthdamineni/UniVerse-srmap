@@ -41,6 +41,7 @@ import {
   generateLearningSession,
   getContinueLearning,
   getContributorProfile,
+  getExamPrepRecommendations,
   getExploreData,
   getGuide,
   getLmsAnnotations,
@@ -55,6 +56,7 @@ import {
   getRecommendations,
   getRevisionQueue,
   getRoadmap,
+  getRoadmapRecommendations,
   getSubjectOverview,
   getWeeklyLeaderboard,
   listGuides,
@@ -97,9 +99,12 @@ import type {
   ResourceFilterState,
   ResourceFormState
 } from "./_shared/LmsPageShared";
+import { track } from "../../lib/core/analytics";
 
 export function LmsHomePage() {
   const recommendations = useAsyncPage(() => getRecommendations({ limit: 6 }), []);
+  const examPrep = useAsyncPage(() => getExamPrepRecommendations({ limit: 6 }), []);
+  const roadmapRecommendations = useAsyncPage(() => getRoadmapRecommendations({ limit: 4 }), []);
   const continueLearning = useAsyncPage(() => getContinueLearning(), []);
   const revision = useAsyncPage(() => getRevisionQueue(), []);
   const pendingExam = useAsyncPage(() => getPendingExamFeedback(), []);
@@ -107,8 +112,24 @@ export function LmsHomePage() {
   const leaderboard = useAsyncPage(() => getWeeklyLeaderboard(), []);
   const streak = useAsyncPage(() => getLmsStreak(), []);
 
+  useEffect(() => {
+    if (!examPrep.data?.length) return;
+    track('lms_exam_prep_recommendations_viewed', {
+      count: examPrep.data.length,
+      topResourceId: examPrep.data[0]?.id,
+    });
+  }, [examPrep.data]);
+
+  useEffect(() => {
+    if (!roadmapRecommendations.data?.length) return;
+    track('lms_roadmap_recommendations_viewed', {
+      count: roadmapRecommendations.data.length,
+      topRoadmapId: roadmapRecommendations.data[0]?.id,
+    });
+  }, [roadmapRecommendations.data]);
+
   return (
-    <LmsFrame title="LMS Home" loading={recommendations.loading || continueLearning.loading} error={recommendations.error || continueLearning.error}>
+    <LmsFrame title="LMS Home" loading={recommendations.loading || examPrep.loading || roadmapRecommendations.loading || continueLearning.loading} error={recommendations.error || examPrep.error || roadmapRecommendations.error || continueLearning.error}>
       <SectionCard title="Momentum">
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Current streak" value={String(streak.data?.currentStreak || 0)} />
@@ -122,6 +143,47 @@ export function LmsHomePage() {
           <ResourceGrid items={[continueLearning.data]} />
         </SectionCard>
       ) : null}
+
+      <RecommendationSection title="Exam prep" items={examPrep.data || []} />
+
+      <SectionCard title="Career and Competition Roadmaps">
+        {roadmapRecommendations.data?.length ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {roadmapRecommendations.data.map((roadmap) => (
+              <Link
+                key={roadmap.id}
+                to={`/resources/roadmaps/${roadmap.id}`}
+                className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4 no-underline transition hover:bg-[var(--comp-surface-hover)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--comp-text-primary)]">{roadmap.title}</p>
+                    <p className="mt-1 text-xs text-[var(--comp-text-muted)]">
+                      {roadmap.skill} · {roadmap.estimatedHours || "Flexible"}h
+                    </p>
+                  </div>
+                  {roadmap.confidence ? (
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_24%,transparent)] px-2 py-0.5 text-xs font-medium text-[var(--comp-accent)]">
+                      {Math.round(roadmap.confidence * 100)}%
+                    </span>
+                  ) : null}
+                </div>
+                {roadmap.reasons?.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {roadmap.reasons.slice(0, 2).map((reason) => (
+                      <span key={reason.code} className="rounded-full border border-[var(--comp-border)] px-2 py-0.5 text-xs text-[var(--comp-text-secondary)]">
+                        {reason.label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="body-text text-sm">Roadmap recommendations appear after career gaps or competition signals are available.</p>
+        )}
+      </SectionCard>
 
       <RecommendationSection title="Recommended for you" items={recommendations.data || []} />
 
@@ -139,4 +201,3 @@ export function LmsHomePage() {
 }
 
 export default LmsHomePage;
-

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import OpportunitiesPage from "./OpportunitiesPage";
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   listOpportunities: vi.fn(() =>
     Promise.resolve({
       items: [
@@ -41,7 +41,7 @@ describe("OpportunitiesPage", () => {
   });
 
   it("loads items after debounce window", async () => {
-    const { listOpportunities } = await import("../../lib/careerApi");
+    const { listOpportunities } = await import("../../lib/career/careerApi");
     render(
       <MemoryRouter initialEntries={["/career/opportunities"]}>
         <OpportunitiesPage />
@@ -58,7 +58,7 @@ describe("OpportunitiesPage", () => {
 
   it("applies type filter via job chip", async () => {
     const user = userEvent.setup();
-    const { listOpportunities } = await import("../../lib/careerApi");
+    const { listOpportunities } = await import("../../lib/career/careerApi");
     render(
       <MemoryRouter initialEntries={["/career/opportunities"]}>
         <OpportunitiesPage />
@@ -77,7 +77,7 @@ describe("OpportunitiesPage", () => {
 
   it("changes sort option", async () => {
     const user = userEvent.setup();
-    const { listOpportunities } = await import("../../lib/careerApi");
+    const { listOpportunities } = await import("../../lib/career/careerApi");
     render(
       <MemoryRouter initialEntries={["/career/opportunities"]}>
         <OpportunitiesPage />

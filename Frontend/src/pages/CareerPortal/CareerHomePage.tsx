@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listOpportunities, getPersonalizedFeed, bookmarkOpportunity, type CareerOpportunity } from '../../lib/careerApi';
+import { listOpportunities, getPersonalizedFeed, bookmarkOpportunity, type CareerOpportunity } from '../../lib/career/careerApi';
 import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
 import { PlusCircle, Search, Clock, Briefcase, GraduationCap, Code, Trophy, Sparkles } from 'lucide-react';

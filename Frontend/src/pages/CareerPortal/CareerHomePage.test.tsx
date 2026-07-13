@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CareerHomePage from "./CareerHomePage";
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   listOpportunities: vi.fn(() =>
     Promise.resolve({
       items: [

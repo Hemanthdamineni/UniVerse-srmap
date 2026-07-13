@@ -14,7 +14,7 @@ import {
   replyToHelpdeskTicket,
   type CampusTicket,
   updateHelpdeskTicket,
-} from "../../lib/campusApi";
+} from "../../lib/campus/campusApi";
 
 type QueueFilter = "all" | "new" | "in-progress" | "escalated" | "breached" | "resolved";
 

@@ -2,10 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import type { CareerOpportunity } from "../../lib/careerApi";
+import type { CareerOpportunity } from "../../lib/career/careerApi";
 import OpportunityDetailPage from "./OpportunityDetailPage";
 
 const getOpportunity = vi.fn();
+const getOpportunityFit = vi.fn(() =>
+  Promise.resolve({
+    fitScore: 82,
+    breakdown: { skillMatchScore: 0.5 },
+    matchedSkills: ["Python"],
+    missingSkills: ["Go"],
+    eligibility: { eligible: true, branchEligible: true, yearEligible: true },
+    reasons: ["Matches 1 required skill."],
+    recommendations: ["Close skill gaps: Go."],
+    resumeVersionId: "r1",
+    opportunityId: "o1",
+  })
+);
 const trackView = vi.fn(() => Promise.resolve({ tracked: true }));
 const bookmarkOpportunity = vi.fn(() => Promise.resolve({ bookmarked: true }));
 const trackApply = vi.fn(() => Promise.resolve({ tracked: true }));
@@ -20,9 +33,12 @@ const createApplication = vi.fn(() =>
 );
 const flagOpportunity = vi.fn(() => Promise.resolve({ flagged: true }));
 
-vi.mock("../../lib/careerApi", () => ({
+vi.mock("../../lib/career/careerApi", () => ({
   get getOpportunity() {
     return getOpportunity;
+  },
+  get getOpportunityFit() {
+    return getOpportunityFit;
   },
   get trackView() {
     return trackView;
@@ -97,6 +113,17 @@ describe("OpportunityDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getOpportunity.mockResolvedValue(baseOpp());
+    getOpportunityFit.mockResolvedValue({
+      fitScore: 82,
+      breakdown: { skillMatchScore: 0.5 },
+      matchedSkills: ["Python"],
+      missingSkills: ["Go"],
+      eligibility: { eligible: true, branchEligible: true, yearEligible: true },
+      reasons: ["Matches 1 required skill."],
+      recommendations: ["Close skill gaps: Go."],
+      resumeVersionId: "r1",
+      opportunityId: "o1",
+    });
     vi.spyOn(window, "open").mockImplementation(() => null);
   });
 
@@ -105,6 +132,8 @@ describe("OpportunityDetailPage", () => {
     renderAt("/career/opportunities/o1");
     await waitFor(() => expect(screen.getByText("Detail Title")).toBeInTheDocument());
     expect(trackView).toHaveBeenCalledWith("o1");
+    expect(await screen.findByText("82%")).toBeInTheDocument();
+    expect(getOpportunityFit).toHaveBeenCalledWith("o1");
     await user.click(screen.getByRole("button", { name: /Apply Now/i }));
     expect(trackApply).toHaveBeenCalledWith("o1");
     expect(window.open).toHaveBeenCalled();

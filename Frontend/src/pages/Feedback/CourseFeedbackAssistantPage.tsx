@@ -10,7 +10,7 @@ import {
   type FeedbackStatusResponse,
   type FeedbackSubmitResponse,
   validateFeedbackComment,
-} from "../../lib/studentToolsApi";
+} from "../../lib/campus/studentToolsApi";
 
 type Props = {
   blueprint: PageBlueprint;

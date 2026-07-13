@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
-} from "../../lib/auth";
+} from "../../lib/core/auth";
 
 type Step = "initiate" | "change" | "done";
 type Tone = "neutral" | "error" | "success";

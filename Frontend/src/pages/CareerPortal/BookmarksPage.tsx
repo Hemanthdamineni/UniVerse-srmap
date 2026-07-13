@@ -1,12 +1,12 @@
 // Bookmarks: PageHeader, SkeletonCard loading, EmptyState + tokens; listOpportunities filter unchanged.
 import React, { useEffect, useState } from "react";
-import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/careerApi";
+import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { Bookmark } from "lucide-react";
-import { PageHeader } from "../../components/ui/PageHeader";
+import { PageHeader } from "../../components/ui/Layouts";
 import { PageContainer } from "../../components/layout/PageLayouts";
-import { SkeletonCard } from "../../components/ui/SkeletonCard";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { SkeletonCard } from "../../components/ui/Skeletons";
+import { EmptyState } from "../../components/ui/Feedback";
 
 const BookmarksPage: React.FC = () => {
   const [bookmarks, setBookmarks] = useState<CareerOpportunity[]>([]);

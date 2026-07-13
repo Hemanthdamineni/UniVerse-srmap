@@ -6,10 +6,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
-import { getMyCompetitionResult, getMyRoundCertificate, getCompetitionConfig } from '../../lib/campusApi';
-import { SubmissionStatusBanner } from '../../components/competition/SubmissionStatusBanner';
+import { getMyCompetitionResult, getMyRoundCertificate, getCompetitionConfig } from '../../lib/campus/campusApi';
+import { SubmissionStatusBanner } from '../../components/competition/CompetitionBanners';
 import { EvaluationCriteriaTable } from '../../components/competition/EvaluationCriteriaTable';
-import { EmptyState } from '../../components/competition/EmptyState';
+import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 
 type ResultData = {

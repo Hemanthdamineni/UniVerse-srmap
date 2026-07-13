@@ -16,8 +16,8 @@ import {
   getMyCompetitionSubmission,
   submitCompetitionWork,
   type CompetitionRound,
-} from '../../lib/campusApi';
-import { SubmissionStatusBanner } from '../../components/competition/SubmissionStatusBanner';
+} from '../../lib/campus/campusApi';
+import { SubmissionStatusBanner } from '../../components/competition/CompetitionBanners';
 import { FileUploadZone } from '../../components/competition/FileUploadZone';
 import { Input } from "../../components/input";
 import { Textarea } from "../../components/textarea";
@@ -25,7 +25,7 @@ import { FormField } from "../../components/forms/FormField";
 import { EvaluationCriteriaTable } from '../../components/competition/EvaluationCriteriaTable';
 import { DeadlineCountdown } from '../../components/competition/DeadlineCountdown';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
-import { track } from '../../lib/analytics';
+import { track } from '../../lib/core/analytics';
 import { useOptimistic } from '../../hooks/useOptimistic';
 
 export default function SubmissionPage() {

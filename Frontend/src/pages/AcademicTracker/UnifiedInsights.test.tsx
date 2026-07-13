@@ -6,7 +6,7 @@ import UnifiedInsights from "./UnifiedInsights";
 const getLmsUnifiedInsights = vi.fn();
 const recordLmsTrackerRecommendationEvent = vi.fn();
 
-vi.mock("../../lib/lmsApi", () => ({
+vi.mock("../../lib/lms/index", () => ({
   get getLmsUnifiedInsights() {
     return getLmsUnifiedInsights;
   },

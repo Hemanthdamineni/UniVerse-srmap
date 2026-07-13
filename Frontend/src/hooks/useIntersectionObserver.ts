@@ -15,7 +15,7 @@ export function useIntersectionObserver(
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || (once && isVisible)) return;
+    if (!el) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -31,7 +31,7 @@ export function useIntersectionObserver(
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [threshold, rootMargin, once, isVisible]);
+  }, [threshold, rootMargin, once]);
 
   return { ref, isVisible };
 }

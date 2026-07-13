@@ -5,9 +5,9 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
-} from "../../lib/auth";
-import { hasSessionAuth, storeSessionAuth } from "../../lib/session";
-import { isDebugMode, checkBackendDebugMode } from "../../lib/debugModeEnv";
+} from "../../lib/core/auth";
+import { hasSessionAuth, storeSessionAuth } from "../../lib/core/session";
+import { isDebugMode } from "../../lib/core/debugModeEnv";
 import srmLogo from "../../assets/FullSrmlogo.png";
 import "./LoginPage.overdrive.css";
 
@@ -139,19 +139,20 @@ export default function LoginPage() {
     if (requestedInitialCaptcha.current) return;
 
     let cancelled = false;
-    let debugMode = isDebugMode();
+    const debugMode = isDebugMode();
 
     (async () => {
       if (!debugMode) {
-        debugMode = await checkBackendDebugMode();
-      }
-
-      if (cancelled) return;
-      if (!debugMode) {
+        // Skip backend debug probe — the /api/debug/ping endpoint is only
+        // available when the backend is started with --debug, and hitting it
+        // during normal operation produces a noisy 401 with no benefit.
+        // Developers set VITE_DEBUG_MODE=true (frontend) for debug auto-login.
         requestedInitialCaptcha.current = true;
         void fetchCaptcha();
         return;
       }
+
+      if (cancelled) return;
 
       setStatusTone("neutral");
       setStatusMessage("Debug mode: signing in...");
@@ -259,11 +260,6 @@ export default function LoginPage() {
     return "login-spring-field login-field-dimmed";
   };
 
-  const inputStyle = (field: string, hasError?: boolean): React.CSSProperties => ({
-    ...INPUT,
-    ...(hasError ? {} : focusedField === field ? {} : {}),
-  });
-
   return (
     <div className="login-page-shell">
       <div className="login-card">
@@ -346,7 +342,7 @@ export default function LoginPage() {
                 onBlur={() => setFocusedField(null)}
                 placeholder="Your registration number"
                 autoComplete="username" autoCapitalize="none" spellCheck={false}
-                style={inputStyle("username", false)}
+                style={INPUT}
                 className={focusedField === "username" ? "login-input-focused" : ""}
               />
               <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>Enter your university registration number</p>
