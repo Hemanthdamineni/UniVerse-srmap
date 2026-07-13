@@ -1,8 +1,7 @@
 import { RouterProvider } from "react-router-dom";
 import AppProviders from "./AppProviders";
 import { router } from "./routes";
-import { isStaticPrototype } from "./lib/prototype/staticPrototypeEnv";
-import { bootstrapStaticPrototypeSession } from "./lib/prototype/staticPrototypeSession";
+import { isStaticPrototype, bootstrapStaticPrototypeSession } from "./lib/core/prototype";
 
 if (isStaticPrototype()) {
   bootstrapStaticPrototypeSession();
