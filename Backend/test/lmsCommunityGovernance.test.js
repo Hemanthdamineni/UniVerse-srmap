@@ -3,10 +3,10 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
-const { LmsStore } = require("../src/services/lmsStore");
-const { LmsModerationService } = require("../src/services/lmsModerationService");
-const { LmsRevisionScheduler } = require("../src/services/lmsRevisionScheduler");
-const { LmsRecommendationEngine } = require("../src/services/lmsRecommendationEngine");
+const { LmsStore } = require("../src/services/lms/lmsStore");
+const { LmsModerationService } = require("../src/services/lms/lmsServices");
+const { LmsRevisionScheduler } = require("../src/services/lms/lmsServices");
+const { LmsRecommendationEngine } = require("../src/services/lms/lmsServices");
 const { createLmsRoutes } = require("../src/routes/lmsRoutes");
 
 function createStore(name) {
@@ -174,6 +174,116 @@ test("LMS community lifecycle exposes publisher trust, moderation queue, audit, 
   assert.equal(recommendations[0].rankingPolicy.eligible, true);
   assert.ok(recommendations[0].reasons.some((reason) => reason.code === "subjectMatch"));
   assert.ok(Object.hasOwn(recommendations[0].inputsUsed.factors, "engagementScore"));
+
+  const pyq = store.createResource(
+    "publisher-1",
+    createResourcePayload({
+      type: "pyq",
+      title: "Database indexing PYQ set",
+      description: "Previous year SQL indexing questions with answer hints.",
+      tags: ["sql", "pyq", "exam"],
+      examYear: "2025",
+      examType: "end-semester",
+    })
+  );
+  const profileAwareEngine = new LmsRecommendationEngine({
+    lmsStore: store,
+    featureFlagService: { isEnabled: () => true },
+    unifiedProfileStore: {
+      buildUnifiedProfile: () => ({
+        user: { branch: "CSE", department: "Computer Science" },
+        skills: [{ skill: "SQL" }],
+        career: { skillGaps: [{ skill: "SQL" }] },
+        lms: { progress: { subjects: [{ subjectCode: "CSE301", subjectName: "Database Systems" }] } },
+      }),
+    },
+  });
+  const examPrep = await profileAwareEngine.getExamPrepRecommendations({
+    userId: "learner-3",
+    user: { userId: "learner-3", role: "student", branch: "CSE" },
+    filters: { subjectCode: "CSE301" },
+    limit: 2,
+  });
+  assert.equal(examPrep[0].id, pyq.id);
+  assert.equal(examPrep[0].inputsUsed.algorithmKey, "ranking-v3-exam-prep");
+  assert.ok(examPrep[0].reasons.some((reason) => reason.code === "examIntentScore"));
+  assert.ok(examPrep[0].inputsUsed.profileSignals.includes("unified_profile"));
+
+  const sqlRoadmap = store.createRoadmap("publisher-1", {
+    title: "SQL Interview Readiness",
+    description: "Practice indexing, joins, and query optimization for internship interviews.",
+    skill: "SQL",
+    difficulty: "intermediate",
+    estimatedHours: 10,
+    published: true,
+  });
+  store.addRoadmapNode(sqlRoadmap.id, "publisher-1", {
+    title: "Indexing practice",
+    description: "Work through SQL indexing examples.",
+    nodeType: "concept",
+  });
+  const genericRoadmap = store.createRoadmap("publisher-1", {
+    title: "General Study Habits",
+    description: "Build a weekly academic routine.",
+    skill: "Planning",
+    difficulty: "beginner",
+    estimatedHours: 3,
+    published: true,
+  });
+  const roadmapRecommendations = await profileAwareEngine.getRoadmapRecommendations({
+    userId: "learner-3",
+    user: { userId: "learner-3", role: "student", branch: "CSE" },
+    limit: 3,
+  });
+  assert.equal(roadmapRecommendations[0].id, sqlRoadmap.id);
+  assert.equal(roadmapRecommendations[0].inputsUsed.algorithmKey, "roadmap-ranking-v1-cross-domain");
+  assert.ok(roadmapRecommendations[0].reasons.some((reason) => reason.code === "skillGapMatch"));
+  assert.ok(!roadmapRecommendations.some((roadmap) => roadmap.id === genericRoadmap.id));
+
+  const hackathonRoadmap = store.createRoadmap("publisher-1", {
+    title: "Campus Hackathon Preparation",
+    description: "Plan, prototype, and submit a strong hackathon project.",
+    skill: "Prototyping",
+    difficulty: "intermediate",
+    estimatedHours: 8,
+    published: true,
+  });
+  store.addRoadmapNode(hackathonRoadmap.id, "publisher-1", {
+    title: "Prototype scope",
+    description: "Choose a feasible project for the campus hackathon.",
+    nodeType: "milestone",
+  });
+  const competitionAwareEngine = new LmsRecommendationEngine({
+    lmsStore: store,
+    featureFlagService: { isEnabled: () => true },
+    unifiedProfileStore: {
+      buildUnifiedProfile: () => ({
+        user: { branch: "ECE", department: "Electronics" },
+        skills: [],
+        career: { skillGaps: [] },
+        lms: { progress: { subjects: [] } },
+        events: { registrations: [] },
+      }),
+      eventsStore: {
+        listEvents: () => [
+          {
+            title: "Campus Hackathon",
+            category: "Innovation",
+            department: "Engineering",
+            tags: ["prototype", "team"],
+            competitionConfig: { rounds: 2 },
+          },
+        ],
+      },
+    },
+  });
+  const competitionRoadmaps = await competitionAwareEngine.getRoadmapRecommendations({
+    userId: "learner-4",
+    user: { userId: "learner-4", role: "student", branch: "ECE" },
+    limit: 3,
+  });
+  assert.equal(competitionRoadmaps[0].id, hackathonRoadmap.id);
+  assert.ok(competitionRoadmaps[0].reasons.some((reason) => reason.code === "competitionMatch"));
 });
 
 test("LMS moderation routes enforce admin boundary and return resource report queue", async () => {
@@ -187,6 +297,8 @@ test("LMS moderation routes enforce admin boundary and return resource report qu
     lmsTrackerService: null,
     recommendationEngine: {
       getRecommendations: async () => [],
+      getExamPrepRecommendations: async () => [{ id: "exam-prep-1" }],
+      getRoadmapRecommendations: async () => [{ id: "roadmap-rec-1" }],
       recordFeedback: async () => ({}),
     },
     interactionTracker: {
@@ -243,6 +355,20 @@ test("LMS moderation routes enforce admin boundary and return resource report qu
   assert.equal(moderated.status, 200);
   assert.equal(moderated.body.data.resource.moderation.state, 2);
   assert.equal(moderated.body.data.audit[0].action, "decision_hide");
+
+  const examPrep = await invokeRouter(router, {
+    url: "/lms/recommendations/exam-prep?limit=3",
+    headers: { cookie: "erp_session=student-session" },
+  });
+  assert.equal(examPrep.status, 200);
+  assert.equal(examPrep.body.data[0].id, "exam-prep-1");
+
+  const roadmapRecommendations = await invokeRouter(router, {
+    url: "/lms/recommendations/roadmaps?limit=2",
+    headers: { cookie: "erp_session=student-session" },
+  });
+  assert.equal(roadmapRecommendations.status, 200);
+  assert.equal(roadmapRecommendations.body.data[0].id, "roadmap-rec-1");
 });
 
 test("LMS moderation queue stays under latency budget for a seeded review backlog", () => {

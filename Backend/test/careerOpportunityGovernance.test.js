@@ -4,7 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const { CareerStore } = require("../src/services/careerStore");
+const { CareerStore } = require("../src/services/career/careerStore");
 const { createCareerRoutes } = require("../src/routes/careerRoutes");
 
 function makeStore() {

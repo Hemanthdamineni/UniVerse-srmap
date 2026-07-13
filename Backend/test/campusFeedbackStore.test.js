@@ -8,7 +8,7 @@ const { performance } = require("perf_hooks");
 const {
   CampusFeedbackStore,
   MODERATION_STATUS,
-} = require("../src/services/campusFeedbackStore");
+} = require("../src/services/campus/campusFeedbackStore");
 
 function createStore() {
   return new CampusFeedbackStore({

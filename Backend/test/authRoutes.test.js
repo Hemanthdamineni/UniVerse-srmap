@@ -65,7 +65,7 @@ function createMockResponse() {
 }
 
 test("captcha route returns pre-auth attempt metadata", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalFetchCaptcha = erpClient.fetchCaptcha;
 
   erpClient.fetchCaptcha = async () => ({
@@ -112,7 +112,7 @@ test("captcha route returns pre-auth attempt metadata", async () => {
 });
 
 test("login route returns deferred profile success", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalLoginWithCaptcha = erpClient.loginWithCaptcha;
 
   erpClient.loginWithCaptcha = async () => ({
@@ -172,7 +172,7 @@ test("login route returns deferred profile success", async () => {
 });
 
 test("login route preserves backend auth failure codes", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalLoginWithCaptcha = erpClient.loginWithCaptcha;
 
   erpClient.loginWithCaptcha = async () => ({
@@ -227,7 +227,7 @@ test("login route preserves backend auth failure codes", async () => {
 });
 
 test("forgot-password initiate route returns OTP success", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalInitiatePasswordReset = erpClient.initiatePasswordReset;
 
   erpClient.initiatePasswordReset = async () => ({
@@ -285,7 +285,7 @@ test("forgot-password initiate route returns OTP success", async () => {
 });
 
 test("forgot-password change route preserves invalid-password errors", async () => {
-  const erpClient = require("../src/services/erpClient");
+  const erpClient = require("../src/services/erp/erpClient");
   const originalCompletePasswordReset = erpClient.completePasswordReset;
 
   erpClient.completePasswordReset = async () => {

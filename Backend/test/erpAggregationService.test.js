@@ -1,8 +1,15 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { ErpAggregationService } = require("../src/services/erpAggregationService");
-const { InMemoryErpCacheStore } = require("../src/services/erpCacheStore");
+const { ErpAggregationService } = require("../src/services/erp/erpAggregationService");
+const { InMemoryErpCacheStore } = require("../src/services/erp/erpServices");
+
+function withExtracted(section, extracted) {
+  return {
+    ...section,
+    _extracted: extracted,
+  };
+}
 
 function makeService({ liveImpl, resolveMode = "cached-first", scrapeTargets } = {}) {
   const cacheStore = new InMemoryErpCacheStore();
@@ -65,11 +72,17 @@ test("returns live response then cache-fresh on subsequent request", async () =>
       liveCalls += 1;
       return {
         Academic: {
-          "Time Table": {
+          "Time Table": withExtracted({
             title: "Time Table",
             text: "Class schedule",
             tables: [[{ Day: "Monday", Slot: "08:00 - 08:50" }]],
-          },
+          }, {
+            type: "timetable",
+            title: "Time Table",
+            timeSlots: ["08:00 - 08:50"],
+            schedule: [{ day: "Monday", periods: ["CSE 101"] }],
+            subjects: [],
+          }),
         },
       };
     },
@@ -100,10 +113,14 @@ test("adds fee-paid source row counts to ERP response metadata", async () => {
     },
     liveImpl: async () => ({
       Finance: {
-        "Payment Acknowledgment": {
+        "Payment Acknowledgment": withExtracted({
           title: "Payment Acknowledgment",
           tables: [[{ "Receipt No.": "R-1", Amount: "500" }]],
-        },
+        }, {
+          type: "payment-acknowledgment",
+          title: "Payment Acknowledgment",
+          records: [{ receiptNo: "R-1", amount: "500" }],
+        }),
       },
     }),
   });
@@ -130,11 +147,17 @@ test("accepts meaningful text-only payloads for timetable pages", async () => {
   const { service } = makeService({
     liveImpl: async () => ({
       Academic: {
-        "Time Table": {
+        "Time Table": withExtracted({
           title: "Time Table",
           text: "Classes will be announced shortly. Please check back after the timetable office publishes the updated schedule.",
           tables: [],
-        },
+        }, {
+          type: "timetable",
+          title: "Time Table",
+          timeSlots: [],
+          schedule: [],
+          subjects: [],
+        }),
       },
     }),
   });
@@ -159,16 +182,25 @@ test("accepts meaningful text-only payloads for attendance sections when mapped 
     },
     liveImpl: async () => ({
       Academic: {
-        "Attendance Details": {
+        "Attendance Details": withExtracted({
           title: "Attendance Details",
           text: "Attendance for the current term is being recalculated and will be available once faculty verification is complete.",
           tables: [],
-        },
-        "OD/ML Details": {
+        }, {
+          type: "attendance",
+          title: "Attendance Details",
+          records: [],
+          notes: ["Attendance for the current term is being recalculated."],
+        }),
+        "OD/ML Details": withExtracted({
           title: "OD/ML Details",
           text: "No OD or ML requests are pending approval for the selected semester.",
           tables: [],
-        },
+        }, {
+          type: "od-ml-details",
+          title: "OD/ML Details",
+          records: [],
+        }),
       },
     }),
   });
@@ -371,11 +403,17 @@ test("serves cache-stale without session and keeps request successful", async ()
       pageKey: "dashboard",
       data: {
         Academic: {
-          "Time Table": {
+          "Time Table": withExtracted({
             title: "Time Table",
             text: "Cached timetable",
             tables: [[{ Day: "Tuesday", Slot: "09:00 - 09:50" }]],
-          },
+          }, {
+            type: "timetable",
+            title: "Time Table",
+            timeSlots: ["09:00 - 09:50"],
+            schedule: [{ day: "Tuesday", periods: ["CSE 101"] }],
+            subjects: [],
+          }),
         },
       },
       fetchedAt: new Date(Date.now() - 120_000).toISOString(),
@@ -413,7 +451,7 @@ test("fails closed when live payload is malformed for table page", async () => {
       sessionId: "s-1",
     });
   }, (error) => {
-    assert.equal(error.code, "INVALID_UPSTREAM_PAYLOAD");
+    assert.equal(error.code, "MISSING_EXTRACTED_PAYLOAD");
     assert.equal(error.status, 502);
     return true;
   });

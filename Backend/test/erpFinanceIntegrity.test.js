@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const scrapeTargets = require("../src/config/scrapeTargets");
 const {
   extractFinanceFeePaidSourceStats,
-} = require("../src/services/erpFinanceIntegrity");
+} = require("../src/services/erp/erpServices");
 
 test("fee-paid source scrape targets stay one-to-one for per-source visibility", () => {
   assert.deepEqual(scrapeTargets["finance/fee-paid-details"], [
