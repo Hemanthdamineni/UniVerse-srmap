@@ -1,13 +1,13 @@
-// ErpPageShell section-card; earlier results tables unchanged.
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/LoadingSpinner";
-import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erpApi";
-import { extractApiErrorMessage } from "../../lib/auth";
-import { getSessionId, handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/session";
+import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erp/index";
+import { extractApiErrorMessage } from "../../lib/core/auth";
+import { getSessionId, handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/core/session";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/InlineError";
+import { InlineError } from "../../components/ui/Feedback";
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { readExtracted } from "../../lib/erp/shared";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -34,195 +34,100 @@ interface InternalMarkRecord {
   maxMark: string;
 }
 
-const MONTH_PATTERN = /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+\d{4}$/i;
-const SUBJECT_CODE_PATTERN = /^[A-Z]{2,}\s*\d{2,3}[A-Z]?$/i;
-const GRADE_PATTERN = /^(O|A\+|A|B\+|B|C|D|P|F|RA|AB)$/i;
-const RESULT_PATTERN = /^(PASS|FAIL|ABSENT|RA|WH)$/i;
-
-function normalizeText(value: unknown) {
-  return String(value || "").replace(/\s+/g, " ").trim();
+function clean(value: unknown): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
-function humanizeText(value: unknown) {
-  const normalized = normalizeText(value);
-  if (!normalized) return "";
-
-  if (normalized === normalized.toUpperCase() && /[A-Z]/.test(normalized)) {
-    return normalized.toLowerCase().replace(/\b[a-z]/g, (char) => char.toUpperCase());
+function humanizeText(value: unknown): string {
+  const s = clean(value);
+  if (!s) return "";
+  if (s === s.toUpperCase() && /[A-Z]/.test(s)) {
+    return s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
   }
+  return s;
+}
 
-  return normalized;
+function requireExtracted(
+  rawData: unknown,
+  expectedType: string,
+  pageKey: string,
+): Record<string, unknown> {
+  const extracted = readExtracted(rawData);
+  if (!extracted) {
+    throw new Error(
+      `MISSING_EXTRACTED_PAYLOAD [${pageKey}]: _extracted field is absent. ` +
+        `The ERP page structure may have changed. Add or fix the backend extractor.`,
+    );
+  }
+  if (extracted.type !== expectedType) {
+    throw new Error(
+      `UNEXPECTED_PAYLOAD_TYPE [${pageKey}]: expected "${expectedType}", got "${extracted.type}". ` +
+        `The backend extractor output type has changed.`,
+    );
+  }
+  return extracted;
 }
 
 function isBatchFailure(result: ErpBatchPageResult | undefined): result is ErpPageFailure {
   return Boolean(result && (result as { success?: boolean }).success === false);
 }
 
-function readEarlierInternalMarksSection(rawData: unknown) {
-  if (!rawData || typeof rawData !== "object") return null;
-  return ((rawData as Record<string, unknown>).Examination as Record<string, unknown> | undefined)?.[
-    "Earlier Internal Marks"
-  ] as Record<string, unknown> | null;
+function parseHistoricalExamMarks(rawData: unknown): HistoricalExamMark[] {
+  const extracted = requireExtracted(rawData, "exam-mark-details", "examination/exam-mark-details");
+  const records = extracted.records as Record<string, unknown>[];
+  return records.map((r) => ({
+    semester: clean(r.semesterNo),
+    monthYear: clean(r.monthYear),
+    subjectCode: clean(r.subjectCode),
+    subjectDescription: humanizeText(r.subjectName),
+    credit: clean(r.credit),
+    grade: clean(r.grade),
+    gradePoint: clean(r.gradePoints),
+    result: clean(r.result),
+    attempt: clean(r.attempt),
+  })).filter((r) => r.subjectCode && r.subjectDescription);
 }
 
-function readExamMarkDetailsSection(rawData: unknown) {
-  if (!rawData || typeof rawData !== "object") return null;
-  return ((rawData as Record<string, unknown>).Examination as Record<string, unknown> | undefined)?.[
-    "Exam Mark Details"
-  ] as Record<string, unknown> | null;
-}
-
-function parseAvailableSemesters(rawData: unknown) {
-  const section = readEarlierInternalMarksSection(rawData);
-  if (!section) return [1];
-
-  const documentRecord =
-    section.document && typeof section.document === "object"
-      ? (section.document as Record<string, unknown>)
-      : null;
-  const rootRecord =
-    documentRecord?.root && typeof documentRecord.root === "object"
-      ? (documentRecord.root as Record<string, unknown>)
-      : null;
-  const childNodes = Array.isArray(rootRecord?.children) ? (rootRecord.children as Array<Record<string, unknown>>) : [];
-
-  const fromButtons = childNodes
-    .map((node) =>
-      node.props && typeof node.props === "object"
-        ? normalizeText((node.props as Record<string, unknown>).label)
-        : ""
-    )
-    .map((label) => label.match(/semester\s+(\d+)/i))
-    .map((match) => Number.parseInt(match?.[1] || "", 10))
-    .filter((value) => Number.isInteger(value) && value > 0);
-
-  const fromText = Array.from(normalizeText(section.text).matchAll(/semester\s+(\d+)/gi))
-    .map((match) => Number.parseInt(match[1], 10))
-    .filter((value) => Number.isInteger(value) && value > 0);
-
-  const semesters = Array.from(new Set([...fromButtons, ...fromText])).sort((left, right) => left - right);
-  return semesters.length > 0 ? semesters : [1];
-}
-
-function parseExamMarkTokenRow(tokens: string[]): HistoricalExamMark | null {
-  const row: HistoricalExamMark = {
-    semester: "-",
-    monthYear: "-",
-    subjectCode: "-",
-    subjectDescription: "-",
-    credit: "-",
-    grade: "-",
-    gradePoint: "-",
-    result: "-",
-    attempt: "-",
-  };
-
-  const numericTokens = tokens.filter((token) => /^\d+$/.test(token));
-  if (numericTokens.length > 0) row.semester = numericTokens[0];
-  if (numericTokens.length > 1) row.credit = numericTokens[1];
-  if (numericTokens.length > 2) row.attempt = numericTokens[numericTokens.length - 1];
-
-  const monthToken = tokens.find((token) => MONTH_PATTERN.test(token));
-  if (monthToken) row.monthYear = monthToken;
-
-  const subjectCode = tokens.find((token) => SUBJECT_CODE_PATTERN.test(token));
-  if (subjectCode) row.subjectCode = subjectCode;
-
-  const gradeToken = tokens.find((token) => GRADE_PATTERN.test(token));
-  if (gradeToken) row.grade = gradeToken;
-
-  const gradePointToken = tokens.find((token) => /^\d+\.\d{2}$/.test(token));
-  if (gradePointToken) row.gradePoint = gradePointToken;
-
-  const resultToken = tokens.find((token) => RESULT_PATTERN.test(token));
-  if (resultToken) row.result = resultToken;
-
-  const description = tokens
-    .filter((token) => token.length > 3)
-    .filter((token) => !MONTH_PATTERN.test(token))
-    .filter((token) => !SUBJECT_CODE_PATTERN.test(token))
-    .filter((token) => !GRADE_PATTERN.test(token))
-    .filter((token) => !RESULT_PATTERN.test(token))
-    .filter((token) => !/^\d+(\.\d+)?$/.test(token))
-    .sort((left, right) => right.length - left.length)[0];
-
-  if (description) row.subjectDescription = humanizeText(description);
-
-  if (row.subjectCode === "-" || row.subjectDescription === "-") {
-    return null;
-  }
-
-  return row;
-}
-
-function parseHistoricalExamMarks(rawData: unknown) {
-  const section = readExamMarkDetailsSection(rawData);
-  const tables = Array.isArray(section?.tables) ? (section.tables as unknown[]) : [];
-  const parsedRows: HistoricalExamMark[] = [];
-
-  tables.forEach((table) => {
-    if (!Array.isArray(table) || table.length === 0) return;
-    const firstRow = table[0];
-    if (!firstRow || typeof firstRow !== "object") return;
-
-    const tokens = Array.from(
-      new Set(
-        Object.keys(firstRow as Record<string, unknown>)
-          .map((key) => key.replace(/_\d+$/, "").trim())
-          .filter(Boolean)
-      )
-    );
-
-    const parsed = parseExamMarkTokenRow(tokens);
-    if (parsed) {
-      parsedRows.push(parsed);
-    }
-  });
-
-  const deduped = Array.from(
-    new Map(
-      parsedRows.map((row) => [
-        `${row.semester}|${row.monthYear}|${row.subjectCode}|${row.subjectDescription}|${row.attempt}|${row.grade}`,
-        row,
-      ])
-    ).values()
+function parseAvailableSemesters(rawData: unknown): number[] {
+  const extracted = requireExtracted(
+    rawData,
+    "earlier-internal-marks",
+    "examination/earlier-internal-marks",
   );
-
-  return deduped.sort((left, right) => {
-    const semesterDiff = Number.parseInt(left.semester || "0", 10) - Number.parseInt(right.semester || "0", 10);
-    if (semesterDiff !== 0) return semesterDiff;
-    if (left.monthYear !== right.monthYear) return left.monthYear.localeCompare(right.monthYear);
-    return left.subjectCode.localeCompare(right.subjectCode);
-  });
+  const semesters = (extracted.availableSemesters as Array<{ semesterNo: number }> | undefined) ?? [];
+  const nums = semesters
+    .map((s) => Number(s.semesterNo))
+    .filter((n) => Number.isInteger(n) && n > 0)
+    .sort((a, b) => a - b);
+  return nums.length > 0 ? nums : [1];
 }
 
-function parseInternalMarks(rawData: unknown) {
-  const table =
-    rawData && typeof rawData === "object" && Array.isArray((rawData as Record<string, unknown>).tables)
-      ? (((rawData as Record<string, unknown>).tables as unknown[])[0] as Array<Record<string, unknown>> | undefined)
-      : undefined;
-
-  if (!Array.isArray(table)) return [];
-
-  return table
-    .filter((row) => row && typeof row === "object")
-    .map((row) => ({
-      semester: normalizeText(row.Semester),
-      code: normalizeText(row.Code),
-      description: humanizeText(row.Description),
-      subjectType: humanizeText(row["Subject Type"]),
-      markObtained: normalizeText(row["Mark Obtained"]),
-      maxMark: normalizeText(row["Max Mark"]),
+function parseInternalMarks(rawData: unknown): InternalMarkRecord[] {
+  const extracted = requireExtracted(
+    rawData,
+    "internal-marks",
+    "examination/earlier-internal-marks/semester",
+  );
+  const records = extracted.records as Record<string, unknown>[];
+  return records
+    .map((r) => ({
+      semester: clean(r.semester ?? ""),
+      code: clean(r.subjectCode),
+      description: humanizeText(r.subjectName),
+      subjectType: "",
+      markObtained: clean(r.marksObtained),
+      maxMark: clean(r.totalMarks),
     }))
-    .filter((row) => row.code && row.description);
+    .filter((r) => r.code && r.description);
 }
 
-async function fetchInternalMarksForSemester(semester: number) {
+async function fetchInternalMarksForSemester(semester: number): Promise<InternalMarkRecord[]> {
   const sessionId = getSessionId();
   const query = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : "";
-  const response = await fetch(`/api/scrape/examination/earlier-internal-marks/semester/${semester}${query}`, {
-    credentials: "include",
-  });
+  const response = await fetch(
+    `/api/scrape/examination/earlier-internal-marks/semester/${semester}${query}`,
+    { credentials: "include" },
+  );
 
   let payload: unknown = null;
   try {
@@ -235,9 +140,8 @@ async function fetchInternalMarksForSemester(semester: number) {
     if (isSessionAuthFailure(response.status, payload)) {
       handleSessionAuthFailure();
     }
-
     throw new Error(
-      extractApiErrorMessage(payload, `Failed to load semester ${semester} internal marks.`)
+      extractApiErrorMessage(payload, `Failed to load semester ${semester} internal marks.`),
     );
   }
 
@@ -270,7 +174,6 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
         if (isBatchFailure(marksResult)) {
           throw new Error(marksResult.error || "Failed to load historical exam marks.");
         }
-
         if (isBatchFailure(internalResult)) {
           throw new Error(internalResult.error || "Failed to load earlier internal marks.");
         }
@@ -280,7 +183,6 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
         const initialSemester = semesters[semesters.length - 1] || 1;
 
         if (!active) return;
-
         setHistoricalMarks(marksRows);
         setAvailableSemesters(semesters);
         setSelectedSemester(initialSemester);
@@ -293,24 +195,19 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
     }
 
     load();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [blueprint.fetchKeys, refreshTrigger]);
 
   useEffect(() => {
     if (!selectedSemester) return;
-
     let active = true;
 
     async function loadInternalMarks() {
       const semester = selectedSemester;
       if (!semester) return;
-
       try {
         setInternalLoading(true);
         setInternalError(null);
-
         const rows = await fetchInternalMarksForSemester(semester);
         if (!active) return;
         setInternalMarks(rows);
@@ -324,9 +221,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
     }
 
     loadInternalMarks();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [selectedSemester]);
 
   return (
