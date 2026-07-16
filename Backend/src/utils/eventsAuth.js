@@ -56,16 +56,6 @@ function resolveRole(req, sessionStore, adminPassword = "") {
 }
 
 async function resolveRoleAsync(req, sessionStore, adminPassword = "") {
-  if (String(adminPassword || "").trim() && hasAdminAccess(req, adminPassword)) {
-    const headerRole = String(req.header("x-user-role") || "").trim().toLowerCase();
-    return headerRole || "admin";
-  }
-
-  const headerRole = String(req.header("x-user-role") || "").trim().toLowerCase();
-  if (headerRole) return headerRole;
-  const queryRole = String(req.query.role || "").trim().toLowerCase();
-  if (queryRole) return queryRole;
-
   const sessionId = resolveSessionId(req);
   if (!sessionId) return "guest";
 
@@ -101,21 +91,13 @@ function createUserContextMiddleware({ sessionStore, adminPassword = "" }) {
     }
 
     const profile = session?.profileData || {};
-    const headerUserId = String(req.header("x-user-id") || "").trim();
-    const headerName = String(req.header("x-user-name") || "").trim();
-    const headerEmail = String(req.header("x-user-email") || "").trim();
-    const headerDepartment = String(req.header("x-user-department") || "").trim();
-    const queryUserId = String(req.query.userId || "").trim();
-    const queryUserName = String(req.query.userName || "").trim();
-    const queryUserEmail = String(req.query.userEmail || "").trim();
-    const queryUserDepartment = String(req.query.userDepartment || "").trim();
 
     req.userContext = {
       role,
-      userId: headerUserId || queryUserId || parseUserIdFromProfile(profile),
-      name: headerName || queryUserName || parseNameFromProfile(profile),
-      email: headerEmail || queryUserEmail || parseEmailFromProfile(profile),
-      department: headerDepartment || queryUserDepartment || parseDepartmentFromProfile(profile),
+      userId: parseUserIdFromProfile(profile),
+      name: parseNameFromProfile(profile),
+      email: parseEmailFromProfile(profile),
+      department: parseDepartmentFromProfile(profile),
       branch: parseBranchFromProfile(profile),
       year: parseYearFromProfile(profile),
       sessionId,

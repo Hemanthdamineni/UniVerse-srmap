@@ -229,7 +229,7 @@ test("career submission HTTP routes enforce admin review boundary and reasoned a
     assert.equal(approved.status, 200);
     assert.equal(approved.body.status, "approved");
     assert.equal(approved.body.reviewReason, "Verified official workshop source.");
-    assert.equal(approved.body.reviewedBy, "admin-1");
+    assert.equal(approved.body.reviewedBy, "AP23110010419");
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

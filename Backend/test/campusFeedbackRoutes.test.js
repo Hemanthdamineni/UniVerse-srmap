@@ -28,7 +28,7 @@ function createSessionStore() {
       department: "B.Tech CSE / A",
     }),
     "admin-session": createSession({
-      userId: "ADMIN001",
+      userId: "AP23110010419",
       name: "Admin User",
       email: "admin@example.edu",
       department: "Student Affairs",

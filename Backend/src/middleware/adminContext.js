@@ -17,7 +17,7 @@ function createAdminContextMiddleware({ sessionStore }) {
 
       const registerNo = extractRegisterNoFromProfile(session.profileData, session.username);
       const potentialAdmin = isPotentialAdminRegisterNo(registerNo);
-      const isElevated = potentialAdmin || Boolean(session.adminElevated);
+      const isElevated = Boolean(session.adminElevated);
 
       req.adminContext = {
         registerNo,
