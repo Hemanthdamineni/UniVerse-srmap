@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, CheckCircle2, Eye, Info, UploadCloud } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
@@ -7,6 +7,17 @@ import { createEvent } from "../../lib/campus/campusApi";
 import { track } from "../../lib/core/analytics";
 
 type WizardStep = 1 | 2 | 3 | 4;
+
+type BasicFields = {
+  title: string;
+  category: string;
+  department: string;
+  description: string;
+  startAt: string;
+  endAt: string;
+  venue: string;
+  visibility: string;
+};
 
 type DraftRound = {
   title: string;
@@ -19,25 +30,61 @@ const stepLabels = ["Details", "Rounds", "Judges", "Review"];
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<WizardStep>(1);
+const savedDraft: any = (() => {
+    try {
+      const raw = sessionStorage.getItem("create_event_draft");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const [step, setStep] = useState<WizardStep>(
+    savedDraft?.step ? (Math.min(savedDraft.step, 4) as WizardStep) : 1,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [basic, setBasic] = useState({
-    title: "",
-    category: "Academic Research",
-    department: "Computer Science",
-    description: "",
-    startAt: "",
-    endAt: "",
-    venue: "",
-    visibility: "public",
-  });
-  const [isCompetition, setIsCompetition] = useState(true);
-  const [submissionScope, setSubmissionScope] = useState<"individual" | "team">("team");
-  const [rounds, setRounds] = useState<DraftRound[]>([
-    { title: "Round 1", submissionDeadline: "", instructions: "Upload project files and repository links.", maxResubmissions: 2 },
-  ]);
-  const [judges, setJudges] = useState("");
+  const [basic, setBasic] = useState<BasicFields>(
+    savedDraft?.basic ?? {
+      title: "",
+      category: "Academic Research",
+      department: "Computer Science",
+      description: "",
+      startAt: "",
+      endAt: "",
+      venue: "",
+      visibility: "public",
+    },
+  );
+  const [isCompetition, setIsCompetition] = useState<boolean>(
+    savedDraft?.isCompetition ?? true,
+  );
+  const [submissionScope, setSubmissionScope] = useState<
+    "individual" | "team"
+  >(savedDraft?.submissionScope ?? "team");
+  const [rounds, setRounds] = useState<DraftRound[]>(
+    savedDraft?.rounds ?? [
+      {
+        title: "Round 1",
+        submissionDeadline: "",
+        instructions: "Upload project files and repository links.",
+        maxResubmissions: 2,
+      },
+    ],
+  );
+  const [judges, setJudges] = useState<string>(savedDraft?.judges ?? "");
+
+  // Persist wizard state to sessionStorage so a page refresh doesn't lose the draft
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        "create_event_draft",
+        JSON.stringify({ step, basic, isCompetition, submissionScope, rounds, judges }),
+      );
+    } catch {
+      /* quota exceeded -- silently ignore */
+    }
+  }, [step, basic, isCompetition, submissionScope, rounds, judges]);
 
   const canPublish = basic.title.trim() && basic.startAt && basic.endAt && basic.description.trim();
   const duration = useMemo(() => {
@@ -98,6 +145,7 @@ export default function CreateEventPage() {
 
       const created = await createEvent(payload);
       const createdEvent = Array.isArray(created) ? created[0] : created;
+      sessionStorage.removeItem("create_event_draft");
       track("create_event_completed", { mode: "stitch_wizard", isCompetition });
       navigate(createdEvent?.id ? `/events/${createdEvent.id}/manage` : "/events/my-created");
     } catch (err) {

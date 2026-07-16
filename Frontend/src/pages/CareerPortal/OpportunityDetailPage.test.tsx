@@ -134,14 +134,33 @@ describe("OpportunityDetailPage", () => {
     expect(trackView).toHaveBeenCalledWith("o1");
     expect(await screen.findByText("82%")).toBeInTheDocument();
     expect(getOpportunityFit).toHaveBeenCalledWith("o1");
-    await user.click(screen.getByRole("button", { name: /Apply Now/i }));
-    expect(trackApply).toHaveBeenCalledWith("o1");
-    expect(window.open).toHaveBeenCalled();
+
+    // Bookmark — independent of applied state
     const bm = document.querySelector("button svg.lucide-bookmark")?.closest("button");
     await user.click(bm!);
     expect(bookmarkOpportunity).toHaveBeenCalled();
+
+    // Apply flow: click Apply Now, verify tracking and button state transition
+    await user.click(screen.getByRole("button", { name: /Apply Now/i }));
+    expect(trackApply).toHaveBeenCalledWith("o1");
+    expect(window.open).toHaveBeenCalled();
+    // After applying, the Apply button is replaced by "Already Applied"
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Already Applied/i })).toBeInTheDocument()
+    );
+  });
+
+  it("adds opportunity to tracker and updates button state", async () => {
+    const user = userEvent.setup();
+    renderAt("/career/opportunities/o1");
+    await waitFor(() => expect(screen.getByText("Detail Title")).toBeInTheDocument());
+
     await user.click(screen.getByRole("button", { name: /Add to Tracker/i }));
-    expect(createApplication).toHaveBeenCalled();
+    expect(createApplication).toHaveBeenCalledWith("o1", undefined);
+    // After tracking, the applied state updates to show "Already Applied"
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Already Applied/i })).toBeInTheDocument()
+    );
   });
 
   it("shows error UI when fetch fails", async () => {
