@@ -1,8 +1,9 @@
 const express = require("express");
 const { resolveSessionId } = require("../utils/cookies");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
+const { hasAdminAccess } = require("../utils/adminAccess");
 
-function createAdminRoutes({ sessionStore }) {
+function createAdminRoutes({ sessionStore, adminPassword }) {
   const router = express.Router();
 
   router.get("/admin/access/status", async (req, res) => {
@@ -21,6 +22,11 @@ function createAdminRoutes({ sessionStore }) {
     try {
       if (!req.adminContext?.potentialAdmin) {
         const error = new Error("Admin privileges are not available for this account.");
+        error.status = 403;
+        throw error;
+      }
+      if (!hasAdminAccess(req, adminPassword)) {
+        const error = new Error("Admin authentication failed");
         error.status = 403;
         throw error;
       }

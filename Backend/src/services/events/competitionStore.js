@@ -381,6 +381,13 @@ const evaluationMethods = {
       throw error;
     }
     const { event } = this._getRoundOrThrow(submission.eventId, submission.roundId);
+    // Guard: prevent evaluation after results are published
+    const roundRow = this.db.prepare("SELECT resultsPublished FROM rounds WHERE roundId = ? AND eventId = ?").get(submission.roundId, submission.eventId);
+    if (roundRow?.resultsPublished) {
+      const error = new Error("Cannot modify evaluation after results are published");
+      error.status = 409;
+      throw error;
+    }
     this._ensurePermission(user, event, "canEvaluate");
     if (submission.submittedBy === user.userId) {
       const error = new Error("Conflict of interest.");
@@ -1970,6 +1977,7 @@ class CompetitionStore {
     this.db = new DatabaseSync(this.dbPath);
     this.db.exec("PRAGMA busy_timeout = 5000");
     this.db.exec("PRAGMA foreign_keys = ON");
+    this.db.exec("PRAGMA journal_mode = WAL");
     this._ensureSchema();
     this._migrateRoundsFromJson();
   }

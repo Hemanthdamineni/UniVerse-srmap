@@ -293,6 +293,19 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
   router.post("/auth/forgot", handleForgotPassword);
 
   async function handleLogout(req, res) {
+    const sessionId = resolveSessionId(req);
+    if (sessionId) {
+      try {
+        await sessionStore.update(sessionId, {
+          loggedIn: false,
+          storageState: null,
+          profileData: null,
+          loginBootstrap: null,
+          preAuthAttempt: null,
+          username: "",
+        });
+      } catch { /* best effort */ }
+    }
     clearSessionCookie(res, req);
     return sendApiSuccess(res, req, { success: true });
   }

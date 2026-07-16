@@ -13,19 +13,41 @@ function createStore() {
 }
 
 function createSessionStore() {
-  return {
-    async getOrThrow() {
-      return {
-        loggedIn: true,
-        profileData: {
-          TableContent: {
-            "Register No.": "AP23110010001",
-            "Student Name": "Student One",
-            "Student E-Mail": "student@example.edu",
-            "Program / Section": "B.Tech Computer Science and Engineering / A",
-          },
+  const sessions = {
+    "session-1": {
+      loggedIn: true,
+      profileData: {
+        TableContent: {
+          "Register No.": "AP23110010001",
+          "Student Name": "Student One",
+          "Student E-Mail": "student@example.edu",
+          "Program / Section": "B.Tech Computer Science and Engineering / A",
         },
-      };
+      },
+    },
+    "admin-session": {
+      loggedIn: true,
+      adminElevated: true,
+      profileData: {
+        TableContent: {
+          "Register No.": "AP23110010419",
+          "Student Name": "Admin User",
+          "Student E-Mail": "admin@example.edu",
+          "Program / Section": "Admin",
+        },
+      },
+    },
+  };
+  return {
+    async getOrThrow(sessionId) {
+      const session = sessions[sessionId];
+      if (!session) throw new Error("missing session");
+      return session;
+    },
+    async update(sessionId, data) {
+      if (sessions[sessionId]) {
+        Object.assign(sessions[sessionId], data);
+      }
     },
   };
 }
@@ -146,7 +168,7 @@ test("Companion analytics routes collect events and protect reports behind admin
 
   const report = await invokeRouter(router, {
     url: "/analytics/companion/report?days=30",
-    headers: { "x-user-role": "admin", "x-user-id": "admin-1" },
+    headers: { cookie: "erp_session=admin-session" },
   });
   assert.equal(report.status, 200);
   assert.equal(report.body.totals.totalEvents, 1);
