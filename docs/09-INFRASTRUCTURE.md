@@ -161,6 +161,13 @@ REDIS_SENTINEL_MASTER_NAME=mymaster
   - `content.sqlite` — Unified content store
   - `events.sqlite` — Events system
   - `external-pages.sqlite` — External page metadata
+  - `helpdesk.sqlite` — Helpdesk tickets and FAQs
+  - `campus-feedback.sqlite` — Campus feedback
+  - `career.sqlite` — Career portal (resumes, job listings)
+  - `lms.sqlite` — LMS resources, guides, roadmaps, quizzes, PYQs
+  - `lms-tracker.sqlite` — LMS interaction tracking
+  - `unified-profile.sqlite` — Unified student profiles
+  - `companion-analytics.sqlite` — Companion platform analytics
 - The `Backend/data/` directory is mounted as a Docker volume
 - **Backup strategy:** Backup `Backend/data/` directory regularly
 - Discovery map (`endpoint-discovery.json`) is checked in; doesn't change at runtime

@@ -26,6 +26,9 @@ A **middleware platform** that wraps the SRM AP University ERP system. It scrape
 | 09 | [Infrastructure & Deployment](./09-INFRASTRUCTURE.md) | Docker, Nginx, Redis, monitoring, runbooks |
 | 10 | [Development Guide](./10-DEVELOPMENT-GUIDE.md) | Local setup, running, testing, debugging, common pitfalls |
 | 11 | [Extending the System](./11-EXTENDING-THE-SYSTEM.md) | Adding new ERP pages, new modules, new renderers, new services |
+| 12 | [System Audit Report](./12-SYSTEM-AUDIT-REPORT.md) | Audit findings, compliance, access review |
+| 13 | [Database Schemas](./13-DATABASE-SCHEMAS.md) | All SQLite table definitions, indices, and relationships |
+| 14 | [Production Readiness Runbook](./runbooks/admin-content-lifecycle.md) | Deployment, operational procedures, runbooks |
 
 ---
 
@@ -43,6 +46,19 @@ cd Frontend && npm install && npm run dev
 
 # 4. Open http://localhost:5173
 ```
+
+---
+
+## Additional Documents
+
+Supplementary documentation lives in these subdirectories:
+
+| Directory | Contents |
+|-----------|----------|
+| [`design/`](./design/) | Architecture flow maps, aura design system |
+| [`reports/`](./reports/) | Completion audit, post-implementation report, root cause analysis |
+| [`runbooks/`](./runbooks/) | Operational runbooks (admin content lifecycle) |
+| [`uat/`](./uat/) | User acceptance testing documentation |
 
 ---
 
