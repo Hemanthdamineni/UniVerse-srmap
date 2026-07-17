@@ -40,9 +40,6 @@ function resolveSessionId(req) {
   const headerSession = String(req?.header?.("x-session-id") || "").trim();
   if (headerSession) return headerSession;
 
-  const querySession = String(req?.query?.sessionId || "").trim();
-  if (querySession) return querySession;
-
   const bodySession = String(req?.body?.sessionId || "").trim();
   if (bodySession) return bodySession;
 

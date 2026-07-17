@@ -7,25 +7,25 @@ function getProvidedAdminPassword(req) {
     if (fromBody) return fromBody;
   }
 
-  if (typeof req.query.adminPassword === "string") {
-    const fromQuery = req.query.adminPassword.trim();
-    if (fromQuery) return fromQuery;
-  }
-
   return "";
 }
 
 function hasAdminAccess(req, adminPassword = "") {
   if (req?.adminContext?.isElevated) return true;
   const requiredPassword = String(adminPassword || "").trim();
-  if (!requiredPassword) return true;
+  if (!requiredPassword) return false;
   return getProvidedAdminPassword(req) === requiredPassword;
 }
 
 function assertAdminAccess(req, adminPassword = "") {
   if (hasAdminAccess(req, adminPassword)) return;
-  const error = new Error("Admin authentication failed");
-  error.status = 403;
+  const requiredPassword = String(adminPassword || "").trim();
+  const error = new Error(
+    requiredPassword
+      ? "Admin authentication failed"
+      : "Admin authentication is not configured"
+  );
+  error.status = requiredPassword ? 403 : 503;
   throw error;
 }
 
