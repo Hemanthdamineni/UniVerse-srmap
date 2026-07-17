@@ -77,7 +77,6 @@ export default function AdminCampusFeedbackPage() {
 
   useEffect(() => {
     void loadQueue();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, status, pagination.offset]);
 
   async function decide(entry: CampusFeedbackEntry, nextStatus: Exclude<CampusFeedbackStatus, "pending">) {

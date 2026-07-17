@@ -5,6 +5,9 @@ import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
 
+// ERP-dependent base URL for receipt print endpoint — adjust if the ERP path changes
+const ERP_RECEIPT_PRINT_BASE = "/srmapstudentcorner/students/report/receiptgenerationprint.jsp";
+
 type Props = {
   blueprint: PageBlueprint;
 };
@@ -29,7 +32,7 @@ export default function FeePaidPage({ blueprint }: Props) {
       const response = await executeErpAction({
         pageKey: target.pageKey,
         actionId: target.actionId,
-        url: `/srmapstudentcorner/students/report/receiptgenerationprint.jsp?receiptid=${target.receiptId}`,
+        url: `${ERP_RECEIPT_PRINT_BASE}?receiptid=${target.receiptId}`,
         method: "GET"
       });
 
@@ -87,7 +90,8 @@ export default function FeePaidPage({ blueprint }: Props) {
 
         const pipelineResult = executePipeline("finance-paid", rawData);
         if (!pipelineResult.isValid || !pipelineResult.data) {
-          // If the pipeline says it's invalid, we show no rows rather than crashing
+          // Pipeline failed — log error and show warnings to user rather than crashing
+          console.error("Pipeline failed for finance-paid:", pipelineResult.errors);
           setData({
             title: blueprint.heading,
             records: [],
@@ -172,8 +176,6 @@ export default function FeePaidPage({ blueprint }: Props) {
                 )
             );
             const colCount = dataCols.length + (hasPrintAction ? 1 : 0);
-
-  const warnings = data?.warnings || [];
 
   return (
               <section key={section.sourcePageKey} className="dashboard-card overflow-hidden p-0">

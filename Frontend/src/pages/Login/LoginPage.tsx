@@ -135,7 +135,12 @@ export default function LoginPage() {
 
   // ── Detect debug mode and auto-login ──
   useEffect(() => {
-    if (hasSessionAuth()) { navigate("/dashboard", { replace: true }); return; }
+    if (hasSessionAuth()) {
+      const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
+      sessionStorage.removeItem("login_redirect");
+      navigate(redirectTo, { replace: true });
+      return;
+    }
     if (requestedInitialCaptcha.current) return;
 
     let cancelled = false;
@@ -160,7 +165,9 @@ export default function LoginPage() {
         const r = await axios.post("/api/dev/login", { username: "AP23110010419" });
         if (cancelled) return;
         storeSessionAuth({ sessionId: String(r.data?.sessionId || ""), profileData: r.data?.profileData });
-        navigate("/dashboard", { replace: true });
+        const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
+        sessionStorage.removeItem("login_redirect");
+        navigate(redirectTo, { replace: true });
       } catch {
         if (cancelled) return;
         setStatusTone("error");
@@ -226,7 +233,11 @@ export default function LoginPage() {
       setSubmitPhase("success");
       setStatusTone("success");
       setStatusMessage("Logged in. Opening dashboard...");
-      setTimeout(() => navigate("/dashboard", { replace: true }), 700);
+      setTimeout(() => {
+        const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
+        sessionStorage.removeItem("login_redirect");
+        navigate(redirectTo, { replace: true });
+      }, 700);
     } catch (e: unknown) {
       const p = axios.isAxiosError(e) ? e.response?.data : null;
       const msg = extractApiErrorMessage(p, axios.isAxiosError(e) ? (e.message || "Login failed.") : "Login failed.");

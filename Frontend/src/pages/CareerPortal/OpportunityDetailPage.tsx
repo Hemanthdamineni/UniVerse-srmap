@@ -79,7 +79,7 @@ const OpportunityDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookmarked, setBookmarked] = useState(false);
-  const [applied, setApplied] = useState(false);
+  const [applied, setApplied] = useState(() => (id ? localStorage.getItem(`applied_${id}`) === "true" : false));
   const [fit, setFit] = useState<OpportunityFit | null>(null);
   const [fitLoading, setFitLoading] = useState(false);
 
@@ -166,6 +166,8 @@ const OpportunityDetailPage: React.FC = () => {
     try {
       await trackApply(id);
       window.open(opp.applyUrl, '_blank');
+      setApplied(true);
+      localStorage.setItem(`applied_${id}`, "true");
     } catch (err) {
       console.error('Failed to track apply', err);
     }
@@ -255,12 +257,18 @@ const OpportunityDetailPage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap gap-4 pt-2">
-            <Button 
-              className="flex-1 sm:flex-none h-12 px-8 text-lg"
-              onClick={handleApply}
-            >
-              Apply Now <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
+            {applied ? (
+              <Button disabled className="flex-1 sm:flex-none h-12 px-8 text-lg">
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Already Applied
+              </Button>
+            ) : (
+              <Button
+                className="flex-1 sm:flex-none h-12 px-8 text-lg"
+                onClick={handleApply}
+              >
+                Apply Now <ExternalLink className="ml-2 h-5 w-5" />
+              </Button>
+            )}
             <Button 
               variant="outline" 
               className={applied ? "flex-1 sm:flex-none h-12 text-emerald-600 border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" : "flex-1 sm:flex-none h-12"}

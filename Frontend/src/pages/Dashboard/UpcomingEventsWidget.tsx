@@ -97,7 +97,6 @@ export default function UpcomingEventsWidget() {
 
   useEffect(() => {
     fetchEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* -- Loading state -- */
