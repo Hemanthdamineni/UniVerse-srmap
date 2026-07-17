@@ -341,6 +341,14 @@ async function startServer() {
     log({ level: "info", msg: "HTTP server closed" });
     clearInterval(reminderTicker);
     lmsInteractionQueue.stop();
+    // Release the in-memory cache sweep timer (no-op if cache is Redis-backed).
+    if (typeof erpCacheStore?.close === "function") {
+      erpCacheStore.close();
+    }
+    // Close Redis connections so the process can exit cleanly.
+    if (redisClient && typeof redisClient.quit === "function") {
+      redisClient.quit().catch(() => {});
+    }
     shutdownLogger().finally(() => {
       process.exit(exitCode);
     });
