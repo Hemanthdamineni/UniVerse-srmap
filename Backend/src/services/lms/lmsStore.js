@@ -1897,6 +1897,11 @@ const resourceMethods = {
     this.db
       .prepare("UPDATE lms_resources SET isDeleted = 1, deletedAt = ?, deletedBy = ? WHERE id = ?")
       .run(nowIso(), userId, id);
+    // Decrement user storage quota so totalBytes doesn't inflate over time
+    // as resources are created and soft-deleted.
+    if (resource.fileSize) {
+      this.updateUserStorage(resource.uploadedBy, -(resource.fileSize));
+    }
     this.syncResourceSearchIndex(id);
     return { deleted: true, id };
   },
@@ -1913,6 +1918,10 @@ const resourceMethods = {
     this.db
       .prepare("UPDATE lms_resources SET isDeleted = 0, deletedAt = NULL, deletedBy = NULL WHERE id = ?")
       .run(id);
+    // Restore storage quota that was decremented on soft-delete.
+    if (resource.fileSize) {
+      this.updateUserStorage(resource.uploadedBy, resource.fileSize);
+    }
     this.syncResourceSearchIndex(id);
     return this.getResource(id, userId, { includeHiddenOwn: true });
   },
