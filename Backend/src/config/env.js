@@ -70,8 +70,15 @@ const UNIFIED_PROFILE_DB_PATH =
   process.env.UNIFIED_PROFILE_DB_PATH || path.join(__dirname, "../../data/unified-profile.sqlite");
 const COMPANION_ANALYTICS_DB_PATH =
   process.env.COMPANION_ANALYTICS_DB_PATH || path.join(__dirname, "../../data/companion-analytics.sqlite");
+/** WARNING: ADMIN_CONTENT_PASSWORD MUST be configured via the environment variable.
+ *  There is no safe fallback -- leaving it empty disables admin content access. */
 const ADMIN_CONTENT_PASSWORD =
-  process.env.ADMIN_CONTENT_PASSWORD || "asdfghjkl;'";
+  process.env.ADMIN_CONTENT_PASSWORD || "";
+if (!ADMIN_CONTENT_PASSWORD && NODE_ENV !== "test") {
+  console.warn(
+    "[env] WARNING: ADMIN_CONTENT_PASSWORD is not set. Admin content endpoints will be disabled."
+  );
+}
 const ERP_UI_MAP_FILE = process.env.ERP_UI_MAP_FILE || "";
 const ERP_ARTIFACT_MAX_AGE_DAYS = Number(process.env.ERP_ARTIFACT_MAX_AGE_DAYS || 14);
 const FRONTEND_BLUEPRINT_FILE =
