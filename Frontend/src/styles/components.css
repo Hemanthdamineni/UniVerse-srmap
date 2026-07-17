@@ -39,7 +39,7 @@
 /* Button Variants */
 .btn-primary {
   background: var(--comp-accent);
-  color: #ffffff;
+  color: var(--comp-accent-fg);
   border: none;
 }
 .btn-primary:hover {
