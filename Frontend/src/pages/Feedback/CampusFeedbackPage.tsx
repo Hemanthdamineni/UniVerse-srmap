@@ -219,7 +219,6 @@ export default function CampusFeedbackPage<Category extends string>({
   useEffect(() => {
     void loadFeedback();
     // type and fixedTarget are stable per route component.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateRating(category: Category, value: number) {

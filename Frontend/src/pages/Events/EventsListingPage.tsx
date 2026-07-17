@@ -13,6 +13,7 @@ import { Select } from "../../components/select";
 const categories = ["All Categories", "Technical", "Cultural", "Sports", "Academic", "Workshop"];
 const departments = ["All Departments", "CS Department", "Arts School", "Business Mgmt", "Student Union"];
 const formats = ["All", "Online", "Offline"];
+const dateRanges = ["All Dates", "This Week", "This Month"];
 
 function getEventImage(event: EventSummary, index: number) {
   const image = event.posterImagePath || (event as Record<string, unknown>).coverImageUrl;
@@ -210,6 +211,7 @@ export default function EventsListingPage() {
   const [category, setCategory] = useState(categories[0]);
   const [department, setDepartment] = useState(departments[0]);
   const [format, setFormat] = useState(formats[0]);
+  const [dateRange, setDateRange] = useState(dateRanges[0]);
 
   const loadEvents = useCallback(() => {
     setLoading(true);
@@ -266,9 +268,24 @@ export default function EventsListingPage() {
       const matchesFormat =
         format === "All" ||
         (format === "Online" ? venue.includes("online") || venue.includes("http") : !venue.includes("online"));
-      return matchesQuery && matchesCategory && matchesDepartment && matchesFormat;
+
+      // Date range filter
+      let matchesDate = true;
+      if (dateRange !== "All Dates") {
+        const eventDate = new Date(event.startAt || event.startDate);
+        const now = new Date();
+        if (dateRange === "This Week") {
+          const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          matchesDate = eventDate >= now && eventDate <= weekEnd;
+        } else if (dateRange === "This Month") {
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          matchesDate = eventDate >= now && eventDate <= monthEnd;
+        }
+      }
+
+      return matchesQuery && matchesCategory && matchesDepartment && matchesFormat && matchesDate;
     });
-  }, [category, department, events, format, query]);
+  }, [category, dateRange, department, events, format, query]);
 
   return (
     <CompetitionPageShell
@@ -306,7 +323,9 @@ export default function EventsListingPage() {
           <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Date Range</span>
           <div className="flex h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] px-3">
             <CalendarClock size={16} />
-            <Input className="h-full border-0 bg-transparent px-0 shadow-none" readOnly value="Upcoming This Week" />
+            <Select value={dateRange} onChange={(event) => setDateRange(event.target.value)}>
+              {dateRanges.map((item) => <option key={item}>{item}</option>)}
+            </Select>
           </div>
         </label>
         <div className="inline-grid h-11 grid-flow-col items-center gap-1 rounded-xl bg-[var(--dash-subcard-bg)] p-1" role="group" aria-label="Format">
