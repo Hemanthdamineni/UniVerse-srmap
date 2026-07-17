@@ -977,7 +977,7 @@ const learningProgressMethods = {
           SELECT rq.*, r.title, r.subjectCode, r.subjectName, r.type, r.estimatedMinutes
           FROM lms_revision_queue rq
           JOIN lms_resources r ON r.id = rq.resourceId
-          WHERE rq.userId = ?
+          WHERE rq.userId = ? AND r.isDeleted = 0
           ORDER BY rq.dueDate ASC
         `
       )
@@ -2411,6 +2411,21 @@ const roadmapMethods = {
     const roadmap = this.getRoadmapRow(roadmapId);
     assertCondition(roadmap, 404, "Roadmap not found", "LMS_NOT_FOUND");
     assertCondition(roadmap.authorId === userId, 403, "You cannot edit this roadmap", "LMS_FORBIDDEN");
+    // Cycle detection: check if adding fromNodeId -> toNodeId would create a cycle
+    const cycleExists = this.db.prepare(`
+      WITH RECURSIVE path(n) AS (
+        SELECT ?
+        UNION
+        SELECT e.fromNodeId FROM lms_roadmap_edges e JOIN path p ON e.toNodeId = p.n
+        WHERE e.roadmapId = ?
+      )
+      SELECT 1 FROM path WHERE n = ?
+    `).get(toNodeId, roadmapId, fromNodeId);
+    if (cycleExists) {
+      const error = new Error("Adding this edge would create a cycle");
+      error.status = 409;
+      throw error;
+    }
     this.db.prepare(
       "INSERT OR IGNORE INTO lms_roadmap_edges (roadmapId, fromNodeId, toNodeId) VALUES (?, ?, ?)"
     ).run(roadmapId, fromNodeId, toNodeId);
