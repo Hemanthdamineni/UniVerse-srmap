@@ -237,7 +237,7 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
   ));
 
   router.post("/career/opportunities/:id/apply", wrap((req) =>
-    careerStore.trackApply(req.params.id, req.userContext.userId)
+    careerStore.trackApply(req.params.id, req.userContext.userId, req.body?.notes)
   ));
 
   router.post("/career/opportunities/:id/flag", wrap((req) =>
@@ -293,7 +293,8 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
 
   router.put("/career/profile", wrap((req) => {
     careerStore.updateProfile(req.userContext, normalizeProfilePayload(req.body || {}));
-    return careerStore.getProfile(req.userContext);
+    const profile = careerStore.getProfile(req.userContext);
+    return { updated: true, profile };
   }));
 
   router.get("/career/applications", wrap((req) => ({
