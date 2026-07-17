@@ -153,6 +153,21 @@ function buildCgpaSummaryPayload({
 class InMemoryErpCacheStore {
   constructor() {
     this.store = new Map();
+    // Periodic sweep to prevent unbounded heap growth from expired entries
+    // that are never read again. 5-minute interval balances memory safety
+    // against CPU overhead.
+    this._cleanupTimer = setInterval(() => this._sweepExpired(), 5 * 60 * 1000);
+    this._cleanupTimer.unref();
+  }
+
+  /** Remove all expired entries from the store. */
+  _sweepExpired() {
+    const now = Date.now();
+    for (const [key, entry] of this.store) {
+      if (!entry.expiresAt || entry.expiresAt <= now) {
+        this.store.delete(key);
+      }
+    }
   }
 
   async get(cacheKey) {
@@ -177,6 +192,18 @@ class InMemoryErpCacheStore {
 
   async delete(cacheKey) {
     this.store.delete(cacheKey);
+  }
+
+  async clear() {
+    this.store.clear();
+  }
+
+  /** Release the periodic cleanup timer. Call during graceful shutdown. */
+  close() {
+    if (this._cleanupTimer) {
+      clearInterval(this._cleanupTimer);
+      this._cleanupTimer = null;
+    }
   }
 
   async size() {

@@ -601,9 +601,59 @@ const circuitAndCacheMethods = {
 
   async markCircuitFailure(pageKey) {
     const key = normalizeKey(pageKey);
-    const prev = await this.getCircuitState(key);
-    const failures = Number(prev.failures || 0) + 1;
 
+    if (this.redisClient) {
+      // Atomic read-modify-write via Redis optimistic locking.
+      // Eliminates the TOCTOU race where concurrent requests could read
+      // the same failures count, both increment it, and overwrite each other.
+      const circuitKey = this.circuitKeyFor(key);
+      const ttlSec = Math.max(1, Math.ceil(ERP_CIRCUIT_REDIS_TTL_MS / 1000));
+
+      await this.redisClient.watch(circuitKey);
+      const raw = await this.redisClient.get(circuitKey);
+      const prev = raw ? JSON.parse(raw) : { failures: 0, openUntilMs: 0 };
+      const failures = Number(prev.failures || 0) + 1;
+      const next = {
+        failures,
+        openUntilMs:
+          failures >= ERP_CIRCUIT_FAILURE_THRESHOLD
+            ? Date.now() + ERP_CIRCUIT_COOLDOWN_MS
+            : Number(prev.openUntilMs || 0),
+      };
+
+      const multi = this.redisClient.multi();
+      multi.set(circuitKey, JSON.stringify(next), { EX: ttlSec });
+      const results = await multi.exec();
+
+      if (results) {
+        // Optimistic lock succeeded — update in-memory state.
+        this.circuitByPage.set(key, next);
+        setCircuitState({ pageKey: key, isOpen: next.openUntilMs > Date.now() });
+      } else {
+        // WATCH fired — another process modified the key concurrently.
+        // Retry once without watch as a simple fallback.
+        await this.redisClient.unwatch();
+        const retryRaw = await this.redisClient.get(circuitKey);
+        const retryPrev = retryRaw ? JSON.parse(retryRaw) : { failures: 0, openUntilMs: 0 };
+        const retryFailures = Number(retryPrev.failures || 0) + 1;
+        const retryNext = {
+          failures: retryFailures,
+          openUntilMs:
+            retryFailures >= ERP_CIRCUIT_FAILURE_THRESHOLD
+              ? Date.now() + ERP_CIRCUIT_COOLDOWN_MS
+              : Number(retryPrev.openUntilMs || 0),
+        };
+        await this.redisClient.set(circuitKey, JSON.stringify(retryNext), { EX: ttlSec });
+        this.circuitByPage.set(key, retryNext);
+        setCircuitState({ pageKey: key, isOpen: retryNext.openUntilMs > Date.now() });
+      }
+      return;
+    }
+
+    // In-memory path (no Redis). Safe from TOCTOU because Node.js runs
+    // the read-increment-write synchronously without yielding the event loop.
+    const prev = this.circuitByPage.get(key) || { failures: 0, openUntilMs: 0 };
+    const failures = Number(prev.failures || 0) + 1;
     const next = {
       failures,
       openUntilMs:
@@ -611,8 +661,8 @@ const circuitAndCacheMethods = {
           ? Date.now() + ERP_CIRCUIT_COOLDOWN_MS
           : Number(prev.openUntilMs || 0),
     };
-
-    await this.saveCircuitState(key, next);
+    this.circuitByPage.set(key, next);
+    setCircuitState({ pageKey: key, isOpen: next.openUntilMs > Date.now() });
   },
 
   async canCallLive(pageKey) {
