@@ -1,6 +1,6 @@
 const { EXTERNAL_DB_PATH } = require("../src/config/env");
 const { EXTERNAL_PAGE_SEED_DATA } = require("../src/data/externalSeedData");
-const { ExternalDataStore } = require("../src/services/externalDataStore");
+const { ExternalDataStore } = require("../src/services/campus/feedbackServices");
 
 function main() {
   const args = process.argv.slice(2);

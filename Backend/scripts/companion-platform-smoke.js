@@ -7,10 +7,12 @@ const { CareerStore } = require("../src/services/career/careerStore");
 const { EventsStore } = require("../src/services/events/eventsStore");
 const { createCompetitionStore } = require("../src/services/events/competitionStore");
 const { LmsStore } = require("../src/services/lms/lmsStore");
-const { LmsModerationService } = require("../src/services/lmsModerationService");
-const { LmsRevisionScheduler } = require("../src/services/lmsRevisionScheduler");
-const { LmsFeatureFlagService } = require("../src/services/lmsFeatureFlagService");
-const { LmsRecommendationEngine } = require("../src/services/lmsRecommendationEngine");
+const {
+  LmsFeatureFlagService,
+  LmsModerationService,
+  LmsRecommendationEngine,
+  LmsRevisionScheduler,
+} = require("../src/services/lms/lmsServices");
 const { UnifiedProfileStore } = require("../src/services/core/unifiedProfileStore");
 
 function user(overrides = {}) {

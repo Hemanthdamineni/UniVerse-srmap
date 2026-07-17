@@ -20,11 +20,12 @@ const { createRequestContextMiddleware } = require("../src/middleware/requestCon
 const { createGlobalRateLimitMiddleware } = require("../src/middleware/rateLimit");
 const { createErpV2Routes } = require("../src/routes/erpV2Routes");
 const { sendApiError } = require("../src/utils/apiResponse");
-const { SessionStore } = require("../src/services/sessionStore");
-const { InMemoryErpCacheStore } = require("../src/services/erpCacheStore");
-const { DiscoveryRepository } = require("../src/services/discoveryRepository");
-const { PagePolicyStore } = require("../src/services/pagePolicyStore");
-const { ErpLiveService } = require("../src/services/erpLiveService");
+const { SessionStore, PagePolicyStore } = require("../src/services/core/sessionServices");
+const { DiscoveryRepository } = require("../src/services/career/careerServices");
+const {
+  InMemoryErpCacheStore,
+  ErpLiveService,
+} = require("../src/services/erp/erpServices");
 const { ErpAggregationService } = require("../src/services/erp/erpAggregationService");
 const {
   fetchProfileViaApi,

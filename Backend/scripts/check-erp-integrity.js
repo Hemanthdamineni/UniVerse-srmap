@@ -11,7 +11,7 @@ const {
   FRONTEND_BLUEPRINT_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
 } = require("../src/config/env");
-const { evaluateIntegrityStatic } = require("../src/services/erpIntegrityService");
+const { evaluateIntegrityStatic } = require("../src/services/erp/erpServices");
 
 function resolveArg(flag, fallback = "") {
   const idx = process.argv.indexOf(flag);

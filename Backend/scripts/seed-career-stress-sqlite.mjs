@@ -15,7 +15,7 @@ import { DatabaseSync } from "node:sqlite";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { CareerStore } = require("../src/services/careerStore.js");
+const { CareerStore } = require("../src/services/career/careerStore.js");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");

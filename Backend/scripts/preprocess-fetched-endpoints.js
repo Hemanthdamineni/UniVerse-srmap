@@ -3,7 +3,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const { normalizeArtifactItem } = require("../src/services/erpPayloadNormalizer");
 
 function safeJsonParse(text, fileLabel) {
   try {
@@ -335,6 +334,29 @@ function removeInternalMarksNestedHeaderRow(item) {
 
 function postProcessItem(item) {
   return normalizeArtifactItem(item);
+}
+
+function normalizeArtifactItem(item) {
+  if (!item || typeof item !== "object") return item;
+  if (!item.data || !Array.isArray(item.data.tables)) {
+    return removeInternalMarksNestedHeaderRow(item);
+  }
+
+  const tables = item.data.tables.map((table) => {
+    let next = table;
+    next = fixTimeTableSubjectsTable(next);
+    next = fixFeePaidGroupHeaderTable(next);
+    next = fixAttendanceDetailsSplitHeader(next);
+    return next;
+  });
+
+  return removeInternalMarksNestedHeaderRow({
+    ...item,
+    data: {
+      ...item.data,
+      tables,
+    },
+  });
 }
 
 function normalizeResult(result, baseDir) {
