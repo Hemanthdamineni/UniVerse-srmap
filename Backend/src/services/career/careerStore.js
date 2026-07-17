@@ -985,7 +985,7 @@ const opportunityActionMethods = {
     if (existing) {
       this.db.prepare("DELETE FROM career_bookmarks WHERE opportunityId = ? AND userId = ?")
         .run(opportunityId, userId);
-      this.db.prepare("UPDATE career_opportunities SET bookmarkCount = bookmarkCount - 1 WHERE id = ?")
+      this.db.prepare("UPDATE career_opportunities SET bookmarkCount = MAX(0, bookmarkCount - 1) WHERE id = ?")
         .run(opportunityId);
       return { bookmarked: false };
     } else {
