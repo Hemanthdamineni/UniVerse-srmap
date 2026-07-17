@@ -72,7 +72,6 @@ function createApp({
   app.use(cookieParser());
   app.use(compression());
   app.use(createRequestContextMiddleware());
-  app.use(express.json({ limit: "2mb" }));
   app.use(createAdminContextMiddleware({ sessionStore }));
   if (eventsStore?.dataDir) {
     const submissionsPath = path.join(eventsStore.dataDir, "../submissions");
@@ -87,6 +86,7 @@ function createApp({
     app.use("/uploads", express.static(uploadsDir));
   }
   app.use("/api", createGlobalRateLimitMiddleware({ redisClient }));
+  app.use("/api", express.json({ limit: "2mb" }));
 
   app.use(
     "/api",

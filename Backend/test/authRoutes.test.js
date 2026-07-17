@@ -141,9 +141,13 @@ test("login route returns deferred profile success", async () => {
             username: "",
           };
         },
+        async create() {
+          return "session-rotated";
+        },
         async update(sessionId, payload) {
           updates.push({ sessionId, payload });
         },
+        async delete() {},
       },
     });
 

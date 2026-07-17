@@ -214,6 +214,11 @@ class RedisSessionStore {
     return next;
   }
 
+  async delete(sessionId) {
+    const id = String(sessionId || "").trim();
+    if (id) await this.client.del(this.keyFor(id));
+  }
+
   async size() {
     return -1;
   }
@@ -272,6 +277,10 @@ class SessionStore {
     };
     this.sessions.set(sessionId, next);
     return next;
+  }
+
+  async delete(sessionId) {
+    this.sessions.delete(sessionId);
   }
 
   async size() {

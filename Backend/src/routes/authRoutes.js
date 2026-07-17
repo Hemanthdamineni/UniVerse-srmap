@@ -128,19 +128,23 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
         return sendApiError(res, req, error);
       }
 
-      await sessionStore.update(sessionId, {
-        storageState: loginResult.storageState,
+      // Rotate session: create a new authenticated session and discard the
+      // pre-auth captcha session to prevent session fixation attacks.
+      const newSessionId = await sessionStore.create(loginResult.storageState);
+      await sessionStore.update(newSessionId, {
         loggedIn: true,
         profileData: loginResult.profileStatus === "ready" ? loginResult.profileData || null : null,
         username: String(username).trim(),
         preAuthAttempt: null,
       });
+      // Best-effort cleanup of the pre-auth session.
+      await sessionStore.delete(sessionId).catch(() => {});
 
-      setSessionCookie(res, req, sessionId);
+      setSessionCookie(res, req, newSessionId);
 
       return sendApiSuccess(res, req, {
         success: true,
-        sessionId,
+        sessionId: newSessionId,
         profileData: loginResult.profileData,
         profileStatus: loginResult.profileStatus || "deferred",
         loginAttemptId: loginResult.loginAttemptId || session.preAuthAttempt?.loginAttemptId || null,
