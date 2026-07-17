@@ -2108,30 +2108,33 @@ const resourceMethods = {
   },
 
   toggleUpvote(resourceId, userId) {
-    const existing = this.db
-      .prepare("SELECT 1 FROM lms_upvotes WHERE resourceId = ? AND userId = ?")
-      .get(resourceId, userId);
-    if (existing) {
+    // Atomic toggle using INSERT OR IGNORE: eliminates the race window
+    // between SELECT-exists-check and INSERT that would otherwise cause
+    // PRIMARY KEY constraint violations under concurrent requests.
+    const now = nowIso();
+    const result = this.db
+      .prepare("INSERT OR IGNORE INTO lms_upvotes (resourceId, userId, createdAt) VALUES (?, ?, ?)")
+      .run(resourceId, userId, now);
+    if (result.changes === 0) {
+      // Already existed → remove upvote
       this.db.prepare("DELETE FROM lms_upvotes WHERE resourceId = ? AND userId = ?").run(resourceId, userId);
       this.db.prepare("UPDATE lms_resources SET upvotes = MAX(0, upvotes - 1) WHERE id = ?").run(resourceId);
       this.recomputeQualityScore(resourceId);
       return { active: false };
     }
-    this.db.prepare("INSERT INTO lms_upvotes (resourceId, userId, createdAt) VALUES (?, ?, ?)").run(
-      resourceId,
-      userId,
-      nowIso()
-    );
     this.db.prepare("UPDATE lms_resources SET upvotes = upvotes + 1 WHERE id = ?").run(resourceId);
     this.recomputeQualityScore(resourceId);
     return { active: true };
   },
 
   toggleBookmark(resourceId, userId) {
-    const existing = this.db
-      .prepare("SELECT 1 FROM lms_bookmarks WHERE resourceId = ? AND userId = ?")
-      .get(resourceId, userId);
-    if (existing) {
+    // Atomic toggle using INSERT OR IGNORE (same pattern as toggleUpvote).
+    const now = nowIso();
+    const result = this.db
+      .prepare("INSERT OR IGNORE INTO lms_bookmarks (resourceId, userId, createdAt) VALUES (?, ?, ?)")
+      .run(resourceId, userId, now);
+    if (result.changes === 0) {
+      // Already existed → remove bookmark
       this.db.prepare("DELETE FROM lms_bookmarks WHERE resourceId = ? AND userId = ?").run(resourceId, userId);
       this.db.prepare("UPDATE lms_resources SET bookmarkCount = MAX(0, bookmarkCount - 1) WHERE id = ?").run(
         resourceId
@@ -2139,11 +2142,6 @@ const resourceMethods = {
       this.recomputeQualityScore(resourceId);
       return { active: false };
     }
-    this.db.prepare("INSERT INTO lms_bookmarks (resourceId, userId, createdAt) VALUES (?, ?, ?)").run(
-      resourceId,
-      userId,
-      nowIso()
-    );
     this.db.prepare("UPDATE lms_resources SET bookmarkCount = bookmarkCount + 1 WHERE id = ?").run(resourceId);
     this.recomputeQualityScore(resourceId);
     return { active: true };
