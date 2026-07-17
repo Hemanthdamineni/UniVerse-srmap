@@ -20,9 +20,22 @@ const APPLICATION_STATUSES = new Set([
   "shortlisted",
   "interviewed",
   "offered",
+  "accepted",
   "rejected",
   "withdrawn",
 ]);
+
+const VALID_APPLICATION_TRANSITIONS = {
+  interested: ["applied", "withdrawn"],
+  applied: ["shortlisted", "rejected", "withdrawn"],
+  under_review: ["shortlisted", "rejected", "withdrawn"],
+  shortlisted: ["interviewed", "offered", "rejected", "withdrawn"],
+  interviewed: ["offered", "rejected", "withdrawn"],
+  offered: ["accepted", "rejected", "withdrawn"],
+  accepted: ["withdrawn"],
+  rejected: [],
+  withdrawn: [],
+};
 
 const OPPORTUNITY_TYPES = new Set(["job", "internship", "hackathon", "competition", "fellowship", "workshop"]);
 
@@ -929,7 +942,7 @@ const opportunityActionMethods = {
     if (existing) {
       this.db.prepare("DELETE FROM career_bookmarks WHERE opportunityId = ? AND userId = ?")
         .run(id, user.userId);
-      this.db.prepare("UPDATE career_opportunities SET bookmarkCount = bookmarkCount - 1 WHERE id = ?")
+      this.db.prepare("UPDATE career_opportunities SET bookmarkCount = MAX(0, bookmarkCount - 1) WHERE id = ?")
         .run(id);
     }
 
@@ -1007,10 +1020,13 @@ const opportunityActionMethods = {
     return { tracked: true };
   },
 
-  trackApply(opportunityId, userId) {
+  trackApply(opportunityId, userId, notes) {
     this._ensureActiveOpportunityId(opportunityId);
     this.db.prepare("UPDATE career_opportunities SET applyCount = applyCount + 1 WHERE id = ?").run(opportunityId);
-    return { tracked: true };
+    if (notes) {
+      this.createApplication(userId, opportunityId, notes);
+    }
+    return { tracked: true, applied: true };
   },
 
   flagOpportunity(opportunityId, userId, reason) {
@@ -1040,6 +1056,16 @@ const opportunityActionMethods = {
       const error = new Error("Invalid application status");
       error.status = 400;
       throw error;
+    }
+    // Validate state transition
+    const currentRow = this.db.prepare("SELECT status FROM career_applications WHERE id = ? AND userId = ?").get(id, userId);
+    if (currentRow && currentRow.status !== st) {
+      const allowed = VALID_APPLICATION_TRANSITIONS[currentRow.status];
+      if (!allowed || !allowed.includes(st)) {
+        const error = new Error(`Cannot transition from ${currentRow.status} to ${st}`);
+        error.status = 409;
+        throw error;
+      }
     }
     const now = nowIso();
     
@@ -1221,21 +1247,27 @@ const profileMethods = {
       }
     }
 
-    // Clear old gaps
-    this.db.prepare("DELETE FROM career_skill_gaps WHERE userId = ?").run(userId);
-
-    // Insert new gaps (top 10)
-    const sortedGaps = Array.from(gapMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-
+    // Clear old gaps and insert new ones in a single transaction
+    const clearStmt = this.db.prepare("DELETE FROM career_skill_gaps WHERE userId = ?");
     const insert = this.db.prepare(`
       INSERT INTO career_skill_gaps (userId, skill, opportunityCount, updatedAt, gapLevel)
       VALUES (?, ?, ?, ?, 'missing')
     `);
 
-    for (const [skill, count] of sortedGaps) {
-      insert.run(userId, skill, count, now);
+    const sortedGaps = Array.from(gapMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      clearStmt.run(userId);
+      for (const [skill, count] of sortedGaps) {
+        insert.run(userId, skill, count, now);
+      }
+      this.db.exec("COMMIT");
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
     }
   }
 };
@@ -2344,6 +2376,7 @@ class CareerStore {
     this.db = new DatabaseSync(resolved);
     this.db.exec("PRAGMA busy_timeout = 5000");
     this.db.exec("PRAGMA foreign_keys = ON");
+    this.db.exec("PRAGMA journal_mode = WAL");
     this._ensureSchema();
     this._seedDefaultsIfNeeded();
     this._rebuildCareerSearchFts();
