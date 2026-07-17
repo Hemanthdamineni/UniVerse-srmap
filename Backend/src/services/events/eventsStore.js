@@ -7,6 +7,9 @@ const { randomUUID, createHash } = require("crypto");
 const EVENT_STATES = {
   DRAFT: "draft",
   PUBLISHED: "published",
+  ONGOING: "ongoing",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
   ARCHIVED: "archived",
 };
 
@@ -813,6 +816,25 @@ const eventCrudMethods = {
       throw error;
     }
 
+    // Validate state transition
+    const VALID_EVENT_TRANSITIONS = {
+      draft: ["published", "cancelled"],
+      published: ["ongoing", "cancelled", "completed"],
+      ongoing: ["completed", "cancelled"],
+      completed: ["archived"],
+      cancelled: [],
+      archived: [],
+    };
+    const currentStatus = event.status;
+    if (currentStatus && currentStatus !== nextStatus) {
+      const allowed = VALID_EVENT_TRANSITIONS[currentStatus];
+      if (!allowed || !allowed.includes(nextStatus)) {
+        const error = new Error(`Cannot transition event from ${currentStatus} to ${nextStatus}`);
+        error.status = 409;
+        throw error;
+      }
+    }
+
     const transitionPayload = { status: nextStatus };
     if (nextStatus === EVENT_STATES.PUBLISHED && event.approvalStatus === APPROVAL_STATUS.PENDING) {
       transitionPayload.approvalStatus = APPROVAL_STATUS.APPROVED;
@@ -1411,12 +1433,19 @@ const storageMethods = {
 
   _persistAll() {
     if (this.db) {
-      this._writeSqliteState("events", this.events);
-      this._writeSqliteState("registrations", this.registrations);
-      this._writeSqliteState("notifications", this.notifications);
-      this._writeSqliteState("feedback", this.feedback);
-      this._writeSqliteState("gallery", this.gallery);
-      this._writeSqliteState("checkIns", this.checkIns);
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this._writeSqliteState("events", this.events);
+        this._writeSqliteState("registrations", this.registrations);
+        this._writeSqliteState("notifications", this.notifications);
+        this._writeSqliteState("feedback", this.feedback);
+        this._writeSqliteState("gallery", this.gallery);
+        this._writeSqliteState("checkIns", this.checkIns);
+        this.db.exec("COMMIT");
+      } catch (err) {
+        this.db.exec("ROLLBACK");
+        throw err;
+      }
       return;
     }
 
@@ -1468,6 +1497,7 @@ class EventsStore {
       this.db = new DatabaseSync(this.dbPath);
       this.db.exec("PRAGMA busy_timeout = 5000");
       this.db.exec("PRAGMA foreign_keys = ON");
+      this.db.exec("PRAGMA journal_mode = WAL");
       this._ensureSqliteSchema();
     }
 
