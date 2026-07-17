@@ -20,11 +20,17 @@ StaticHost/dist/
 .vite/
 
 # ===========================
+# Test outputs
+# ===========================
+test-results/
+
+# ===========================
 # Runtime databases
 # ===========================
 Backend/data/*.sqlite
 Backend/data/*.sqlite-shm
 Backend/data/*.sqlite-wal
+!Backend/data/*.sqlite.template
 
 # Runtime upload/data directories
 Backend/data/certificates/
@@ -76,6 +82,7 @@ graphify-out/
 # ===========================
 .kiro/
 .agents/
+.claude/
 .codex/
 .config/
 
@@ -93,6 +100,8 @@ Thumbs.db
 # ===========================
 .env
 .env.local
+.env.production
+.env.staging
 .env.*.local
 
 # ===========================
