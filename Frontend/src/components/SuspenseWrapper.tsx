@@ -1,6 +1,5 @@
 import React, { Suspense } from "react";
-import { SkeletonCard } from "./ui/Skeletons";
-import { DashboardLayout } from "./layout/PageLayouts";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 function PageLoader() {
   return (
@@ -14,5 +13,9 @@ function PageLoader() {
 }
 
 export function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
 }

@@ -52,9 +52,10 @@ Students authenticate once and see all ERP data (attendance, timetable, marks, f
 |---------|-------|--------|
 | Events System | `/events/*` | ✅ Full CRUD, registration, check-in, feedback, iCal, CSV export |
 | Content / Resources | `/resources/*` | ✅ Admin-managed content store (SQLite) |
-| Academic Tracker | `/academic-tracker/*` | 🔲 Placeholder — external source |
-| Career Portal | `/career-portal/*` | 🔲 Placeholder — external source |
-| Helpdesk | `/helpdesk/*` | 🔲 Placeholder — external source |
+| Academic Tracker | `/academic-tracker/*` | ✅ Progress overview, academic insights, unified insights |
+| Career Portal | `/career-portal/*` | ✅ Full CRUD with resume parsing, matching, skill gap, public profile |
+| LMS | `/lms/*` | ✅ Full resource/guide/roadmap/quiz/PYQ system |
+| Helpdesk | `/helpdesk/*` | ✅ Ticket CRUD, FAQs, escalation workflow |
 | Feedback | `/feedback/*` | ⚠️ Partial — course feedback via ERP, others external |
 
 ---

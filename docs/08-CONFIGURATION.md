@@ -106,10 +106,22 @@ Derived:
 | `ERP_UI_MAP_FILE` | `""` | ERP UI mapping file (optional) |
 | `ERP_PAGE_POLICY_FILE` | `Backend/src/config/erp-page-policy.json` | Page policy config |
 | `FRONTEND_BLUEPRINT_FILE` | `Frontend/src/config/erpBlueprints.ts` | Frontend blueprint file (for integrity checks) |
-| `ADMIN_CONTENT_PASSWORD` | `asdfghjkl;'` | Content admin password |
+| `ADMIN_CONTENT_PASSWORD` | empty, disables password-based admin content access | Content/admin API password; set in staging and production |
 | `ERP_ARTIFACT_MAX_AGE_DAYS` | `14` | Max age for ERP dump artifacts |
 | `DUMP_SNAPSHOT_DIR` | — | Path to ERP dump snapshot directory |
 | `DUMP_SUMMARY_FILE` | — | Path to ERP dump summary file |
+
+### Additional SQLite Database Stores
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HELPDESK_DB_PATH` | `Backend/data/helpdesk.sqlite` | Helpdesk ticket/FAQ SQLite database |
+| `CAMPUS_FEEDBACK_DB_PATH` | `Backend/data/campus-feedback.sqlite` | Campus feedback SQLite database |
+| `CAREER_DB_PATH` | `Backend/data/career.sqlite` | Career portal SQLite database |
+| `LMS_DB_PATH` | `Backend/data/lms.sqlite` | LMS resource/quiz SQLite database |
+| `LMS_TRACKER_DB_PATH` | `Backend/data/lms-tracker.sqlite` | LMS interaction tracker SQLite database |
+| `UNIFIED_PROFILE_DB_PATH` | `Backend/data/unified-profile.sqlite` | Unified student profile SQLite database |
+| `COMPANION_ANALYTICS_DB_PATH` | `Backend/data/companion-analytics.sqlite` | Companion analytics SQLite database |
 
 ---
 
