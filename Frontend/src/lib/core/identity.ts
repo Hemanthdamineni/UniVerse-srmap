@@ -1,6 +1,21 @@
 import { readStoredProfileData } from "./session";
 
-export const PLATFORM_ADMIN_REG_NO = "AP23110010419";
+/**
+ * Admin register numbers sourced from VITE_ADMIN_REGISTER_NUMBERS env var
+ * (comma-separated string, e.g. "AP23110010419,AP23110010420").
+ * Falls back to an empty array. Configure via .env in production.
+ */
+const RAW_ENV = import.meta.env.VITE_ADMIN_REGISTER_NUMBERS as string | undefined;
+const ADMIN_REGISTER_NUMBERS: string[] = (RAW_ENV || "")
+  .split(",")
+  .map((s) => s.trim().toUpperCase())
+  .filter(Boolean);
+
+if (!RAW_ENV && import.meta.env.DEV) {
+  console.warn(
+    "[identity] VITE_ADMIN_REGISTER_NUMBERS is not set. No platform admins defined.",
+  );
+}
 
 type ProfileRecord = Record<string, unknown>;
 
@@ -61,5 +76,5 @@ export function isPlatformAdmin(profileOrRegNo: ProfileRecord | string | null = 
       ? profileOrRegNo.trim().toUpperCase()
       : getCurrentRegNo(profileOrRegNo);
 
-  return regNo === PLATFORM_ADMIN_REG_NO;
+  return ADMIN_REGISTER_NUMBERS.length > 0 && ADMIN_REGISTER_NUMBERS.includes(regNo);
 }

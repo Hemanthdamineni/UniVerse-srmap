@@ -88,11 +88,19 @@ export interface EventSummary {
   type: string;
   status: string;
   visibility: string;
+  /** Backend stores dates in startAt/endAt */
+  startAt: string;
+  endAt: string;
+  /** startDate/endDate are derived aliases used in display logic */
   startDate: string;
   endDate: string;
-  location: string;
+  /** Backend stores location as object { physical, virtual, mapUrl } */
+  location: string | { physical?: string; virtual?: string; mapUrl?: string };
   department: string;
   maxCapacity: number | null;
+  /** Backend field is registeredCount */
+  registeredCount: number;
+  /** registrationCount is an alias used in some display logic */
   registrationCount: number;
   createdBy: RegNo;
   prizes: string | null;

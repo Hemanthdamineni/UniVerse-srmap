@@ -41,6 +41,7 @@
   --comp-accent: #0A3035;
   --comp-accent-hover: #0d3438;
   --comp-accent-light: #e6f0f1;
+  --comp-accent-fg: #ffffff;
 
   /* Spacing design tokens */
   --space-xs: 4px;
@@ -187,6 +188,7 @@
   --comp-accent: #34AEBE;
   --comp-accent-hover: #288a99;
   --comp-accent-light: #0d2d32;
+  --comp-accent-fg: #ffffff;
 
   /* Header / Footer — muted surface in dark mode with accent border */
   --header-bg: var(--bg-primary);
