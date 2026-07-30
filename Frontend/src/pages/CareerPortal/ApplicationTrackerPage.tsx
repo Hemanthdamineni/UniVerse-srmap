@@ -163,8 +163,9 @@ const ApplicationTrackerPage: React.FC = () => {
           }
         />
       ) : (
-        <div className="flex-1 overflow-y-auto pr-2 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-6 min-w-[1100px]">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {COLUMNS.map(column => {
               const columnApps = applications.filter(a => a.status === column.id);
               
@@ -237,6 +238,7 @@ const ApplicationTrackerPage: React.FC = () => {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       )}
