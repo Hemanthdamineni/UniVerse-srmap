@@ -7,11 +7,13 @@ import { PageHeader } from "../../components/ui/Layouts";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { SkeletonCard } from "../../components/ui/Skeletons";
+import { InlineError } from "../../components/ui/Feedback";
 import { Tag } from "../../components/ui/Badges";
 
 const SkillGapPage: React.FC = () => {
   const [gaps, setGaps] = useState<SkillGap[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchGaps();
@@ -22,7 +24,9 @@ const SkillGapPage: React.FC = () => {
       const data = await listSkillGaps();
       setGaps(data.items);
     } catch (err) {
-      console.error("Failed to fetch skill gaps", err);
+      const message = err instanceof Error ? err.message : "Failed to fetch skill gaps";
+      console.error(message, err);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -33,6 +37,22 @@ const SkillGapPage: React.FC = () => {
       <PageContainer className="max-w-4xl space-y-4">
         <SkeletonCard className="h-20" />
         <SkeletonCard className="h-72" />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer className="max-w-4xl space-y-4">
+        <PageHeader
+          title="Skill gap analysis"
+          subtitle="Identify technical skills that unlock the most opportunities for you"
+        />
+        <InlineError
+          title="Could not load skill gap analysis"
+          message={error}
+          onRetry={fetchGaps}
+        />
       </PageContainer>
     );
   }
