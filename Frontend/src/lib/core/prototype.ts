@@ -29,6 +29,10 @@ export function bootstrapStaticPrototypeSession() {
 // ── staticPrototypeProfileData.ts ───────────────────────────────────────────────
 /** Profile used for static prototype builds (no `/api/profile`). */
 export const STATIC_PROTOTYPE_PROFILE = {
+  name: "Prototype Student",
+  registerNo: "AP23110010419",
+  branch: "CSE",
+  year: 3,
   TableContent: {
     "Student Name": "Prototype Student",
     "Register No.": "AP23110010419",
@@ -92,6 +96,106 @@ type StaticErpBatchResponse = Record<string, StaticErpBatchPageResult>;
 
 let cachedFixtures: StaticErpBatchResponse | null = null;
 let cacheFailed = false;
+
+function findLegacySection(value: unknown, depth = 0): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || depth > 3) return null;
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.tables)) return record;
+  for (const child of Object.values(record)) {
+    const found = findLegacySection(child, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
+function legacyRows(section: Record<string, unknown>, tableIndex = 0) {
+  const tables = section.tables;
+  if (!Array.isArray(tables) || !Array.isArray(tables[tableIndex])) return [] as Record<string, unknown>[];
+  return tables[tableIndex].filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === "object" && !Array.isArray(row));
+}
+
+/**
+ * Production APIs provide `_extracted` typed records. The checked-in static
+ * snapshot predates that contract, so adapt only the three student-critical
+ * record shapes that have dedicated typed screens.
+ */
+function addStaticExtraction(pageKey: string, result: StaticErpBatchPageResult) {
+  if (!isErpPageResponse(result)) return result;
+  const section = findLegacySection(result.data);
+  if (!section || section._extracted) return result;
+
+  if (pageKey === "academic/time-table") {
+    const rows = legacyRows(section);
+    const timeRow = rows[1] || {};
+    const slotKeys = Object.keys(timeRow).filter((key) => /^\d+$/.test(key));
+    const timeSlots = slotKeys.map((key) => String(timeRow[key] || "")).filter(Boolean);
+    const schedule = rows
+      .filter((row) => /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i.test(String(row.col1 || "")))
+      .map((row) => ({ day: String(row.col1), periods: slotKeys.map((key) => String(row[key] || "")) }));
+    section._extracted = { type: "timetable", timeSlots, schedule, subjects: [] };
+  }
+
+  if (pageKey === "finance/fee-due-details") {
+    const records = legacyRows(section)
+      .filter((row) => String(row["Fee Category"] || "").trim())
+      .map((row) => ({
+        feeCategory: String(row["Fee Category"] || ""),
+        feeHead: String(row["Fee Head"] || ""),
+        dueAmount: String(row["Due Amount (INR)"] || ""),
+        collected: String(row["Collected (INR)"] || ""),
+        toBePaid: String(row["To be Paid Amount (INR)"] || ""),
+      }));
+    section._extracted = { type: "fee-dues", title: String(section.title || "Fee Dues"), records };
+  }
+
+  if (pageKey === "academic/attendance-details") {
+    const rows = legacyRows(section, 1);
+    const records = rows
+      .filter((row) => /^[A-Z]{2,}\s*\d+/i.test(String(row["Subject Code"] || "")))
+      .map((row) => ({
+        subjectCode: String(row["Subject Code"] || ""),
+        subjectDescription: String(row["Subject Description"] || ""),
+        classesConducted: Number(row.ClassesConducted) || 0,
+        present: Number(row["Attendance Entered (Slots)"]) || 0,
+        odMlTaken: Number(row["Present % P / (P+A+OD)"]) || 0,
+        attendancePercentage: String(row["Attendance %"] || "0"),
+        odMlPercentage: String(row.col9 || "0"),
+      }));
+    section._extracted = { type: "attendance", records };
+  }
+
+  if (pageKey === "examination/current-semester-results") {
+    const records = legacyRows(section)
+      .filter((row) => /^[A-Z]{2,}\s*\d+/i.test(String(row["Subject Code"] || "")))
+      .map((row) => ({
+        subjectCode: String(row["Subject Code"] || ""),
+        subjectName: String(row["Subject Description"] || ""),
+        grade: "Pending",
+        result: "Final grade not published",
+        extras: { semester: "6", credit: "" },
+      }));
+    section._extracted = {
+      type: "current-results",
+      title: "Current semester results",
+      records,
+      semesterSummaries: [],
+    };
+  }
+
+  if (pageKey === "examination/internal-mark-details") {
+    const records = legacyRows(section)
+      .filter((row) => /^[A-Z]{2,}\s*\d+/i.test(String(row["Subject Code"] || "")))
+      .map((row) => ({
+        subjectCode: String(row["Subject Code"] || ""),
+        subjectName: String(row["Subject Description"] || ""),
+        marksObtained: String(row["Marks Obtained"] || "0"),
+        totalMarks: String(row["Max.Marks"] || "50"),
+      }));
+    section._extracted = { type: "internal-marks", records };
+  }
+
+  return result;
+}
 
 function fixtureBase(): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -161,7 +265,7 @@ export async function resolveStaticErpBatch(pageKeys: string[]): Promise<StaticE
   for (const key of pageKeys) {
     const raw = fromFile[key];
     if (isErpPageFailure(raw) || isErpPageResponse(raw)) {
-      out[key] = raw as StaticErpBatchPageResult;
+      out[key] = addStaticExtraction(key, raw as StaticErpBatchPageResult);
     } else {
       out[key] = minimalStaticErpPageResponse(key);
     }
@@ -182,4 +286,3 @@ export async function loadStaticErpSupplementalJson<T extends Record<string, unk
     return null;
   }
 }
-

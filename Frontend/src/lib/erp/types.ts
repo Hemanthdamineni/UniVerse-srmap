@@ -220,6 +220,9 @@ export interface FeesPaidModel {
 export interface BankDetailField {
   label: string;
   value: string;
+  fieldType: string;
+  options?: Array<{ value: string; label: string }>;
+  name?: string;
 }
 
 export interface BankDetailsModel {

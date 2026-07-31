@@ -10,15 +10,15 @@ import {
 import type { BlueprintPageState } from "./blueprintData/types";
 
 const initialState: BlueprintPageState = {
-  isLoading: false,
+  isLoading: true,
   error: null,
-  source: "Placeholder",
+  source: "Live ERP",
   sections: [],
   statuses: [],
   kpis: [],
 };
 
-export function useBlueprintPageData(blueprint: PageBlueprint): BlueprintPageState {
+export function useBlueprintPageData(blueprint: PageBlueprint, reloadToken = 0): BlueprintPageState {
   const [state, setState] = useState<BlueprintPageState>(initialState);
   const [sessionProfile, setSessionProfile] = useState<Record<string, unknown> | null>(() =>
     readStoredProfileData()
@@ -54,6 +54,7 @@ export function useBlueprintPageData(blueprint: PageBlueprint): BlueprintPageSta
     async function load() {
       if (isPlaceholderBlueprint(blueprint)) {
         if (!active) return;
+        const unavailableMessage = blueprint.placeholderReason || "This page is not available yet.";
         setState({
           isLoading: false,
           error: null,
@@ -61,7 +62,7 @@ export function useBlueprintPageData(blueprint: PageBlueprint): BlueprintPageSta
           sections: [
             {
               title: blueprint.heading,
-              summary: blueprint.placeholderReason || "No university ERP source mapped.",
+              summary: unavailableMessage,
               tables: [],
             },
           ],
@@ -69,7 +70,7 @@ export function useBlueprintPageData(blueprint: PageBlueprint): BlueprintPageSta
             {
               id: `${blueprint.route}-placeholder`,
               tone: "info",
-              text: blueprint.placeholderReason || "No university ERP source mapped.",
+              text: unavailableMessage,
             },
           ],
           kpis: [],
@@ -113,7 +114,7 @@ export function useBlueprintPageData(blueprint: PageBlueprint): BlueprintPageSta
     return () => {
       active = false;
     };
-  }, [blueprint, sessionProfile]);
+  }, [blueprint, sessionProfile, reloadToken]);
 
   return state;
 }

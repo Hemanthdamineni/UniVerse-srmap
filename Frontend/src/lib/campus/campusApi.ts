@@ -1,5 +1,6 @@
 import { requestData, requestMultipart } from "../core/apiClient";
 import { isStaticPrototype } from "../core/prototype";
+import { isPrototypeEventRegistered, setPrototypeEventRegistration } from "../events/prototypeEventState";
 
 export type EventSummary = {
   id: string;
@@ -229,6 +230,130 @@ const STATIC_HELPDESK_TICKETS: CampusTicket[] = [
   },
 ];
 
+const STATIC_EVENTS: EventSummary[] = [
+  {
+    id: "evt-static-ai-summit",
+    title: "AI Builders Summit",
+    description: "A student-led showcase with project demos, mentor sessions, and team formation.",
+    startAt: "2026-08-05T09:30:00.000Z",
+    endAt: "2026-08-05T16:30:00.000Z",
+    startDate: "2026-08-05",
+    endDate: "2026-08-05",
+    category: "Technical",
+    department: "CS Department",
+    status: "published",
+    approvalStatus: "approved",
+    visibility: "public",
+    venue: "APJ Abdul Kalam Auditorium",
+    location: "APJ Abdul Kalam Auditorium",
+    registeredCount: 186,
+    registrationCount: 186,
+    seatsAvailable: 64,
+    maxCapacity: 250,
+    registrationDeadline: "2026-08-03T18:00:00.000Z",
+    prizes: "Certificates",
+    eligibility: "Open to all SRM AP students",
+    isCompetition: false,
+    tags: ["ai", "projects", "networking"],
+    featured: true,
+  },
+  {
+    id: "evt-static-hack-night",
+    title: "Campus Hack Night",
+    description: "Build a prototype in teams and submit by midnight.",
+    startAt: "2026-08-12T12:30:00.000Z",
+    endAt: "2026-08-13T00:30:00.000Z",
+    startDate: "2026-08-12",
+    endDate: "2026-08-13",
+    category: "Workshop",
+    department: "Student Union",
+    status: "published",
+    approvalStatus: "approved",
+    visibility: "public",
+    venue: "Innovation Lab",
+    location: "Innovation Lab",
+    registeredCount: 92,
+    registrationCount: 92,
+    seatsAvailable: 28,
+    maxCapacity: 120,
+    registrationDeadline: "2026-08-10T18:00:00.000Z",
+    prizes: "₹25,000 prize pool",
+    eligibility: "Teams of 2–4 students",
+    isCompetition: true,
+    tags: ["hackathon", "prototype"],
+  },
+  {
+    id: "evt-static-cultural-evening",
+    title: "Cultural Evening Auditions",
+    description: "Auditions for music, dance, theatre, and anchoring slots.",
+    startAt: "2026-08-18T10:00:00.000Z",
+    endAt: "2026-08-18T15:00:00.000Z",
+    startDate: "2026-08-18",
+    endDate: "2026-08-18",
+    category: "Cultural",
+    department: "Arts School",
+    status: "published",
+    approvalStatus: "approved",
+    visibility: "public",
+    venue: "Open Air Theatre",
+    location: "Open Air Theatre",
+    registeredCount: 74,
+    registrationCount: 74,
+    seatsAvailable: 46,
+    maxCapacity: 120,
+    registrationDeadline: "2026-08-16T18:00:00.000Z",
+    prizes: "Performance slots",
+    eligibility: "Individual and group entries",
+    tags: ["culture", "auditions"],
+  },
+];
+
+function getStaticEventDetail(eventId: string): EventDetail {
+  const event = STATIC_EVENTS.find((item) => item.id === eventId);
+  if (!event) {
+    throw new Error("This event is not available in the static prototype.");
+  }
+
+  const registered = isPrototypeEventRegistered(eventId);
+  return {
+    ...event,
+    rules: "Bring a valid SRM AP ID, follow the organizer's schedule, and submit original work where required.",
+    faq: [
+      { question: "Who can register?", answer: event.eligibility || "SRM AP students who meet the listed eligibility." },
+      { question: "Where is the event held?", answer: typeof event.location === "string" ? event.location : event.venue || "The listed campus venue." },
+    ],
+    myRegistration: registered ? { registeredAt: new Date().toISOString(), status: "registered" } : undefined,
+  };
+}
+
+function getStaticCompetitionConfig(eventId: string): CompetitionConfig {
+  const event = STATIC_EVENTS.find((item) => item.id === eventId);
+  if (!event?.isCompetition) return { isCompetition: false, rounds: [] };
+
+  return {
+    isCompetition: true,
+    submissionScope: "team",
+    maxTeamSize: 4,
+    rounds: [
+      {
+        roundId: "round-prototype-build",
+        title: "Prototype submission",
+        startTime: "2026-08-12T12:30:00.000Z",
+        submissionDeadline: "2026-08-13T00:00:00.000Z",
+        instructions: "Build with your team and submit a working prototype before midnight.",
+        submissionTypes: ["link", "file"],
+        maxResubmissions: 2,
+        evaluationCriteria: [
+          { label: "Problem fit", maxScore: 30 },
+          { label: "Execution", maxScore: 40 },
+          { label: "Presentation", maxScore: 30 },
+        ],
+        resultsPublished: false,
+      },
+    ],
+  };
+}
+
 function buildStaticHelpdeskList(filters?: Record<string, string>) {
   let items = [...STATIC_HELPDESK_TICKETS];
   if (filters?.queue) items = items.filter((ticket) => ticket.queueState === filters.queue);
@@ -271,6 +396,18 @@ function normalizeEventList(payload: EventSummary[] | { events?: EventSummary[] 
 }
 
 export async function listEvents(query?: Record<string, string>, headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    let items = [...STATIC_EVENTS];
+    if (query?.status) items = items.filter((event) => event.status === query.status);
+    if (query?.type === "upcoming") {
+      const now = Date.now();
+      items = items.filter((event) => new Date(event.startAt || event.startDate).getTime() >= now);
+    }
+    if (query?.registered === "true") {
+      items = items.filter((event) => isPrototypeEventRegistered(event.id));
+    }
+    return items;
+  }
   const params = new URLSearchParams(query || {});
   const payload = await requestData<EventSummary[] | { events?: EventSummary[] }>(`/api/events${params.toString() ? `?${params.toString()}` : ""}`, {
     headers,
@@ -279,6 +416,7 @@ export async function listEvents(query?: Record<string, string>, headers?: Heade
 }
 
 export async function getEvent(eventId: string, headers?: HeadersInit) {
+  if (isStaticPrototype()) return getStaticEventDetail(eventId);
   return requestData<EventDetail>(`/api/events/${encodeURIComponent(eventId)}`, {
     headers,
   });
@@ -300,6 +438,11 @@ export async function deleteEvent(eventId: string, headers?: HeadersInit) {
 }
 
 export async function registerForEvent(eventId: string) {
+  if (isStaticPrototype()) {
+    getStaticEventDetail(eventId);
+    setPrototypeEventRegistration(eventId, true);
+    return { registered: true };
+  }
   return requestData<Record<string, unknown>>(`/api/events/${encodeURIComponent(eventId)}/register`, {
     method: "POST",
     body: JSON.stringify({}),
@@ -307,6 +450,11 @@ export async function registerForEvent(eventId: string) {
 }
 
 export async function cancelEventRegistration(eventId: string) {
+  if (isStaticPrototype()) {
+    getStaticEventDetail(eventId);
+    setPrototypeEventRegistration(eventId, false);
+    return { cancelled: true };
+  }
   return requestData<Record<string, unknown>>(
     `/api/events/${encodeURIComponent(eventId)}/cancel-registration`,
     {
@@ -317,6 +465,7 @@ export async function cancelEventRegistration(eventId: string) {
 }
 
 export async function getCompetitionConfig(eventId: string) {
+  if (isStaticPrototype()) return getStaticCompetitionConfig(eventId);
   return requestData<CompetitionConfig>(`/api/competitions/${encodeURIComponent(eventId)}/config`);
 }
 
@@ -746,7 +895,7 @@ export type CampusFeedbackGovernance = {
 
 export type CampusFeedbackGovernanceResponse = {
   official: CampusFeedbackGovernance;
-  unofficial: CampusFeedbackGovernance;
+  campus: CampusFeedbackGovernance;
 };
 
 export type CampusFeedbackListResponse = {
@@ -783,8 +932,8 @@ export async function getCampusFeedbackGovernance(): Promise<CampusFeedbackGover
         routeNamespace: "/api/feedback/end-semester",
         editableThroughCampusModeration: false,
       },
-      unofficial: {
-        label: "Unofficial campus feedback",
+      campus: {
+        label: "Campus feedback",
         owner: "Campus community feedback with admin moderation",
         routeNamespace: "/api/campus-feedback",
         retentionPolicy:
@@ -893,7 +1042,7 @@ export async function getMyCampusFeedback(type?: CampusFeedbackType): Promise<Ca
     return {
       items: type ? STATIC_ENTRIES.filter((entry) => entry.type === type) : STATIC_ENTRIES,
       governance: {
-        label: "Unofficial campus feedback",
+        label: "Campus feedback",
         owner: "Campus community feedback with admin moderation",
         routeNamespace: "/api/campus-feedback",
       },
@@ -933,7 +1082,7 @@ export async function getAdminCampusFeedback(
         total: filteredItems.length,
       },
       governance: {
-        label: "Unofficial campus feedback",
+        label: "Campus feedback",
         owner: "Campus community feedback with admin moderation",
         routeNamespace: "/api/campus-feedback",
       },

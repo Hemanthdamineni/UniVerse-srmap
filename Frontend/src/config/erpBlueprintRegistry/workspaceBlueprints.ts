@@ -17,11 +17,18 @@ function externalSummary(route: string, heading: string, fetchKeys: string[], lo
 
 export const WORKSPACE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   "/resources/learning-materials":  internal("/resources/learning-materials",  "Learning Materials",  ["resources/learning-materials"],  "Loading learning materials...",  { domain: "lms" }),
-  "/resources/advanced-access":     internal("/resources/advanced-access",     "Advanced Access",     ["resources/advanced-access"],     "Loading advanced access...",     { domain: "lms" }),
+  "/resources/advanced-access": {
+    route: "/resources/advanced-access",
+    heading: "Advanced Access",
+    fetchKeys: [],
+    domain: "lms",
+    integrationState: "placeholder",
+    renderer: "generic",
+    placeholderReason: "Coming soon: advanced access is not yet available to students.",
+    status: "hidden",
+  } as Bp,
 
-  "/academic-tracker/progress-overview":  { route: "/academic-tracker/progress-overview",  heading: "Progress Overview",  fetchKeys: ["academic-tracker/progress-overview"],  domain: "lms", sourceMode: "external", integrationState: "summary", renderer: "generic", loadingMessage: "Loading progress overview..." } as Bp,
-  "/academic-tracker/academic-insights":  { route: "/academic-tracker/academic-insights",  heading: "Academic Insights",  fetchKeys: ["academic-tracker/academic-insights"],  domain: "lms", sourceMode: "external", integrationState: "summary", renderer: "generic", loadingMessage: "Loading academic insights..." } as Bp,
-  "/academic-tracker/unified-insights":   internal("/academic-tracker/unified-insights",   "Unified Insights",   ["academic-tracker/unified-insights"],   "Loading unified insights...",   { domain: "lms" }),
+  "/academic-tracker/academic-insights": internal("/academic-tracker/academic-insights", "Academic Tracker", ["academic-tracker/academic-insights", "academic-tracker/progress-overview"], "Loading academic tracker...", { domain: "lms" }),
 
   "/career":                        internal("/career",                        "Career Portal",         ["career/opportunities"],                       "Opening Career Portal..."),
   "/career/opportunities":          internal("/career/opportunities",          "All Opportunities",     ["career/opportunities"],                       "Searching opportunities..."),

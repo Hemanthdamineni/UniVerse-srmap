@@ -281,6 +281,7 @@ const OpportunityDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="icon" 
+              aria-label={bookmarked ? "Remove from saved opportunities" : "Save this opportunity"}
               className={bookmarked ? "h-12 w-12 text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] border border-[color-mix(in_srgb,var(--warning)_20%,transparent)]" : "h-12 w-12 text-[var(--comp-text-muted)]"}
               onClick={handleBookmark}
             >

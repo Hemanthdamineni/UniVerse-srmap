@@ -4,7 +4,10 @@ import ResourceCard from "./ResourceCard";
 export default function ResourceGrid({ items }: { items: LmsResource[] }) {
   if (items.length === 0) {
     return (
-      <div className="dashboard-card border-dashed p-8 text-center text-sm text-[var(--text-secondary)]">
+      <div
+        className="rounded-xl border border-dashed p-8 text-center text-sm text-[var(--comp-text-muted)]"
+        style={{ borderColor: "var(--comp-border)" }}
+      >
         No resources found.
       </div>
     );

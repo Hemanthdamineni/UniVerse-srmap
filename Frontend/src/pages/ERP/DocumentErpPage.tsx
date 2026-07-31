@@ -6,9 +6,10 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
+import { extractSections, sanitizeText } from "../../lib/erp/sanitize";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
@@ -16,35 +17,6 @@ type Props = {
 
 type TableRow = Record<string, string>;
 
-function cleanText(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value.replace(/\s+/g, " ").trim();
-  return String(value ?? "");
-}
-
-function extractSections(responsesByKey: Record<string, ErpPageResponse>) {
-  const sections: Array<{ title: string; text: string; tables: TableRow[][] }> = [];
-
-  for (const resp of Object.values(responsesByKey)) {
-    const data = resp?.data as Record<string, unknown> | null;
-    if (!data || typeof data !== "object") continue;
-
-    const title = cleanText(data.title);
-    const text = cleanText(data.text);
-    const raw = data.tables;
-    const tables: TableRow[][] = Array.isArray(raw)
-      ? (raw as unknown[]).filter(Array.isArray).map((t) =>
-          (t as unknown[]).filter((r): r is TableRow => !!r && typeof r === "object")
-        )
-      : [];
-
-    if (title || text || tables.some((t) => t.length > 0)) {
-      sections.push({ title, text, tables });
-    }
-  }
-
-  return sections;
-}
 
 function SimpleTable({ rows }: { rows: TableRow[] }) {
   if (!rows.length) return null;
@@ -103,7 +75,7 @@ export default function DocumentErpPage({ blueprint }: Props) {
       for (const key of pageKeys) {
         const result = batch[key];
         if (!result || (result as any).success === false) {
-          failures.push(cleanText((result as any)?.error) || `Failed to load ${key}`);
+          failures.push(sanitizeText((result as any)?.error) || `Failed to load ${key}`);
         } else {
           successful[key] = result as ErpPageResponse;
         }
@@ -148,13 +120,15 @@ export default function DocumentErpPage({ blueprint }: Props) {
       {hasContent && (
         <div className="space-y-8">
           {sections.map((section, i) => (
-            <div key={i} className="space-y-4">
+            <div key={i} className="space-y-3">
               {section.title && (
-                <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--comp-text-primary)" }}>
+                <h2 className="text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
                   {section.title}
                 </h2>
               )}
-              {section.text && (
+              {/* Only show text when there are no tables — otherwise text is usually a
+                  concatenated dump of the same table data */}
+              {section.text && section.tables.length === 0 && (
                 <p className="text-sm leading-relaxed" style={{ color: "var(--comp-text-secondary)" }}>
                   {section.text}
                 </p>
@@ -168,9 +142,10 @@ export default function DocumentErpPage({ blueprint }: Props) {
       )}
 
       {!hasContent && !loading && !error && (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--border)_55%,transparent)] bg-[color-mix(in_srgb,var(--surface)_78%,transparent)] px-6 text-center">
-          <p className="text-sm text-[var(--comp-text-secondary)]">No content available for this page.</p>
-        </div>
+        <EmptyState
+          title="No content available"
+          description="This page doesn't have any data to display right now. Try refreshing or check back later."
+        />
       )}
     </ErpPageShell>
   );

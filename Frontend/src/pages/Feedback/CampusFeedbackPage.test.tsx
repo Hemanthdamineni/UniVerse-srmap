@@ -45,8 +45,8 @@ const governance = {
     routeNamespace: "/api/feedback/end-semester",
     editableThroughCampusModeration: false,
   },
-  unofficial: {
-    label: "Unofficial campus feedback",
+  campus: {
+    label: "Campus feedback",
     owner: "Campus community feedback",
     routeNamespace: "/api/campus-feedback",
   },
@@ -62,14 +62,14 @@ describe("CampusFeedbackPage", () => {
     };
     getCampusFeedbackGovernance.mockResolvedValue(governance);
     getCampusFeedbackOptions.mockResolvedValue([{ id: "event-1", label: "Tech Fest", type: "events" }]);
-    getMyCampusFeedback.mockResolvedValue({ items: [], governance: governance.unofficial });
+    getMyCampusFeedback.mockResolvedValue({ items: [], governance: governance.campus });
     importLegacyCampusFeedback.mockResolvedValue({ imported: [], skipped: [], counts: { imported: 0, skipped: 0 } });
     submitCampusFeedback.mockResolvedValue({
       id: "cf-1",
       type: "events",
       typeLabel: "Events Feedback",
-      targetId: "event-1",
-      targetLabel: "Tech Fest",
+      targetId: "events-overall",
+      targetLabel: "Campus events and activities",
       ratings: { Experience: 5 },
       comment: "Great event flow",
       status: "pending",
@@ -79,12 +79,11 @@ describe("CampusFeedbackPage", () => {
     });
   });
 
-  it("submits unofficial feedback through the campus feedback API and shows moderation status", async () => {
+  it("submits feedback through the campus feedback API and shows moderation status", async () => {
     const user = userEvent.setup();
     render(<EventsFeedback />);
 
-    expect(await screen.findByText("Unofficial campus feedback")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Event"), "event-1");
+    expect(await screen.findByText("Campus feedback")).toBeInTheDocument();
     await user.click(screen.getAllByRole("radio", { name: "5 star" })[0]);
     await user.type(screen.getByLabelText("Comments"), "Great event flow");
     await user.click(screen.getByRole("button", { name: /Submit Feedback/i }));
@@ -93,7 +92,7 @@ describe("CampusFeedbackPage", () => {
     expect(submitCampusFeedback).toHaveBeenCalledWith(
       "events",
       expect.objectContaining({
-        targetId: "event-1",
+        targetId: "events-overall",
         ratings: expect.objectContaining({ Experience: 5 }),
         displayMode: "anonymous",
       })

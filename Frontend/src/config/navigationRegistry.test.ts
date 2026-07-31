@@ -7,6 +7,7 @@ import {
   getSidebarNav,
   resolveCatalogRoute,
 } from "./navigationRegistry";
+import { PAGE_BLUEPRINTS, isPageVisible } from "./erpBlueprints";
 import { clearNavigationExtensionsForTests, registerNavigationExtension } from "./navigationExtensions";
 
 afterEach(() => {
@@ -20,7 +21,7 @@ describe("navigationRegistry", () => {
       mainNavAppend: [
         {
           label: "Test Section",
-          icon: "/src/assets/Icons/Dashboard.png",
+          icon: "/assets/icons/Dashboard.png",
           domain: "erp",
           route: "/test-extension-route",
           type: "B",
@@ -81,5 +82,23 @@ describe("navigationRegistry", () => {
   it("hides admin catalog routes for non-admin users", () => {
     const routes = new Set(getRouteCatalog().map((r) => r.route));
     expect(routes.has("/admin/events-management")).toBe(false);
+  });
+
+  it("keeps unfinished routes out of student discovery surfaces", () => {
+    const catalogRoutes = new Set(getRouteCatalog({ isAdmin: true }).map((r) => r.route));
+    const sidebarRoutes = new Set(
+      getSidebarNav({ isAdmin: true }).flatMap((item) =>
+        "submenu" in item && item.submenu ? item.submenu.map((sub) => sub.route) : "route" in item && item.route ? [item.route] : [],
+      ),
+    );
+
+    const hiddenRoutes = Object.values(PAGE_BLUEPRINTS)
+      .filter(bp => !isPageVisible(bp))
+      .map(bp => bp.route);
+
+    for (const route of hiddenRoutes) {
+      expect(catalogRoutes.has(route)).toBe(false);
+      expect(sidebarRoutes.has(route)).toBe(false);
+    }
   });
 });

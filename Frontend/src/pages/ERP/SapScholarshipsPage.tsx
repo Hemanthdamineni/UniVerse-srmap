@@ -3,22 +3,11 @@ import { executePipeline, type SapScholarshipsModel } from "../../lib/erp/erpTra
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
 };
-
-function SapEmptyNotice({ message }: { message: string }) {
-  return (
-    <div className="flex min-h-44 flex-col items-center justify-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--border)_55%,transparent)] bg-[color-mix(in_srgb,var(--surface)_78%,transparent)] px-8 py-10 text-center">
-      <span className="inline-flex items-center rounded-full border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--comp-text-secondary)]">
-        Application History
-      </span>
-      <p className="max-w-xs text-sm leading-6 text-[var(--comp-text-secondary)]">{message}</p>
-    </div>
-  );
-}
 
 
 export default function SapScholarshipsPage({ blueprint }: Props) {
@@ -114,7 +103,10 @@ export default function SapScholarshipsPage({ blueprint }: Props) {
               );
             })
           ) : data.message ? (
-            <SapEmptyNotice message={data.message} />
+            <EmptyState
+              title="No data available"
+              description={data.message}
+            />
           ) : null}
         </>
       )}

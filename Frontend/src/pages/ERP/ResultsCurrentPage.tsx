@@ -178,6 +178,11 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
             </p>
           )}
 
+          {/* Internal Marks Section */}
+          {internalMarks && (
+            <InternalMarksBundledSection model={internalMarks} />
+          )}
+
           {/* Subject Results Section */}
           <section className="dashboard-card p-0">
             <div className="border-b border-[var(--border)] px-5 py-4">
@@ -195,11 +200,6 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
               />
             </div>
           </section>
-
-          {/* Internal Marks Section */}
-          {internalMarks && (
-            <InternalMarksBundledSection model={internalMarks} />
-          )}
 
           {/* SGPA/CGPA Predictor Section */}
           <SectionCard title="SGPA / CGPA Predictor">

@@ -3,7 +3,7 @@ import { executePipeline, type FaqsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
@@ -108,9 +108,10 @@ export default function FaqsPage({ blueprint }: Props) {
           ))}
         </div>
       ) : data && data.sections.length === 0 && !loading && !error ? (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--border)', background: 'color-mix(in srgb, var(--surface) 80%, transparent)' }}>
-          <p className="text-sm" style={{ color: 'var(--comp-text-muted)' }}>No FAQ content available.</p>
-        </div>
+        <EmptyState
+          title="No FAQs available"
+          description="FAQ content hasn't been published yet. Check back later or visit the official ERP portal."
+        />
       ) : null}
     </ErpPageShell>
   );

@@ -19,14 +19,27 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary"],
       reportsDirectory: "./coverage",
-      include: [
-        "src/pages/CareerPortal/**/*.tsx",
-        "src/components/career/**/*.tsx",
-        "src/lib/careerApi.ts",
-        "src/lib/erpProfileCareer.ts",
-      ],
-      /* Legacy ERP tab modules; imports are out of sync with student careerApi — excluded until wired. */
+      include: ["src/**"],
       exclude: [
+        // Test infrastructure & config
+        "src/test/**",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+        "src/**/__mocks__/**",
+
+        // Type declarations (no executable code)
+        "src/**/*.d.ts",
+        "src/vite-env.d.ts",
+
+        // Static assets & styles (not testable JS/TS)
+        "src/assets/**",
+        "src/styles/**",
+
+        // Prototype / debug utilities (fixture data, not production code)
+        "src/lib/prototype/**",
+
+        // Legacy ERP tab modules — imports are out of sync with student
+        // careerApi; excluded until wired.
         "src/pages/CareerPortal/Opportunities.tsx",
         "src/pages/CareerPortal/AlumniConnect.tsx",
         "src/pages/CareerPortal/InterviewBooking.tsx",

@@ -8,10 +8,8 @@ export default function EventsFeedback() {
       title="Events Feedback"
       type="events"
       categories={CATEGORIES}
+      fixedTarget={{ id: "events-overall", type: "events", label: "Campus events and activities" }}
       targetLabel="Event"
-      targetEmptyMessage="No events are open for unofficial campus feedback yet."
-      optionManagementLabel="Manage Event Feedback Targets"
-      optionPlaceholder="Event name"
     />
   );
 }

@@ -3,7 +3,7 @@ import { executePipeline, type RoomDetailsModel } from "../../lib/erp/erpTransfo
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
@@ -63,21 +63,16 @@ export default function RoomDetailsPage({ blueprint }: Props) {
       )}
 
       {data && data.noRoom ? (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--border)', background: 'color-mix(in srgb, var(--surface) 80%, transparent)' }}>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--comp-text-muted)' }}>Status</p>
-            <p className="text-xl font-bold" style={{ color: 'var(--comp-text-primary)' }}>No hostel room assigned</p>
-            <p className="text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
-              Room details will appear here once a hostel room is allocated.
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          title="No hostel room assigned"
+          description="Room details will appear here once a hostel room is allocated to you."
+        />
       ) : data && fields.length > 0 ? (
         <section className="dashboard-card overflow-hidden p-0">
           <div className="border-b px-5 py-4" style={{ borderColor: 'var(--comp-border)' }}>
             <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Room Assignment</h3>
           </div>
-          <div className="divide-y" style={{ borderColor: 'var(--comp-border)' }}>
+          <div className="divide-y divide-[var(--comp-border)]">
             {fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="flex items-center gap-4 px-5 py-3.5">
                 <span className="min-w-[180px] shrink-0 text-sm font-medium" style={{ color: 'var(--comp-text-secondary)' }}>

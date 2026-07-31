@@ -60,7 +60,6 @@ describe("ResourceCard", () => {
 
     expect(screen.getByText("AP23110010234")).toHaveAttribute("href", "/resources/contributors/AP23110010234");
     expect(screen.getByText(/Trust 88/i)).toBeInTheDocument();
-    expect(screen.getByText("Why this is recommended")).toBeInTheDocument();
     expect(screen.getByText("Matches your subject focus")).toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@ import { matchPath } from "react-router-dom";
 import {
   BOTTOM_NAV,
   MAIN_NAV,
-  NAV_HIDDEN_ROUTES,
+  isPageVisible,
   PAGE_BLUEPRINTS,
   type Domain,
   type NavItem,
@@ -26,12 +26,12 @@ export type BreadcrumbItem = {
 
 export const ADMIN_NAV_SECTION: NavSection = {
   section: "ADMINISTRATION",
-  icon: "/src/assets/Icons/Settings.png",
+  icon: "/assets/icons/Settings.png",
   items: [
     {
       type: "group",
       label: "Admin",
-      icon: "/src/assets/Icons/Settings.png",
+      icon: "/assets/icons/Settings.png",
       domain: "admin",
       children: [
         { type: "link", label: "Events Management", route: "/admin/events-management", domain: "admin", access: "B" },
@@ -61,7 +61,6 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
   { route: "/events/my-activity", label: "My Activity", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-teams", label: "My Teams", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-created", label: "My Created Events", group: "Competition Platform", domain: "campus" },
-  { route: "/events/attendance", label: "Event Attendance", group: "Competition Platform", domain: "erp" },
   { route: "/resources", label: "Learning home", group: "Learning Management", domain: "lms", keywords: "lms home hub" },
   { route: "/resources/browse", label: "Browse catalog", group: "Learning Management", domain: "lms" },
   { route: "/resources/explore", label: "Explore", group: "Learning Management", domain: "lms" },
@@ -98,17 +97,24 @@ function cloneSidebarItem(item: SidebarItem): SidebarItem {
   if ("submenu" in item && item.submenu) {
     return {
       ...item,
-      submenu: item.submenu.map((s) => ({ ...s })),
+      submenu: item.submenu.filter((s) => PAGE_BLUEPRINTS[s.route] ? isPageVisible(PAGE_BLUEPRINTS[s.route]) : true).map((s) => ({ ...s })),
     };
   }
   return { ...item };
+}
+
+function isSidebarItemVisible(item: SidebarItem): boolean {
+  if ("submenu" in item && item.submenu) {
+    return item.submenu.length > 0;
+  }
+  return !("route" in item) || !item.route || (PAGE_BLUEPRINTS[item.route] ? isPageVisible(PAGE_BLUEPRINTS[item.route]) : true);
 }
 
 export function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
   if (item.type === "link") {
     return {
       label: item.label,
-      icon: item.icon ?? "/src/assets/Icons/Dashboard.png",
+      icon: item.icon ?? "/assets/icons/Dashboard.png",
       domain: item.domain,
       route: item.route,
       type: item.access,
@@ -117,7 +123,7 @@ export function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
 
   return {
     label: item.label,
-    icon: item.icon ?? "/src/assets/Icons/Dashboard.png",
+    icon: item.icon ?? "/assets/icons/Dashboard.png",
     domain: item.domain ?? "mixed",
     submenu: item.children.map((child) => ({
       label: child.label,
@@ -141,10 +147,13 @@ export function getMainNavSections(options: NavViewOptions = {}): NavSection[] {
 }
 
 export function getSidebarNav(options: NavViewOptions = {}): SidebarItem[] {
-  const items = getMainNavSections(options).flatMap((section) => section.items.map(convertNavItemToSidebarItem));
+  const items = getMainNavSections(options)
+    .flatMap((section) => section.items.map(convertNavItemToSidebarItem))
+    .map(cloneSidebarItem)
+    .filter(isSidebarItemVisible);
   for (const ext of getNavigationExtensions()) {
     if (ext.mainNavAppend?.length) {
-      items.push(...ext.mainNavAppend.map(cloneSidebarItem));
+      items.push(...ext.mainNavAppend.map(cloneSidebarItem).filter(isSidebarItemVisible));
     }
   }
   return items;
@@ -182,7 +191,7 @@ export function getRouteCatalog(options: NavViewOptions = {}): RouteCatalogEntry
   }
 
   for (const bp of Object.values(PAGE_BLUEPRINTS)) {
-    if (NAV_HIDDEN_ROUTES.has(bp.route)) continue;
+    if (!isPageVisible(bp)) continue;
     if (map.has(bp.route)) continue;
     map.set(bp.route, {
       route: bp.route,
@@ -193,7 +202,7 @@ export function getRouteCatalog(options: NavViewOptions = {}): RouteCatalogEntry
     });
   }
 
-  const nav = getMergedMainNav();
+  const nav = getSidebarNav(options);
   for (const row of flattenNavRoutes(nav)) {
     if (map.has(row.route)) {
       const existing = map.get(row.route)!;
@@ -221,7 +230,7 @@ export function getRouteCatalog(options: NavViewOptions = {}): RouteCatalogEntry
     }
   }
 
-  const all = Array.from(map.values()).filter((entry) => !NAV_HIDDEN_ROUTES.has(entry.route));
+  const all = Array.from(map.values()).filter((entry) => (PAGE_BLUEPRINTS[entry.route] ? isPageVisible(PAGE_BLUEPRINTS[entry.route]) : true));
   if (options.isAdmin) {
     return all;
   }

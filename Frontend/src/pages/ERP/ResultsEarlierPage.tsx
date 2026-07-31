@@ -75,17 +75,27 @@ function isBatchFailure(result: ErpBatchPageResult | undefined): result is ErpPa
 function parseHistoricalExamMarks(rawData: unknown): HistoricalExamMark[] {
   const extracted = requireExtracted(rawData, "exam-mark-details", "examination/exam-mark-details");
   const records = extracted.records as Record<string, unknown>[];
-  return records.map((r) => ({
-    semester: clean(r.semesterNo),
-    monthYear: clean(r.monthYear),
-    subjectCode: clean(r.subjectCode),
-    subjectDescription: humanizeText(r.subjectName),
-    credit: clean(r.credit),
-    grade: clean(r.grade),
-    gradePoint: clean(r.gradePoints),
-    result: clean(r.result),
-    attempt: clean(r.attempt),
-  })).filter((r) => r.subjectCode && r.subjectDescription);
+  const total = records.length;
+  const parsed = records
+    .map((r) => ({
+      semester: clean(r.semesterNo),
+      monthYear: clean(r.monthYear),
+      subjectCode: clean(r.subjectCode),
+      subjectDescription: humanizeText(r.subjectName),
+      credit: clean(r.credit),
+      grade: clean(r.grade),
+      gradePoint: clean(r.gradePoints),
+      result: clean(r.result),
+      attempt: clean(r.attempt),
+    }))
+    .filter((r) => r.subjectCode && r.subjectDescription);
+  const dropped = total - parsed.length;
+  if (dropped > 0) {
+    console.warn(
+      `[ResultsEarlierPage] Dropped ${dropped} of ${total} exam mark records — missing subject code or description.`,
+    );
+  }
+  return parsed;
 }
 
 function parseAvailableSemesters(rawData: unknown): number[] {
@@ -109,7 +119,8 @@ function parseInternalMarks(rawData: unknown): InternalMarkRecord[] {
     "examination/earlier-internal-marks/semester",
   );
   const records = extracted.records as Record<string, unknown>[];
-  return records
+  const total = records.length;
+  const parsed = records
     .map((r) => ({
       semester: clean(r.semester ?? ""),
       code: clean(r.subjectCode),
@@ -119,14 +130,24 @@ function parseInternalMarks(rawData: unknown): InternalMarkRecord[] {
       maxMark: clean(r.totalMarks),
     }))
     .filter((r) => r.code && r.description);
+  const dropped = total - parsed.length;
+  if (dropped > 0) {
+    console.warn(
+      `[ResultsEarlierPage] Dropped ${dropped} of ${total} internal mark records — missing subject code or description.`,
+    );
+  }
+  return parsed;
 }
 
-async function fetchInternalMarksForSemester(semester: number): Promise<InternalMarkRecord[]> {
+async function fetchInternalMarksForSemester(
+  semester: number,
+  signal?: AbortSignal,
+): Promise<InternalMarkRecord[]> {
   const sessionId = getSessionId();
   const query = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : "";
   const response = await fetch(
     `/api/scrape/examination/earlier-internal-marks/semester/${semester}${query}`,
-    { credentials: "include" },
+    { credentials: "include", signal },
   );
 
   let payload: unknown = null;
@@ -180,7 +201,12 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
 
         const marksRows = parseHistoricalExamMarks(marksResult?.data);
         const semesters = parseAvailableSemesters(internalResult?.data);
-        const initialSemester = semesters[semesters.length - 1] || 1;
+        // Default to the highest available semester; fall back to the highest
+        // semester found in historical exam marks if the extractor returned none.
+        const initialSemester =
+          semesters[semesters.length - 1] ||
+          Math.max(...marksRows.map((r) => parseInt(r.semester, 10)).filter((n) => !isNaN(n)), 0) ||
+          1;
 
         if (!active) return;
         setHistoricalMarks(marksRows);
@@ -200,6 +226,7 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
 
   useEffect(() => {
     if (!selectedSemester) return;
+    const controller = new AbortController();
     let active = true;
 
     async function loadInternalMarks() {
@@ -208,10 +235,11 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
       try {
         setInternalLoading(true);
         setInternalError(null);
-        const rows = await fetchInternalMarksForSemester(semester);
+        const rows = await fetchInternalMarksForSemester(semester, controller.signal);
         if (!active) return;
         setInternalMarks(rows);
       } catch (err) {
+        if (controller.signal.aborted) return;
         if (!active) return;
         setInternalError(err instanceof Error ? err.message : "Failed to load internal marks.");
         setInternalMarks([]);
@@ -221,7 +249,10 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
     }
 
     loadInternalMarks();
-    return () => { active = false; };
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [selectedSemester]);
 
   return (

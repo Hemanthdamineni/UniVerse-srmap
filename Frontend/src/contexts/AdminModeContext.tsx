@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { hasSessionAuth } from "../lib/core/session";
-import { disableAdminMode, getAdminAccessStatus, unlockAdminMode, getAdminHeaders } from "../lib/campus/adminApi";
+import { disableAdminMode, getAdminAccessStatus, unlockAdminMode } from "../lib/campus/adminApi";
 import { getCurrentRegNo, isPlatformAdmin } from "../lib/core/identity";
 
 type AdminModeState = {
@@ -27,6 +27,11 @@ function hasSessionStorage() {
   return typeof window !== "undefined" && Boolean(window.sessionStorage);
 }
 
+function buildAdminHeaders(password: string): HeadersInit {
+  const trimmed = String(password).trim();
+  return trimmed ? { "x-admin-password": trimmed } : {};
+}
+
 export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   const [potentialAdmin, setPotentialAdmin] = useState(() => isPlatformAdmin());
   const [isAdmin, setIsAdmin] = useState(() => isPlatformAdmin());
@@ -35,6 +40,7 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [promptPassword, setPromptPassword] = useState("");
+  const adminPasswordRef = useRef("");
 
   useEffect(() => {
     if (!hasSessionAuth()) {
@@ -70,6 +76,9 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
     setError("");
     try {
       await unlockAdminMode(promptPassword);
+      // Keep the password in memory (React ref) for subsequent admin API calls.
+      // Never written to sessionStorage — avoids XSS exfiltration.
+      adminPasswordRef.current = promptPassword;
       setIsAdmin(true);
       setShowPrompt(false);
       setPromptPassword("");
@@ -97,6 +106,7 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
     setError("");
     try {
       await disableAdminMode();
+      adminPasswordRef.current = "";
       setIsAdmin(false);
       if (hasSessionStorage()) window.sessionStorage.setItem(PROMPT_DISMISSED_KEY, "1");
     } catch (disableError) {
@@ -105,6 +115,8 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
       setBusy(false);
     }
   }
+
+  const adminHeaders = useMemo(() => buildAdminHeaders(adminPasswordRef.current), [isAdmin]);
 
   const value = useMemo<AdminModeState>(
     () => ({
@@ -120,9 +132,9 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
       openPrompt,
       unlock,
       disable,
-      adminHeaders: getAdminHeaders(),
+      adminHeaders,
     }),
-    [potentialAdmin, isAdmin, registerNo, showPrompt, busy, error, promptPassword]
+    [potentialAdmin, isAdmin, registerNo, showPrompt, busy, error, promptPassword, adminHeaders]
   );
 
   return <AdminModeContext.Provider value={value}>{children}</AdminModeContext.Provider>;

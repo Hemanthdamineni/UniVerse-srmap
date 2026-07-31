@@ -1,12 +1,13 @@
 function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="flex justify-between items-center rounded-t-lg border-t border-[var(--comp-accent)]/30 p-5" style={{ backgroundColor: "var(--footer-bg)", color: "var(--footer-fg)" }}>
+    <footer className="flex flex-col gap-2 rounded-t-lg border-t border-[var(--comp-accent)]/30 p-5 text-sm sm:flex-row sm:items-center sm:justify-between" style={{ backgroundColor: "var(--footer-bg)", color: "var(--footer-fg)" }}>
       <div className="text-left p-0">
-        © 2025 UniVerse — SRMAP Edition. All rights reserved.
+        © {year} UniVerse, SRMAP Edition. All rights reserved.
       </div>
-      <div className="flex justify-between gap-5">
-        <a href="/privacy-policy" className="text-white no-underline text-sm">Privacy Policy</a>
-        <a href="/terms-of-service" className="text-white no-underline text-sm">Terms of Service</a>
+      <div className="text-left opacity-85 sm:text-right">
+        SRM AP student companion
       </div>
     </footer>
   );

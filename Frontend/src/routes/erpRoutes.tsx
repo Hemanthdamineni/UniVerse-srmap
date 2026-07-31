@@ -1,7 +1,8 @@
 import type React from "react";
 import AdminOnlyPage from "../components/AdminOnlyPage";
 import ProtectedPage from "../components/ProtectedPage";
-import { PAGE_BLUEPRINTS, isPlaceholderBlueprint } from "../config/erpBlueprints";
+import type { PageBlueprint } from "../config/erpBlueprints";
+import { isPageVisible, PAGE_BLUEPRINTS, isPlaceholderBlueprint } from "../config/erpBlueprints";
 import { lazy } from "react";
 import { SuspenseWrapper } from "../components/SuspenseWrapper";
 
@@ -20,23 +21,24 @@ const AdminHelpdeskFaqsPage = lazy(() => import("../pages/Admin/AdminHelpdeskFaq
 const AdminHelpdeskTicketsPage = lazy(() => import("../pages/Admin/AdminHelpdeskTicketsPage"));
 const AdminLmsModerationPage = lazy(() => import("../pages/Admin/AdminLmsModerationPage"));
 const AdminSystemControlsPage = lazy(() => import("../pages/Admin/AdminSystemControlsPage"));
-const AcademicInsights = lazy(() => import("../pages/AcademicTracker/AcademicInsights"));
-const ProgressOverview = lazy(() => import("../pages/AcademicTracker/ProgressOverview"));
-const UnifiedInsights = lazy(() => import("../pages/AcademicTracker/UnifiedInsights"));
+const AcademicHubPage = lazy(() => import("../pages/AcademicTracker/AcademicHubPage"));
 const AlumniConnect = lazy(() => import("../pages/CareerPortal/AlumniConnect"));
+const TransportRoutesPage = lazy(() => import("../pages/ERP/TransportRoutesPage"));
+const HostelBookingPage = lazy(() => import("../pages/ERP/HostelBookingPage"));
 const ApplicationTrackerPage = lazy(() => import("../pages/CareerPortal/ApplicationTrackerPage"));
 const BookmarksPage = lazy(() => import("../pages/CareerPortal/BookmarksPage"));
 const CareerHomePage = lazy(() => import("../pages/CareerPortal/CareerHomePage"));
-const CareerProfilePage = lazy(() => import("../pages/CareerPortal/CareerProfilePage"));
 const InterviewBooking = lazy(() => import("../pages/CareerPortal/InterviewBooking"));
 const OpportunitiesPage = lazy(() => import("../pages/CareerPortal/OpportunitiesPage"));
 const OpportunityDetailPage = lazy(() => import("../pages/CareerPortal/OpportunityDetailPage"));
 const SkillGapPage = lazy(() => import("../pages/CareerPortal/SkillGapPage"));
 const SubmitOpportunityPage = lazy(() => import("../pages/CareerPortal/SubmitOpportunityPage"));
+const ProfessionalProfilePage = lazy(() => import("../pages/CareerPortal/ProfessionalProfilePage"));
 const AttendanceDetailsPage = lazy(() => import("../pages/ERP/AttendanceDetailsPage"));
 const BankDetailsPage = lazy(() => import("../pages/ERP/BankDetailsPage"));
 const CurriculumPage = lazy(() => import("../pages/ERP/CurriculumPage"));
 const DocumentErpPage = lazy(() => import("../pages/ERP/DocumentErpPage"));
+const RegistrationErpPage = lazy(() => import("../pages/ERP/RegistrationErpPage"));
 const FaqsPage = lazy(() => import("../pages/ERP/FaqsPage"));
 const FeeDuesPage = lazy(() => import("../pages/ERP/FeeDuesPage"));
 const FeePaidPage = lazy(() => import("../pages/ERP/FeePaidPage"));
@@ -49,6 +51,7 @@ const TimetablePage = lazy(() => import("../pages/ERP/TimetablePage"));
 const EventsFeedback = lazy(() => import("../pages/Feedback/EventsFeedback"));
 const HostelMessFeedback = lazy(() => import("../pages/Feedback/HostelMessFeedback"));
 const TransportFeedback = lazy(() => import("../pages/Feedback/TransportFeedback"));
+const FeedbackDashboard = lazy(() => import("../pages/Feedback/FeedbackDashboard"));
 const CourseFeedbackAssistantPage = lazy(() => import("../pages/Feedback/CourseFeedbackAssistantPage"));
 const EventsRegistrationHub = lazy(() => import("../pages/Events/EventsRegistrationHub"));
 const HelpdeskFAQs = lazy(() => import("../pages/Helpdesk/FAQs"));
@@ -63,11 +66,14 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/helpdesk/track-escalate": <TrackEscalate />,
   "/registration/events-registration": <EventsRegistrationHub />,
   "/feedback/events-feedback": <EventsFeedback />,
+  "/feedback/dashboard": <FeedbackDashboard />,
   "/feedback/hostel-mess-feedback": <HostelMessFeedback />,
   "/feedback/transport-feedback": <TransportFeedback />,
-  "/academic-tracker/progress-overview": <ProgressOverview />,
-  "/academic-tracker/academic-insights": <AcademicInsights />,
-  "/academic-tracker/unified-insights": <UnifiedInsights />,
+  "/transport-hostel/routes": <TransportRoutesPage blueprint={{ route: "/transport-hostel/routes", heading: "Transport Routes", fetchKeys: ["transport/transport-&-faqs"], renderer: "generic" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native", loadingMessage: "Loading transport routes..." }} />,
+  "/transport-hostel/hostel-booking": <HostelBookingPage blueprint={{ route: "/transport-hostel/hostel-booking", heading: "Hostel Booking", fetchKeys: ["hostel/hostel-booking-for-full-year"], renderer: "generic" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native", loadingMessage: "Loading hostel info..." }} />,
+  "/academic-tracker/progress-overview": <AcademicHubPage />,
+  "/academic-tracker/academic-insights": <AcademicHubPage />,
+  "/academic-tracker/unified-insights": <AcademicHubPage />,
   "/career": <CareerHomePage />,
   "/career/opportunities": <OpportunitiesPage />,
   "/career/opportunities/:id": <OpportunityDetailPage />,
@@ -76,7 +82,8 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/career/jobs": <OpportunitiesPage initialType="job" />,
   "/career/competitions": <OpportunitiesPage initialType="competition" />,
   "/career/me/bookmarks": <BookmarksPage />,
-  "/career/me/profile": <CareerProfilePage />,
+  "/career/me/profile": <ProfessionalProfilePage />,
+  "/career/me/resume": <ProfessionalProfilePage />,
   "/career/me/skill-gap": <SkillGapPage />,
   "/career/me/tracker": <ApplicationTrackerPage />,
   "/career/submit": <SubmitOpportunityPage />,
@@ -101,6 +108,7 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
 
 export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
   .filter((blueprint) =>
+    isPageVisible(blueprint) &&
     blueprint.route !== "/dashboard" &&
     blueprint.route !== "/profile" &&
     !blueprint.route.startsWith("/events")
@@ -108,7 +116,11 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
   .map((blueprint) => {
     let component = <BlueprintPage blueprint={blueprint} />;
 
-    if (DOMAIN_PAGE_MAP[blueprint.route]) {
+    // A placeholder must always win over an older bespoke route. Otherwise a
+    // hidden, unavailable task can still render a misleading legacy screen.
+    if (isPlaceholderBlueprint(blueprint)) {
+      component = <BlueprintPage blueprint={blueprint} />;
+    } else if (DOMAIN_PAGE_MAP[blueprint.route]) {
       component = <>{DOMAIN_PAGE_MAP[blueprint.route]}</>;
     } else if (blueprint.route === "/feedback/course-feedback") {
       component = <CourseFeedbackAssistantPage blueprint={blueprint} />;
@@ -140,10 +152,11 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
       component = <FaqsPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "refund-change") {
       component = <RefundChangePage blueprint={blueprint} />;
+    } else if (blueprint.renderer === "document" && blueprint.route.startsWith("/registration/")) {
+      component = <RegistrationErpPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "document") {
       component = <DocumentErpPage blueprint={blueprint} />;
     } else if (
-      isPlaceholderBlueprint(blueprint) ||
       blueprint.sourceMode !== "erp" ||
       blueprint.fetchKeys.length === 0
     ) {

@@ -82,53 +82,86 @@ function DefaultFallback({
   return (
     <div
       role="alert"
-      className="flex min-h-[300px] w-full items-center justify-center p-8"
+      className="flex min-h-[320px] w-full items-center justify-center p-6"
     >
-      <div className="flex max-w-md flex-col items-center gap-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8 text-center shadow-lg">
+      <div
+        className="w-full max-w-md space-y-5 rounded-xl border p-6 text-center md:p-8"
+        style={{
+          background: "var(--surface)",
+          borderColor: "color-mix(in srgb, var(--error) 20%, var(--border))",
+          boxShadow: "var(--shadow-lg)",
+        }}
+      >
         {/* Icon */}
-        <span className="text-5xl" aria-hidden="true">
-          ⚠️
-        </span>
+        <div
+          className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg"
+          style={{
+            background: "color-mix(in srgb, var(--error) 10%, transparent)",
+          }}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--error)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
 
-        {/* Message */}
-        <div className="space-y-2">
+        {/* Copy */}
+        <div className="space-y-1.5">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             Something went wrong
           </h2>
-          <p className="text-sm text-[var(--text-secondary)]">
-            An unexpected error occurred. Please try again or contact support if
-            the problem persists.
+          <p className="mx-auto max-w-xs text-sm leading-6 text-[var(--text-secondary)]">
+            An error occurred while rendering this section. You can retry or return to the dashboard.
           </p>
         </div>
 
-        {/* Expandable error details (dev-friendly) */}
+        {/* Error details */}
         {error && (
-          <details className="w-full">
-            <summary className="cursor-pointer text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-              Error details
+          <details
+            className="w-full rounded-lg text-left"
+            style={{
+              border: "1px solid var(--border)",
+              background: "var(--background)",
+            }}
+          >
+            <summary className="cursor-pointer px-4 py-2.5 text-xs font-medium text-[var(--text-secondary)] select-none">
+              Technical details
             </summary>
-            <pre className="mt-2 overflow-auto rounded-lg bg-[var(--background)] p-3 text-left text-xs text-[var(--text-secondary)]">
+            <pre className="overflow-auto border-t px-4 py-3 text-xs leading-5 text-[var(--text-secondary)]" style={{ borderColor: "var(--border)" }}>
               {error.message}
               {error.stack && `\n\n${error.stack}`}
             </pre>
           </details>
         )}
 
-        {/* Reset button */}
-        <button
-          onClick={onReset}
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-blue)] px-5 py-2.5 text-sm font-medium text-[var(--comp-accent-fg)] transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-blue)]"
-        >
-          Try Again
-        </button>
-
-        {/* Navigate back to dashboard -- breaks infinite retry loops */}
-        <button
-          onClick={() => (window.location.href = "/dashboard")}
-          className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface)] hover:text-[var(--text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-blue)]"
-        >
-          Back to Dashboard
-        </button>
+        {/* Actions — consistent component vocabulary */}
+        <div className="flex justify-center gap-3 pt-1">
+          <button onClick={onReset} type="button" className="btn-primary gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+            Try again
+          </button>
+          <button
+            onClick={() => (window.location.href = "/dashboard")}
+            type="button"
+            className="btn-secondary"
+          >
+            Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

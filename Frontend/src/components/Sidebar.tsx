@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { BOTTOM_NAV } from "../config/erpBlueprints";
+import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
 import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/core/session";
@@ -29,6 +29,14 @@ function normalizeRoute(route: string) {
   return normalized || "/";
 }
 
+function resolveAssetPath(src: string) {
+  if (!src.startsWith("/assets/")) return src;
+
+  const base = import.meta.env.BASE_URL || "/";
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  return `${normalizedBase}${src.slice(1)}`;
+}
+
 export default function Sidebar() {
   const admin = useAdminMode();
   const [sidebarClosed, setSidebarClosed] = useState(() =>
@@ -44,7 +52,29 @@ export default function Sidebar() {
   const currentPath = normalizeRoute(location.pathname);
   const isActiveRoute = useCallback((route: string) => normalizeRoute(route) === currentPath, [currentPath]);
 
-  const navSections = useMemo(() => getMainNavSections({ isAdmin: admin.isAdmin }), [admin.isAdmin]);
+  const navSections = useMemo(
+    () =>
+      getMainNavSections({ isAdmin: admin.isAdmin })
+        .map((section) => ({
+          ...section,
+          items: section.items
+            .map((item) =>
+              item.type === "group"
+                ? {
+                    ...item,
+                    children: item.children.filter((child) => PAGE_BLUEPRINTS[child.route] ? isPageVisible(PAGE_BLUEPRINTS[child.route]) : true),
+                  }
+                : item,
+            )
+            .filter((item) =>
+              item.type === "group"
+                ? item.children.length > 0
+                : (PAGE_BLUEPRINTS[item.route] ? isPageVisible(PAGE_BLUEPRINTS[item.route]) : true),
+            ),
+        }))
+        .filter((section) => section.items.length > 0),
+    [admin.isAdmin],
+  );
 
   const activeGroupKey = useMemo(() => {
     for (const section of navSections) {
@@ -153,7 +183,7 @@ export default function Sidebar() {
       <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
           <div className="text-[1.15rem] font-bold tracking-[0.01em]">
-            <SidebarContrastText text="UniVerse — SRMAP Edition" className="sidebar-item" />
+            <SidebarContrastText text="UniVerse, SRMAP Edition" className="sidebar-item" />
           </div>
         ) : null}
         <button
@@ -197,7 +227,7 @@ export default function Sidebar() {
                         } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
                       >
                         <img
-                          src={item.icon ?? "/src/assets/Icons/Dashboard.png"}
+                          src={resolveAssetPath(item.icon ?? "/assets/icons/Dashboard.png")}
                           alt=""
                           className="sidebar-icon h-6 w-6"
                         />
@@ -231,7 +261,7 @@ export default function Sidebar() {
                         }}
                       >
                         <img
-                          src={item.icon ?? "/src/assets/Icons/Dashboard.png"}
+                          src={resolveAssetPath(item.icon ?? "/assets/icons/Dashboard.png")}
                           alt=""
                           className="sidebar-icon h-6 w-6"
                         />
@@ -319,7 +349,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
               >
-                <img src={item.icon} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
+                <img src={resolveAssetPath(item.icon)} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </button>
             ) : (
@@ -331,7 +361,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 }`}
               >
-                <img src={item.icon} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
+                <img src={resolveAssetPath(item.icon)} alt="" className="sidebar-icon mr-3 h-6 w-6" loading="lazy" />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </Link>
             )
@@ -340,11 +370,7 @@ export default function Sidebar() {
 
         {!sidebarClosed ? (
           <div className="mt-auto px-6 py-6 pb-2 text-[0.65rem] text-[var(--sidebar-item-muted)]">
-            <div className="mb-2 flex items-center gap-3">
-              <a href="/privacy-policy" className="sidebar-item-hover transition no-underline">Privacy</a>
-              <a href="/terms-of-service" className="sidebar-item-hover transition no-underline">Terms</a>
-            </div>
-            <div>© 2025 UniVerse — SRMAP Edition</div>
+            <div>© {new Date().getFullYear()} UniVerse, SRMAP Edition</div>
           </div>
         ) : null}
       </div>

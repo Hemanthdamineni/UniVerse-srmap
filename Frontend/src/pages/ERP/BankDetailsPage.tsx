@@ -1,19 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { executePipeline, type BankDetailsModel } from "../../lib/erp/erpTransformers";
-import { getErpBatch } from "../../lib/erp/index";
+import { getErpBatch, executeErpAction } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
 };
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip data:mime;base64, prefix
+      const base64 = result.split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function BankDetailsPage({ blueprint }: Props) {
   const [data, setData] = useState<BankDetailsModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Form state
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -48,8 +69,78 @@ export default function BankDetailsPage({ blueprint }: Props) {
     return () => { active = false; };
   }, [blueprint, refreshTrigger]);
 
+  // Initialize form values when data loads
+  useEffect(() => {
+    if (data?.fields) {
+      const values: Record<string, string> = {};
+      for (const field of data.fields) {
+        values[field.label] = field.value || "";
+      }
+      setFormValues(values);
+    }
+  }, [data]);
+
+  const handleFieldChange = (label: string, value: string) => {
+    setFormValues((prev) => ({ ...prev, [label]: value }));
+    setSubmitResult(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+    setSubmitResult(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSubmitResult(null);
+
+    try {
+      let filePayload: Record<string, unknown> = {};
+      if (selectedFile) {
+        const base64 = await fileToBase64(selectedFile);
+        filePayload = {
+          _fileBuffer: base64,
+          _fileName: selectedFile.name,
+          _fileMimeType: selectedFile.type,
+        };
+      }
+
+      const result = await executeErpAction({
+        pageKey: blueprint.fetchKeys[0] || "finance/bank-account-details",
+        actionId: "bank-details-save",
+        actionPayload: {
+          beneficiaryName: formValues["Beneficiary Name"] || "",
+          accountNumber: formValues["Beneficiary Account Number"] || "",
+          bankName: formValues["Bank Name"] || "",
+          branchName: formValues["Bank Branch name"] || "",
+          ifscCode: formValues["IFSC Code"] || "",
+          accountOwnerRelation: formValues["Account owner relationship"] || "",
+          accountOwnerContact: formValues["Account owner Contact number"] || "",
+          ...filePayload,
+        },
+      });
+
+      setSubmitResult({
+        success: result.success,
+        message: result.message || (result.success ? "Bank details saved successfully." : "Failed to save bank details."),
+      });
+    } catch (err: any) {
+      setSubmitResult({
+        success: false,
+        message: err.message || "Failed to save bank details.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const fields = data?.fields || [];
-  const isForm = data?.isForm;
+
+  // Group fields into two columns
+  const leftFields = fields.filter((_, i) => i % 2 === 0);
+  const rightFields = fields.filter((_, i) => i % 2 === 1);
 
   return (
     <ErpPageShell
@@ -60,80 +151,234 @@ export default function BankDetailsPage({ blueprint }: Props) {
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       {error && (
-        <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
+        <InlineError
+          message={error}
+          onRetry={() => setRefreshTrigger((prev) => prev + 1)}
+        />
       )}
 
-      {/* Form page: bank details is an input form on the ERP */}
-      {data && isForm && (
-        <section className="dashboard-card p-6 space-y-4">
-          <div className="flex items-start gap-4">
+      {!error && fields.length === 0 && !loading && (
+        <EmptyState
+          title="No bank details available"
+          description="No bank account information found. Please try again later."
+        />
+      )}
+
+      {!error && fields.length > 0 && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form header */}
+          <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
-              style={{ background: 'color-mix(in srgb, var(--accent) 12%, transparent)', color: 'var(--accent)' }}
+              className="flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ background: "color-mix(in srgb, var(--comp-accent) 12%, transparent)" }}
             >
-              🏦
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--comp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
             </div>
-            <div className="space-y-1">
-              <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>
-                Bank Details Form
-              </h3>
-              <p className="text-sm leading-6" style={{ color: 'var(--comp-text-secondary)' }}>
-                This page is an input form on the ERP portal where you can register or update your bank
-                account details for refund processing. The form requires your beneficiary name, account
-                number, bank name, IFSC code, and a cancelled cheque or passbook copy.
+            <div>
+              <h2 className="text-base font-semibold" style={{ color: "var(--comp-text-primary)" }}>
+                Account Information
+              </h2>
+              <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>
+                Fill in your bank details below. Fields marked with * are required.
               </p>
             </div>
           </div>
-          <div
-            className="rounded-xl border px-4 py-3 text-sm"
-            style={{
-              borderColor: 'var(--comp-border)',
-              background: 'color-mix(in srgb, var(--surface) 60%, transparent)',
-              color: 'var(--comp-text-secondary)',
-            }}
-          >
-            <p className="font-medium mb-1" style={{ color: 'var(--comp-text-primary)' }}>Fields required:</p>
-            <ul className="list-disc list-inside space-y-0.5">
-              <li>Beneficiary Name</li>
-              <li>Beneficiary Account Number</li>
-              <li>Bank Name &amp; Branch</li>
-              <li>IFSC Code</li>
-              <li>Account Owner Relationship &amp; Contact Number</li>
-              <li>Cancelled Cheque / First page of Passbook (attachment)</li>
-            </ul>
-          </div>
-          <p className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>
-            To fill in your bank details, please visit the Student ERP portal directly under Finance → Bank Details.
-          </p>
-        </section>
-      )}
 
-      {/* Data display: bank details are already saved */}
-      {data && !isForm && fields.length > 0 && (
-        <section className="dashboard-card overflow-hidden p-0">
-          <div className="border-b px-5 py-4" style={{ borderColor: 'var(--comp-border)' }}>
-            <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Account Information</h3>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--comp-border)' }}>
-            {fields.map((field, index) => (
-              <div key={`${field.label}-${index}`} className="flex items-center gap-4 px-5 py-3.5">
-                <span className="min-w-[180px] shrink-0 text-sm font-medium" style={{ color: 'var(--comp-text-secondary)' }}>
-                  {field.label}
-                </span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>
-                  {field.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+          {/* Two-column form grid */}
+          <div className="grid gap-5 md:grid-cols-2">
+            {/* Left column */}
+            <div className="space-y-4">
+              {leftFields.map((field) => (
+                <FormField
+                  key={field.label}
+                  field={field}
+                  value={formValues[field.label] || ""}
+                  onChange={(v) => handleFieldChange(field.label, v)}
+                  disabled={submitting}
+                />
+              ))}
+            </div>
 
-      {data && !isForm && fields.length === 0 && !loading && !error && (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--border)', background: 'color-mix(in srgb, var(--surface) 80%, transparent)' }}>
-          <p className="text-sm" style={{ color: 'var(--comp-text-muted)' }}>No bank details available.</p>
-        </div>
+            {/* Right column */}
+            <div className="space-y-4">
+              {rightFields.map((field) => (
+                <FormField
+                  key={field.label}
+                  field={field}
+                  value={formValues[field.label] || ""}
+                  onChange={(v) => handleFieldChange(field.label, v)}
+                  disabled={submitting}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* File upload for Cancelled Cheque / Passbook */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
+              Cancelled Cheque / First page of Passbook
+            </label>
+            <div
+              className="flex items-center gap-4 rounded-xl border px-4 py-3"
+              style={{ borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)" }}
+            >
+              <input disabled={submitting}
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors hover:opacity-80"
+                style={{
+                  borderColor: "var(--comp-border)",
+                  color: "var(--comp-text-primary)",
+                  background: "color-mix(in srgb, var(--comp-surface) 80%, transparent)",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                Choose file
+              </button>
+              <span className="text-sm" style={{ color: selectedFile ? "var(--comp-text-primary)" : "var(--comp-text-muted)" }}>
+                {selectedFile ? selectedFile.name : "No file chosen"}
+              </span>
+            </div>
+            <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>
+              Upload a scanned copy of your cancelled cheque or first page of passbook. Max 5MB.
+            </p>
+          </div>
+
+          {/* Submit result */}
+          {submitResult && (
+            <div
+              className="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+              style={{
+                borderColor: submitResult.success
+                  ? "color-mix(in srgb, var(--success) 30%, transparent)"
+                  : "color-mix(in srgb, var(--error) 30%, transparent)",
+                background: submitResult.success
+                  ? "color-mix(in srgb, var(--success) 8%, transparent)"
+                  : "color-mix(in srgb, var(--error) 8%, transparent)",
+                color: submitResult.success ? "var(--success)" : "var(--error)",
+              }}
+            >
+              {submitResult.success ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              )}
+              <span>{submitResult.message}</span>
+            </div>
+          )}
+
+          {/* Submit button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "var(--comp-accent)" }}
+            >
+              {submitting ? (
+                <>
+                  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
+                  Save Bank Details
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       )}
     </ErpPageShell>
+  );
+}
+
+// ── Form field component ──────────────────────────────────────────────────
+
+function FormField({
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  field: { label: string; value: string; fieldType: string; options?: Array<{ value: string; label: string }> };
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}) {
+  const isSelect = field.fieldType === "select" && field.options?.length;
+  const isFile = field.fieldType === "file";
+
+  if (isFile) {
+    // File upload is handled separately in the parent form
+    return null;
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
+        {field.label}
+      </label>
+      {isSelect ? (
+        <select disabled={disabled}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors focus:ring-2"
+          style={{
+            borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)",
+            background: "var(--comp-surface)",
+            color: "var(--comp-text-primary)",
+          }}
+        >
+          <option value="">Select...</option>
+          {field.options!.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input disabled={disabled}
+          type={field.fieldType === "number" ? "number" : "text"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${field.label.toLowerCase()}`}
+          className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors focus:ring-2"
+          style={{
+            borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)",
+            background: "var(--comp-surface)",
+            color: "var(--comp-text-primary)",
+          }}
+        />
+      )}
+    </div>
   );
 }

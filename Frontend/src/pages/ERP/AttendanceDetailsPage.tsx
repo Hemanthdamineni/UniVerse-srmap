@@ -6,7 +6,8 @@ import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { AttendanceModel, ErpGenericTable } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { calculateBunkCapacity } from "./components/BunkCalculator";
 
 interface AttendanceDetailsPageProps {
   blueprint: PageBlueprint;
@@ -83,43 +84,84 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                   <th className="erp-table-head-cell label-text erp-table-align-center">Present</th>
                   <th className="erp-table-head-cell label-text erp-table-align-center">OD/ML %</th>
                   <th className="erp-table-head-cell label-text erp-table-align-center">Attendance %</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-center">Bunk</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-center">Needed</th>
+                  <th className="erp-table-head-cell label-text erp-table-align-center">Status</th>
                   <th className="erp-table-head-cell label-text">LMS</th>
                 </tr>
               </thead>
               <tbody className="erp-table-body">
                 {model.records.length === 0 ? (
                   <tr className="erp-table-row">
-                    <td colSpan={9} className="erp-table-cell py-8 text-center text-sm italic" style={{ color: 'var(--comp-text-muted)' }}>
-                      No attendance records for this semester.
+                    <td colSpan={12} className="erp-table-cell py-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3" style={{ color: 'var(--comp-text-muted)' }} aria-hidden="true">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>No attendance records</p>
+                        <p className="mt-0.5 text-xs" style={{ color: 'var(--comp-text-muted)' }}>No attendance records are available for the current semester.</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  model.records.map((rec) => (
-                    <tr key={rec.subjectCode} className="erp-table-row">
-                      <td className="erp-table-cell erp-table-cell-strong">{rec.subjectCode}</td>
-                      <td className="erp-table-cell">{rec.subjectDescription}</td>
-                      <td className="erp-table-cell erp-table-align-center">{rec.classesConducted}</td>
-                      <td className="erp-table-cell erp-table-align-center">{rec.attendanceEntered}</td>
-                      <td className="erp-table-cell erp-table-align-center">{rec.odMlTaken}</td>
-                      <td className="erp-table-cell erp-table-align-center">{rec.present}</td>
-                      <td className="erp-table-cell erp-table-align-center">{rec.odMlApprovedPct.toFixed(2)}%</td>
-                      <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: rec.attendancePct < 75 ? 'var(--error)' : 'var(--success)' }}>
-                        {rec.attendancePct.toFixed(2)}%
-                      </td>
-                      <td className="erp-table-cell">
-                        <Link
-                          to={`/resources/browse?subjectCode=${encodeURIComponent(rec.subjectCode)}`}
-                          className="comp-btn-ghost min-h-0 rounded-full px-3 py-1 text-xs font-semibold"
-                        >
-                          Resources
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
+                  model.records.map((rec) => {
+                    const bunk = calculateBunkCapacity(
+                      rec.classesConducted,
+                      rec.present,
+                      75,
+                      rec.odMlTaken,
+                    );
+                    const statusColor =
+                      bunk.status === "safe"
+                        ? "var(--success)"
+                        : bunk.status === "caution"
+                        ? "var(--warning)"
+                        : "var(--error)";
+                    return (
+                      <tr key={rec.subjectCode} className="erp-table-row">
+                        <td className="erp-table-cell erp-table-cell-strong">{rec.subjectCode}</td>
+                        <td className="erp-table-cell">{rec.subjectDescription}</td>
+                        <td className="erp-table-cell erp-table-align-center">{rec.classesConducted}</td>
+                        <td className="erp-table-cell erp-table-align-center">{rec.attendanceEntered}</td>
+                        <td className="erp-table-cell erp-table-align-center">{rec.odMlTaken}</td>
+                        <td className="erp-table-cell erp-table-align-center">{rec.present}</td>
+                        <td className="erp-table-cell erp-table-align-center">{rec.odMlApprovedPct.toFixed(2)}%</td>
+                        <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: rec.attendancePct < 75 ? 'var(--error)' : 'var(--success)' }}>
+                          {rec.attendancePct.toFixed(2)}%
+                        </td>
+                        <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: statusColor }}>
+                          {bunk.safeToSkip > 0 ? bunk.safeToSkip : "—"}
+                        </td>
+                        <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: statusColor }}>
+                          {bunk.classesNeededToAttend > 0 ? bunk.classesNeededToAttend : "—"}
+                        </td>
+                        <td className="erp-table-cell erp-table-align-center">
+                          <span
+                            className="erp-status-pill"
+                            style={{
+                              backgroundColor: `color-mix(in srgb, ${statusColor} 20%, transparent)`,
+                              color: statusColor,
+                            }}
+                          >
+                            {bunk.status === "safe" ? "✓ Safe" : bunk.status === "caution" ? "⚠ Caution" : "✕ Required"}
+                          </span>
+                        </td>
+                        <td className="erp-table-cell">
+                          <Link
+                            to={`/resources/browse?subjectCode=${encodeURIComponent(rec.subjectCode)}`}
+                            className="comp-btn-ghost min-h-0 rounded-full px-3 py-1 text-xs font-semibold"
+                          >
+                            Resources
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
 
           {model.notes.length > 0 && (
             <section className="dashboard-card p-4">

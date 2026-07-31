@@ -1,37 +1,18 @@
 import { requestData } from "../core/apiClient";
 
-const ADMIN_PASSWORD_KEY = "erp.admin.password";
-
 export type AdminAccessState = {
   unlocked: boolean;
 };
 
-function hasSessionStorage() {
-  return typeof window !== "undefined" && Boolean(window.sessionStorage);
-}
-
-export function getStoredAdminPassword() {
-  if (!hasSessionStorage()) return "";
-  return window.sessionStorage.getItem(ADMIN_PASSWORD_KEY) || "";
-}
-
-export function hasStoredAdminPassword() {
-  return Boolean(getStoredAdminPassword());
-}
-
-export function storeAdminPassword(password: string) {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.setItem(ADMIN_PASSWORD_KEY, password);
-}
-
-export function clearStoredAdminPassword() {
-  if (!hasSessionStorage()) return;
-  window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
-}
-
-export function getAdminHeaders(passwordOverride?: string): Record<string, string> {
-  const password = String(passwordOverride || getStoredAdminPassword()).trim();
-  return password ? { "x-admin-password": password } : {};
+/**
+ * Return admin headers for a single request.
+ * The password is never persisted — it lives in-memory only for the duration
+ * of the unlock call, then discarded. Server-side session elevation handles
+ * subsequent authentication.
+ */
+function getAdminHeaders(password: string): Record<string, string> {
+  const trimmed = String(password).trim();
+  return trimmed ? { "x-admin-password": trimmed } : {};
 }
 
 export async function verifyAdminPassword(password: string) {
@@ -40,7 +21,6 @@ export async function verifyAdminPassword(password: string) {
     headers: getAdminHeaders(password),
     body: JSON.stringify({ adminPassword: password }),
   });
-  storeAdminPassword(password);
   return data;
 }
 
@@ -58,8 +38,10 @@ export async function getAdminAccessStatus() {
   if (isStaticPrototype()) {
     return {
       registerNo: getCurrentRegNo() || "AP23110010419",
-      potentialAdmin: true,
-      isAdmin: true,
+      // Static hosting is a student-facing demo. Never expose privileged
+      // navigation or imply that administrative actions are available there.
+      potentialAdmin: false,
+      isAdmin: false,
     };
   }
   return requestData<AdminAccessStatus>("/api/admin/access/status");
@@ -67,21 +49,19 @@ export async function getAdminAccessStatus() {
 
 export async function unlockAdminMode(password: string) {
   if (isStaticPrototype()) {
-    return { isAdmin: true };
+    throw new Error("Admin mode is not available in the static prototype.");
   }
   const data = await requestData<{ isAdmin: boolean }>("/api/admin/access/unlock", {
     method: "POST",
     headers: getAdminHeaders(password),
   });
-  storeAdminPassword(password);
   return data;
 }
 
 export async function disableAdminMode() {
   if (isStaticPrototype()) {
-    return { isAdmin: true };
+    return { isAdmin: false };
   }
-  clearStoredAdminPassword();
   return requestData<{ isAdmin: boolean }>("/api/admin/access/disable", {
     method: "POST",
   });

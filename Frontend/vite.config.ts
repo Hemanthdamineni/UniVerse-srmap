@@ -8,7 +8,7 @@ const staticPrototype =
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: staticPrototype ? './' : '/',
+  base: '/',
   plugins: [react(), tailwindcss()],
   build: {
     ...(staticPrototype

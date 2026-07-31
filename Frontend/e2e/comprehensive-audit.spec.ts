@@ -48,7 +48,6 @@ test.describe("comprehensive-site-audit", () => {
       "/transport-hostel/room-details",
       "/transport-hostel/route-details",
       "/transport-hostel/refund-change-requests",
-      "/transport-hostel/faqs",
       "/feedback/course-feedback",
       "/feedback/events-feedback",
       "/feedback/hostel-mess-feedback",

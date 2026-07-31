@@ -238,7 +238,11 @@ export default function EventDetailPageNew() {
             </div>
             <div className="event-detail-action-buttons">
               {canRegister ? (
-                <button className="comp-btn-primary" disabled={busy} onClick={() => void runAction("register")}>Register Now</button>
+                config?.isCompetition && config.submissionScope === "team" ? (
+                  <Link className="comp-btn-primary" to={`/events/${encodeURIComponent(loadedEvent.id)}/register`}>Set up team</Link>
+                ) : (
+                  <button className="comp-btn-primary" disabled={busy} onClick={() => void runAction("register")}>Register Now</button>
+                )
               ) : null}
               {isRegistered ? (
                 <button className="comp-btn-ghost" disabled={busy} onClick={() => void runAction("cancel")}>Cancel Registration</button>

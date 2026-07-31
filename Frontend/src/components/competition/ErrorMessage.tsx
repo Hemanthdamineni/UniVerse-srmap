@@ -1,4 +1,4 @@
-import { ErrorState } from "../ui/Feedback";
+import { InlineError } from "../ui/Feedback";
 
 interface ErrorMessageProps {
   title?: string;
@@ -8,9 +8,13 @@ interface ErrorMessageProps {
 }
 
 export function ErrorMessage({ title, message, onRetry, preservedInput }: ErrorMessageProps) {
-  const prefix = title ? `${title}: ` : "";
   const suffix = preservedInput ? " Your input has been preserved." : "";
   return (
-    <ErrorState message={`${prefix}${message}${suffix}`} onRetry={onRetry} />
+    <InlineError
+      title={title || "Something went wrong"}
+      message={`${message}${suffix}`}
+      description="Retry this section. If it keeps failing, your session or the campus service may need attention."
+      onRetry={onRetry}
+    />
   );
 }

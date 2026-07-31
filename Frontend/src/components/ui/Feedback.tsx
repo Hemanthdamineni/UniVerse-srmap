@@ -34,30 +34,42 @@ export function EmptyState({ title, description, icon, action, className, ...pro
 
 export interface InlineErrorProps extends React.HTMLAttributes<HTMLDivElement> {
   message: string;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
   onRetry?: () => void;
 }
 
-export function InlineError({ message, onRetry, className, ...props }: InlineErrorProps) {
+export function InlineError({ message, title, description, action, onRetry, className, ...props }: InlineErrorProps) {
   return (
     <div 
       className={cn(
-        'flex items-center gap-3 rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] p-4 text-[var(--error)]',
+        'flex items-start gap-3 rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] p-4 text-[var(--error)]',
         className
       )}
       {...props}
     >
-      <AlertCircle size={20} className="shrink-0" />
-      <div className="flex-1 text-sm font-medium">{message}</div>
-      {onRetry && (
-        <button 
-          onClick={onRetry}
-          type="button"
-          className="min-h-11 min-w-11 shrink-0 rounded-md p-2 transition-colors hover:bg-[color-mix(in_srgb,var(--error)_14%,transparent)] md:min-h-9 md:min-w-9"
-          title="Retry"
-        >
-          <RefreshCw size={16} />
-        </button>
-      )}
+      <AlertCircle size={20} className="mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1">
+        {title ? <p className="mb-1 text-sm font-semibold text-[var(--text-primary)]">{title}</p> : null}
+        <p className="text-sm font-medium">{message}</p>
+        {description ? <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{description}</p> : null}
+        {(onRetry || action) ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onRetry ? (
+              <button
+                onClick={onRetry}
+                type="button"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-[color-mix(in_srgb,var(--error)_24%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[color-mix(in_srgb,var(--error)_8%,var(--surface))]"
+              >
+                <RefreshCw size={14} />
+                Try again
+              </button>
+            ) : null}
+            {action}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -148,7 +160,7 @@ type ErrorProps = {
 };
 
 export function ErrorState({ message, onRetry, className = "" }: ErrorProps) {
-  return <InlineError message={message} onRetry={onRetry} className={className} />;
+  return <InlineError title="Could not load this section" message={message} onRetry={onRetry} className={className} />;
 }
 
 type EmptyProps = {
@@ -248,4 +260,3 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
 
   return <span ref={ref} className={`tabular-nums ${className}`}>{formatFn(displayValue)}</span>;
 };
-

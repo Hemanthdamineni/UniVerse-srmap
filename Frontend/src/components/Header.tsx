@@ -2,12 +2,13 @@
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { hasSessionAuth } from "../lib/core/session";
+import srmLogo from "../assets/FullSrmlogo.png";
 
 function Logo() {
     return (
         <Link to="/" className="inline-flex items-center">
             <img
-                src="src/assets/FullSrmlogo.png"
+                src={srmLogo}
                 alt="Logo of UniVerse — SRMAP Edition"
                 className="w-[120px] h-[60px] m-[2px]"
             />
