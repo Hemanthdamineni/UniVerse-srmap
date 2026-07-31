@@ -16,10 +16,11 @@ export default function AnnotationPanel({
   return (
     <section className="dashboard-card space-y-3 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">Private notes</h3>
+        <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Private notes</h3>
         {annotations[0] ? (
           <button
-            className="text-xs font-medium text-rose-600"
+            className="btn-ghost text-xs"
+            style={{ color: "var(--error)" }}
             onClick={async () => {
               setBusy(true);
               try {
@@ -36,13 +37,18 @@ export default function AnnotationPanel({
         ) : null}
       </div>
       <textarea
-        className="min-h-32 w-full rounded-2xl border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--info)]"
+        className="min-h-28 w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:border-[var(--info)]"
+        style={{
+          background: "var(--comp-surface)",
+          borderColor: "var(--comp-border)",
+          color: "var(--comp-text-primary)",
+        }}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder="Write your personal notes here..."
       />
       <button
-        className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
+        className="btn-primary"
         onClick={async () => {
           setBusy(true);
           try {
@@ -53,7 +59,7 @@ export default function AnnotationPanel({
         }}
         disabled={busy}
       >
-        {busy ? "Saving..." : "Save note"}
+        {busy ? "Saving…" : "Save note"}
       </button>
     </section>
   );

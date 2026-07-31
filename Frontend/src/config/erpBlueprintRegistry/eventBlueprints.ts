@@ -26,6 +26,7 @@ export const EVENT_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     fetchKeys: ["events/event-attendance"],
     domain: "erp",
     sourceMode: "erp",
+    status: "hidden"
   }),
   "/events": bp("/events", "Discover", "Loading events..."),
   "/events/:eventId": bp("/events/:eventId", "Event Details", "Loading event..."),
@@ -46,6 +47,12 @@ export const EVENT_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   "/events/:eventId/manage/rounds/:roundId/submissions": bp("/events/:eventId/manage/rounds/:roundId/submissions", "Submissions", "Loading submissions..."),
   "/events/:eventId/manage/rounds/:roundId/submissions/:submissionId/evaluate": bp("/events/:eventId/manage/rounds/:roundId/submissions/:submissionId/evaluate", "Evaluate Submission", "Loading submission..."),
   "/events/:eventId/manage/rounds/:roundId/shortlist": bp("/events/:eventId/manage/rounds/:roundId/shortlist", "Shortlist & Publish", "Loading evaluation data..."),
+  "/feedback/dashboard": bp("/feedback/dashboard", "Feedback Dashboard", "Loading feedback dashboard...", {
+    fetchKeys: [],
+    domain: "campus",
+    sourceMode: "internal",
+    integrationState: "native",
+  }),
   "/feedback/course-feedback": bp("/feedback/course-feedback", "Course Feedback", "Loading course feedback...", {
     fetchKeys: ["feedback/end-semester-feedback"],
     domain: "erp",

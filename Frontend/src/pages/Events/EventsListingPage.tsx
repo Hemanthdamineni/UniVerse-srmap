@@ -290,11 +290,11 @@ export default function EventsListingPage() {
   return (
     <CompetitionPageShell
       title="Active Events"
-      subtitle="Curate and manage upcoming university happenings."
+      subtitle="Find campus events, check deadlines, and register from one place."
       actions={
         <Link className="comp-btn-primary" to="/events/create">
           <Plus size={18} />
-          New Event
+          Host event
         </Link>
       }
       variant="wide"
@@ -342,7 +342,7 @@ export default function EventsListingPage() {
         </div>
       </section>
 
-      {error ? <ErrorMessage message={error} onRetry={loadEvents} /> : null}
+      {error ? <ErrorMessage title="Events could not load" message={error} onRetry={loadEvents} /> : null}
       {!recommendationsLoading && !recommendationError ? (
         <RecommendationRail recommendations={recommendations} eventsById={eventsById} />
       ) : null}
@@ -360,7 +360,7 @@ export default function EventsListingPage() {
             {filteredEvents.slice(1).map((event, index) => <EventCard key={event.id} event={event} index={index + 1} />)}
             <Link className="grid min-h-36 place-items-center content-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--dash-subcard-bg)] text-center no-underline text-[var(--text-primary)]" to="/events/create">
               <Plus size={24} />
-              <strong>New Event</strong>
+              <strong>Host event</strong>
               <span className="text-xs text-[var(--text-secondary)]">Host a department activity</span>
             </Link>
           </div>
@@ -371,9 +371,26 @@ export default function EventsListingPage() {
         </>
       ) : (
         <CompetitionEmptyPanel
-          title="No events found"
-          description="Try clearing the filters or create the next campus event."
-          action={<Link className="comp-btn-primary" to="/events/create">Create Event</Link>}
+          title={query || category !== categories[0] || department !== departments[0] || format !== formats[0] || dateRange !== dateRanges[0] ? "No matching events" : "No events are open right now"}
+          description={query || category !== categories[0] || department !== departments[0] || format !== formats[0] || dateRange !== dateRanges[0] ? "Clear your filters to see every active event, or broaden your search." : "Check again later, or host the next campus activity if you are organizing one."}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                className="comp-btn-ghost"
+                onClick={() => {
+                  setQuery("");
+                  setCategory(categories[0]);
+                  setDepartment(departments[0]);
+                  setFormat(formats[0]);
+                  setDateRange(dateRanges[0]);
+                }}
+              >
+                Clear filters
+              </button>
+              <Link className="comp-btn-primary" to="/events/create">Host event</Link>
+            </div>
+          }
         />
       )}
     </CompetitionPageShell>

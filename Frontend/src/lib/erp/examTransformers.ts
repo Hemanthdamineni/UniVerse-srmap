@@ -32,7 +32,7 @@ function requireExtractedPage(
   pageKey: string,
   expectedType: string,
 ): Record<string, unknown> {
-  const pageExtracted = readExtractedPage(rawData, pageKey);
+  const pageExtracted = readExtractedPage(rawData, pageKey, expectedType);
   if (pageExtracted !== null) {
     // Already-extracted object — validate type directly (do NOT re-wrap in readExtracted)
     if (pageExtracted.type !== expectedType) {
@@ -63,9 +63,8 @@ export function transformCurrentResults(rawData: unknown): Partial<CurrentResult
 
   const title = String(extracted.title ?? "");
 
-  const subjects: CurrentResultSubject[] = (
-    extracted.records as Record<string, unknown>[]
-  )
+  const rawRecords = Array.isArray(extracted.records) ? extracted.records : [];
+  const subjects: CurrentResultSubject[] = rawRecords
     .map((r) => {
       const extras =
         r.extras && typeof r.extras === "object"

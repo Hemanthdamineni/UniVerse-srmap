@@ -2,12 +2,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
 import OpportunityCard from "../../components/career/OpportunityCard";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/ui/Layouts";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { FilterBar } from "../../components/ui/FilterBar";
 import { SkeletonCard } from "../../components/ui/Skeletons";
-import { EmptyState } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 interface OpportunitiesPageProps {
   initialType?: string;
@@ -22,9 +22,11 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
   const [searchTerm, setSearchTerm] = useState(searchParams.get("query") || "");
   const [type, setType] = useState(initialType || searchParams.get("type") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "relevance");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchOpps = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const filters: Record<string, string> = {};
       if (searchTerm) filters.query = searchTerm;
@@ -35,6 +37,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
       setOpportunities(data.items);
     } catch (err) {
       console.error("Failed to fetch opportunities", err);
+      setError(err instanceof Error ? err.message : "Could not load opportunities.");
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
 
   return (
     <PageContainer className="space-y-6">
-      <PageHeader title="Opportunities" subtitle="Find your next step" />
+      <PageHeader title="Opportunities" subtitle="Search openings, compare deadlines, and save roles to track later." />
 
       <FilterBar
         searchValue={searchTerm}
@@ -130,7 +133,19 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
         }
       />
 
-      {loading ? (
+      {error ? (
+        <InlineError
+          title="Opportunities could not load"
+          message={error}
+          description="Retry the listing, or open your tracker if you only need applications you already saved."
+          onRetry={fetchOpps}
+          action={
+            <Link to="/career/me/tracker" className="rounded-md border border-[var(--comp-border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+              Open tracker
+            </Link>
+          }
+        />
+      ) : loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <SkeletonCard key={i} className="min-h-[200px]" />
@@ -144,20 +159,25 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
         </div>
       ) : (
         <EmptyState
-          title="No opportunities found"
-          description="Try adjusting your search or filters to find what you're looking for."
+          title={searchTerm || type ? "No matching opportunities" : "No opportunities are open right now"}
+          description={searchTerm || type ? "Clear your filters to see all current openings, or try a broader skill or company name." : "Check back later or submit a verified opportunity for classmates."}
           action={
-            <button
-              type="button"
-              className="btn-secondary rounded-lg px-4 py-2 text-sm"
-              onClick={() => {
-                setSearchTerm("");
-                setType("");
-                setSearchParams({});
-              }}
-            >
-              Clear all filters
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                className="btn-secondary rounded-lg px-4 py-2 text-sm"
+                onClick={() => {
+                  setSearchTerm("");
+                  setType("");
+                  setSearchParams({});
+                }}
+              >
+                Clear filters
+              </button>
+              <Link to="/career/submit" className="rounded-lg border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+                Submit opportunity
+              </Link>
+            </div>
           }
         />
       )}

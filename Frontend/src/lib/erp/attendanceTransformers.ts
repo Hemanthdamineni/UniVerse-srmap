@@ -31,7 +31,7 @@ function requireExtractedPage(
   pageKey: string,
   expectedType: string,
 ): Record<string, unknown> {
-  const pageExtracted = readExtractedPage(rawData, pageKey);
+  const pageExtracted = readExtractedPage(rawData, pageKey, expectedType);
   if (pageExtracted !== null) {
     // Already-extracted object — validate type directly
     if (pageExtracted.type !== expectedType) {
@@ -48,7 +48,8 @@ function requireExtractedPage(
 
 export function transformAttendance(rawData: unknown): AttendanceModel {
   const extracted = requireExtractedPage(rawData, "academic/attendance-details", "attendance");
-  const records: AttendanceRecord[] = (extracted.records as Record<string, unknown>[]).map((r) => ({
+  const rawRecords = Array.isArray(extracted.records) ? extracted.records : [];
+  const records: AttendanceRecord[] = rawRecords.map((r) => ({
     subjectCode: String(r.subjectCode ?? ""),
     subjectDescription: String(r.subjectDescription ?? ""),
     classesConducted: Number(r.classesConducted) || 0,
@@ -72,7 +73,7 @@ export function transformAttendance(rawData: unknown): AttendanceModel {
         `UNEXPECTED_PAYLOAD_TYPE [academic/od-ml-details]: expected "od-ml-details", got "${odMlExtracted.type}".`,
       );
     }
-    const odRecords = odMlExtracted.records as Record<string, unknown>[];
+    const odRecords = Array.isArray(odMlExtracted.records) ? odMlExtracted.records : [];
     if (odRecords.length > 0) {
       odMlTables = [
         {

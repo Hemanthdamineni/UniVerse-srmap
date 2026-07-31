@@ -3,7 +3,7 @@ import { executePipeline, type RefundChangeModel } from "../../lib/erp/erpTransf
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
   blueprint: PageBlueprint;
@@ -108,9 +108,10 @@ export default function RefundChangePage({ blueprint }: Props) {
           ))}
         </div>
       ) : data && data.sections.length === 0 && !loading && !error ? (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--border)', background: 'color-mix(in srgb, var(--surface) 80%, transparent)' }}>
-          <p className="text-sm" style={{ color: 'var(--comp-text-muted)' }}>No refund or change request information available.</p>
-        </div>
+        <EmptyState
+          title="No requests found"
+          description="No refund or change request information is available for this period. Visit the official ERP to submit a request."
+        />
       ) : null}
     </ErpPageShell>
   );

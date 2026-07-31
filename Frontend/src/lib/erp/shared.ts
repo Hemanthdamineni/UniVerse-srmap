@@ -17,13 +17,14 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
  * Read the `_extracted` typed payload from a page response.
  * Returns null if no targeted extractor ran for this page.
  */
-export function readExtracted(pageData: unknown): Record<string, unknown> | null {
+export function readExtracted(pageData: unknown, expectedType?: string): Record<string, unknown> | null {
   if (!pageData || typeof pageData !== "object") return null;
   const payload = pageData as Record<string, unknown>;
 
   // Fast path 1: _extracted at top level (adaptToLegacyPayload result passed directly)
   if (payload._extracted && typeof payload._extracted === "object" && !Array.isArray(payload._extracted)) {
-    return payload._extracted as Record<string, unknown>;
+    const ext = payload._extracted as Record<string, unknown>;
+    if (!expectedType || ext.type === expectedType) return ext;
   }
 
   // Fast path 2: nested under .data at top level
@@ -31,13 +32,14 @@ export function readExtracted(pageData: unknown): Record<string, unknown> | null
   const data = payload.data as Record<string, unknown> | undefined;
   if (data && typeof data === "object" && !Array.isArray(data)) {
     if (data._extracted && typeof data._extracted === "object" && !Array.isArray(data._extracted)) {
-      return data._extracted as Record<string, unknown>;
+      const ext = data._extracted as Record<string, unknown>;
+      if (!expectedType || ext.type === expectedType) return ext;
     }
 
     // Path 3: grouped ERP blob under .data wrapper
     // scrapeByKey returns { Dropdown: { Subitem: { _extracted, ... } } }
     // and getBatch wraps each page's result in { success, pageKey, data: { ... } }
-    const found = findGroupedExtracted(data);
+    const found = findGroupedExtracted(data, expectedType);
     if (found) return found;
   }
 
@@ -45,7 +47,7 @@ export function readExtracted(pageData: unknown): Record<string, unknown> | null
   // Used when a component receives the inner .data value directly,
   // e.g. Dashboard extracts timetableData = batch["academic/time-table"]?.data
   // which is already { "Academic": { "Time Table": { ..._extracted } } }
-  const found = findGroupedExtracted(payload);
+  const found = findGroupedExtracted(payload, expectedType);
   if (found) return found;
 
   return null;
@@ -57,6 +59,7 @@ export function readExtracted(pageData: unknown): Record<string, unknown> | null
  */
 function findGroupedExtracted(
   root: Record<string, unknown>,
+  expectedType?: string,
 ): Record<string, unknown> | null {
   for (const section of Object.values(root)) {
     if (!section || typeof section !== "object" || Array.isArray(section)) continue;
@@ -65,7 +68,8 @@ function findGroupedExtracted(
       if (!subsection || typeof subsection !== "object" || Array.isArray(subsection)) continue;
       const sub = subsection as Record<string, unknown>;
       if (sub._extracted && typeof sub._extracted === "object" && !Array.isArray(sub._extracted)) {
-        return sub._extracted as Record<string, unknown>;
+        const ext = sub._extracted as Record<string, unknown>;
+        if (!expectedType || ext.type === expectedType) return ext;
       }
     }
   }
@@ -80,7 +84,7 @@ function findGroupedExtracted(
  *   V2 batch response: rawData[pageKey] = { success: true, data: { Dropdown: { Subitem: { _extracted } } } }
  *   Direct payload:    rawData[pageKey] = { _extracted: ... }  (or a grouped blob already at pagePayload level)
  */
-export function readExtractedPage(rawData: unknown, pageKey: string): Record<string, unknown> | null {
+export function readExtractedPage(rawData: unknown, pageKey: string, expectedType?: string): Record<string, unknown> | null {
   if (!rawData || typeof rawData !== "object") return null;
   const root = rawData as Record<string, unknown>;
   const pagePayload = root[pageKey];
@@ -90,8 +94,8 @@ export function readExtractedPage(rawData: unknown, pageKey: string): Record<str
   // Unwrap .data so readExtracted can search the grouped structure.
   const pp = pagePayload as Record<string, unknown>;
   if (pp.success === true && pp.data && typeof pp.data === "object" && !Array.isArray(pp.data)) {
-    return readExtracted(pp.data);
+    return readExtracted(pp.data, expectedType);
   }
 
-  return readExtracted(pagePayload);
+  return readExtracted(pagePayload, expectedType);
 }

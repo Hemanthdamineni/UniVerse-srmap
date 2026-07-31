@@ -32,10 +32,10 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)]">
       {isStaticPrototype() ? (
         <div
-          className="z-[70] shrink-0 border-b border-amber-500/40 bg-amber-500/15 px-4 py-2 text-center text-sm font-medium text-amber-950 dark:text-amber-100"
+          className="z-[70] shrink-0 border-b border-amber-300 bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
           role="status"
         >
-          Static prototype — UI only; data comes from <code className="rounded bg-[var(--contrast-2)]/10 px-1 dark:bg-white/10">public/fixtures</code> and
+          Static prototype — UI only; data comes from <code className="rounded bg-amber-200 px-1 text-amber-950 dark:bg-amber-900 dark:text-amber-100">public/fixtures</code> and
           built-in stubs. No live backend.
         </div>
       ) : null}

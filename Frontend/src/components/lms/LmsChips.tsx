@@ -16,7 +16,14 @@ export function CurrentlyStudyingBadge({ count }: { count?: number | null }) {
 export function ExamProvenBadge({ score }: { score?: number | null }) {
   if (!score || score <= 2) return null;
   return (
-    <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-[var(--success)]">
+    <span
+      className="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+      style={{
+        background: "color-mix(in srgb, var(--success) 12%, transparent)",
+        color: "var(--success)",
+        border: "1px solid color-mix(in srgb, var(--success) 28%, transparent)",
+      }}
+    >
       Exam Proven
     </span>
   );
@@ -28,7 +35,14 @@ export function ExamProvenBadge({ score }: { score?: number | null }) {
 export function ReadingTimeChip({ minutes }: { minutes?: number | null }) {
   if (!minutes || minutes <= 0) return null;
   return (
-    <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] bg-white/80 px-2.5 py-1 text-xs font-medium text-[var(--comp-text-primary)]">
+    <span
+      className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+      style={{
+        background: "color-mix(in srgb, var(--comp-accent) 6%, var(--comp-surface))",
+        color: "var(--comp-text-primary)",
+        border: "1px solid color-mix(in srgb, var(--comp-accent) 15%, transparent)",
+      }}
+    >
       ~{minutes} min
     </span>
   );
@@ -40,7 +54,14 @@ export function ReadingTimeChip({ minutes }: { minutes?: number | null }) {
 export function ValidityChip({ value }: { value?: string | null }) {
   if (!value) return null;
   return (
-    <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">
+    <span
+      className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+      style={{
+        background: "color-mix(in srgb, var(--info) 10%, transparent)",
+        color: "var(--info)",
+        border: "1px solid color-mix(in srgb, var(--info) 25%, transparent)",
+      }}
+    >
       {value}
     </span>
   );
@@ -70,11 +91,10 @@ export function DuplicateWarning({
 }) {
   if (!exact && !similarCount) return null;
   return (
-    <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2 text-sm text-amber-900">
+    <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2 text-sm text-[var(--warning)]">
       {exact
         ? `An exact duplicate already exists: ${exact.title}`
         : `${similarCount} similar resource${similarCount === 1 ? "" : "s"} already exist for this subject.`}
     </div>
   );
 }
-

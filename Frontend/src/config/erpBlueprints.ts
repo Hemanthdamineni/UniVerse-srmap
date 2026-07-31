@@ -13,6 +13,7 @@ export type {
   PageBlueprint,
   PageRenderer,
   PageSourceMode,
+  PageStatus,
   PlaceholderPageBlueprint,
   SidebarDomain,
   SidebarGroupItem,
@@ -21,13 +22,24 @@ export type {
   SidebarSubItem,
 } from "./erpBlueprintTypes";
 
-/** Routes that stay in PAGE_BLUEPRINTS but are omitted from sidebar + command palette. */
-export const NAV_HIDDEN_ROUTES = new Set<string>([
-  "/exams/essentials",
-  "/transport-hostel/outing-maintenance",
-  "/registration/registration-tracker",
-  "/registration/events-registration",
-]);
+/**
+ * Gets the actual status of a blueprint, falling back to 'active' if unset.
+ */
+export function getEffectiveStatus(blueprint: PageBlueprint): import("./erpBlueprintTypes").PageStatus {
+  return blueprint.status ?? "active";
+}
+
+/**
+ * Determines if a page should be exposed in the application.
+ * In production, only 'active' pages are visible.
+ * In development, 'hidden' and 'experimental' pages are also visible to assist working on them.
+ */
+export function isPageVisible(blueprint: PageBlueprint): boolean {
+  const status = getEffectiveStatus(blueprint);
+  if (status === "active") return true;
+  if (import.meta.env.DEV && (status === "hidden" || status === "experimental")) return true;
+  return false;
+}
 
 export function isPlaceholderBlueprint(blueprint: PageBlueprint): blueprint is PlaceholderPageBlueprint {
   return blueprint.integrationState === "placeholder";
@@ -137,7 +149,7 @@ function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
   if (item.type === "link") {
     return {
       label: item.label,
-      icon: item.icon ?? "/src/assets/Icons/Dashboard.png",
+      icon: item.icon ?? "/assets/icons/Dashboard.png",
       domain: item.domain,
       route: item.route,
       type: item.access,
@@ -146,7 +158,7 @@ function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
 
   return {
     label: item.label,
-    icon: item.icon ?? "/src/assets/Icons/Dashboard.png",
+    icon: item.icon ?? "/assets/icons/Dashboard.png",
     domain: item.domain ?? "mixed",
     submenu: item.children.map((child) => ({
       label: child.label,

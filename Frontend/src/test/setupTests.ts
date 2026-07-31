@@ -1,5 +1,19 @@
 import "@testing-library/jest-dom/vitest";
 
+// Polyfill ResizeObserver for recharts ResponsiveContainer in jsdom
+if (typeof globalThis.ResizeObserver === "undefined") {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(globalThis, "ResizeObserver", {
+    value: ResizeObserverStub,
+    writable: true,
+    configurable: true,
+  });
+}
+
 // localStorage mock for jsdom + React 19 compatibility.
 // React 19's client renderer calls lazy useState initializers in a context
 // where jsdom globals aren't always accessible via direct reference.

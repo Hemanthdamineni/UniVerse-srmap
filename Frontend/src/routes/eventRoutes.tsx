@@ -1,3 +1,4 @@
+import { PAGE_BLUEPRINTS, isPageVisible } from "../config/erpBlueprints";
 import type React from "react";
 import { useParams } from "react-router-dom";
 import ProtectedPage from "../components/ProtectedPage";
@@ -100,7 +101,7 @@ export const eventRoutes = [
       </RequireCompetitionAccess>
     ),
   },
-].map((route) => ({
+].filter(route => PAGE_BLUEPRINTS[route.path] ? isPageVisible(PAGE_BLUEPRINTS[route.path]) : true).map((route) => ({
   ...route,
   element: <ProtectedPage><SuspenseWrapper>{route.element}</SuspenseWrapper></ProtectedPage>,
 }));

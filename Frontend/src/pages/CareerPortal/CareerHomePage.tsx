@@ -1,36 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { listOpportunities, getPersonalizedFeed, bookmarkOpportunity, type CareerOpportunity } from '../../lib/career/careerApi';
 import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
 import { PlusCircle, Search, Clock, Briefcase, GraduationCap, Code, Trophy, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageContainer } from '../../components/layout/PageLayouts';
+import { EmptyState, InlineError } from '../../components/ui/Feedback';
+import { SkeletonCard } from '../../components/ui/Skeletons';
 
 const CareerHomePage: React.FC = () => {
   const [latestOpps, setLatestOpps] = useState<CareerOpportunity[]>([]);
   const [personalizedOpps, setPersonalizedOpps] = useState<CareerOpportunity[]>([]);
   const [expiringOpps, setExpiringOpps] = useState<CareerOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [latest, expiring, personalized] = await Promise.all([
+        listOpportunities({ limit: '6', sort: 'recent' }),
+        listOpportunities({ limit: '8', sort: 'deadline', expiringWithinDays: '3' }),
+        getPersonalizedFeed()
+      ]);
+      setLatestOpps(latest.items);
+      setExpiringOpps(expiring.items);
+      setPersonalizedOpps(personalized.items.slice(0, 3));
+    } catch (err) {
+      console.error('Failed to fetch career opportunities', err);
+      setError(err instanceof Error ? err.message : "Could not load career opportunities.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [latest, expiring, personalized] = await Promise.all([
-          listOpportunities({ limit: '6', sort: 'recent' }),
-          listOpportunities({ limit: '8', sort: 'deadline', expiringWithinDays: '3' }),
-          getPersonalizedFeed()
-        ]);
-        setLatestOpps(latest.items);
-        setExpiringOpps(expiring.items);
-        setPersonalizedOpps(personalized.items.slice(0, 3));
-      } catch (err) {
-        console.error('Failed to fetch career opportunities', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    void fetchData();
+  }, [fetchData]);
 
   const handleBookmarkToggle = async (id: string) => {
     // Optimistic update
@@ -67,7 +74,7 @@ const CareerHomePage: React.FC = () => {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="page-title">Career Portal</h1>
-          <p className="body-text mt-1">Autonomous opportunity discovery and tracker</p>
+          <p className="body-text mt-1">Find openings, save what matters, and track every application.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/academic-tracker/unified-insights">
@@ -97,8 +104,22 @@ const CareerHomePage: React.FC = () => {
         ))}
       </div>
 
+      {error ? (
+        <InlineError
+          title="Career opportunities could not load"
+          message={error}
+          description="You can retry the feed, or open the tracker if you only need your saved applications."
+          onRetry={fetchData}
+          action={
+            <Link to="/career/me/tracker" className="rounded-md border border-[var(--comp-border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+              Open tracker
+            </Link>
+          }
+        />
+      ) : null}
+
       {/* Personalized for You (Phase 4) */}
-      {personalizedOpps.length > 0 && (
+      {!error && personalizedOpps.length > 0 && (
         <section className="dashboard-card p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -118,7 +139,7 @@ const CareerHomePage: React.FC = () => {
       )}
 
       {/* Expiring Soon */}
-      {expiringOpps.length > 0 && (
+      {!error && expiringOpps.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-[var(--error)]" />
@@ -133,7 +154,7 @@ const CareerHomePage: React.FC = () => {
       )}
 
       {/* Latest Opportunities */}
-      <section>
+      {!error ? <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="section-title">Latest opportunities</h2>
           <Link to="/career/opportunities" className="text-[var(--comp-accent)] hover:underline text-sm font-medium">
@@ -143,8 +164,8 @@ const CareerHomePage: React.FC = () => {
         
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-48 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] animate-pulse" />
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} />
             ))}
           </div>
         ) : latestOpps.length > 0 ? (
@@ -154,11 +175,22 @@ const CareerHomePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="dashboard-card border-dashed py-12 text-center">
-            <p className="body-text">No opportunities found. Be the first to submit one.</p>
-          </div>
+          <EmptyState
+            title="No opportunities are open right now"
+            description="Check back later, browse all filters, or submit a verified opportunity for classmates."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link to="/career/opportunities" className="rounded-lg border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+                  Browse all
+                </Link>
+                <Link to="/career/submit" className="rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white no-underline">
+                  Submit opportunity
+                </Link>
+              </div>
+            }
+          />
         )}
-      </section>
+      </section> : null}
 
       {/* Tracker Shortcut */}
       <section className="dashboard-card flex flex-col sm:flex-row justify-between items-center gap-4 p-6">

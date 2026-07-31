@@ -8,10 +8,8 @@ export default function TransportFeedback() {
       title="Transport Feedback"
       type="transport"
       categories={CATEGORIES}
-      targetLabel="Route"
-      targetEmptyMessage="No transport routes are open for unofficial campus feedback yet."
-      optionManagementLabel="Manage Transport Feedback Routes"
-      optionPlaceholder="Route name"
+      fixedTarget={{ id: "transport-overall", type: "transport", label: "Campus transport services" }}
+      targetLabel="Service"
     />
   );
 }

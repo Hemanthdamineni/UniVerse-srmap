@@ -7,6 +7,7 @@ import { SkeletonTable, SkeletonCard } from "../../components/ui/Skeletons";
 import { CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { useEvent } from "../../contexts/EventContext";
 import { track } from "../../lib/core/analytics";
+import { Users, Plus, Search, MessageSquare, AlertTriangle } from "lucide-react";
 import {
   acceptInvite,
   assignRole,
@@ -222,10 +223,12 @@ export function TeamFormationPage() {
   const [matches, setMatches] = useState<TeamMatchCandidate[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!event) return;
     let active = true;
+    setLoading(true);
     Promise.all([
       getMyTeam(event.id),
       getTeamRecruitmentBoard(event.id).catch(() => []),
@@ -239,11 +242,31 @@ export function TeamFormationPage() {
       })
       .catch((err: unknown) => {
         if (active) setError(err instanceof Error ? err.message : "Failed to load team discovery.");
-      });
+      })
+      .finally(() => { if (active) setLoading(false); });
     return () => {
       active = false;
     };
   }, [event]);
+
+  async function onSubmitSkills() {
+    if (!event || !team || !neededSkills.trim()) return;
+    await runStep(setBusy, setError, async () => {
+      await upsertTeamRecruitmentPost(event.id, {
+        neededSkills: neededSkills.split(",").map((s) => s.trim()).filter(Boolean),
+        description: recruitmentNote,
+        openSlots: Math.max(1, 4 - team.members.filter((m) => m.status === "accepted").length),
+        status: "open",
+      });
+      const [boardItems, matchItems] = await Promise.all([
+        getTeamRecruitmentBoard(event.id).catch(() => []),
+        getTeamMatches(event.id).catch(() => []),
+      ]);
+      setBoard(boardItems);
+      setMatches(matchItems);
+      track("resume_skills_synced", { eventId: event.id, teamId: team.id });
+    }, "Failed to submit skills.");
+  }
 
   async function onCreate() {
     if (!event || !teamName.trim()) return;
@@ -295,88 +318,87 @@ export function TeamFormationPage() {
 
   return (
     <PageStack>
-      <div className="dashboard-card rounded-xl p-5">
-        <p className="comp-heading-lg mt-0">Create a team</p>
-        {error ? <ErrorMessage message={error} preservedInput /> : null}
-        <label className="comp-label" htmlFor="team-name-create">Team name</label>
-        <Input id="team-name-create" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
-        <button className="comp-btn-primary" disabled={busy || !teamName.trim()} onClick={() => void onCreate()}>
-          {busy ? "Saving..." : "Create team"}
-        </button>
-      </div>
-      {team ? (
-        <div className="dashboard-card rounded-xl p-5">
-          <p className="comp-heading-md mt-0">{team.name}</p>
-          <p className="comp-body">Team code: {team.id}</p>
-          <label className="comp-label" htmlFor="team-invite">Invite by reg no</label>
-          <div className="flex flex-wrap gap-2">
-            <Input id="team-invite" className="min-w-[220px] flex-1" value={inviteRegNo} onChange={(e) => setInviteRegNo(e.target.value)} placeholder="AP21110010" />
-            <button className="comp-btn-ghost" disabled={busy || !inviteRegNo.trim()} onClick={() => void onInvite()}>Send invite</button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {team.members.map((member) => (
-              <span key={member.regNo} className="rounded-full border border-[var(--comp-border)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
-                {member.regNo} - {member.status}
-              </span>
-            ))}
+      {error ? <ErrorMessage message={error} preservedInput /> : null}
+
+      {!team ? (
+        <div className="dashboard-card rounded-xl p-6 text-center">
+          <Users className="mx-auto h-10 w-10 text-[var(--comp-text-muted)]" />
+          <p className="comp-heading-md mt-3">No team yet</p>
+          <p className="comp-body mt-1">Form a team to collaborate, find complementary skills, and submit together.</p>
+          <div className="mt-4 inline-flex flex-col items-start gap-2">
+            <label className="comp-label" htmlFor="team-name-create">Team name</label>
+            <Input id="team-name-create" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="My awesome team" />
+            <button className="comp-btn-primary" disabled={busy || !teamName.trim()} onClick={() => void onCreate()}>
+              {busy ? "Saving..." : "Create team"}
+            </button>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <>
+          <div className="dashboard-card rounded-xl p-5">
+            <p className="comp-heading-md mt-0">{team.name}</p>
+            <p className="comp-body">Team code: {team.id}</p>
+            <label className="comp-label" htmlFor="team-invite">Invite by reg no</label>
+            <div className="flex flex-wrap gap-2">
+              <Input id="team-invite" className="min-w-[220px] flex-1" value={inviteRegNo} onChange={(e) => setInviteRegNo(e.target.value)} placeholder="AP21110010" />
+              <button className="comp-btn-ghost" disabled={busy || !inviteRegNo.trim()} onClick={() => void onInvite()}>Send invite</button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {team.members.map((member) => (
+                <span key={member.regNo} className="rounded-full border border-[var(--comp-border)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
+                  {member.regNo} - {member.status}
+                </span>
+              ))}
+            </div>
+          </div>
 
-      {team ? (
-        <div className="dashboard-card rounded-xl p-5">
-          <p className="comp-heading-md mt-0">Find teammates</p>
-          <div className="grid gap-3 md:grid-cols-[1fr_1.4fr]">
-            <div className="space-y-3">
-              <label className="comp-label" htmlFor="team-needed-skills">Needed skills</label>
-              <Input
-                id="team-needed-skills"
-                value={neededSkills}
-                onChange={(e) => setNeededSkills(e.target.value)}
-                placeholder="React, pitch, design"
-              />
-              <label className="comp-label" htmlFor="team-recruitment-note">Recruitment note</label>
-              <Input
-                id="team-recruitment-note"
-                value={recruitmentNote}
-                onChange={(e) => setRecruitmentNote(e.target.value)}
-                placeholder="What should a teammate know before joining?"
-              />
-              <button className="comp-btn-primary" disabled={busy || !neededSkills.trim()} onClick={() => void onPublishRecruitment()}>
-                {busy ? "Publishing..." : "Publish team need"}
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="dashboard-card rounded-xl p-5">
+              <p className="comp-heading-md mt-0">Share your skills</p>
+              <p className="comp-body">Tell the system what you know so it can find teammates with complementary strengths.</p>
+              <label className="comp-label" htmlFor="skills">Skills (comma-separated)</label>
+              <Input id="skills" value={neededSkills} onChange={(e) => setNeededSkills(e.target.value)} placeholder="React, Python, ML" />
+              <button className="comp-btn-ghost mt-2" disabled={busy} onClick={() => void onSubmitSkills()}>
+                {busy ? "Saving..." : "Submit skills"}
               </button>
             </div>
-            <div className="space-y-2">
+
+            <div className="dashboard-card rounded-xl p-5">
+              <p className="comp-heading-md mt-0">Matched candidates</p>
               {matches.length === 0 ? (
-                <p className="comp-body">Matched candidates appear after registered students share relevant skills in their forms.</p>
+                <div className="text-center py-6">
+                  <Search className="mx-auto h-8 w-8 text-[var(--comp-text-muted)]" />
+                  <p className="comp-body mt-2">Matched candidates appear after registered students share relevant skills in their forms.</p>
+                </div>
               ) : (
-                matches.slice(0, 4).map((candidate) => (
-                  <div key={candidate.userId} className="rounded-xl border border-[var(--comp-border)] bg-[var(--dash-subcard-bg)] p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="m-0 font-semibold">{candidate.name || candidate.userId}</p>
-                      <span className="comp-label">{candidate.matchScore}% fit</span>
+                <div className="space-y-3">
+                  {matches.slice(0, 4).map((candidate) => (
+                    <div key={candidate.userId} className="rounded-xl border border-[var(--comp-border)] bg-[var(--dash-subcard-bg)] p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="m-0 font-semibold">{candidate.name || candidate.userId}</p>
+                        <span className="comp-label">{candidate.matchScore}% fit</span>
+                      </div>
+                      <p className="comp-body m-0">{candidate.department || "Department unavailable"}</p>
+                      {candidate.matchedSkills.length ? (
+                        <p className="comp-body m-0">Matches: {candidate.matchedSkills.join(", ")}</p>
+                      ) : null}
+                      <button className="comp-btn-ghost mt-2" disabled={busy} onClick={() => { void onInvite(candidate.userId); }}>Invite</button>
                     </div>
-                    <p className="comp-body m-0">{candidate.department || "Department unavailable"}</p>
-                    {candidate.matchedSkills.length ? (
-                      <p className="comp-body m-0">Matches: {candidate.matchedSkills.join(", ")}</p>
-                    ) : null}
-                    <button className="comp-btn-ghost mt-2" disabled={busy} onClick={() => {
-                      void onInvite(candidate.userId);
-                    }}>
-                      Invite
-                    </button>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+        </>
+      )}
 
       <div className="dashboard-card rounded-xl p-5">
         <p className="comp-heading-md mt-0">Teams looking for members</p>
         {board.length === 0 ? (
-          <p className="comp-body">No teams have posted open needs yet.</p>
+          <div className="text-center py-6">
+            <Search className="mx-auto h-8 w-8 text-[var(--comp-text-muted)]" />
+            <p className="comp-body mt-2">No teams have posted open needs yet.</p>
+          </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {board.map((post) => (

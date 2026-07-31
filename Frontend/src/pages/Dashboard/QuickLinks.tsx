@@ -1,43 +1,51 @@
 import { useNavigate } from 'react-router-dom';
+import { BookOpen, Briefcase, CalendarDays, ClipboardCheck, CreditCard, GraduationCap, Trophy } from "lucide-react";
 
 function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: number }) {
   const navigate = useNavigate();
 
   const quickLinks = [
     {
-      name: "Timetable",
-      color: "dashboard-subcard",
-      path: "/academic/timetable"
+      name: "Today",
+      description: "Open timetable",
+      icon: CalendarDays,
+      path: "/academic/timetable",
     },
     {
       name: "Attendance",
-      color: "dashboard-subcard",
-      path: "/academic/attendance-details"
+      description: "Check risk",
+      icon: ClipboardCheck,
+      path: "/academic/attendance-details",
     },
     {
-      name: "Internal Marks",
-      color: "dashboard-subcard",
-      path: "/exams/current-semester-results"
+      name: "Marks",
+      description: "Review results",
+      icon: GraduationCap,
+      path: "/exams/current-semester-results",
     },
     {
-      name: "Fee Details",
-      color: "dashboard-subcard",
-      path: "/finance/fee-dues"
+      name: "Fees",
+      description: "Dues and paid",
+      icon: CreditCard,
+      path: "/finance/fee-dues",
     },
     {
-      name: "LMS",
-      color: "dashboard-subcard",
-      path: "/resources"
+      name: "Resources",
+      description: "Study material",
+      icon: BookOpen,
+      path: "/resources",
     },
     {
-      name: "Feedback Assistant",
-      color: feedbackPendingCount > 0 ? "dashboard-subcard ring-2 ring-amber-300" : "dashboard-subcard",
-      path: "/feedback/course-feedback"
+      name: "Events",
+      description: "Find and register",
+      icon: Trophy,
+      path: "/events",
     },
     {
-      name: "Helpdesk",
-      color: "dashboard-subcard",
-      path: "/helpdesk/raise-ticket"
+      name: "Career",
+      description: "Apply or track",
+      icon: Briefcase,
+      path: "/career",
     },
   ];
 
@@ -47,23 +55,52 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
 
   return (
     <div className="h-full p-3">
-      <h2 className="card-title font-bold mb-2.5">Quick Links</h2>
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <div>
+          <h2 className="card-title font-bold">Student Tasks</h2>
+          <p className="mt-0.5 text-xs text-[var(--comp-text-secondary)]">Start the things students check most.</p>
+        </div>
+      </div>
       {feedbackPendingCount > 0 ? (
         <div className="mb-3 rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--status-pending-bg)', color: 'var(--status-pending-text)', border: '1px solid var(--status-pending-border)' }}>
-          {feedbackPendingCount} feedback item{feedbackPendingCount === 1 ? "" : "s"} waiting for review.
+          {feedbackPendingCount} course feedback item{feedbackPendingCount === 1 ? "" : "s"} need attention.
         </div>
       ) : null}
-      <div className="flex h-[calc(100%-2.25rem)] flex-col gap-1.5">
-        {quickLinks.map((link, index) => (
-          <div
-            key={index}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {quickLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+          <button
+            key={link.path}
+            type="button"
             onClick={() => handleLinkClick(link.path)}
-            className={`${link.color} flex min-h-[30px] items-center justify-center rounded-lg px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all`}
+            className="dashboard-subcard flex min-h-[58px] items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)]"
             style={{ transitionDuration: 'var(--transition-fast)' }}
           >
-            <p className="text-sm font-medium text-center" style={{ color: 'var(--comp-text-primary)' }}>{link.name}</p>
-          </div>
-        ))}
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-accent)]">
+              <Icon size={16} />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-[var(--comp-text-primary)]">{link.name}</span>
+              <span className="block truncate text-xs text-[var(--comp-text-secondary)]">{link.description}</span>
+            </span>
+          </button>
+        );})}
+        <button
+          type="button"
+          onClick={() => handleLinkClick("/feedback/course-feedback")}
+          className={`dashboard-subcard flex min-h-[58px] items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)] ${feedbackPendingCount > 0 ? "ring-2 ring-amber-300" : ""}`}
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--warning)]">
+            <ClipboardCheck size={16} />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-[var(--comp-text-primary)]">Feedback</span>
+            <span className="block truncate text-xs text-[var(--comp-text-secondary)]">
+              {feedbackPendingCount > 0 ? "Complete pending" : "Course feedback"}
+            </span>
+          </span>
+        </button>
       </div>
     </div>
   );

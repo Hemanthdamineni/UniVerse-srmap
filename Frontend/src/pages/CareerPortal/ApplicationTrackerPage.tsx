@@ -163,15 +163,15 @@ const ApplicationTrackerPage: React.FC = () => {
           }
         />
       ) : (
-        <div className="flex-1 overflow-y-auto pr-2 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {COLUMNS.map(column => {
-              const columnApps = applications.filter(a => a.status === column.id);
-              
+        <div className="flex-1 overflow-auto pr-2 pb-6">
+          <div className="flex min-w-[700px] md:min-w-[1200px] lg:grid lg:min-w-0 lg:grid-cols-4 gap-6">
+            {COLUMNS.map((column) => {
+              const columnApps = applications.filter((a) => a.status === column.id);
+
               return (
-                <div 
+                <div
                   key={column.id}
-                  className="h-[400px] lg:h-[450px] flex flex-col rounded-xl bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_50%,transparent)] overflow-hidden shadow-sm"
+                  className="w-72 shrink-0 lg:w-auto h-[400px] lg:h-[450px] flex flex-col rounded-xl bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_50%,transparent)] overflow-hidden shadow-sm"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, column.id)}
                 >

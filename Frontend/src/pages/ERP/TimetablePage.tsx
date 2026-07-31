@@ -6,7 +6,7 @@ import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { TimetableModel } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 interface TimetablePageProps {
   blueprint: PageBlueprint;
@@ -16,18 +16,20 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
   const [model, setModel] = useState<TimetableModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setEmptyMessage(null);
 
     getErpBatch(blueprint.fetchKeys)
       .then((batch) => {
         if (!active) return;
         const result = batch["academic/time-table"];
         if (!result || (result as any).success === false) {
-          setError("Timetable data unavailable.");
+          setEmptyMessage("Your class timetable has not been published yet. Check back later or contact your department.");
           setLoading(false);
           return;
         }
@@ -64,7 +66,11 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
         <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
       )}
 
-      {model && (
+      {emptyMessage && (
+        <EmptyState title="Timetable not available" description={emptyMessage} />
+      )}
+
+      {model && !emptyMessage && (
         <>
           {/* Weekly Schedule Grid */}
           <div className="erp-table-shell">
@@ -72,18 +78,31 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
               <thead className="erp-table-head">
                 <tr>
                   <th className="erp-table-head-cell label-text w-28">Day</th>
-                  {timeSlots.map((slot, i) => (
-                    <th key={i} className="erp-table-head-cell label-text erp-table-align-center min-w-[130px]">
-                      {slot}
-                    </th>
-                  ))}
+                  {timeSlots.length > 0 ? (
+                    timeSlots.map((slot, i) => (
+                      <th key={i} className="erp-table-head-cell label-text erp-table-align-center min-w-[130px]">
+                        {slot}
+                      </th>
+                    ))
+                  ) : (
+                    <th className="erp-table-head-cell label-text">Schedule</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="erp-table-body">
                 {days.length === 0 ? (
                   <tr className="erp-table-row">
-                    <td colSpan={timeSlots.length + 1} className="erp-table-cell py-8 text-center text-sm italic" style={{ color: 'var(--comp-text-muted)' }}>
-                      No schedule data available.
+                    <td colSpan={timeSlots.length > 0 ? timeSlots.length + 1 : 2} className="erp-table-cell py-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3" style={{ color: 'var(--comp-text-muted)' }} aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>No schedule data available</p>
+                        <p className="mt-0.5 text-xs" style={{ color: 'var(--comp-text-muted)' }}>Your class timetable hasn't been published yet. Check back later or contact your department.</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (

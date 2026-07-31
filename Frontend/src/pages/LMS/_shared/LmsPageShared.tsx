@@ -206,7 +206,19 @@ export function LmsFrame({
 }) {
   return (
     <ErpPageShell title={title} source="Internal API" isLoading={loading} loadingMessage={`Loading ${title}...`}>
-      {error ? <InlineError message={error} className="mb-4" /> : null}
+      {error ? (
+        <InlineError
+          title={`Could not load ${title}`}
+          message={error}
+          description="Your ERP session may have expired, or the LMS service may be temporarily unavailable."
+          action={
+            <Link to="/resources" className="rounded-md border border-[var(--comp-border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+              Back to LMS home
+            </Link>
+          }
+          className="mb-4"
+        />
+      ) : null}
       <div className="space-y-5">{children}</div>
     </ErpPageShell>
   );

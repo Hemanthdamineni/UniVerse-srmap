@@ -72,7 +72,7 @@ export default function InteractiveFlashcardDeck({ cards }: { cards: FlashcardDa
           </div>
         </div>
 
-        <button
+        <button aria-label="Action"
           className="flex items-center rounded-xl bg-[var(--comp-accent)] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
           onClick={() => {
             setCurrentIndex(0);
@@ -106,7 +106,7 @@ export default function InteractiveFlashcardDeck({ cards }: { cards: FlashcardDa
 
       {/* 3D Card Area */}
       <div className="flex-1 flex flex-col items-center justify-center perspective-[1000px] mb-8">
-        <button
+        <button aria-label="Action"
           className="group relative w-full h-80 outline-none cursor-pointer"
           onClick={() => setFlipped(prev => !prev)}
           style={{ transformStyle: "preserve-3d" }}
@@ -173,13 +173,13 @@ export default function InteractiveFlashcardDeck({ cards }: { cards: FlashcardDa
           flipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
       >
-        <button
+        <button aria-label="Action"
           onClick={() => handleNext('needPractice')}
           className="flex-1 max-w-[200px] py-3.5 rounded-xl border-2 border-[var(--warning)] text-[var(--warning)] font-semibold bg-[color-mix(in_srgb,var(--warning)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] transition-colors"
         >
           Need Practice
         </button>
-        <button
+        <button aria-label="Action"
           onClick={() => handleNext('gotIt')}
           className="flex-1 max-w-[200px] py-3.5 rounded-xl border-2 border-[var(--success)] text-[var(--success)] font-semibold bg-[color-mix(in_srgb,var(--success)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--success)_10%,transparent)] transition-colors flex items-center justify-center gap-2"
         >

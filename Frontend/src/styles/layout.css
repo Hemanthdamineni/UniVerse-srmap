@@ -167,7 +167,7 @@
   }
 
   .erp-table-row + .erp-table-row {
-    border-bottom: 0.5px solid var(--comp-border);
+    border-top: 0.5px solid var(--comp-border);
   }
 
   .erp-table-row:hover {

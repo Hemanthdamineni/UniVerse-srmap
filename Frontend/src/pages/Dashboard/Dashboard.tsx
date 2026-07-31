@@ -105,7 +105,11 @@ function Dashboard() {
   if (error) {
     return (
       <DashboardLayout>
-        <InlineError message={error} />
+        <InlineError
+          title="Dashboard could not load"
+          message={error}
+          description="Your ERP session may have expired, or the student data service may be temporarily unavailable."
+        />
       </DashboardLayout>
     );
   }
@@ -113,7 +117,11 @@ function Dashboard() {
   if (profileError) {
     return (
       <DashboardLayout>
-        <InlineError message={`Profile Error: ${profileError}`} />
+        <InlineError
+          title="Profile could not load"
+          message={profileError}
+          description="The rest of the student workspace needs your profile to personalize timetable, attendance, and quick actions."
+        />
       </DashboardLayout>
     );
   }
@@ -121,7 +129,11 @@ function Dashboard() {
   if (!profileData) {
     return (
       <DashboardLayout>
-        <InlineError message="Profile Error: No profile data available for the current session." />
+        <InlineError
+          title="Profile could not load"
+          message="No profile data is available for the current session."
+          description="Sign in again if this continues, then return to the dashboard."
+        />
       </DashboardLayout>
     );
   }

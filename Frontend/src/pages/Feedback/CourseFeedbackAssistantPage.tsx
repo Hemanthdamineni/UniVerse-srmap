@@ -158,8 +158,8 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
           <StatusBanner
             message={{
               id: "feedback-disabled",
-              tone: "locked",
-              text: status?.disabledMessage || "Automation is currently disabled. You can still open the raw ERP page and submit it manually.",
+              tone: "info",
+              text: "End-semester feedback is not currently available. This is normal between feedback cycles.",
             }}
           />
           <div className="flex justify-start">

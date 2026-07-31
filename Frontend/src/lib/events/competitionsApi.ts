@@ -10,7 +10,15 @@
 
 import { requestData, requestMultipart } from '../core/apiClient';
 import { handleSessionAuthFailure } from '../core/session';
+import { isStaticPrototype } from '../core/prototype';
+import { getCurrentRegNo } from '../core/identity';
 import { eventCache } from './eventCache';
+import {
+  getPrototypeEventTeam,
+  isPrototypeEventRegistered,
+  savePrototypeEventTeam,
+  setPrototypeEventRegistration,
+} from './prototypeEventState';
 
 // ─── Error Types ─────────────────────────────────────────────────────────────
 
@@ -257,6 +265,21 @@ const roundBase = (eventId: string, roundId: string) =>
 // ─── Role ─────────────────────────────────────────────────────────────────────
 
 export async function getMyRole(eventId: string): Promise<MyRoleResponse> {
+  if (isStaticPrototype()) {
+    const regNo = getCurrentRegNo() || 'STATIC-STUDENT';
+    const registered = isPrototypeEventRegistered(eventId);
+    return {
+      regNo,
+      role: registered ? 'participant' : 'visitor',
+      permissions: {
+        canEdit: false,
+        canEvaluate: false,
+        canShortlist: false,
+        canManageRoles: false,
+        canViewAllSubmissions: false,
+      },
+    };
+  }
   return safeFetch(() => requestData<MyRoleResponse>(`${compBase(eventId)}/my-role`));
 }
 
@@ -302,6 +325,11 @@ export async function getMyRegisteredEvents(): Promise<EventSummary[]> {
 }
 
 export async function registerForEvent(eventId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    setPrototypeEventRegistration(eventId, true);
+    eventCache.invalidate(`event:${eventId}`);
+    return;
+  }
   await safeFetch(() =>
     requestData<Record<string, unknown>>(`${eventsBase}/${enc(eventId)}/register`, {
       method: 'POST',
@@ -314,6 +342,21 @@ export async function registerForEvent(eventId: string): Promise<void> {
 // ─── Teams ────────────────────────────────────────────────────────────────────
 
 export async function createTeam(eventId: string, name: string): Promise<Team> {
+  if (isStaticPrototype()) {
+    const regNo = getCurrentRegNo() || 'STATIC-STUDENT';
+    const now = new Date().toISOString();
+    const team: Team = {
+      id: `static-team-${eventId}`,
+      eventId,
+      name,
+      leaderRegNo: regNo,
+      members: [{ regNo, name: 'Prototype Student', joinedAt: now, status: 'accepted' }],
+      createdAt: now,
+    };
+    savePrototypeEventTeam(team);
+    eventCache.invalidate(`team:${eventId}`);
+    return team;
+  }
   const result = await safeFetch(() =>
     requestData<Team>(`${compBase(eventId)}/teams`, {
       method: 'POST',
@@ -325,6 +368,7 @@ export async function createTeam(eventId: string, name: string): Promise<Team> {
 }
 
 export async function getMyTeam(eventId: string): Promise<Team | null> {
+  if (isStaticPrototype()) return getPrototypeEventTeam(eventId);
   const cacheKey = `team:${eventId}`;
   const cached = eventCache.get<Team | null>(cacheKey);
   if (cached !== null) return cached;
@@ -345,6 +389,16 @@ export async function inviteMember(
   teamId: string,
   regNo: RegNo
 ): Promise<void> {
+  if (isStaticPrototype()) {
+    const team = getPrototypeEventTeam(eventId);
+    if (!team || team.id !== teamId) throw new Error('Create a team before inviting a member.');
+    if (!team.members.some((member) => member.regNo === regNo)) {
+      team.members.push({ regNo, name: regNo, joinedAt: new Date().toISOString(), status: 'pending' });
+      savePrototypeEventTeam(team);
+    }
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
   await safeFetch(() =>
     requestData<Record<string, unknown>>(
       `${compBase(eventId)}/teams/${enc(teamId)}/invite`,

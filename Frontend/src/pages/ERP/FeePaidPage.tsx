@@ -3,7 +3,7 @@ import type { PageBlueprint } from "../../config/erpBlueprints";
 import { executeErpAction, getErpBatch } from "../../lib/erp/index";
 import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erp/erpTransformers";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 // ERP-dependent base URL for receipt print endpoint — adjust if the ERP path changes
 const ERP_RECEIPT_PRINT_BASE = "/srmapstudentcorner/students/report/receiptgenerationprint.jsp";
@@ -90,8 +90,8 @@ export default function FeePaidPage({ blueprint }: Props) {
 
         const pipelineResult = executePipeline("finance-paid", rawData);
         if (!pipelineResult.isValid || !pipelineResult.data) {
-          // Pipeline failed — log error and show warnings to user rather than crashing
-          console.error("Pipeline failed for finance-paid:", pipelineResult.errors);
+          // Pipeline failed — log warning and show errors to user rather than crashing
+          console.warn("Pipeline failed for finance-paid:", pipelineResult.errors);
           setData({
             title: blueprint.heading,
             records: [],
@@ -135,14 +135,14 @@ export default function FeePaidPage({ blueprint }: Props) {
       loadingMessage={blueprint.loadingMessage || "Loading fees paid..."}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
-      {error ? (
+      {error && (
         <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
-      ) : null}
+      )}
 
-      {!error && warnings.length > 0 ? (
+      {!error && warnings.length > 0 && (
         <section
           className="dashboard-card border p-4"
-          style={{ borderColor: "rgba(245, 158, 11, 0.35)", background: "rgba(245, 158, 11, 0.08)" }}
+          style={{ borderColor: "color-mix(in srgb, var(--warning) 35%, transparent)", background: "color-mix(in srgb, var(--warning) 8%, transparent)" }}
           aria-label="Fee paid source warnings"
         >
           <h3 className="text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
@@ -154,9 +154,7 @@ export default function FeePaidPage({ blueprint }: Props) {
             ))}
           </ul>
         </section>
-      ) : null}
-
-      {/* Source extraction trace removed */}
+      )}
 
       {data?.sections && data.sections.length > 0 ? (
         <div className="space-y-8">
@@ -177,7 +175,7 @@ export default function FeePaidPage({ blueprint }: Props) {
             );
             const colCount = dataCols.length + (hasPrintAction ? 1 : 0);
 
-  return (
+            return (
               <section key={section.sourcePageKey} className="dashboard-card overflow-hidden p-0">
                 <div className="border-b px-5 py-4" style={{ borderColor: 'var(--comp-border)' }}>
                   <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{section.sourceLabel}</h3>
@@ -222,7 +220,7 @@ export default function FeePaidPage({ blueprint }: Props) {
                                 className="inline-flex items-center justify-center text-[11px] font-semibold tracking-wide uppercase px-3 py-1.5 rounded-md border"
                                 style={{
                                   borderColor: 'var(--comp-border)',
-                                  backgroundColor: printingId === row.stableKey ? 'transparent' : 'var(--comp-bg-elevated, #1e293b)',
+                                  backgroundColor: printingId === row.stableKey ? 'transparent' : 'var(--comp-surface-hover)',
                                   color: printingId === row.stableKey ? 'var(--comp-text-muted)' : 'var(--comp-text-primary)',
                                   transition: 'all 0.15s ease',
                                 }}
@@ -232,18 +230,18 @@ export default function FeePaidPage({ blueprint }: Props) {
                             </td>
                           ) : hasPrintAction ? (
                             <td className="erp-table-cell text-center">
-                              <span className="text-xs text-muted-foreground">-</span>
+                              <span className="text-xs text-[var(--comp-text-muted)]">-</span>
                             </td>
                           ) : null}
                         </tr>
                       ))}
-                      {section.rows.length === 0 ? (
+                      {section.rows.length === 0 && (
                         <tr className="erp-table-row">
                           <td colSpan={colCount || 1} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                            No payment receipts found.
+                            No payment receipts found in this data source.
                           </td>
                         </tr>
-                      ) : null}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -252,24 +250,14 @@ export default function FeePaidPage({ blueprint }: Props) {
           })}
         </div>
       ) : !error && !loading ? (
-        <section className="dashboard-card overflow-hidden p-0">
-          <div className="erp-table-shell rounded-none border-0 shadow-none overflow-x-auto">
-            <table className="erp-table w-full text-left">
-              <thead className="erp-table-head">
-                <tr>
-                  <th className="erp-table-head-cell label-text">Details</th>
-                </tr>
-              </thead>
-              <tbody className="erp-table-body">
-                <tr className="erp-table-row">
-                  <td className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                    No payment receipts found.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <EmptyState
+          title={warnings.length > 0 ? "Could not extract payment data" : "No payment receipts found"}
+          description={
+            warnings.length > 0
+              ? "Payment data was received from the ERP, but no receipts could be extracted. The data format may have changed."
+              : "No payment receipts are available yet. Paid fees will appear here once processed."
+          }
+        />
       ) : null}
     </ErpPageShell>
   );

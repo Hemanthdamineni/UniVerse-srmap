@@ -24,18 +24,18 @@ function BasicInfo({ profileData }: { profileData: any }) {
 
   const getColSpanClass = (span: number) => {
     const spanClasses: Record<number, string> = {
-      1: 'col-span-1',
-      2: 'col-span-2',
-      3: 'col-span-3',
-      4: 'col-span-4',
-      5: 'col-span-5',
-      6: 'col-span-6',
+      1: 'lg:col-span-1',
+      2: 'lg:col-span-2',
+      3: 'lg:col-span-3',
+      4: 'lg:col-span-4',
+      5: 'lg:col-span-5',
+      6: 'lg:col-span-6',
     };
-    return spanClasses[span] || 'col-span-1';
+    return spanClasses[span] || 'lg:col-span-1';
   };
 
   return (
-    <div className="grid grid-cols-12 gap-x-4 gap-y-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-x-4">
       {[
         { label: "Name", value: profileModel.studentName, span: 4 },
         { label: "Register No", value: profileModel.registerNo, span: 2 },
@@ -49,9 +49,9 @@ function BasicInfo({ profileData }: { profileData: any }) {
         { label: "Student Contact Number", value: profileModel.contactNumber, span: 2 },
         { label: "Email", value: profileModel.email, span: 4 },
       ].map(({ label, value, span }, idx) => (
-        <div key={`${label}-${idx}`} className={`row-span-1 ${getColSpanClass(span)}`}>
+        <div key={`${label}-${idx}`} className={`row-span-1 min-w-0 ${getColSpanClass(span)}`}>
           <p className="label-text">{label}</p>
-          <h3 className="card-title font-semibold">{sanitizeVisibleText(value || "N/A")}</h3>
+          <h3 className="card-title break-words font-semibold">{sanitizeVisibleText(value || "N/A")}</h3>
         </div>
       ))}
     </div>

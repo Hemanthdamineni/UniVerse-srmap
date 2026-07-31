@@ -46,7 +46,8 @@ function requireExtracted(
 export function transformFeeDues(rawData: unknown): Partial<FeeDuesModel> {
   const extracted = requireExtracted(rawData, "fee-dues", "finance/fee-due-details");
   const title = String(extracted.title ?? "Fee Dues");
-  const records: FeeDueRecord[] = (extracted.records as Record<string, unknown>[])
+  const rawRecords = Array.isArray(extracted.records) ? extracted.records : [];
+  const records: FeeDueRecord[] = rawRecords
     .map((r) => ({
       category: String(r.feeCategory ?? ""),
       head: String(r.feeHead ?? ""),
@@ -92,7 +93,8 @@ function buildFeePaidSection(
       label: colLabels[k] ?? k,
     }));
 
-    const rows: FeePaidSectionRow[] = (extracted.records as Record<string, unknown>[]).map((r) => {
+    const rawRecords1 = Array.isArray(extracted.records) ? extracted.records : [];
+    const rows: FeePaidSectionRow[] = rawRecords1.map((r) => {
       const receiptNumber = String(r.receiptNumber ?? "");
       const hasPrint = Boolean(receiptNumber && /^\d+$/.test(receiptNumber));
       return {
@@ -114,7 +116,8 @@ function buildFeePaidSection(
       { key: "particulars", label: "Particulars" },
       { key: "amount", label: "Amount" },
     ];
-    const rows: FeePaidSectionRow[] = (extracted.records as Record<string, unknown>[]).map((r) => {
+    const rawRecords2 = Array.isArray(extracted.records) ? extracted.records : [];
+    const rows: FeePaidSectionRow[] = rawRecords2.map((r) => {
       const receiptNo = String(r.receiptNo ?? "");
       const hasPrint = Boolean(receiptNo && /^\d+$/.test(receiptNo));
       return {
@@ -213,7 +216,18 @@ export function transformBankDetails(rawData: unknown): Partial<BankDetailsModel
   const extracted = requireExtracted(rawData, "bank-details", "finance/bank-account-details");
   const title = String(extracted.title ?? "Bank Details");
   const fields: BankDetailField[] = (extracted.fields as Record<string, unknown>[])
-    .map((f) => ({ label: String(f.label ?? ""), value: String(f.value ?? "") }))
+    .map((f) => ({
+      label: String(f.label ?? ""),
+      value: String(f.value ?? ""),
+      fieldType: String(f.fieldType ?? "text"),
+      options: Array.isArray(f.options)
+        ? (f.options as Record<string, unknown>[]).map((o) => ({
+            value: String(o.value ?? ""),
+            label: String(o.label ?? ""),
+          }))
+        : undefined,
+      name: f.name ? String(f.name) : undefined,
+    }))
     .filter((f) => f.label);
   const isForm = fields.every((f) => !f.value);
   return { title, fields, isForm };

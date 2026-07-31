@@ -4,7 +4,7 @@ import { executePipeline, type FeeDuesModel } from "../../lib/erp/erpTransformer
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { InlineError } from "../../components/ui/Feedback";
+import { InlineError, EmptyState } from "../../components/ui/Feedback";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -32,6 +32,76 @@ function extractFeeDueNotes(rawData: unknown) {
     .filter(Boolean)
     .filter((note) => note.length > 20)
     .slice(0, 3);
+}
+
+function FinanceClearanceCard({ notes }: { notes: string[] }) {
+  return (
+    <div className="space-y-6">
+      {/* Clearance badge + headline */}
+      <div className="flex flex-col items-center py-4">
+        <div
+          className="mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+          style={{
+            background: "color-mix(in srgb, var(--comp-accent) 12%, transparent)",
+          }}
+        >
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--comp-accent)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+
+        <h2
+          className="mb-1 text-xl font-bold tracking-tight"
+          style={{ color: "var(--comp-text-primary)" }}
+        >
+          No fee dues
+        </h2>
+        <p
+          className="mx-auto max-w-sm text-center text-sm leading-6"
+          style={{ color: "var(--comp-text-secondary)" }}
+        >
+          Your current finance ledger is clear with no outstanding dues.
+        </p>
+      </div>
+
+      {/* Notes */}
+      {notes.length > 0 && (
+        <div className="space-y-3">
+          <div
+            className="flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1"
+            style={{ color: "color-mix(in srgb, var(--comp-text-muted) 40%, transparent)" }}
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">Notes</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {notes.map((note, index) => (
+              <div
+                key={`${index}-${note.slice(0, 32)}`}
+                className="rounded-xl border px-4 py-3.5 text-sm leading-6"
+                style={{
+                  borderColor: "color-mix(in srgb, var(--comp-border) 50%, transparent)",
+                  background: "color-mix(in srgb, var(--surface) 60%, transparent)",
+                }}
+              >
+                {note}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function FeeDuesPage({ blueprint }: Props) {
@@ -87,35 +157,17 @@ export default function FeeDuesPage({ blueprint }: Props) {
         <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
       )}
 
+      {!error && !loading && !data && (
+        <EmptyState title="No fee information available" description="Fee due data is currently unavailable." />
+      )}
+
       {data && (
         <section className="dashboard-card space-y-4 p-6">
 
           {data.noDues ? (
-            <div className="space-y-4">
-              <div className="flex min-h-40 items-center justify-center rounded-2xl px-6 text-center" style={{ border: '1px solid var(--success)', background: 'color-mix(in srgb, var(--success) 10%, transparent)' }}>
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--success)' }}>Status</p>
-                  <p className="text-3xl font-black" style={{ color: 'var(--comp-text-primary)' }}>No fee dues.</p>
-                  <p className="mx-auto max-w-2xl text-sm leading-6" style={{ color: 'var(--comp-text-secondary)' }}>
-                    Your current finance ledger does not show any outstanding dues.
-                  </p>
-                </div>
-              </div>
-
-              {notes.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {notes.map((note, index) => (
-                    <div
-                      key={`${index}-${note.slice(0, 32)}`}
-                      data-page-contrast="true"
-                      className="page-contrast-fg rounded-xl border border-[color-mix(in_srgb,var(--border)_60%,transparent)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-4 py-4 text-sm leading-6 shadow-sm"
-                    >
-                      {note}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+            <FinanceClearanceCard notes={notes} />
+          ) : data.records.length === 0 ? (
+            <EmptyState title="No pending fee dues" description="You have no outstanding fee dues recorded. Check your fees paid history." />
           ) : (
             <div className="space-y-8">
               <div className="erp-table-shell">

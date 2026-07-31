@@ -129,11 +129,11 @@ function StatusPill({ status }: { status: CampusFeedbackEntry["status"] }) {
 function GovernanceBanner({ governance }: { governance: CampusFeedbackGovernanceResponse | null }) {
   return (
     <div className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_22%,var(--border))] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-secondary)]">
-      <div className="font-semibold text-[var(--comp-text-primary)]">Unofficial campus feedback</div>
+      <div className="font-semibold text-[var(--comp-text-primary)]">Campus feedback</div>
       <p className="mt-1 leading-6">
-        Managed through {governance?.unofficial.routeNamespace || "/api/campus-feedback"} with
+        Managed through {governance?.campus?.routeNamespace || "/api/campus-feedback"} with
         moderation. Official course feedback remains in{" "}
-        {governance?.official.routeNamespace || "/api/feedback/end-semester"} and cannot be edited
+        {governance?.official?.routeNamespace || "/api/feedback/end-semester"} and cannot be edited
         here.
       </p>
     </div>
@@ -387,7 +387,7 @@ export default function CampusFeedbackPage<Category extends string>({
 
       <SectionCard title="Submission History">
         {history.length === 0 ? (
-          <EmptyStateCard message="No unofficial feedback submitted yet." />
+          <EmptyStateCard message="No campus feedback submitted yet." />
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {history.map((entry) => (

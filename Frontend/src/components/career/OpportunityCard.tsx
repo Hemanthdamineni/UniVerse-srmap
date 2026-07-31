@@ -44,6 +44,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
         <Button
           variant="ghost"
           size="icon"
+          aria-label={isBookmarked ? `Remove ${title} from saved opportunities` : `Save ${title}`}
           className={isBookmarked ? 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_15%,transparent)] hover:bg-[color-mix(in_srgb,var(--warning)_20%,transparent)]' : 'text-[var(--comp-text-muted)] hover:text-[var(--text-primary)]'}
           onClick={() => onBookmarkToggle?.(id)}
         >

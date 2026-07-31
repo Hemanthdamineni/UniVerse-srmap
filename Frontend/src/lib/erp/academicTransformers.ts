@@ -41,7 +41,7 @@ function requireExtractedPage(
   pageKey: string,
   expectedType: string,
 ): Record<string, unknown> | null {
-  const pageExtracted = readExtractedPage(rawData, pageKey);
+  const pageExtracted = readExtractedPage(rawData, pageKey, expectedType);
   if (pageExtracted !== null) {
     if (pageExtracted.type !== expectedType) {
       throw new Error(
@@ -145,7 +145,7 @@ export function transformCourseRegistration(rawData: unknown): CourseRegistratio
 
 export function transformCurriculum(rawData: unknown): CurriculumModel {
   const extracted = requireExtracted(rawData, "subjects", "academic/curriculum");
-  const records = (extracted.records as Record<string, unknown>[]) ?? [];
+  const records = Array.isArray(extracted.records) ? extracted.records : [];
 
   const subjects = records
     .map((r) => ({

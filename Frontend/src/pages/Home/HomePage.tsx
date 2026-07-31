@@ -4,16 +4,16 @@ import { hasSessionAuth, readStoredProfileData } from "../../lib/core/session";
 
 const VALUE_PILLARS = [
   {
-    title: "Canonical ERP Data",
-    description: "Backend normalization now repairs known ERP quirks before anything reaches the UI.",
+    title: "Know your day",
+    description: "Timetable, attendance, announcements, and academic updates in one scan.",
   },
   {
-    title: "Session-First Auth",
-    description: "Your local session state is derived from the real ERP session instead of placeholder tokens.",
+    title: "Stay ahead",
+    description: "Marks, fees, registrations, and documents without the ERP maze.",
   },
   {
-    title: "Manual Captcha Flow",
-    description: "Captcha stays explicit and compliant, with clearer recovery when a session expires.",
+    title: "Use campus tools",
+    description: "LMS, events, career, feedback, and helpdesk stay close by.",
   },
 ];
 
@@ -82,19 +82,19 @@ export default function HomePage() {
         <section className="rounded-[32px] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
-              UniVerse — SRMAP Edition
+              UniVerse, SRMAP Edition
             </span>
             <span className="text-sm text-[var(--text-secondary)]">
-              Cleaner sessions, safer auth, and normalized academic data.
+              Academic records plus campus services.
             </span>
           </div>
 
           <h1 className="mt-6 max-w-4xl text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
-            A calmer front door for the same messy ERP underneath.
+            Your university day, in one clear place.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-[var(--text-secondary)]">
-            This version keeps ERP access on the backend, treats captcha honestly, and normalizes broken
-            page structures before the UI ever has to reason about them.
+            Check attendance, marks, timetable, fees, registrations, and campus services without losing your
+            place in the old ERP flow.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -127,12 +127,12 @@ export default function HomePage() {
 
         <section className="flex flex-col justify-between rounded-[32px] bg-[var(--comp-accent)] p-8 text-white shadow-[0_24px_80px_rgba(10,38,42,0.16)]">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-white/75">What Changed</p>
+            <p className="text-sm uppercase tracking-[0.24em] text-white/75">Start with what matters</p>
             <div className="mt-6 space-y-5">
               {[
-                "Page contracts now validate live ERP payloads before they enter cache.",
-                "Shared normalization rules repair shifted headers and duplicated table rows.",
-                "Auth state now follows the real ERP session instead of a dummy client token.",
+                "Open the dashboard for today's academic snapshot.",
+                "Use the sidebar to jump straight to attendance, exams, finance, or registrations.",
+                "Return any time without searching for the same ERP page again.",
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/15 bg-white/6 p-4">
                   <p className="text-sm leading-6 text-white/88">{item}</p>
@@ -144,8 +144,8 @@ export default function HomePage() {
           <div className="mt-8 rounded-2xl border border-white/15 bg-white/7 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/65">Start Here</p>
             <p className="mt-3 text-sm leading-6 text-white/85">
-              Use your registration number to sign in. If the captcha or session expires, the app now tells
-              you that directly and refreshes the recovery path instead of leaving you stuck.
+              Sign in with your university registration number. If the captcha or ERP session expires, UniVerse
+              will tell you what happened and let you recover cleanly.
             </p>
           </div>
         </section>

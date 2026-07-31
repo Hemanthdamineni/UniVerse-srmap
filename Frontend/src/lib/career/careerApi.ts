@@ -221,7 +221,7 @@ const STATIC_CAREER_OPPORTUNITIES: CareerOpportunity[] = [
     eligibleBranches: ["CSE"],
     eligibleYears: [3, 4],
     isFree: true,
-    deadline: "2030-06-30",
+    deadline: "2026-08-30",
     source: "manual",
     sourceUrl: "https://careers.example.com/frontend-platform-internship",
     applyUrl: "https://careers.example.com/frontend-platform-internship",
@@ -234,6 +234,20 @@ const STATIC_CAREER_OPPORTUNITIES: CareerOpportunity[] = [
     isActive: true,
     isVerified: true,
     isFeatured: false,
+  },
+];
+
+const STATIC_CAREER_APPLICATIONS: CareerApplication[] = [
+  {
+    id: "app-static-frontend",
+    opportunityId: "opp-static-frontend",
+    userId: "AP23110010419",
+    status: "interested",
+    appliedAt: "2026-07-18T09:00:00.000Z",
+    updatedAt: "2026-07-18T09:00:00.000Z",
+    opportunityTitle: "Frontend Platform Internship",
+    company: "Acme Labs",
+    type: "internship",
   },
 ];
 
@@ -382,10 +396,23 @@ export async function listOpportunities(filters?: Record<string, string>) {
 }
 
 export async function getPersonalizedFeed() {
+  if (isStaticPrototype()) {
+    return {
+      items: STATIC_CAREER_OPPORTUNITIES.map((item) => ({
+        ...item,
+        isBookmarked: true,
+        personalizedScore: item.relevanceScore,
+        skillMatch: { matched: ["React", "TypeScript"], missing: ["Node.js"], percent: 67 },
+      })),
+    };
+  }
   return requestData<{ items: CareerOpportunity[] }>("/api/career/feed");
 }
 
 export async function getOpportunity(id: string) {
+  if (isStaticPrototype()) {
+    return STATIC_CAREER_OPPORTUNITIES.find((item) => item.id === id) || STATIC_CAREER_OPPORTUNITIES[0];
+  }
   return requestData<CareerOpportunity>(`/api/career/opportunities/${encodeURIComponent(id)}`);
 }
 
@@ -511,18 +538,23 @@ export async function listSkillGaps() {
 }
 
 export async function bookmarkOpportunity(id: string) {
+  if (isStaticPrototype()) {
+    return { bookmarked: Boolean(id) };
+  }
   return requestData<{ bookmarked: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}/bookmark`, {
     method: "POST",
   });
 }
 
 export async function trackApply(id: string) {
+  if (isStaticPrototype()) return { tracked: Boolean(id) };
   return requestData<{ tracked: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}/apply`, {
     method: "POST",
   });
 }
 
 export async function flagOpportunity(id: string, reason: string) {
+  if (isStaticPrototype()) return { flagged: Boolean(id) && Boolean(reason) };
   return requestData<{ flagged: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}/flag`, {
     method: "POST",
     body: JSON.stringify({ reason }),
@@ -530,16 +562,29 @@ export async function flagOpportunity(id: string, reason: string) {
 }
 
 export async function trackView(id: string) {
+  if (isStaticPrototype()) return { tracked: Boolean(id) };
   return requestData<{ tracked: boolean }>(`/api/career/opportunities/${encodeURIComponent(id)}/view`, {
     method: "POST",
   });
 }
 
 export async function listApplications() {
+  if (isStaticPrototype()) {
+    return { items: STATIC_CAREER_APPLICATIONS };
+  }
   return requestData<{ items: CareerApplication[] }>("/api/career/applications");
 }
 
 export async function createApplication(opportunityId: string, notes?: string) {
+  if (isStaticPrototype()) {
+    return {
+      ...STATIC_CAREER_APPLICATIONS[0],
+      id: `app-static-${opportunityId}`,
+      opportunityId,
+      notes: notes || "",
+      status: "interested",
+    };
+  }
   return requestData<CareerApplication>("/api/career/applications", {
     method: "POST",
     body: JSON.stringify({ opportunityId, notes }),

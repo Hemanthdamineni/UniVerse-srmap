@@ -12,22 +12,30 @@ export default function ExamFeedbackCard({
   return (
     <article className="dashboard-card space-y-3 p-4">
       <div>
-        <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{resource.title}</h3>
-        <p className="text-sm text-[var(--text-secondary)]">{resource.subjectCode}</p>
+        <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{resource.title}</h3>
+        <p className="text-xs text-[var(--comp-text-muted)]">{resource.subjectCode}</p>
       </div>
       <div className="flex gap-2">
         <button
-          className={`rounded-full px-4 py-2 text-sm font-semibold ${
-            value === true ? "bg-emerald-600 text-white" : "bg-emerald-100 text-[var(--success)]"
-          }`}
+          className="rounded-lg px-3 py-1.5 text-sm font-semibold transition"
+          style={{
+            background: value === true
+              ? "var(--success)"
+              : "color-mix(in srgb, var(--success) 10%, transparent)",
+            color: value === true ? "#fff" : "var(--success)",
+          }}
           onClick={() => onChange(true)}
         >
           Helped
         </button>
         <button
-          className={`rounded-full px-4 py-2 text-sm font-semibold ${
-            value === false ? "bg-[var(--error)] text-white" : "bg-[color-mix(in_srgb,var(--error)_15%,transparent)] text-[var(--error)]"
-          }`}
+          className="rounded-lg px-3 py-1.5 text-sm font-semibold transition"
+          style={{
+            background: value === false
+              ? "var(--error)"
+              : "color-mix(in srgb, var(--error) 10%, transparent)",
+            color: value === false ? "#fff" : "var(--error)",
+          }}
           onClick={() => onChange(false)}
         >
           Didn't help
