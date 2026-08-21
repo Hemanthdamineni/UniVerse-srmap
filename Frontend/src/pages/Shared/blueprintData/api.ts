@@ -1,5 +1,4 @@
 import {
-  getSessionId,
   handleSessionAuthFailure,
   isSessionAuthFailure,
 } from "../../../lib/core/session";
@@ -47,10 +46,7 @@ async function fetchJson(
     nonJsonMessage?: string;
   } = {}
 ): Promise<unknown> {
-  const sessionId = getSessionId();
-  const url = sessionId && !path.includes("/api/external") ? `${path}?sessionId=${encodeURIComponent(sessionId)}` : path;
-
-  const response = await fetch(url, {
+  const response = await fetch(path, {
     credentials: "include",
   });
 

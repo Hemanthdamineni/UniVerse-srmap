@@ -9,6 +9,7 @@ const {
   fetchProfileViaApi,
   isUsableProfileData,
   buildFallbackProfileData,
+  verifyAuthenticatedShellFromStorageState,
 } = require("../services/erp/erpClient");
 const {
   resolveSessionId,
@@ -17,7 +18,11 @@ const {
 } = require("../utils/cookies");
 
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
-const { NODE_ENV } = require("../config/env");
+const {
+  NODE_ENV,
+  LOGIN_DEADLINE_MS,
+  ERP_HEARTBEAT_PROBE_INTERVAL_MS,
+} = require("../config/env");
 
 const DEMO_ADMIN_REG_NO = "AP23110010419";
 
@@ -46,6 +51,79 @@ function buildDemoProfileData(username) {
 
 function createAuthRoutes({ sessionStore, erpDumpService }) {
   const router = express.Router();
+
+  // Rejects with LOGIN_TIMEOUT if the wrapped promise exceeds the deadline.
+  // The losing promise gets a no-op catch so a late upstream failure can
+  // never surface as an unhandled rejection after the response is sent.
+  function withLoginDeadline(loginPromise) {
+    let timer;
+    const deadline = new Promise((_resolve, reject) => {
+      timer = setTimeout(() => {
+        const error = new Error(
+          "The ERP took too long to verify your login. Please try again."
+        );
+        error.status = 504;
+        error.code = "LOGIN_TIMEOUT";
+        reject(error);
+      }, LOGIN_DEADLINE_MS);
+    });
+    loginPromise.catch(() => {});
+    return Promise.race([loginPromise, deadline]).finally(() => clearTimeout(timer));
+  }
+
+  async function handleHeartbeat(req, res) {
+    const sessionId = resolveSessionId(req);
+    try {
+      const session = await sessionStore.getOrThrow(sessionId);
+
+      if (!session.loggedIn) {
+        const error = new Error("Not signed in.");
+        error.status = 401;
+        error.code = "UNAUTHORIZED";
+        return sendApiError(res, req, error);
+      }
+
+      const now = Date.now();
+      const lastProbeAt = Number(session.lastUpstreamProbeAt || 0);
+      const shouldProbeUpstream =
+        Boolean(session.storageState) &&
+        now - lastProbeAt > ERP_HEARTBEAT_PROBE_INTERVAL_MS;
+
+      let storageState = session.storageState;
+      let alive = session.lastUpstreamAlive !== false;
+
+      if (shouldProbeUpstream) {
+        try {
+          const probe = await verifyAuthenticatedShellFromStorageState(storageState);
+          storageState = probe.storageState || storageState;
+          alive = Boolean(probe.authenticated);
+        } catch {
+          // Upstream unreachable — never kill healthy local sessions on flaky networks.
+          alive = true;
+        }
+      }
+
+      await sessionStore.update(sessionId, {
+        storageState,
+        lastHeartbeatAt: now,
+        ...(shouldProbeUpstream
+          ? { lastUpstreamProbeAt: now, lastUpstreamAlive: alive }
+          : {}),
+      });
+
+      return sendApiSuccess(res, req, {
+        success: true,
+        alive,
+        probed: shouldProbeUpstream,
+      });
+    } catch (error) {
+      if (Number(error?.status) === 401) clearSessionCookie(res, req);
+      return sendApiError(res, req, error);
+    }
+  }
+
+  router.get("/heartbeat", handleHeartbeat);
+  router.get("/auth/heartbeat", handleHeartbeat);
 
   async function handleCaptcha(req, res) {
     try {
@@ -102,7 +180,7 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
     try {
       const session = await sessionStore.getOrThrow(sessionId);
 
-      const loginResult = await loginWithCaptcha({
+      const loginPromise = loginWithCaptcha({
         storageState: session.storageState,
         username,
         password,
@@ -111,6 +189,8 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
         preAuthAttempt: session.preAuthAttempt,
         sessionId,
       });
+
+      const loginResult = await withLoginDeadline(loginPromise);
 
       if (!loginResult.success) {
         await sessionStore.update(sessionId, {

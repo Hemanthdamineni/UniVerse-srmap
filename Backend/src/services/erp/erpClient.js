@@ -870,6 +870,39 @@ function classifyLoginResponse(html = "", { hasSidebar = false, finalUrl = "", h
       message: "Invalid username or password. Please try again.",
     };
   }
+  if (/\baccount\b[^\n]{0,40}\b(blocked|locked|disabled)\b/i.test(rawHtml) || /\buser\s+(?:is\s+)?(?:blocked|locked)\b/i.test(rawHtml)) {
+    return {
+      classifier: "account_blocked",
+      authenticated: false,
+      failureCode: "ACCOUNT_BLOCKED",
+      status: 403,
+      message:
+        "Your ERP account is locked by the university. Please contact the IT helpdesk to unlock it.",
+    };
+  }
+  if (/password[^\n]{0,40}\bexpir/i.test(rawHtml)) {
+    return {
+      classifier: "password_expired",
+      authenticated: false,
+      failureCode: "PASSWORD_EXPIRED",
+      status: 401,
+      message:
+        "Your ERP password has expired. Use Forgot Password to reset it, then sign in again.",
+    };
+  }
+  if (
+    /\bunder\s+maintenance\b/i.test(rawHtml) ||
+    /\btemporarily\s+unavailable\b/i.test(rawHtml) ||
+    /\bserver\s+busy\b/i.test(rawHtml)
+  ) {
+    return {
+      classifier: "upstream_maintenance",
+      authenticated: false,
+      failureCode: "UPSTREAM_MAINTENANCE",
+      status: 503,
+      message: "The ERP is temporarily unavailable. Please try again in a few minutes.",
+    };
+  }
 
   if (statusCode >= 400) {
     return {

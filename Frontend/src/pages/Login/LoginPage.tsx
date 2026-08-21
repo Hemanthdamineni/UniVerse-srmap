@@ -1,85 +1,63 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
   extractApiErrorMessage,
+  extractApiErrorCode,
   normalizeCaptchaImageSource,
+  normalizeRegistrationNumber,
+  validateRegistrationNumber,
 } from "../../lib/core/auth";
-import { hasSessionAuth, storeSessionAuth } from "../../lib/core/session";
+import {
+  consumeLoginRedirect,
+  consumeSessionExpiredFlag,
+  hasSessionAuth,
+  storeSessionAuth,
+} from "../../lib/core/session";
 import { isDebugMode } from "../../lib/core/debugModeEnv";
-import srmLogo from "../../assets/FullSrmlogo.png";
+import {
+  CheckIcon,
+  EyeIcon,
+  INPUT,
+  LABEL,
+  LoadingDots,
+  RefreshIcon,
+  StatusMessage,
+} from "./LoginParts";
+import LoginIdentityPanel from "./LoginIdentityPanel";
 import "./LoginPage.overdrive.css";
 
-type Tone = "neutral" | "error" | "success";
 type SubmitPhase = "idle" | "loading" | "success";
 
-function CheckIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
+const CAPTCHA_RETRY_CODES = new Set(["CAPTCHA_EXPIRED", "INVALID_CAPTCHA"]);
+// The official ERP burns the session captcha on EVERY failed attempt
+// (verified live: wrong credentials re-serve the login page rather than a
+// distinct banner), so these codes all need a fresh captcha before retrying.
+const RETRY_WITH_FRESH_CAPTCHA_CODES = new Set([
+  ...CAPTCHA_RETRY_CODES,
+  "INVALID_CREDENTIALS",
+  "LOGIN_VERIFICATION_FAILED",
+]);
 
-function EyeIcon({ open }: { open: boolean }) {
-  return open ? (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
+// The backend enforces its own login deadline (LOGIN_DEADLINE_MS); this is a
+// client-side backstop with headroom over it so the UI never spins forever.
+const CAPTCHA_FETCH_TIMEOUT_MS = 15_000;
+const LOGIN_REQUEST_TIMEOUT_MS = 60_000;
+const SLOW_VERIFY_HINT_MS = 8_000;
 
-function RefreshIcon({ spinning }: { spinning: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-      style={{ display: "block", animation: spinning ? "login-spin 0.8s linear infinite" : "none" }}>
-      <polyline points="23 4 23 10 17 10" />
-      <polyline points="1 20 1 14 7 14" />
-      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-    </svg>
-  );
-}
-
-function LoadingDots() {
-  return (
-    <span className="login-loading-dots" aria-label="Signing in">
-      <span /><span /><span />
-    </span>
-  );
-}
-
-function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
-  if (!message) return null;
-  const cfg = {
-    success: { bg: "color-mix(in srgb, var(--success) 10%, transparent)", border: "color-mix(in srgb, var(--success) 35%, transparent)", color: "var(--success)", icon: "✓" },
-    error:   { bg: "color-mix(in srgb, var(--error) 8%, transparent)",   border: "color-mix(in srgb, var(--error) 30%, transparent)",   color: "var(--error)",   icon: "!" },
-    neutral: { bg: "color-mix(in srgb, var(--accent-blue) 8%, transparent)", border: "color-mix(in srgb, var(--accent-blue) 28%, transparent)", color: "var(--info)", icon: "·" },
-  }[tone];
-  return (
-    <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "11px 14px", borderRadius: "10px", border: `1px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, fontSize: "0.82rem", fontWeight: 500, lineHeight: 1.5, animation: "login-fadein 0.18s ease-out" }}>
-      <span style={{ fontWeight: 700, flexShrink: 0, lineHeight: 1.4 }}>{cfg.icon}</span>
-      <span>{message}</span>
-    </div>
-  );
-}
-
-const LABEL: React.CSSProperties = { display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--comp-text-secondary)", marginBottom: "7px" };
-const INPUT: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "11px 14px", fontSize: "0.875rem", borderRadius: "10px", border: "1px solid color-mix(in srgb, var(--border) 90%, transparent)", background: "var(--background)", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", transition: "border-color 0.2s ease, box-shadow 0.2s ease" };
+const REMEMBER_REGNO_KEY = "erp.login.regNo";
+const REMEMBER_OPTIN_KEY = "erp.login.rememberRegNo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const requestedInitialCaptcha = useRef(false);
   const debugAutoLoginAttempted = useRef(false);
-  const cursorRippleRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const captchaInputRef = useRef<HTMLInputElement>(null);
+  const slowVerifyTimerRef = useRef<number | undefined>(undefined);
+  // Guards the idle-expiry auto-refresh so a failed refresh can't loop.
+  const autoRefreshForExpiryRef = useRef(0);
 
   const [form, setForm] = useState({ username: "", password: "", captcha: "" });
   const [sessionId, setSessionId] = useState("");
@@ -88,13 +66,54 @@ export default function LoginPage() {
   const [captchaLoading, setCaptchaLoading] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [showPassword, setShowPassword] = useState(false);
-  const [statusTone, setStatusTone] = useState<Tone>("neutral");
+  const [statusTone, setStatusTone] = useState<"neutral" | "error" | "success">("neutral");
   const [statusMessage, setStatusMessage] = useState("");
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [formShake, setFormShake] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [rememberOptIn, setRememberOptIn] = useState(false);
+  const [captchaExpiresAt, setCaptchaExpiresAt] = useState(0);
+  const [captchaTotalMs, setCaptchaTotalMs] = useState(0);
+  const [captchaRemainingMs, setCaptchaRemainingMs] = useState(0);
 
   const submitting = submitPhase === "loading";
   const canSubmit = !submitting && submitPhase !== "success" && !captchaLoading && Boolean(sessionId) && Boolean(form.username.trim()) && Boolean(form.password.trim()) && Boolean(form.captcha.trim());
+
+  // ── Remember registration number prefill ──
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(REMEMBER_OPTIN_KEY) !== "1") return;
+      setRememberOptIn(true);
+      const saved = window.localStorage.getItem(REMEMBER_REGNO_KEY) || "";
+      if (saved) setForm((c) => ({ ...c, username: saved }));
+    } catch {
+      // localStorage unavailable — skip prefill.
+    }
+  }, []);
+
+  // ── Captcha expiry countdown ──
+  useEffect(() => {
+    if (!captchaExpiresAt) {
+      setCaptchaRemainingMs(0);
+      return;
+    }
+    const tick = () => setCaptchaRemainingMs(Math.max(0, captchaExpiresAt - Date.now()));
+    tick();
+    const id = window.setInterval(tick, 500);
+    return () => window.clearInterval(id);
+  }, [captchaExpiresAt]);
+
+  // ── Silent renewal: expired while idle and nothing typed yet ──
+  useEffect(() => {
+    if (!captchaExpiresAt || captchaRemainingMs > 0) return;
+    if (submitting || captchaLoading) return;
+    if (form.captcha.trim() !== "") return;
+    if (autoRefreshForExpiryRef.current === captchaExpiresAt) return;
+    autoRefreshForExpiryRef.current = captchaExpiresAt;
+    void fetchCaptcha();
+  });
+
+  useEffect(() => () => window.clearTimeout(slowVerifyTimerRef.current), []);
 
   // ── Canvas auto-crop: trim right-side whitespace from captcha ──
   useEffect(() => {
@@ -136,10 +155,12 @@ export default function LoginPage() {
   // ── Detect debug mode and auto-login ──
   useEffect(() => {
     if (hasSessionAuth()) {
-      const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
-      sessionStorage.removeItem("login_redirect");
-      navigate(redirectTo, { replace: true });
+      navigate(consumeLoginRedirect(), { replace: true });
       return;
+    }
+    if (consumeSessionExpiredFlag()) {
+      setStatusTone("error");
+      setStatusMessage("Your session expired. Please sign in again.");
     }
     if (requestedInitialCaptcha.current) return;
 
@@ -164,10 +185,8 @@ export default function LoginPage() {
       try {
         const r = await axios.post("/api/dev/login", { username: "AP23110010419" });
         if (cancelled) return;
-        storeSessionAuth({ sessionId: String(r.data?.sessionId || ""), profileData: r.data?.profileData });
-        const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
-        sessionStorage.removeItem("login_redirect");
-        navigate(redirectTo, { replace: true });
+        storeSessionAuth({ profileData: r.data?.profileData });
+        navigate(consumeLoginRedirect(), { replace: true });
       } catch {
         if (cancelled) return;
         setStatusTone("error");
@@ -181,18 +200,29 @@ export default function LoginPage() {
     return () => { cancelled = true; };
   }, [navigate]);
 
-  const fetchCaptcha = async (nextMessage = "") => {
+  const fetchCaptcha = async (
+    nextMessage = "",
+    opts: { focusCaptcha?: boolean; tone?: "neutral" | "error" } = {}
+  ) => {
     setCaptchaLoading(true);
     try {
-      const r = await axios.get("/api/captcha");
+      const r = await axios.get("/api/captcha", { timeout: CAPTCHA_FETCH_TIMEOUT_MS });
       setCaptchaBase64(normalizeCaptchaImageSource(r.data?.captchaBase64));
       setSessionId(String(r.data?.sessionId || ""));
+      const expiresInMs = Math.max(0, Number(r.data?.expiresInMs) || 0);
+      setCaptchaTotalMs(expiresInMs);
+      setCaptchaExpiresAt(expiresInMs ? Date.now() + expiresInMs : 0);
       setForm((c) => ({ ...c, captcha: "" }));
-      if (nextMessage) { setStatusTone("neutral"); setStatusMessage(nextMessage); }
+      if (nextMessage) { setStatusTone(opts.tone || "neutral"); setStatusMessage(nextMessage); }
+      if (opts.focusCaptcha) captchaInputRef.current?.focus();
     } catch (e: unknown) {
       const p = axios.isAxiosError(e) ? e.response?.data : null;
       setStatusTone("error");
-      setStatusMessage(extractApiErrorMessage(p, "Failed to load captcha."));
+      setStatusMessage(
+        axios.isAxiosError(e) && !p
+          ? "Couldn't reach the ERP to load a captcha. Check your connection, then tap Refresh."
+          : extractApiErrorMessage(p, "Failed to load captcha.")
+      );
     } finally {
       setCaptchaLoading(false);
     }
@@ -206,12 +236,48 @@ export default function LoginPage() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((c) => ({ ...c, [name]: value }));
+    const nextValue = name === "username" ? normalizeRegistrationNumber(value) : value;
+    setForm((c) => ({ ...c, [name]: nextValue }));
+  };
+
+  const handleLoginFailure = (payload: unknown, fallbackMessage: string) => {
+    setSubmitPhase("idle");
+    triggerShake();
+    const code = extractApiErrorCode(payload);
+    if (RETRY_WITH_FRESH_CAPTCHA_CODES.has(code)) {
+      // Credentials are preserved; upstream has consumed the captcha, so a
+      // fresh one is loaded and only it needs retyping.
+      const message =
+        code === "CAPTCHA_EXPIRED"
+          ? "Captcha expired — we've loaded a fresh one. Just retype it."
+          : code === "INVALID_CAPTCHA"
+            ? "That captcha didn't match — we've loaded a fresh one. Please retype it."
+            : `${fallbackMessage} We've loaded a fresh captcha for your next attempt.`;
+      void fetchCaptcha(message, { focusCaptcha: true, tone: "error" });
+      return;
+    }
+    setStatusTone("error");
+    setStatusMessage(fallbackMessage);
+  };
+
+  const persistRememberedRegNo = (username: string) => {
+    try {
+      if (rememberOptIn) {
+        window.localStorage.setItem(REMEMBER_OPTIN_KEY, "1");
+        window.localStorage.setItem(REMEMBER_REGNO_KEY, username);
+      } else {
+        window.localStorage.removeItem(REMEMBER_OPTIN_KEY);
+        window.localStorage.removeItem(REMEMBER_REGNO_KEY);
+      }
+    } catch {
+      // localStorage unavailable — preference just won't persist.
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.username.trim()) { setStatusTone("error"); setStatusMessage("Registration number is required."); triggerShake(); return; }
+    const regNoError = validateRegistrationNumber(form.username);
+    if (regNoError) { setStatusTone("error"); setStatusMessage(regNoError); triggerShake(); return; }
     if (!form.password.trim()) { setStatusTone("error"); setStatusMessage("Password is required."); triggerShake(); return; }
     if (!form.captcha.trim()) { setStatusTone("error"); setStatusMessage("Enter the captcha to continue."); triggerShake(); return; }
     if (!sessionId) { setStatusTone("error"); setStatusMessage("Captcha session missing. Refresh and try again."); triggerShake(); return; }
@@ -219,51 +285,50 @@ export default function LoginPage() {
     setSubmitPhase("loading");
     setStatusTone("neutral");
     setStatusMessage("Verifying credentials...");
+    window.clearTimeout(slowVerifyTimerRef.current);
+    slowVerifyTimerRef.current = window.setTimeout(() => {
+      setStatusTone("neutral");
+      setStatusMessage("Still verifying — the university ERP can take longer during busy hours.");
+    }, SLOW_VERIFY_HINT_MS);
 
     try {
-      const r = await axios.post("/api/login", { username: form.username, password: form.password, captcha: form.captcha, sessionId });
+      const r = await axios.post(
+        "/api/login",
+        { username: form.username, password: form.password, captcha: form.captcha, sessionId },
+        { timeout: LOGIN_REQUEST_TIMEOUT_MS }
+      );
+      window.clearTimeout(slowVerifyTimerRef.current);
       if (!r.data?.success) {
-        setSubmitPhase("idle");
-        setStatusTone("error");
-        setStatusMessage(`Login failed: ${extractApiErrorMessage(r.data, "Unknown error.")}`);
-        triggerShake();
+        handleLoginFailure(r.data, `Login failed: ${extractApiErrorMessage(r.data, "Unknown error.")}`);
         return;
       }
-      storeSessionAuth({ sessionId: String(r.data?.sessionId || sessionId), profileData: r.data?.profileData });
+      storeSessionAuth({ profileData: r.data?.profileData });
+      persistRememberedRegNo(form.username.trim().toUpperCase());
       setSubmitPhase("success");
       setStatusTone("success");
       setStatusMessage("Logged in. Opening dashboard...");
       setTimeout(() => {
-        const redirectTo = sessionStorage.getItem("login_redirect") || "/dashboard";
-        sessionStorage.removeItem("login_redirect");
-        navigate(redirectTo, { replace: true });
+        navigate(consumeLoginRedirect(), { replace: true });
       }, 700);
     } catch (e: unknown) {
+      window.clearTimeout(slowVerifyTimerRef.current);
       const p = axios.isAxiosError(e) ? e.response?.data : null;
+      if (axios.isAxiosError(e) && !e.response) {
+        const timedOut = e.code === "ECONNABORTED" || /timeout/i.test(String(e.message || ""));
+        setStatusTone("error");
+        setStatusMessage(
+          timedOut
+            ? "The ERP is taking too long to verify your login. Please try again."
+            : "Network error — couldn't reach the login service. Please try again."
+        );
+        triggerShake();
+        setSubmitPhase("idle");
+        return;
+      }
       const msg = extractApiErrorMessage(p, axios.isAxiosError(e) ? (e.message || "Login failed.") : "Login failed.");
-      setStatusTone("error");
-      setStatusMessage(msg);
-      triggerShake();
-      setSubmitPhase("idle");
+      handleLoginFailure(p, msg);
     }
   };
-
-  const handleIdentityMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1) + "%";
-    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1) + "%";
-    if (cursorRippleRef.current) {
-      cursorRippleRef.current.style.setProperty("--cx", x);
-      cursorRippleRef.current.style.setProperty("--cy", y);
-    }
-  }, []);
-
-  const handleIdentityMouseLeave = useCallback(() => {
-    if (cursorRippleRef.current) {
-      cursorRippleRef.current.style.setProperty("--cx", "-200px");
-      cursorRippleRef.current.style.setProperty("--cy", "-200px");
-    }
-  }, []);
 
   const fieldClass = (field: string) => {
     if (!focusedField) return "login-spring-field";
@@ -271,62 +336,19 @@ export default function LoginPage() {
     return "login-spring-field login-field-dimmed";
   };
 
+  const captchaSecondsLeft = Math.ceil(captchaRemainingMs / 1000);
+  const captchaProgressPct = captchaTotalMs > 0 ? Math.min(100, (captchaRemainingMs / captchaTotalMs) * 100) : 0;
+  const captchaUrgentColor =
+    captchaRemainingMs <= 10_000 ? "var(--error)"
+    : captchaRemainingMs <= 30_000 ? "var(--warning)"
+    : "var(--comp-accent)";
+
   return (
     <div className="login-page-shell">
       <div className="login-card">
 
         {/* ── Identity Panel ── */}
-        <div
-          className="login-identity-panel"
-          onMouseMove={handleIdentityMouseMove}
-          onMouseLeave={handleIdentityMouseLeave}
-        >
-          <div ref={cursorRippleRef} className="login-cursor-ripple" />
-
-          <div className="login-identity-content" style={{ padding: "48px 40px", justifyContent: "space-between" }}>
-            <div>
-              <div className="login-identity-enter login-id-d0">
-                <img src={srmLogo} alt="SRM AP University" style={{ height: "40px", width: "auto", objectFit: "contain", display: "block", filter: "brightness(0) invert(1)", marginBottom: "40px" }} />
-              </div>
-              <div className="login-identity-enter login-id-d1">
-                <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "#ffffff", lineHeight: 1.25, margin: 0, letterSpacing: "-0.02em" }}>
-                  SRM AP<br />University ERP
-                </h1>
-              </div>
-              <div className="login-identity-enter login-id-d2">
-                <p style={{ marginTop: "12px", fontSize: "0.875rem", color: "rgba(255,255,255,0.58)", lineHeight: 1.6, maxWidth: "260px" }}>
-                  Your academic records, attendance, and campus services in one place.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ marginTop: "48px" }}>
-              {[
-                { label: "Secure session-based login", sub: "Credentials verified directly against the university backend." },
-                { label: "Captcha protected", sub: "Each login requires a fresh captcha for compliance." },
-                { label: "Password recovery available", sub: "Reset via OTP sent to your registered email." },
-              ].map((item, i) => (
-                <div
-                  key={item.label}
-                  className={`login-identity-enter login-id-d${i + 2}`}
-                  style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 0", borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.09)" }}
-                >
-                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#34AEBE", flexShrink: 0, marginTop: "5px", boxShadow: "0 0 8px rgba(52,174,190,0.55)" }} />
-                  <div>
-                    <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "rgba(255,255,255,0.88)", lineHeight: 1.3 }}>{item.label}</p>
-                    <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.42)", lineHeight: 1.5 }}>{item.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="login-identity-enter login-id-d4" style={{ marginTop: "36px" }}>
-              <span style={{ display: "inline-block", padding: "5px 12px", background: "rgba(52,174,190,0.18)", border: "1px solid rgba(52,174,190,0.32)", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600, color: "#34AEBE", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                Student Portal
-              </span>
-            </div>
-          </div>
-        </div>
+        <LoginIdentityPanel />
 
         {/* ── Form Panel ── */}
         <div className="login-form-panel">
@@ -351,12 +373,14 @@ export default function LoginPage() {
                 value={form.username} onChange={handleChange}
                 onFocus={() => setFocusedField("username")}
                 onBlur={() => setFocusedField(null)}
-                placeholder="Your registration number"
+                placeholder="e.g. AP24110000000"
                 autoComplete="username" autoCapitalize="none" spellCheck={false}
+                autoFocus
+                maxLength={13}
                 style={INPUT}
                 className={focusedField === "username" ? "login-input-focused" : ""}
               />
-              <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>Enter your university registration number</p>
+              <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>Format: AP followed by 11 digits</p>
             </div>
 
             {/* Password */}
@@ -367,7 +391,8 @@ export default function LoginPage() {
                   id="password" name="password" type={showPassword ? "text" : "password"}
                   value={form.password} onChange={handleChange}
                   onFocus={() => setFocusedField("password")}
-                  onBlur={() => setFocusedField(null)}
+                  onBlur={() => { setFocusedField(null); setCapsLockOn(false); }}
+                  onKeyUp={(e) => setCapsLockOn(e.getModifierState?.("CapsLock") ?? false)}
                   placeholder="Your ERP password"
                   autoComplete="current-password"
                   style={{ flex: 1, padding: "11px 14px", fontSize: "0.875rem", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
@@ -380,19 +405,31 @@ export default function LoginPage() {
                   <EyeIcon open={showPassword} />
                 </button>
               </div>
+              {capsLockOn && (
+                <p role="status" style={{ margin: "5px 0 0", fontSize: "0.76rem", fontWeight: 600, color: "var(--warning)" }}>
+                  Caps Lock is on
+                </p>
+              )}
             </div>
 
             {/* Captcha */}
             <div className={`login-form-enter login-f-d4 ${fieldClass("captcha")}`} style={{ marginBottom: "18px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "7px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "7px", gap: "10px" }}>
                 <label htmlFor="captcha" style={{ ...LABEL, marginBottom: 0 }}>Captcha</label>
-                <button type="button" onClick={() => { void fetchCaptcha("Captcha refreshed."); }} disabled={captchaLoading} aria-label="Refresh captcha"
-                  style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: captchaLoading ? "not-allowed" : "pointer", color: "var(--comp-accent)", fontSize: "0.75rem", fontWeight: 600, padding: "2px 0", fontFamily: "inherit", opacity: captchaLoading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
-                  <RefreshIcon spinning={captchaLoading} />
-                  {captchaLoading ? "Refreshing..." : "Refresh"}
-                </button>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "12px" }}>
+                  {!captchaLoading && captchaRemainingMs > 0 && captchaRemainingMs <= 30_000 && (
+                    <span title="Time before this captcha expires" style={{ fontSize: "0.75rem", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: captchaUrgentColor }}>
+                      {captchaSecondsLeft}s
+                    </span>
+                  )}
+                  <button type="button" onClick={() => { void fetchCaptcha("Captcha refreshed.", { focusCaptcha: true }); }} disabled={captchaLoading} aria-label="Refresh captcha"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: captchaLoading ? "not-allowed" : "pointer", color: "var(--comp-accent)", fontSize: "0.75rem", fontWeight: 600, padding: "2px 0", fontFamily: "inherit", opacity: captchaLoading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
+                    <RefreshIcon spinning={captchaLoading} />
+                    {captchaLoading ? "Refreshing..." : "Refresh"}
+                  </button>
+                </span>
               </div>
-              <div style={{ borderRadius: "10px", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", display: "flex", alignItems: "stretch", boxShadow: focusedField === "captcha" ? "0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08)" : "none" }}>
+              <div style={{ position: "relative", borderRadius: "10px", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", display: "flex", alignItems: "stretch", boxShadow: focusedField === "captcha" ? "0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08)" : "none" }}>
                 <div style={{ flexShrink: 0, background: "#ffffff", borderRight: "1px solid color-mix(in srgb, var(--border) 80%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "72px", minWidth: "80px", maxWidth: "180px", overflow: "hidden" }}>
                   {captchaLoading
                     ? <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", animation: "login-pulse 1.4s ease-in-out infinite", padding: "0 12px" }}>Loading...</span>
@@ -402,7 +439,7 @@ export default function LoginPage() {
                   }
                 </div>
                 <input
-                  id="captcha" name="captcha"
+                  id="captcha" name="captcha" ref={captchaInputRef}
                   value={form.captcha} onChange={handleChange}
                   onFocus={() => setFocusedField("captcha")}
                   onBlur={() => setFocusedField(null)}
@@ -410,11 +447,23 @@ export default function LoginPage() {
                   autoComplete="off"
                   style={{ flex: 1, padding: "11px 14px", fontSize: "0.875rem", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                 />
+                {!captchaLoading && captchaExpiresAt > 0 && (
+                  <div aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, height: "3px", width: `${captchaProgressPct}%`, maxWidth: "100%", background: captchaUrgentColor, transition: "width 0.5s linear, background 0.3s ease" }} />
+                )}
               </div>
             </div>
 
-            {/* Forgot */}
-            <div className="login-form-enter login-f-d5" style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+            {/* Remember + Forgot */}
+            <div className="login-form-enter login-f-d5" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", fontWeight: 500, color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+                <input
+                  type="checkbox"
+                  checked={rememberOptIn}
+                  onChange={(e) => setRememberOptIn(e.target.checked)}
+                  style={{ accentColor: "var(--comp-accent)", width: "15px", height: "15px", margin: 0, cursor: "pointer" }}
+                />
+                Remember registration number
+              </label>
               <Link to="/forgot-password" style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--comp-accent)", textDecoration: "none" }}
                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}

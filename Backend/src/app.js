@@ -29,7 +29,7 @@ const { createTelemetryRoutes } = require("./routes/telemetryRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createRequestContextMiddleware } = require("./middleware/requestContext");
 const { createAdminContextMiddleware } = require("./middleware/adminContext");
-const { createGlobalRateLimitMiddleware } = require("./middleware/rateLimit");
+const { createGlobalRateLimitMiddleware, createLoginRateLimitMiddleware } = require("./middleware/rateLimit");
 const { FEATURE_ERP_V2_API } = require("./config/env");
 const { sendApiError } = require("./utils/apiResponse");
 
@@ -86,6 +86,17 @@ function createApp({
     app.use("/uploads", express.static(uploadsDir));
   }
   app.use("/api", createGlobalRateLimitMiddleware({ redisClient }));
+  app.use(
+    [
+      "/api/captcha",
+      "/api/auth/captcha",
+      "/api/login",
+      "/api/auth/login",
+      "/api/forgot",
+      "/api/auth/forgot",
+    ],
+    createLoginRateLimitMiddleware({ redisClient })
+  );
   app.use("/api", express.json({ limit: "2mb" }));
 
   app.use(

@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
-import { fetchSessionProfile, getSessionId, logoutSession, readStoredProfileData } from "../lib/core/session";
+import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { useAdminMode } from "../contexts/AdminModeContext";
 
 function SidebarContrastText({ text, className = "" }: { text: string; className?: string }) {
@@ -114,7 +114,7 @@ export default function Sidebar() {
   useEffect(() => {
     let active = true;
 
-    if (!getSessionId()) {
+    if (!hasSessionAuth()) {
       setProfileData(null);
       return () => {
         active = false;

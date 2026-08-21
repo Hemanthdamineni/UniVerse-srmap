@@ -11,7 +11,7 @@ import WelcomeCard from "./WelcomeCard";
 import UpcomingEventsWidget from "./UpcomingEventsWidget";
 import CareerWidget from "./CareerWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
-import { fetchSessionProfile, getSessionId } from "../../lib/core/session";
+import { fetchSessionProfile, hasSessionAuth } from "../../lib/core/session";
 import { getErpBatch } from "../../lib/erp/index";
 import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
 import { InlineError } from "../../components/ui/Feedback";
@@ -33,9 +33,7 @@ function Dashboard() {
   usePageContrast(dashboardRef, [loading, profileLoading, error, profileError, selectedDate]);
 
   useEffect(() => {
-    const sessionId = getSessionId();
-
-    if (!sessionId) {
+    if (!hasSessionAuth()) {
       setError("Your session has expired. Please log in to continue.");
       setLoading(false);
       setProfileLoading(false);
