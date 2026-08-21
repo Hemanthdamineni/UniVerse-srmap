@@ -56,10 +56,8 @@ export function transformAttendance(rawData: unknown): AttendanceModel {
     attendanceEntered: Number(r.present) || 0,
     odMlTaken: Number(r.odMlTaken) || 0,
     present: Number(r.present) || 0,
-    // Note: odMlApprovedPct and attendancePct fields are intentionally swapped
-    // to match the SRM portal's display (confirmed by user).
-    odMlApprovedPct: parseFloat(String(r.attendancePercentage ?? "0")) || 0,
-    attendancePct: parseFloat(String(r.odMlPercentage ?? "0")) || 0,
+    odMlApprovedPct: parseFloat(String(r.odMlPercentage ?? "0")) || 0,
+    attendancePct: parseFloat(String(r.attendancePercentage ?? "0")) || 0,
   })).filter((r) => r.subjectCode);
 
   const notes: string[] = [];
