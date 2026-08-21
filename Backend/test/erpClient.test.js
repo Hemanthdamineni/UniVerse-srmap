@@ -270,15 +270,51 @@ test("buildLoginPayload preserves obfuscated ERP login assignments", () => {
 });
 
 test("classifyLoginResponse detects invalid captcha and authenticated shell states", () => {
-  const invalidCaptcha = classifyLoginResponse("<div>Invalid captcha</div>");
+  const invalidCaptcha = classifyLoginResponse('<div id="divmsg"> Captcha Invalid.... </div>');
   assert.equal(invalidCaptcha.classifier, "invalid_captcha");
   assert.equal(invalidCaptcha.failureCode, "INVALID_CAPTCHA");
+
+  // Legacy whole-page phrasing must keep working as a fallback.
+  const legacy = classifyLoginResponse("<div>Invalid captcha</div>");
+  assert.equal(legacy.failureCode, "INVALID_CAPTCHA");
 
   const authenticated = classifyLoginResponse('<div id="sidebar-menu">Welcome</div>', {
     finalUrl: "https://student.srmap.edu.in/srmapstudentcorner/HRDsystem",
   });
   assert.equal(authenticated.classifier, "authenticated_shell");
   assert.equal(authenticated.authenticated, true);
+});
+
+test("classifyLoginResponse reads real ERP rejection banner word order", () => {
+  // Verified live: SRM ERP writes rejections to <div id="divmsg"> using
+  // "Captcha Invalid" — the reverse of the phrase we historically matched.
+  const real = classifyLoginResponse(
+    '<html><body><div style="color:#FF0000;text-align:center" id="divmsg"> Captcha Invalid.... </div></body></html>',
+    { hasSidebar: false }
+  );
+  assert.equal(real.classifier, "invalid_captcha");
+  assert.equal(real.failureCode, "INVALID_CAPTCHA");
+  assert.equal(real.status, 401);
+});
+
+test("classifyLoginResponse maps divmsg credential rejections to INVALID_CREDENTIALS", () => {
+  for (const wording of [
+    " Invalid User Name or Password ",
+    "Invalid Login",
+    "Wrong password entered",
+  ]) {
+    const classified = classifyLoginResponse(`<div id="divmsg">${wording}</div>`);
+    assert.equal(classified.failureCode, "INVALID_CREDENTIALS", `wording: ${wording}`);
+    assert.equal(classified.status, 401);
+  }
+});
+
+test("classifyLoginResponse surfaces unrecognized divmsg text verbatim", () => {
+  const classified = classifyLoginResponse(
+    '<div id="divmsg"> Some brand new portal message </div>'
+  );
+  assert.equal(classified.classifier, "unknown_upstream_state");
+  assert.match(classified.message, /Some brand new portal message/);
 });
 
 test("classifyLoginResponse does not treat 404 verification pages as authenticated", () => {

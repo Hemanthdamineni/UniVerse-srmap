@@ -852,6 +852,35 @@ function classifyLoginResponse(html = "", { hasSidebar = false, finalUrl = "", h
   const rawHtml = String(html || "");
   const normalizedUrl = String(finalUrl || "");
   const statusCode = Number(httpStatus || 0);
+
+  // The ERP reports rejections in <div id="divmsg"> (verified live: e.g.
+  // "Captcha Invalid...." for a bad captcha, credential errors likewise).
+  // Match against that first — its word order differs from what we used to
+  // assume — then fall back to legacy whole-page checks.
+  const rejectionMessage = extractLoginRejectionMessage(rawHtml);
+  if (/invalid\s*captcha|captcha\s*invalid/i.test(rejectionMessage)) {
+    return {
+      classifier: "invalid_captcha",
+      authenticated: false,
+      failureCode: "INVALID_CAPTCHA",
+      status: 401,
+      message: "Invalid captcha. Please try again.",
+    };
+  }
+  if (
+    /invalid\s*(?:login|user(?:name)?|credentials?)/i.test(rejectionMessage) ||
+    /(?:user\s*name|username|user)\s*(?:or|\/)\s*password\s*(?:is\s*)?invalid/i.test(rejectionMessage) ||
+    /(?:incorrect|wrong)\s*(?:password|user)/i.test(rejectionMessage)
+  ) {
+    return {
+      classifier: "invalid_credentials",
+      authenticated: false,
+      failureCode: "INVALID_CREDENTIALS",
+      status: 401,
+      message: "Invalid username or password. Please try again.",
+    };
+  }
+
   if (/invalid captcha/i.test(rawHtml)) {
     return {
       classifier: "invalid_captcha",
@@ -943,8 +972,22 @@ function classifyLoginResponse(html = "", { hasSidebar = false, finalUrl = "", h
     authenticated: false,
     failureCode: "",
     status: 502,
-    message: "ERP returned an unknown login response.",
+    message: rejectionMessage
+      ? `ERP rejected the sign-in attempt: ${rejectionMessage.replace(/\.{2,}$/, "").trim()}`
+      : "ERP returned an unknown login response.",
   };
+}
+
+// Reads the ERP's own rejection banner. Verified live: failed logins re-serve
+// the login page with the reason inside <div id="divmsg"> (e.g.
+// "Captcha Invalid...."), which legacy whole-page patterns missed both by
+// word order and because artifacts truncated before this region.
+function extractLoginRejectionMessage(html = "") {
+  const match = String(html || "").match(
+    /<div[^>]*id\s*=\s*["']divmsg["'][^>]*>([\s\S]*?)<\/div>/i
+  );
+  if (!match) return "";
+  return cleanText(match[1]);
 }
 
 function buildFallbackProfileData(username, profileData = null) {
