@@ -64,13 +64,13 @@ vi.mock("../../components/layout/PageLayouts", () => ({
   ),
 }));
 
-const mockGetSessionId = vi.fn();
+const mockHasSessionAuth = vi.fn();
 const mockGetErpBatch = vi.fn();
 const mockFetchSessionProfile = vi.fn();
 const mockGetEndSemesterFeedbackStatus = vi.fn();
 
 vi.mock("../../lib/core/session", () => ({
-  getSessionId: (...args: unknown[]) => mockGetSessionId(...args),
+  hasSessionAuth: (...args: unknown[]) => mockHasSessionAuth(...args),
   fetchSessionProfile: (...args: unknown[]) => mockFetchSessionProfile(...args),
 }));
 
@@ -106,7 +106,7 @@ describe("Dashboard", () => {
   // --- Loading state ---
 
   it("shows loading skeleton while data is being fetched", () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockReturnValue(new Promise(() => {}));
     mockFetchSessionProfile.mockReturnValue(new Promise(() => {}));
     mockGetEndSemesterFeedbackStatus.mockReturnValue(new Promise(() => {}));
@@ -120,7 +120,7 @@ describe("Dashboard", () => {
   // --- Session expired ---
 
   it("shows error when no session ID is found", async () => {
-    mockGetSessionId.mockReturnValue(null);
+    mockHasSessionAuth.mockReturnValue(false);
     mockGetErpBatch.mockReturnValue(new Promise(() => {}));
     mockFetchSessionProfile.mockReturnValue(new Promise(() => {}));
     mockGetEndSemesterFeedbackStatus.mockReturnValue(Promise.resolve({ totalPending: 0 }));
@@ -139,7 +139,7 @@ describe("Dashboard", () => {
   // --- ERP batch fetch error ---
 
   it("shows error when getErpBatch fails", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockRejectedValue(new Error("ERP connection failed"));
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -156,7 +156,7 @@ describe("Dashboard", () => {
   // --- Profile fetch error ---
 
   it("shows profile error when fetchSessionProfile fails", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockRejectedValue(new Error("Profile unavailable"));
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -171,7 +171,7 @@ describe("Dashboard", () => {
   // --- Null profile data ---
 
   it("shows profile error when profileData is null", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(null);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -186,7 +186,7 @@ describe("Dashboard", () => {
   // --- Successful full render ---
 
   it("renders all dashboard widgets in success state", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({
       "academic/time-table": {},
       "examination/internal-mark-details": {},
@@ -217,7 +217,7 @@ describe("Dashboard", () => {
   });
 
   it("renders QuickLinks, UpcomingEventsWidget, and CareerWidget", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -232,7 +232,7 @@ describe("Dashboard", () => {
   });
 
   it("renders ToDo widget", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -247,7 +247,7 @@ describe("Dashboard", () => {
   });
 
   it("renders WeekCalendar and Schedule in the sidebar", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -266,7 +266,7 @@ describe("Dashboard", () => {
   // --- ERP batch data passed to widgets ---
 
   it("calls getErpBatch with correct page keys", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
@@ -285,7 +285,7 @@ describe("Dashboard", () => {
   // --- Feedback status ---
 
   it("passes feedbackPendingCount to QuickLinks", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 3 });
@@ -302,7 +302,7 @@ describe("Dashboard", () => {
   });
 
   it("handles feedback status API failure gracefully", async () => {
-    mockGetSessionId.mockReturnValue("valid-session-id");
+    mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
     mockGetEndSemesterFeedbackStatus.mockRejectedValue(new Error("Server error"));

@@ -291,6 +291,27 @@ test("classifyLoginResponse does not treat 404 verification pages as authenticat
   assert.equal(classified.authenticated, false);
 });
 
+test("classifyLoginResponse maps account lockout to ACCOUNT_BLOCKED", () => {
+  const classified = classifyLoginResponse("<div>Your account is blocked. Contact admin.</div>");
+  assert.equal(classified.failureCode, "ACCOUNT_BLOCKED");
+  assert.equal(classified.status, 403);
+  assert.equal(classified.authenticated, false);
+});
+
+test("classifyLoginResponse maps expired passwords to PASSWORD_EXPIRED", () => {
+  const classified = classifyLoginResponse("<div>Your password has expired. Please reset.</div>");
+  assert.equal(classified.failureCode, "PASSWORD_EXPIRED");
+  assert.equal(classified.status, 401);
+  assert.equal(classified.authenticated, false);
+});
+
+test("classifyLoginResponse maps ERP maintenance notices to UPSTREAM_MAINTENANCE", () => {
+  const classified = classifyLoginResponse("<div>Portal is under maintenance</div>");
+  assert.equal(classified.failureCode, "UPSTREAM_MAINTENANCE");
+  assert.equal(classified.status, 503);
+  assert.equal(classified.authenticated, false);
+});
+
 test("loginWithCaptcha succeeds with deferred profile when auth shell is verified", async () => {
   const result = await loginWithCaptcha(
     {
@@ -387,7 +408,8 @@ test("loginWithCaptcha rejects expired captcha sessions before upstream submit",
           loginBootstrap: { formAction: "StudentLoginToPortal" },
           preAuthAttempt: {
             loginAttemptId: "attempt-3",
-            issuedAt: Date.now() - 20_000,
+            // Well past LOGIN_PREAUTH_TTL_MS regardless of its configured value.
+            issuedAt: Date.now() - 60 * 60 * 1000,
           },
         },
         {

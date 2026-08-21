@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erp/index";
 import { extractApiErrorMessage } from "../../lib/core/auth";
-import { getSessionId, handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/core/session";
+import { handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/core/session";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
@@ -143,10 +143,8 @@ async function fetchInternalMarksForSemester(
   semester: number,
   signal?: AbortSignal,
 ): Promise<InternalMarkRecord[]> {
-  const sessionId = getSessionId();
-  const query = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : "";
   const response = await fetch(
-    `/api/scrape/examination/earlier-internal-marks/semester/${semester}${query}`,
+    `/api/scrape/examination/earlier-internal-marks/semester/${semester}`,
     { credentials: "include", signal },
   );
 

@@ -1,8 +1,13 @@
 import { isStaticPrototype, STATIC_PROTOTYPE_PROFILE } from "./prototype";
 
-const SESSION_ID_KEY = "sessionId";
+// The httpOnly `erp_session` cookie is the only credential the backend
+// accepts. Nothing session-shaped is ever stored client-side; this flag is a
+// non-secret UX hint so synchronous UI gating keeps working between requests.
+const LOGGED_IN_KEY = "loggedIn";
 const PROFILE_DATA_KEY = "profileData";
 const ADMIN_PASSWORD_KEY = "erp.admin.password";
+const LOGIN_REDIRECT_KEY = "login_redirect";
+const SESSION_EXPIRED_FLAG_KEY = "session_expired";
 
 type PlainRecord = Record<string, unknown>;
 
@@ -50,11 +55,6 @@ function extractErrorCode(payload: unknown) {
   return "";
 }
 
-export function getSessionId() {
-  if (!hasStorage()) return "";
-  return window.localStorage.getItem(SESSION_ID_KEY) || "";
-}
-
 export function readStoredProfileData(): PlainRecord | null {
   if (!hasStorage()) return null;
 
@@ -73,16 +73,10 @@ export function readStoredProfileData(): PlainRecord | null {
   }
 }
 
-export function storeSessionAuth({
-  sessionId,
-  profileData,
-}: {
-  sessionId: string;
-  profileData?: unknown;
-}) {
+export function storeSessionAuth({ profileData }: { profileData?: unknown }) {
   if (!hasStorage()) return;
 
-  window.localStorage.setItem(SESSION_ID_KEY, String(sessionId || ""));
+  window.localStorage.setItem(LOGGED_IN_KEY, "1");
 
   if (profileData && typeof profileData === "object") {
     window.localStorage.setItem(PROFILE_DATA_KEY, JSON.stringify(profileData));
@@ -93,7 +87,7 @@ export function storeSessionAuth({
 
 export function clearSessionAuth() {
   if (!hasStorage()) return;
-  window.localStorage.removeItem(SESSION_ID_KEY);
+  window.localStorage.removeItem(LOGGED_IN_KEY);
   window.localStorage.removeItem(PROFILE_DATA_KEY);
   if (typeof window !== "undefined" && window.sessionStorage) {
     window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
@@ -102,7 +96,8 @@ export function clearSessionAuth() {
 
 export function hasSessionAuth() {
   if (isStaticPrototype()) return true;
-  return Boolean(getSessionId());
+  if (!hasStorage()) return false;
+  return window.localStorage.getItem(LOGGED_IN_KEY) === "1";
 }
 
 export function isSessionAuthFailure(status: number, payload: unknown) {
@@ -117,6 +112,18 @@ export function redirectToLogin() {
   if (typeof window === "undefined") return;
   if (isStaticPrototype()) return;
   if (window.location.pathname === "/login") return;
+
+  const currentPath =
+    `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  try {
+    if (currentPath && !currentPath.startsWith("/login")) {
+      window.sessionStorage.setItem(LOGIN_REDIRECT_KEY, currentPath);
+      window.sessionStorage.setItem(SESSION_EXPIRED_FLAG_KEY, "1");
+    }
+  } catch {
+    // sessionStorage may be unavailable (privacy mode); redirect still works.
+  }
+
   window.location.replace("/login");
 }
 
@@ -124,6 +131,20 @@ export function handleSessionAuthFailure() {
   if (isStaticPrototype()) return;
   clearSessionAuth();
   redirectToLogin();
+}
+
+export function consumeLoginRedirect(): string {
+  if (typeof window === "undefined" || !window.sessionStorage) return "/dashboard";
+  const target = window.sessionStorage.getItem(LOGIN_REDIRECT_KEY) || "/dashboard";
+  window.sessionStorage.removeItem(LOGIN_REDIRECT_KEY);
+  return target;
+}
+
+export function consumeSessionExpiredFlag(): boolean {
+  if (typeof window === "undefined" || !window.sessionStorage) return false;
+  const flagged = window.sessionStorage.getItem(SESSION_EXPIRED_FLAG_KEY) === "1";
+  window.sessionStorage.removeItem(SESSION_EXPIRED_FLAG_KEY);
+  return flagged;
 }
 
 export async function fetchSessionProfile(): Promise<PlainRecord | null> {
@@ -154,15 +175,14 @@ export async function fetchSessionProfile(): Promise<PlainRecord | null> {
     return snapshot;
   }
 
-  const sessionId = getSessionId();
-  if (!sessionId) {
+  if (!hasSessionAuth()) {
     if (hasStorage()) {
       window.localStorage.removeItem(PROFILE_DATA_KEY);
     }
     return null;
   }
 
-  const response = await fetch(`/api/profile?sessionId=${encodeURIComponent(sessionId)}`, {
+  const response = await fetch(`/api/profile`, {
     credentials: "include",
   });
 
@@ -206,4 +226,49 @@ export async function logoutSession() {
   } finally {
     clearSessionAuth();
   }
+}
+
+const HEARTBEAT_INTERVAL_MS = 60_000;
+
+// Keeps the local session TTL fresh and detects upstream ERP expiry
+// proactively (server throttles its own upstream probes), so users get a
+// clean re-login prompt instead of a mid-task hard failure.
+export function startSessionHeartbeat() {
+  if (typeof window === "undefined" || isStaticPrototype()) return () => {};
+
+  let stopped = false;
+
+  async function beat() {
+    if (stopped) return;
+    // Signed out or tab hidden — nothing to keep alive right now.
+    if (!hasSessionAuth() || document.visibilityState !== "visible") return;
+    try {
+      const response = await fetch("/api/auth/heartbeat", { credentials: "include" });
+      if (!response.ok) {
+        if (isSessionAuthFailure(response.status, null)) handleSessionAuthFailure();
+        return;
+      }
+      const payload = (await response.json().catch(() => null)) as
+        | { data?: { alive?: boolean }; alive?: boolean }
+        | null;
+      const alive = payload?.data?.alive ?? payload?.alive ?? true;
+      if (alive === false) handleSessionAuthFailure();
+    } catch {
+      // Offline or transient network issue — retry on the next tick.
+    }
+  }
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") void beat();
+  };
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  const intervalId = window.setInterval(() => { void beat(); }, HEARTBEAT_INTERVAL_MS);
+  void beat();
+
+  return () => {
+    stopped = true;
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.clearInterval(intervalId);
+  };
 }

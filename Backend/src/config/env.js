@@ -9,7 +9,22 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 const LOG_DIR = process.env.LOG_DIR || path.join(__dirname, "../../logs");
 const LOG_FILE_NAME = process.env.LOG_FILE_NAME || "backend.log";
-const LOGIN_PREAUTH_TTL_MS = Number(process.env.LOGIN_PREAUTH_TTL_MS || 15 * 1000);
+// Freshness window for the pre-auth captcha session, aligned with the
+// official ERP: the captcha is bound to its anonymous JSESSIONID, which
+// lives for roughly 30 minutes (container default). We sit slightly under
+// that so our "expired" message never fires while upstream would still
+// have accepted the attempt. The upstream remains the real validator —
+// INVALID_CAPTCHA is classified from its response either way.
+const LOGIN_PREAUTH_TTL_MS = Number(process.env.LOGIN_PREAUTH_TTL_MS || 25 * 60 * 1000);
+// Overall wall-clock budget for a single ERP login attempt. The browser
+// fallback path can stack 30s+ of Playwright timeouts under degraded ERP
+// conditions; this guarantees the HTTP request always answers in time.
+const LOGIN_DEADLINE_MS = Number(process.env.LOGIN_DEADLINE_MS || 45 * 1000);
+// Minimum interval between authenticated upstream probes per session for the
+// client heartbeat endpoint (keeps ERP load flat while sessions stay fresh).
+const ERP_HEARTBEAT_PROBE_INTERVAL_MS = Number(
+  process.env.ERP_HEARTBEAT_PROBE_INTERVAL_MS || 5 * 60 * 1000
+);
 const LOGIN_DIAGNOSTICS_DIR =
   process.env.LOGIN_DIAGNOSTICS_DIR || path.join(LOG_DIR, "login-attempts");
 const LOGIN_DIAGNOSTICS_MAX_ARTIFACTS = Number(
@@ -58,6 +73,14 @@ const LEGACY_SESSION_ID_CUTOFF_DATE =
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 400);
 const RATE_LIMIT_REDIS_PREFIX = process.env.RATE_LIMIT_REDIS_PREFIX || "ratelimit";
+// Stricter per-IP budget for credential-touching endpoints (captcha, login,
+// password reset). Generous enough for humans, hostile to stuffing scripts.
+const LOGIN_RATE_LIMIT_WINDOW_MS = Number(
+  process.env.LOGIN_RATE_LIMIT_WINDOW_MS || 60 * 1000
+);
+const LOGIN_RATE_LIMIT_MAX = Number(process.env.LOGIN_RATE_LIMIT_MAX || 20);
+const LOGIN_RATE_LIMIT_REDIS_PREFIX =
+  process.env.LOGIN_RATE_LIMIT_REDIS_PREFIX || "ratelimit:login";
 const EXTERNAL_DB_PATH =
   process.env.EXTERNAL_DB_PATH || path.join(__dirname, "../../data/external-pages.sqlite");
 const CONTENT_DB_PATH =
@@ -132,6 +155,8 @@ module.exports = {
   LOG_DIR,
   LOG_FILE_NAME,
   LOGIN_PREAUTH_TTL_MS,
+  LOGIN_DEADLINE_MS,
+  ERP_HEARTBEAT_PROBE_INTERVAL_MS,
   LOGIN_DIAGNOSTICS_DIR,
   LOGIN_DIAGNOSTICS_MAX_ARTIFACTS,
   LOGIN_DIAGNOSTICS_MAX_HTML_CHARS,
@@ -167,6 +192,9 @@ module.exports = {
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX,
   RATE_LIMIT_REDIS_PREFIX,
+  LOGIN_RATE_LIMIT_WINDOW_MS,
+  LOGIN_RATE_LIMIT_MAX,
+  LOGIN_RATE_LIMIT_REDIS_PREFIX,
   EXTERNAL_DB_PATH,
   CONTENT_DB_PATH,
   LMS_DB_PATH,
