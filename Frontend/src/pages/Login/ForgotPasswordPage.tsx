@@ -3,9 +3,18 @@ import type { ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  extractApiErrorCode,
   extractApiErrorMessage,
   normalizeCaptchaImageSource,
+  normalizeRegistrationNumber,
 } from "../../lib/core/auth";
+
+// Client-side backstops mirroring LoginPage; the backend enforces its own budgets.
+const CAPTCHA_FETCH_TIMEOUT_MS = 15_000;
+const REQUEST_TIMEOUT_MS = 60_000;
+
+// The official ERP consumes the session captcha on every failed attempt.
+const CAPTCHA_RETRY_CODES = new Set(["CAPTCHA_EXPIRED", "INVALID_CAPTCHA"]);
 
 type Step = "initiate" | "change" | "done";
 type Tone = "neutral" | "error" | "success";
@@ -71,7 +80,7 @@ export default function ForgotPasswordPage() {
   const fetchCaptcha = async (nextMessage = "") => {
     setCaptchaLoading(true);
     try {
-      const response = await axios.get("/api/captcha");
+      const response = await axios.get("/api/captcha", { timeout: CAPTCHA_FETCH_TIMEOUT_MS });
       setCaptchaBase64(normalizeCaptchaImageSource(response.data?.captchaBase64));
       setSessionId(String(response.data?.sessionId || ""));
       setForm((current) => ({ ...current, captcha: "" }));
@@ -83,7 +92,11 @@ export default function ForgotPasswordPage() {
     } catch (error: unknown) {
       const payload = axios.isAxiosError(error) ? error.response?.data : null;
       setStatusTone("error");
-      setStatusMessage(extractApiErrorMessage(payload, "Failed to refresh captcha."));
+      setStatusMessage(
+        axios.isAxiosError(error) && !payload
+          ? "Couldn't reach the ERP to load a captcha. Check your connection, then tap Refresh."
+          : extractApiErrorMessage(payload, "Failed to refresh captcha.")
+      );
     } finally {
       setCaptchaLoading(false);
     }
@@ -91,7 +104,8 @@ export default function ForgotPasswordPage() {
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    const nextValue = name === "username" ? normalizeRegistrationNumber(value) : value;
+    setForm((current) => ({ ...current, [name]: nextValue }));
   };
 
   const handleInitiate = async (event: FormEvent<HTMLFormElement>) => {
@@ -120,12 +134,11 @@ export default function ForgotPasswordPage() {
     setStatusMessage("Requesting OTP...");
 
     try {
-      const response = await axios.post("/api/auth/forgot", {
-        type: "initiate",
-        username: form.username,
-        captcha: form.captcha,
-        sessionId,
-      });
+      const response = await axios.post(
+        "/api/auth/forgot",
+        { type: "initiate", username: form.username, captcha: form.captcha, sessionId },
+        { timeout: REQUEST_TIMEOUT_MS }
+      );
 
       setStep("change");
       setForm((current) => ({ ...current, captcha: "", otp: "", newPassword: "", confirmPassword: "" }));
@@ -135,10 +148,18 @@ export default function ForgotPasswordPage() {
       );
     } catch (error: unknown) {
       const payload = axios.isAxiosError(error) ? error.response?.data : null;
-      const message = extractApiErrorMessage(payload, "Unable to request OTP.");
-
+      if (axios.isAxiosError(error) && !error.response) {
+        setStatusTone("error");
+        setStatusMessage("Network error — couldn't reach the server. Please try again.");
+        return;
+      }
+      if (CAPTCHA_RETRY_CODES.has(extractApiErrorCode(payload))) {
+        // Username is preserved; only the captcha needs retyping.
+        void fetchCaptcha("We've loaded a fresh captcha. Please retype it and try again.");
+        return;
+      }
       setStatusTone("error");
-      setStatusMessage(message);
+      setStatusMessage(extractApiErrorMessage(payload, "Unable to request OTP."));
     } finally {
       setSubmitting(false);
     }
@@ -176,18 +197,22 @@ export default function ForgotPasswordPage() {
     setStatusMessage("Updating password...");
 
     try {
-      const response = await axios.post("/api/auth/forgot", {
-        type: "change",
-        username: form.username,
-        otp: form.otp.trim(),
-        newPassword: form.newPassword,
-      });
+      const response = await axios.post(
+        "/api/auth/forgot",
+        { type: "change", username: form.username, otp: form.otp.trim(), newPassword: form.newPassword },
+        { timeout: REQUEST_TIMEOUT_MS }
+      );
 
       setStep("done");
       setStatusTone("success");
       setStatusMessage(String(response.data?.message || "Password changed successfully. Redirecting to login..."));
     } catch (error: unknown) {
       const payload = axios.isAxiosError(error) ? error.response?.data : null;
+      if (axios.isAxiosError(error) && !error.response) {
+        setStatusTone("error");
+        setStatusMessage("Network error — couldn't reach the server. Please try again.");
+        return;
+      }
       setStatusTone("error");
       setStatusMessage(extractApiErrorMessage(payload, "Unable to update password."));
     } finally {

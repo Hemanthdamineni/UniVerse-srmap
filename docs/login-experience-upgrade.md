@@ -44,6 +44,7 @@ Logging in through our proxy reproduced every pain of the official SRM ERP porta
 |---|---|
 | New classifiers: `ACCOUNT_BLOCKED` (403), `PASSWORD_EXPIRED` (401), `UPSTREAM_MAINTENANCE` (503), mapped from real ERP response text | `Backend/src/services/erp/erpClient.js` |
 | **Live-verified insight:** the official ERP consumes its session captcha on *every* failed attempt and typically re-serves the login page rather than a distinct banner. Frontend therefore loads a fresh captcha after any retryable failure (`INVALID_CREDENTIALS`, `LOGIN_VERIFICATION_FAILED`, …) while keeping the specific error text | `LoginPage.tsx` |
+| Password-recovery flow brought to parity: captcha auto-refresh on `CAPTCHA_EXPIRED`/`INVALID_CAPTCHA`, request timeouts, network-error messaging, username normalization | `ForgotPasswordPage.tsx` |
 | Overall login deadline `LOGIN_DEADLINE_MS` (**45 s**, default): wraps `loginWithCaptcha`, returns clean 504 `LOGIN_TIMEOUT`; late-settling attempts can't produce unhandled rejections | `Backend/src/routes/authRoutes.js` |
 | Frontend request timeouts: captcha fetch 15 s, login POST 60 s (headroom over backend deadline), with distinct network-vs-timeout messaging | `LoginPage.tsx` |
 | Staged feedback: after 8 s of verification, "Still verifying — the university ERP can take longer during busy hours" | `LoginPage.tsx` |
@@ -104,7 +105,7 @@ Investigation showed `FEATURE_AUTH_COOKIE_MODE` already defaults **on**, and the
 
 ### Unit / static
 - Backend `node --test`: **147/147** (incl. classifier cases, heartbeat ×3, login-deadline 504, rate limiter ×5).
-- Frontend Vitest: **1096+/1096+ across 85 files** (full suite green post-cookie-migration; touched areas re-run green after alignment fixes). `tsc --noEmit` clean.
+- Frontend Vitest: **1119/1119 across 85 files**; ESLint clean on all touched files; `tsc --noEmit` clean.
 
 ### Live smoke (local stack ⇢ real SRM ERP)
 | Check | Result |
@@ -150,6 +151,7 @@ Backend/src/app.js                                 limiter wiring
 Backend/test/{authRoutes,erpClient,loginRateLimit}.test.js
 Frontend/src/lib/core/session.ts                   flag model, redirect restore, heartbeat client
 Frontend/src/pages/Login/LoginPage.tsx             captcha lifecycle UX, timeouts, staged messages
+Frontend/src/pages/Login/ForgotPasswordPage.tsx     captcha auto-refresh + timeouts parity
 Frontend/src/pages/Login/{LoginParts,LoginIdentityPanel}.tsx   extracted modules
 Frontend/src/App.tsx                               heartbeat mount
 Frontend/src/components/Sidebar.tsx                flag gate
