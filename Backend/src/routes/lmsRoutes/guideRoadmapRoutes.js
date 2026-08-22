@@ -40,11 +40,29 @@ function registerGuideRoadmapRoutes(
     )
   );
 
+  router.put("/lms/collections/:id", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.updateCollection(req.params.id, req.userContext.userId, {
+        name: req.body.name,
+        description: req.body.description,
+        isPublic: req.body.isPublic,
+      })
+    )
+  );
+
+  router.delete("/lms/collections/:id", (req, res, next) =>
+    createHandle(req, res, next, async () =>
+      lmsStore.deleteCollection(req.params.id, req.userContext.userId)
+    )
+  );
+
   router.get("/lms/guides", (req, res, next) =>
     createHandle(req, res, next, async () =>
       lmsStore.listGuides(
         {
           subjectCode: req.query.subjectCode,
+          query: req.query.query,
+          sort: req.query.sort,
           includeDrafts: toBoolean(req.query.includeDrafts),
         },
         { userId: req.userContext.userId }

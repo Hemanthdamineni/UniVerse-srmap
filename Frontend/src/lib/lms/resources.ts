@@ -90,6 +90,22 @@ export type LmsModerationAuditEntry = {
   createdAt: string;
 };
 
+export type QuestionBankItem = {
+  id: string;
+  subjectCode: string;
+  unit?: string | null;
+  unitNormalized?: string | null;
+  topicId?: string | null;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string | null;
+  difficulty?: string | null;
+  contributedBy: string;
+  createdAt: string;
+  upvotes?: number;
+};
+
 export type LmsResource = {
   id: string;
   type: "link" | "file" | "note" | "quiz" | "flashcard" | "pyq";
@@ -143,6 +159,9 @@ export type LmsResource = {
     eligible: boolean;
     filters: string[];
   };
+  isDeleted?: number;
+  deletedAt?: string | null;
+  deletedBy?: string | null;
   userUpvoted?: boolean;
   userBookmarked?: boolean;
   userMarkedOutdated?: boolean;
@@ -255,6 +274,7 @@ export type LmsCollection = {
   description?: string | null;
   isPublic: number;
   createdAt: string;
+  itemCount?: number;
   items?: LmsResource[];
 };
 

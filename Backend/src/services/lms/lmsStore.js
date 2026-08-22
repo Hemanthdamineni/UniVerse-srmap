@@ -19,10 +19,13 @@ const collectionsMethods = {
     return this.db
       .prepare(
         `
-          SELECT *
-          FROM lms_collections
-          WHERE userId = ? OR isPublic = 1
-          ORDER BY createdAt DESC
+          SELECT c.*,
+                 COUNT(ci.resourceId) AS itemCount
+          FROM lms_collections c
+          LEFT JOIN lms_collection_items ci ON ci.collectionId = c.id
+          WHERE c.userId = ? OR c.isPublic = 1
+          GROUP BY c.id
+          ORDER BY c.createdAt DESC
         `
       )
       .all(userId);
@@ -71,6 +74,33 @@ const collectionsMethods = {
       resourceId
     );
     return this.getCollection(collectionId, userId);
+  },
+
+  updateCollection(collectionId, userId, payload = {}) {
+    const collection = this.db.prepare("SELECT * FROM lms_collections WHERE id = ?").get(collectionId);
+    assertCondition(collection, 404, "Collection not found", "LMS_NOT_FOUND");
+    assertCondition(collection.userId === userId, 403, "You cannot modify this collection", "LMS_FORBIDDEN");
+    const name = payload.name !== undefined ? toSafeString(payload.name) : collection.name;
+    assertCondition(name, 400, "Collection name is required", "LMS_VALIDATION");
+    const description =
+      payload.description !== undefined ? toNullableString(payload.description) : collection.description;
+    const isPublic =
+      payload.isPublic !== undefined ? toBooleanInteger(payload.isPublic) : Number(collection.isPublic || 0);
+    this.db.prepare(
+      "UPDATE lms_collections SET name = ?, description = ?, isPublic = ? WHERE id = ?"
+    ).run(name, description, isPublic, collectionId);
+    return this.getCollection(collectionId, userId);
+  },
+
+  deleteCollection(collectionId, userId) {
+    const collection = this.db.prepare("SELECT * FROM lms_collections WHERE id = ?").get(collectionId);
+    assertCondition(collection, 404, "Collection not found", "LMS_NOT_FOUND");
+    assertCondition(collection.userId === userId, 403, "You cannot modify this collection", "LMS_FORBIDDEN");
+    this.withTransaction(() => {
+      this.db.prepare("DELETE FROM lms_collection_items WHERE collectionId = ?").run(collectionId);
+      this.db.prepare("DELETE FROM lms_collections WHERE id = ?").run(collectionId);
+    });
+    return { deleted: true, id: collectionId };
   }
 };
 
@@ -488,8 +518,17 @@ const guideMethods = {
       where.push("subjectCode = ?");
       params.push(toSafeString(filters.subjectCode).toUpperCase());
     }
+    if (filters.query) {
+      where.push("(title LIKE ? OR description LIKE ? OR subjectCode LIKE ?)");
+      const like = `%${toSafeString(filters.query)}%`;
+      params.push(like, like, like);
+    }
+    let orderBy = "qualityScore DESC, createdAt DESC";
+    if (filters.sort === "newest") orderBy = "createdAt DESC";
+    else if (filters.sort === "oldest") orderBy = "createdAt ASC";
+    else if (filters.sort === "popular") orderBy = "upvotes DESC";
     const rows = this.db
-      .prepare(`SELECT * FROM lms_guides WHERE ${where.join(" AND ")} ORDER BY qualityScore DESC, createdAt DESC`)
+      .prepare(`SELECT * FROM lms_guides WHERE ${where.join(" AND ")} ORDER BY ${orderBy}`)
       .all(...params);
     return rows.map((row) => this.mapGuide(row, false, userId));
   },
@@ -781,7 +820,7 @@ const learningDiscoveryMethods = {
         `
           SELECT p.*, r.subjectCode, r.subjectName, r.title
           FROM lms_progress p
-          JOIN lms_resources r ON r.id = p.resourceId
+          JOIN lms_resources r ON r.id = p.resourceId AND r.isDeleted = 0
           WHERE p.userId = ?
           ORDER BY p.updatedAt DESC
         `
@@ -791,10 +830,26 @@ const learningDiscoveryMethods = {
     const started = rows.length;
     const perSubject = new Map();
     for (const row of rows) {
-      const bucket = perSubject.get(row.subjectCode) || { subjectCode: row.subjectCode, subjectName: row.subjectName, started: 0, completed: 0 };
+      const bucket =
+        perSubject.get(row.subjectCode) ||
+        { subjectCode: row.subjectCode, subjectName: row.subjectName, started: 0, completed: 0, totalResources: 0 };
       bucket.started += 1;
       if (row.status === "completed") bucket.completed += 1;
       perSubject.set(row.subjectCode, bucket);
+    }
+    // Total live resources per touched subject — so progress shows coverage,
+    // not just personal counts.
+    const totalsStmt = this.db.prepare(
+      "SELECT COUNT(*) AS total FROM lms_resources WHERE subjectCode = ? AND isDeleted = 0"
+    );
+    for (const bucket of perSubject.values()) {
+      bucket.totalResources = totalsStmt.get(bucket.subjectCode)?.total || 0;
+      if (bucket.totalResources > 0) {
+        bucket.coveredPct =
+          Number((((bucket.completed + bucket.started * 0.5) / bucket.totalResources) * 100).toFixed(1));
+      } else {
+        bucket.coveredPct = 0;
+      }
     }
     return {
       started,
@@ -1557,6 +1612,19 @@ const moderationMethods = {
 
 const questionBankMethods = {
   addQuestion(userId, payload) {
+    const subjectCode = toSafeString(payload.subjectCode).toUpperCase();
+    assertCondition(subjectCode, 400, "subjectCode is required", "LMS_VALIDATION");
+    const question = toSafeString(payload.question);
+    assertCondition(question, 400, "question is required", "LMS_VALIDATION");
+    const options = ensureArray(payload.options).map((option) => toSafeString(option)).filter(Boolean);
+    assertCondition(options.length >= 2, 400, "At least two options are required", "LMS_VALIDATION");
+    const correctIndex = toInteger(payload.correctIndex, -1);
+    assertCondition(
+      Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex < options.length,
+      400,
+      "correctIndex must point at one of the provided options",
+      "LMS_VALIDATION"
+    );
     const difficulty = toSafeString(payload.difficulty).toLowerCase();
     if (difficulty) {
       assertCondition(
@@ -1575,13 +1643,13 @@ const questionBankMethods = {
       `
     ).run(
       id,
-      toSafeString(payload.subjectCode).toUpperCase(),
+      subjectCode,
       toNullableString(payload.unit),
       payload.unit ? normalizeUnit(payload.unit) : null,
       toNullableString(payload.topicId),
-      toSafeString(payload.question),
-      stringifyJson(ensureArray(payload.options), "[]"),
-      clamp(toInteger(payload.correctIndex, 0), 0, Math.max(0, ensureArray(payload.options).length - 1)),
+      question,
+      stringifyJson(options, "[]"),
+      correctIndex,
       toNullableString(payload.explanation),
       difficulty || null,
       userId,
