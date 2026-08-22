@@ -56,6 +56,7 @@ function iso(offsetDays, hour = 10, minute = 0) {
 }
 
 async function cleanupDemoData() {
+  // Clean up events
   const events = await request("/events");
   for (const event of events) {
     await request(`/events/${encodeURIComponent(event.id)}`, { method: "DELETE" }).catch((error) => {
@@ -63,25 +64,58 @@ async function cleanupDemoData() {
     });
   }
 
-  const resources = await request("/lms/resources?query=Demo&limit=50&page=1");
-  for (const resource of (resources.items || []).filter((item) => String(item.title || "").startsWith("Demo "))) {
-    await request(`/lms/resources/${encodeURIComponent(resource.id)}`, { method: "DELETE" }).catch((error) => {
-      console.warn(error.message);
-    });
+  // Clean up resources (with pagination)
+  let page = 1;
+  let hasMore = true;
+  while (hasMore) {
+    const resources = await request(`/lms/resources?query=Demo&limit=100&page=${page}`);
+    const demoResources = (resources.items || []).filter((item) => String(item.title || "").startsWith("Demo "));
+    for (const resource of demoResources) {
+      await request(`/lms/resources/${encodeURIComponent(resource.id)}`, { method: "DELETE" }).catch((error) => {
+        console.warn(error.message);
+      });
+    }
+    hasMore = demoResources.length === 100 && resources.pagination?.page < resources.pagination?.totalPages;
+    page++;
   }
 
+  // Clean up guides (listGuides returns array directly)
   const guides = await request("/lms/guides?includeDrafts=true");
-  for (const guide of guides.filter((item) => String(item.title || "").startsWith("Demo "))) {
+  for (const guide of (Array.isArray(guides) ? guides : []).filter((item) => String(item.title || "").startsWith("Demo "))) {
     await request(`/lms/guides/${encodeURIComponent(guide.id)}`, { method: "DELETE" }).catch((error) => {
       console.warn(error.message);
     });
   }
 
+  // Clean up roadmaps (listRoadmaps returns array directly)
   const roadmaps = await request("/lms/roadmaps?includeDrafts=true");
-  for (const roadmap of roadmaps.filter((item) => String(item.title || "").startsWith("Demo "))) {
+  for (const roadmap of (Array.isArray(roadmaps) ? roadmaps : []).filter((item) => String(item.title || "").startsWith("Demo "))) {
     await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}`, { method: "DELETE" }).catch((error) => {
       console.warn(error.message);
     });
+  }
+
+  // Clean up requests (getRequests returns { items, pagination })
+  const requestsResponse = await request("/lms/requests?includeDrafts=true");
+  const requests = requestsResponse?.items || [];
+  for (const req of requests.filter((item) => String(item.title || "").startsWith("Demo "))) {
+    await request(`/lms/requests/${encodeURIComponent(req.id)}`, { method: "DELETE" }).catch((error) => {
+      console.warn(error.message);
+    });
+  }
+
+  // Clean up collections (listCollections returns array directly; no DELETE endpoint for collections)
+  const collections = await request("/lms/collections?includeDrafts=true");
+  for (const col of (Array.isArray(collections) ? collections : []).filter((item) => String(item.name || "").startsWith("Demo "))) {
+    // Get collection with items (items are embedded in the collection response)
+    const collectionWithItems = await request(`/lms/collections/${encodeURIComponent(col.id)}`).catch(() => null);
+    const items = collectionWithItems?.items || [];
+    for (const item of items) {
+      await request(`/lms/collections/${encodeURIComponent(col.id)}/items/${encodeURIComponent(item.id)}`, { method: "DELETE" }).catch((error) => {
+        console.warn(error.message);
+      });
+    }
+    // Note: Collection DELETE not supported by API; collections remain but emptied
   }
 }
 
@@ -375,7 +409,17 @@ async function seedLms() {
     },
   ];
 
+  // Check if demo resources already exist
+  const existingResources = await request("/lms/resources?query=Demo&limit=100&page=1");
+  const existingDemoTitles = new Set(
+    (existingResources.items || []).filter((item) => String(item.title || "").startsWith("Demo ")).map((item) => item.title)
+  );
+
   for (const payload of resourcePayloads) {
+    if (existingDemoTitles.has(payload.title)) {
+      console.log(`Skipping existing demo resource: ${payload.title}`);
+      continue;
+    }
     resources.push(
       await request("/lms/resources", {
         method: "POST",
@@ -384,113 +428,158 @@ async function seedLms() {
     );
   }
 
-  const guide = await request("/lms/guides", {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Demo Exam Week Survival Guide",
-      description: "A compact guide for planning revision blocks, PYQ practice, and final-day review.",
-      subjectCode: "CSE302",
-      subjectName: "Design and Analysis of Algorithms",
-      semester: "VI",
-      unit: "Exam Prep",
-      difficulty: "intermediate",
-      tags: ["exam", "planning", "revision"],
-      published: true,
-      sections: [
-        {
-          title: "Plan the week",
-          content: "Split revision into high-yield units, active recall, and one mixed problem set every day.",
-        },
-        {
-          title: "Use PYQs properly",
-          content: "Attempt first, compare second, and note the repeated framing of questions.",
-        },
-        {
-          title: "Final day checklist",
-          content: "Only review mistakes, formulas, and two solved examples per pattern.",
-        },
-      ],
-    }),
-  });
-
-  let roadmap = await request("/lms/roadmaps", {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Demo Full Stack Project Roadmap",
-      description: "A practical roadmap from API contract to UI polish for campus apps.",
-      skill: "Full Stack Development",
-      difficulty: "intermediate",
-      estimatedHours: 18,
-      published: true,
-    }),
-  });
-
-  roadmap = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/nodes`, {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Define the API contract",
-      description: "List routes, payloads, errors, and auth states before building UI.",
-      nodeType: "concept",
-    }),
-  });
-  roadmap = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/nodes`, {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Build reusable UI states",
-      description: "Create loading, empty, error, and success states as shared components.",
-      nodeType: "milestone",
-    }),
-  });
-  roadmap = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/nodes`, {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Verify with browser checks",
-      description: "Use screenshots, console logs, and API assertions before marking complete.",
-      nodeType: "milestone",
-    }),
-  });
-
-  const [first, second, third] = roadmap.nodes || [];
-  if (first && second) {
-    roadmap = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/edges`, {
+  // Check if demo guide exists (listGuides returns array directly)
+  const guidesResponse = await request("/lms/guides?includeDrafts=true");
+  const existingGuides = Array.isArray(guidesResponse) ? guidesResponse : [];
+  const guideTitle = "Demo Exam Week Survival Guide";
+  let guide = existingGuides.find((item) => item.title === guideTitle);
+  if (!guide) {
+    guide = await request("/lms/guides", {
       method: "POST",
-      body: JSON.stringify({ fromNodeId: first.id, toNodeId: second.id }),
-    });
-  }
-  if (second && third) {
-    roadmap = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/edges`, {
-      method: "POST",
-      body: JSON.stringify({ fromNodeId: second.id, toNodeId: third.id }),
+      body: JSON.stringify({
+        title: guideTitle,
+        description: "A compact guide for planning revision blocks, PYQ practice, and final-day review.",
+        subjectCode: "CSE302",
+        subjectName: "Design and Analysis of Algorithms",
+        semester: "VI",
+        unit: "Exam Prep",
+        difficulty: "intermediate",
+        tags: ["exam", "planning", "revision"],
+        published: true,
+        sections: [
+          {
+            title: "Plan the week",
+            content: "Split revision into high-yield units, active recall, and one mixed problem set every day.",
+          },
+          {
+            title: "Use PYQs properly",
+            content: "Attempt first, compare second, and note the repeated framing of questions.",
+          },
+          {
+            title: "Final day checklist",
+            content: "Only review mistakes, formulas, and two solved examples per pattern.",
+          },
+        ],
+      }),
     });
   }
 
-  const requestBoardItem = await request("/lms/requests", {
-    method: "POST",
-    body: JSON.stringify({
-      title: "Demo Need solved PYQs for Compiler Design",
-      description: "Looking for annotated 2024 PYQs with parser construction steps and common mistakes.",
-      subjectCode: "CSE310",
-      subjectName: "Compiler Design",
-      semester: "VI",
-      unit: "Unit 2",
-      resourceType: "pyq",
-    }),
-  });
-
-  const collection = await request("/lms/collections", {
-    method: "POST",
-    body: JSON.stringify({
-      name: "Demo Exam Prep Pack",
-      description: "Temporary seeded collection for checking collection UI.",
-      isPublic: true,
-    }),
-  });
-
-  for (const resource of resources.slice(0, 2)) {
-    await request(`/lms/collections/${encodeURIComponent(collection.id)}/items`, {
+  // Check if demo roadmap exists (listRoadmaps returns array directly)
+  const roadmapsResponse = await request("/lms/roadmaps?includeDrafts=true");
+  const existingRoadmaps = Array.isArray(roadmapsResponse) ? roadmapsResponse : [];
+  const roadmapTitle = "Demo Full Stack Project Roadmap";
+  let roadmap = existingRoadmaps.find((item) => item.title === roadmapTitle);
+  if (!roadmap) {
+    roadmap = await request("/lms/roadmaps", {
       method: "POST",
-      body: JSON.stringify({ resourceId: resource.id }),
-    }).catch((error) => console.warn(error.message));
+      body: JSON.stringify({
+        title: roadmapTitle,
+        description: "A practical roadmap from API contract to UI polish for campus apps.",
+        skill: "Full Stack Development",
+        difficulty: "intermediate",
+        estimatedHours: 18,
+        published: true,
+      }),
+    });
+  }
+
+  // Ensure roadmap nodes exist
+  if (roadmap && (!roadmap.nodes || roadmap.nodes.length === 0)) {
+    const nodesToAdd = [
+      {
+        title: "Define the API contract",
+        description: "List routes, payloads, errors, and auth states before building UI.",
+        nodeType: "concept",
+      },
+      {
+        title: "Build reusable UI states",
+        description: "Create loading, empty, error, and success states as shared components.",
+        nodeType: "milestone",
+      },
+      {
+        title: "Verify with browser checks",
+        description: "Use screenshots, console logs, and API assertions before marking complete.",
+        nodeType: "milestone",
+      },
+    ];
+
+    for (const nodePayload of nodesToAdd) {
+      const node = await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/nodes`, {
+        method: "POST",
+        body: JSON.stringify(nodePayload),
+      });
+      if (!roadmap.nodes) roadmap.nodes = [];
+      roadmap.nodes.push(node);
+    }
+
+    const [first, second, third] = roadmap.nodes || [];
+    if (first && second) {
+      await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/edges`, {
+        method: "POST",
+        body: JSON.stringify({ fromNodeId: first.id, toNodeId: second.id }),
+      }).catch((error) => {
+        if (error.status !== 409) console.warn(error.message); // Ignore "cycle" error from existing edge
+      });
+    }
+    if (second && third) {
+      await request(`/lms/roadmaps/${encodeURIComponent(roadmap.id)}/edges`, {
+        method: "POST",
+        body: JSON.stringify({ fromNodeId: second.id, toNodeId: third.id }),
+      }).catch((error) => {
+        if (error.status !== 409) console.warn(error.message); // Ignore "cycle" error from existing edge
+      });
+    }
+  }
+
+  // Check if demo request exists (getRequests returns { items, pagination })
+  const requestsResponse = await request("/lms/requests?includeDrafts=true");
+  const existingRequests = requestsResponse?.items || [];
+  const requestTitle = "Demo Need solved PYQs for Compiler Design";
+  let requestBoardItem = existingRequests.find((item) => item.title === requestTitle);
+  if (!requestBoardItem) {
+    requestBoardItem = await request("/lms/requests", {
+      method: "POST",
+      body: JSON.stringify({
+        title: requestTitle,
+        description: "Looking for annotated 2024 PYQs with parser construction steps and common mistakes.",
+        subjectCode: "CSE310",
+        subjectName: "Compiler Design",
+        semester: "VI",
+        unit: "Unit 2",
+        resourceType: "pyq",
+      }),
+    });
+  }
+
+  // Check if demo collection exists (listCollections returns array directly)
+  const collectionsResponse = await request("/lms/collections?includeDrafts=true");
+  const existingCollections = Array.isArray(collectionsResponse) ? collectionsResponse : [];
+  const collectionName = "Demo Exam Prep Pack";
+  let collection = existingCollections.find((item) => item.name === collectionName);
+  if (!collection) {
+    collection = await request("/lms/collections", {
+      method: "POST",
+      body: JSON.stringify({
+        name: collectionName,
+        description: "Temporary seeded collection for checking collection UI.",
+        isPublic: true,
+      }),
+    });
+  }
+
+  // Add resources to collection if not already added
+  if (collection && resources.length >= 2) {
+    for (const resource of resources.slice(0, 2)) {
+      const collectionWithItems = await request(`/lms/collections/${encodeURIComponent(collection.id)}`).catch(() => null);
+      const existingItems = collectionWithItems?.items || [];
+      const alreadyAdded = existingItems.some((item) => item.id === resource.id);
+      if (!alreadyAdded) {
+        await request(`/lms/collections/${encodeURIComponent(collection.id)}/items`, {
+          method: "POST",
+          body: JSON.stringify({ resourceId: resource.id }),
+        }).catch((error) => console.warn(error.message));
+      }
+    }
   }
 
   return { resources, guide, roadmap, requestBoardItem, collection };
