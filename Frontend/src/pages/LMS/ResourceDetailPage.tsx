@@ -79,16 +79,17 @@ import {
   updateLmsResource,
   upvoteLmsRequest,
   upvoteQuestionBankItem,
-  useSession,
-  isProfileAdmin,
-  getProfileRegisterNo,
-  createEmptyResourceForm,
-  resourceToForm,
-  buildResourcePayload,
-  useAsyncPage,
-  LmsFrame,
-  renderResourceBody
-} from "./_shared/LmsPageShared";
+   useSession,
+   isProfileAdmin,
+   getProfileRegisterNo,
+   createEmptyResourceForm,
+   resourceToForm,
+   buildResourcePayload,
+   useAsyncPage,
+   LmsFrame,
+   renderResourceBody
+ } from "./_shared/LmsPageShared";
+import { Markdown } from "../../components/markdown";
 import type {
   LmsGuide,
   LmsRequest,
@@ -127,7 +128,7 @@ export function ResourceDetailPage() {
               <p className="text-sm text-[var(--text-secondary)]">
                 {resource.subjectCode} • {resource.subjectName} • {resource.unit}
               </p>
-              <p className="text-sm text-[var(--text-secondary)]">{resource.description}</p>
+              <Markdown className="text-sm">{resource.description ?? ""}</Markdown>
               <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--comp-text-muted)]">
                 <span>Uploaded by {resource.uploadedBy}</span>
                 {resource.updatedAt ? <span>Updated {new Date(resource.updatedAt).toLocaleDateString()}</span> : null}
@@ -142,12 +143,6 @@ export function ResourceDetailPage() {
                     >
                       {resource.publisher.displayName}
                     </Link>
-                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                      {resource.publisher.approvedCount}/{resource.publisher.contributionCount} approved resources, {resource.publisher.flaggedCount} flagged.
-                    </p>
-                  </div>
-                  <div className="min-w-28 rounded-lg bg-[var(--comp-surface)] px-3 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
-                    Trust {resource.publisher.trustScore}
                   </div>
                 </div>
               ) : null}
@@ -225,7 +220,7 @@ export function ResourceDetailPage() {
             <div className="space-y-3">
               {(resource.comments || []).map((entry) => (
                 <div key={entry.id} className="rounded-2xl bg-[var(--comp-surface)] px-4 py-3">
-                  <p className="text-sm text-[var(--comp-text-primary)]">{entry.content}</p>
+                  <Markdown className="text-sm">{entry.content}</Markdown>
                   <p className="mt-1 text-xs text-[var(--text-secondary)]">{entry.userId}</p>
                 </div>
               ))}

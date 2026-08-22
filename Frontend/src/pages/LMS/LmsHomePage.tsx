@@ -146,7 +146,7 @@ export function LmsHomePage() {
 
       <RecommendationSection title="Exam prep" items={examPrep.data || []} />
 
-      <SectionCard title="Career and Competition Roadmaps">
+      <SectionCard title="Recommended Roadmaps">
         {roadmapRecommendations.data?.length ? (
           <div className="grid gap-3 md:grid-cols-2">
             {roadmapRecommendations.data.map((roadmap) => (
@@ -181,7 +181,7 @@ export function LmsHomePage() {
             ))}
           </div>
         ) : (
-          <p className="body-text text-sm">Roadmap recommendations appear after career gaps or competition signals are available.</p>
+          <p className="body-text text-sm">Roadmap recommendations appear as you build learning history across subjects.</p>
         )}
       </SectionCard>
 

@@ -87,6 +87,7 @@ import {
   buildResourcePayload,
   useAsyncPage,
   LmsFrame,
+  EmptyView,
   renderResourceBody
 } from "../_shared/LmsPageShared";
 import type {
@@ -99,11 +100,21 @@ import type {
 } from "../_shared/LmsPageShared";
 
 export function RoadmapsListPage() {
+  const navigate = useNavigate();
   const { data, loading, error } = useAsyncPage(() => listRoadmaps(), []);
+  const roadmaps = data || [];
   return (
     <LmsFrame title="Roadmaps" loading={loading} error={error}>
+      {roadmaps.length === 0 ? (
+        <EmptyView
+          title="No roadmaps published yet"
+          description="Roadmaps are guided skill paths built by the community. Be the first to chart one."
+          actionLabel="Build a roadmap"
+          onAction={() => navigate("/resources/roadmaps/new")}
+        />
+      ) : (
       <div className="grid gap-4 lg:grid-cols-2">
-        {(data || []).map((roadmap: LmsRoadmap) => (
+        {roadmaps.map((roadmap: LmsRoadmap) => (
           <Link key={roadmap.id} to={`/resources/roadmaps/${roadmap.id}`} className="dashboard-card block p-5">
             <p className="text-sm text-[var(--text-secondary)]">{roadmap.skill}</p>
             <h2 className="mt-1 text-lg font-semibold text-[var(--comp-text-primary)]">{roadmap.title}</h2>
@@ -111,6 +122,7 @@ export function RoadmapsListPage() {
           </Link>
         ))}
       </div>
+      )}
     </LmsFrame>
   );
 }

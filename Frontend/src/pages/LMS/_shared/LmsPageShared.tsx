@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 // LMS shell: InlineError in frame; StatCard momentum row; resource preview uses comp-surface tokens.
 import { ErpPageShell, SectionCard } from "../../../components/erp/ErpPrimitives";
-import { InlineError } from "../../../components/ui/Feedback";
+import { InlineError, EmptyView } from "../../../components/ui/Feedback";
 import { StatCard } from "../../../components/ui/Progress";
 import AnnotationPanel from "../../../components/lms/AnnotationPanel";
 import { DuplicateWarning, OutdatedWarning } from "../../../components/lms/LmsChips";
@@ -17,17 +17,24 @@ import ResourceGrid from "../../../components/lms/ResourceGrid";
 import RoadmapGraph from "../../../components/lms/RoadmapGraph";
 import TopicMasteryHeatmap from "../../../components/lms/TopicMasteryHeatmap";
 import WeeklyLeaderboard from "../../../components/lms/WeeklyLeaderboard";
+import { Markdown } from "../../../components/markdown";
 import {
   addRoadmapNode,
   buildQuizFromQuestionBank,
   checkLmsDuplicate,
   completeRoadmapNode,
   createGuide,
+  closeLmsRequest,
   createLmsCollection,
+  deleteLmsCollection,
+  getLmsCollection,
+  removeFromLmsCollection,
+  updateLmsCollection,
   createLmsRequest,
   createLmsResource,
   deleteGuide,
   deleteLmsResource,
+  restoreLmsResource,
   createQuestionBankItem,
   createRoadmap,
   deleteLmsAnnotation,
@@ -98,14 +105,14 @@ export type ResourceFormState = {
   subjectCode: string;
   subjectName: string;
   unit: string;
-  url: string;
-  noteContent: string;
+  url?: string;
+  noteContent?: string;
   difficulty: string;
   tags: string;
-  examYear: string;
-  examType: string;
-  examMonth: string;
-  file: File | null;
+  examYear?: string;
+  examType?: string;
+  examMonth?: string;
+  file?: File | null;
 };
 
 export function getProfileRegisterNo(profile: Record<string, unknown> | null | undefined) {
@@ -225,6 +232,36 @@ export function LmsFrame({
 }
 
 export function renderResourceBody(resource: LmsResource) {
+  const structured = (resource.structuredContent as
+    | { questions?: Array<Record<string, unknown>>; cards?: Array<Record<string, unknown>> }
+    | null
+    | undefined) || null;
+  if (resource.type === "quiz" && structured?.questions?.length) {
+    return (
+      <QuizRunner
+        questions={structured.questions.map((question) => ({
+          id: String(question.id || ""),
+          question: String(question.question || ""),
+          options: Array.isArray(question.options) ? question.options.map(String) : [],
+          explanation: String(question.explanation || ""),
+          correctIndex: Number(question.correctIndex || 0),
+        }))}
+        onSubmit={async (answers) => {
+          await submitQuizAttempt(resource.id, { answers, mode: "practice" });
+        }}
+      />
+    );
+  }
+  if (resource.type === "flashcard" && structured?.cards?.length) {
+    return (
+      <InteractiveFlashcardDeck
+        cards={structured.cards.map((card) => ({
+          front: String(card.front || ""),
+          back: String(card.back || ""),
+        }))}
+      />
+    );
+  }
   if (resource.renderType === "youtube" && resource.url) {
     const embed = resource.url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/");
     return <iframe className="h-[420px] w-full rounded-2xl border-0" src={embed} allowFullScreen title={resource.title} />;
@@ -239,10 +276,14 @@ export function renderResourceBody(resource: LmsResource) {
       />
     );
   }
-  if (resource.renderType === "note" || resource.type === "note") {
+  if (resource.renderType === "markdown" || resource.renderType === "note" || resource.type === "note") {
     return (
-      <div className="body-text whitespace-pre-wrap rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-5 leading-7">
-        {resource.noteContent}
+      <div className="rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-5">
+        {resource.noteContent ? (
+          <Markdown>{resource.noteContent}</Markdown>
+        ) : (
+          <p className="body-text text-sm">No note content yet.</p>
+        )}
       </div>
     );
   }
@@ -282,6 +323,7 @@ export { useEffect, useMemo, useState };
 export { Link, useNavigate, useParams, useSearchParams };
 export { ErpPageShell, SectionCard };
 export { InlineError };
+export { EmptyView };
 export { StatCard };
 export { default as AnnotationPanel } from "../../../components/lms/AnnotationPanel";
 export { DuplicateWarning } from "../../../components/lms/LmsChips";
@@ -305,10 +347,15 @@ export {
   completeRoadmapNode,
   createGuide,
   createLmsCollection,
+  deleteLmsCollection,
+  getLmsCollection,
+  removeFromLmsCollection,
+  updateLmsCollection,
   createLmsRequest,
   createLmsResource,
   deleteGuide,
   deleteLmsResource,
+  restoreLmsResource,
   createQuestionBankItem,
   createRoadmap,
   deleteLmsAnnotation,
@@ -356,7 +403,8 @@ export {
   updateGuide,
   updateLmsResource,
   upvoteLmsRequest,
+  closeLmsRequest,
   upvoteQuestionBankItem,
 } from "../../../lib/lms/index";
-export type { LmsGuide, LmsRequest, LmsResource, LmsRoadmap } from "../../../lib/lms/index";
+export type { LmsCollection, LmsGuide, LmsRequest, LmsResource, LmsRoadmap } from "../../../lib/lms/index";
 export { useSession } from "../../../hooks/useSession";
