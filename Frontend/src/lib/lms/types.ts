@@ -29,6 +29,7 @@ export type {
   LmsRequest,
   LmsCollection,
   LmsModerationQueueResponse,
+  QuestionBankItem,
 } from "./resources";
 
 export type {

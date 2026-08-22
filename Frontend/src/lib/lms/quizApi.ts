@@ -30,7 +30,8 @@ import type {
   LmsRoadmap,
   LmsRequest,
   LmsCollection,
-  LmsModerationQueueResponse
+  LmsModerationQueueResponse,
+  QuestionBankItem,
 } from "./types";
 import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
 import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
@@ -63,7 +64,7 @@ export async function listQuestionBank(params: Record<string, unknown>) {
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
   });
-  return requestData<{ items: Array<Record<string, unknown>>; pagination: LmsPagination }>(
+  return requestData<{ items: QuestionBankItem[]; pagination: LmsPagination }>(
     `/api/lms/question-bank?${search.toString()}`
   );
 }

@@ -140,6 +140,22 @@ export async function removeFromLmsCollection(id: string, resourceId: string) {
   });
 }
 
+export async function updateLmsCollection(
+  id: string,
+  payload: { name?: string; description?: string | null; isPublic?: boolean }
+) {
+  return requestData<LmsCollection>(`/api/lms/collections/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteLmsCollection(id: string) {
+  return requestData<{ deleted: boolean; id: string }>(`/api/lms/collections/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getRecommendations(params: Record<string, unknown> = {}) {
   if (isStaticPrototype()) {
     const limit = Number(params.limit || 12);

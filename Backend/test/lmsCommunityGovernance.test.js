@@ -397,3 +397,51 @@ test("LMS moderation queue stays under latency budget for a seeded review backlo
   console.log(`lms_moderation_queue_seeded_p95_ms=${p95.toFixed(2)}`);
   assert.ok(p95 < 300, `expected p95 < 300ms, got ${p95.toFixed(2)}ms`);
 });
+
+test("LMS question bank validates input and supports browse, upvote, and quiz build", () => {
+  const store = createStore("question-bank");
+
+  const created = store.addQuestion("AP23110010001", {
+    subjectCode: "cse301",
+    question: "What does a primary key guarantee?",
+    options: ["Unique row identity", "Sorted storage", "Faster joins", "Nothing"],
+    correctIndex: 0,
+    difficulty: "easy",
+    explanation: "A primary key uniquely identifies each row.",
+  });
+  assert.equal(created.subjectCode, "CSE301");
+  assert.equal(created.correctIndex, 0);
+  assert.deepEqual(created.options.length, 4);
+
+  const invalidCases = [
+    [{ subjectCode: "", question: "q", options: ["a", "b"], correctIndex: 0 }, "empty subject"],
+    [{ subjectCode: "CSE301", question: "   ", options: ["a", "b"], correctIndex: 0 }, "blank question"],
+    [{ subjectCode: "CSE301", question: "q", options: ["a"], correctIndex: 0 }, "single option"],
+    [{ subjectCode: "CSE301", question: "q", options: ["a", "b"], correctIndex: 2 }, "out-of-range index"],
+    [{ subjectCode: "CSE301", question: "q", options: ["a", "b"], correctIndex: -1 }, "negative index"],
+    [{ subjectCode: "CSE301", question: "q", options: ["a", "   "], correctIndex: 1 }, "blank option"],
+    [{ subjectCode: "CSE301", question: "q", options: ["a", "b"], correctIndex: 0, difficulty: "impossible" }, "bad difficulty"],
+  ];
+  for (const [payload, label] of invalidCases) {
+    assert.throws(() => store.addQuestion("u1", payload), (error) => error.status === 400, `expected rejection for ${label}`);
+  }
+
+  store.upvoteQuestion(created.id);
+  assert.equal(store.getQuestionBankItem(created.id).upvotes, 1);
+
+  const bank = store.getQuestionBank("CSE301", {});
+  assert.equal(bank.items.length, 1);
+  assert.deepEqual(bank.items[0].options, ["Unique row identity", "Sorted storage", "Faster joins", "Nothing"]);
+
+  const unitBank = store.getQuestionBank("CSE301", { unit: "Normalization" });
+  assert.equal(unitBank.items.length, 0);
+
+  const quiz = store.buildQuizFromBank("CSE301", null, 5, "");
+  assert.equal(quiz.count, 1);
+  assert.equal(quiz.questions[0].id, created.id);
+
+  assert.throws(
+    () => store.buildQuizFromBank("NOPE999", null, 5, ""),
+    (error) => error.status === 404 && error.code === "LMS_NOT_FOUND"
+  );
+});
