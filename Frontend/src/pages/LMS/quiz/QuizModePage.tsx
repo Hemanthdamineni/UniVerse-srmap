@@ -101,6 +101,7 @@ import type {
 export function QuizModePage() {
   const { id = "" } = useParams();
   const { data, loading, error } = useAsyncPage(() => getLmsResource(id), [id]);
+  const [submittedMessage, setSubmittedMessage] = useState("");
   const questions = useMemo(() => {
     const content = (data?.structuredContent as { questions?: Array<Record<string, unknown>> } | null) || null;
     return (content?.questions || []).map((question) => ({
@@ -114,13 +115,22 @@ export function QuizModePage() {
 
   return (
     <LmsFrame title={data?.title || "Quiz"} loading={loading} error={error}>
-      <QuizRunner
-        questions={questions}
-        onSubmit={async (answers) => {
-          await submitQuizAttempt(id, { answers, mode: "practice" });
-          window.alert("Quiz submitted.");
-        }}
-      />
+      <div className="space-y-3">
+        {submittedMessage ? (
+          <p className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-medium" style={{ color: "var(--success)" }}>
+            {submittedMessage}
+          </p>
+        ) : null}
+        <QuizRunner
+          questions={questions}
+          onSubmit={async (answers) => {
+            const result = await submitQuizAttempt(id, { answers, mode: "practice" });
+            const score = Number((result as Record<string, unknown>)?.score ?? 0);
+            const maxScore = Number((result as Record<string, unknown>)?.maxScore ?? questions.length);
+            setSubmittedMessage(`Quiz submitted — scored ${score}/${maxScore}.`);
+          }}
+        />
+      </div>
     </LmsFrame>
   );
 }

@@ -121,6 +121,11 @@ export function ContributorProfilePage() {
       </SectionCard>
 
       <RecommendationSection title="Published Resources" items={resources} />
+      {resources.length === 0 ? (
+        <p className="text-center text-sm text-[var(--comp-text-muted)]">
+          This contributor has no published resources yet.
+        </p>
+      ) : null}
     </LmsFrame>
   );
 }

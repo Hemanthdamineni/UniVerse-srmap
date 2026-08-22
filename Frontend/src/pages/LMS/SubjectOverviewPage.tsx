@@ -87,6 +87,7 @@ import {
   buildResourcePayload,
   useAsyncPage,
   LmsFrame,
+  EmptyView,
   renderResourceBody
 } from "./_shared/LmsPageShared";
 import type {
@@ -100,12 +101,18 @@ import type {
 
 export function SubjectOverviewPage() {
   const { code = "" } = useParams();
+  const navigate = useNavigate();
   const { data, loading, error } = useAsyncPage(() => getSubjectOverview(code), [code]);
   const topByUnit = useMemo(() => ((data?.topByUnit as Array<Record<string, unknown>>) || []), [data]);
   const topicMastery = useMemo(() => ((data?.topicMastery as Array<Record<string, unknown>>) || []), [data]);
+  const hasActivity = Boolean(
+    data && (topByUnit.length > 0 || topicMastery.length > 0 || Number(data.studyingCount || 0) > 0)
+  );
 
   return (
     <LmsFrame title={`Subject ${code}`} loading={loading} error={error}>
+      {hasActivity ? (
+      <>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="dashboard-card p-4">
           <p className="text-sm text-[var(--text-secondary)]">Studying now</p>
@@ -138,6 +145,16 @@ export function SubjectOverviewPage() {
           mastery: Number(entry.mastery || 0),
         }))}
       />
+      ) : (
+        </>
+      ) : (
+        <EmptyView
+          title={`No community activity for ${code} yet`}
+          description="Once students study, bookmark, or request resources for this subject, its overview appears here."
+          actionLabel="Browse all resources"
+          onAction={() => navigate("/resources/browse")}
+        />
+      )}
     </LmsFrame>
   );
 }

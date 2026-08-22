@@ -339,9 +339,9 @@ describe("LmsHomePage", () => {
       screen.getByRole("link", { name: /Exam Prep Notes/ })
     ).toBeInTheDocument();
 
-    // -- Career and Competition Roadmaps --
+    // -- Recommended Roadmaps --
     expect(
-      screen.getByRole("heading", { name: "Career and Competition Roadmaps" })
+      screen.getByRole("heading", { name: "Recommended Roadmaps" })
     ).toBeInTheDocument();
 
     // Roadmap card links
@@ -405,7 +405,7 @@ describe("LmsHomePage", () => {
     // Roadmap section shows the descriptive placeholder
     expect(
       screen.getByText(
-        "Roadmap recommendations appear after career gaps or competition signals are available."
+        "Roadmap recommendations appear as you build learning history across subjects."
       )
     ).toBeInTheDocument();
 
@@ -547,7 +547,7 @@ describe("LmsHomePage", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Roadmap recommendations appear after career gaps or competition signals are available."
+          "Roadmap recommendations appear as you build learning history across subjects."
         )
       ).toBeInTheDocument();
     });

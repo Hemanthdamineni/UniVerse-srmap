@@ -102,7 +102,11 @@ export function SavedResourcesPage() {
   const { data, loading, error } = useAsyncPage(() => getMyBookmarks(), []);
   return (
     <LmsFrame title="Saved Resources" loading={loading} error={error}>
-      <ResourceGrid items={data || []} />
+      <ResourceGrid
+        items={data || []}
+        emptyTitle="No saved resources yet"
+        emptyDescription="Tap Save on any note, PYQ, quiz or guide and it lands here for quick access."
+      />
     </LmsFrame>
   );
 }
