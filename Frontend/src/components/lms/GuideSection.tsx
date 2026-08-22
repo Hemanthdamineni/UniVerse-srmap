@@ -1,4 +1,5 @@
 import type { LmsGuideSection } from "../../lib/lms/index";
+import { Markdown } from "../markdown";
 
 export default function GuideSection({
   section,
@@ -20,8 +21,8 @@ export default function GuideSection({
           </button>
         ) : null}
       </div>
-      <div className="whitespace-pre-wrap text-sm leading-7 text-[var(--comp-text-secondary)]">
-        {section.content}
+      <div className="text-sm leading-7 text-[var(--comp-text-secondary)]">
+        <Markdown>{section.content}</Markdown>
       </div>
     </section>
   );

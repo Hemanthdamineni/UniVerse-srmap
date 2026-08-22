@@ -10,7 +10,7 @@ export default function FlipCard({
   const [flipped, setFlipped] = useState(false);
 
   return (
-    <button aria-label="Action"
+    <button
       className="group relative w-full text-left outline-none"
       onClick={() => setFlipped((value) => !value)}
       style={{ perspective: "1000px" }}

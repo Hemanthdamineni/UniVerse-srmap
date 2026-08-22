@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ProgressBar } from "../ui/Progress";
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Markdown } from "../markdown";
 
 type Question = {
   id?: string;
@@ -139,9 +140,9 @@ export default function QuizRunner({
           key={currentIndex} 
           className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
         >
-          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)] leading-snug mb-8">
-            {currentQuestion.question}
-          </h1>
+          <div className="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)] leading-snug mb-8">
+            <Markdown>{currentQuestion.question}</Markdown>
+          </div>
 
           <div className="grid gap-3">
             {currentQuestion.options.map((option, optionIndex) => {
@@ -174,6 +175,18 @@ export default function QuizRunner({
               );
             })}
           </div>
+
+          {answers[currentIndex] !== -1 && currentQuestion.explanation ? (
+            <div className="mt-6 rounded-2xl border border-[color-mix(in_srgb,var(--comp-accent)_18%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_5%,transparent)] p-4">
+              <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--comp-text-secondary)]">
+                <CheckCircle2 className="h-4 w-4 text-[var(--comp-accent)]" />
+                Explanation
+              </div>
+              <div className="text-sm text-[var(--text-secondary)]">
+                <Markdown>{currentQuestion.explanation}</Markdown>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

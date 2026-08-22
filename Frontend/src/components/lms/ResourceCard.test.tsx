@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import ResourceCard from "./ResourceCard";
@@ -51,7 +52,7 @@ const resource: LmsResource = {
 };
 
 describe("ResourceCard", () => {
-  it("renders publisher trust and recommendation reasons", () => {
+  it("renders publisher name and recommendation reasons", () => {
     render(
       <MemoryRouter>
         <ResourceCard resource={resource} />
@@ -59,7 +60,9 @@ describe("ResourceCard", () => {
     );
 
     expect(screen.getByText("AP23110010234")).toHaveAttribute("href", "/resources/contributors/AP23110010234");
-    expect(screen.getByText(/Trust 88/i)).toBeInTheDocument();
     expect(screen.getByText("Matches your subject focus")).toBeInTheDocument();
+    expect(screen.getByText("High community engagement")).toBeInTheDocument();
+    expect(screen.queryByText(/Trust/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/approved/i)).not.toBeInTheDocument();
   });
 });

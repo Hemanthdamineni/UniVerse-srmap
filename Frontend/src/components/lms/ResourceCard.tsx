@@ -96,8 +96,6 @@ export default function ResourceCard({
           >
             {resource.publisher.displayName}
           </Link>
-          {" · "}Trust {resource.publisher.trustScore}
-          {" · "}{resource.publisher.approvedCount}/{resource.publisher.contributionCount} approved
         </p>
       )}
 
