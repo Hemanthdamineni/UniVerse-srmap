@@ -226,7 +226,7 @@ describe("CareerProfilePage", () => {
       </MemoryRouter>
     );
     await waitFor(() => expect(screen.getByRole("heading", { name: "Career Profile" })).toBeInTheDocument());
-    const input = document.getElementById("resume-upload") as HTMLInputElement;
+    const input = screen.getByLabelText(/Upload resume/i) as HTMLInputElement;
     expect(input).toBeTruthy();
     const file = new File(["React TypeScript project"], "cv.txt", { type: "text/plain" });
     await user.upload(input, file);
