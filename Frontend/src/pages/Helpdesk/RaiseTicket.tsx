@@ -6,6 +6,7 @@ import {
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
 import { Markdown } from "../../components/markdown";
+import { FormField } from "../../components/forms/FormField";
 import { createHelpdeskTicket, listHelpdeskTickets, type CampusTicket } from "../../lib/campus/campusApi";
 
 type TicketCategory = "IT Support" | "Academic" | "Hostel" | "Finance" | "Transport" | "Other";
@@ -80,15 +81,12 @@ export default function RaiseTicket() {
 
       <SectionCard title="New Ticket">
         <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label htmlFor="ticket-category" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-              Category
-            </label>
+          <FormField id="ticket-category" label="Category">
             <select
               id="ticket-category"
               value={category}
               onChange={(event) => setCategory(event.target.value as TicketCategory)}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
             >
               {CATEGORIES.map((item) => (
                 <option key={item} value={item}>
@@ -96,16 +94,13 @@ export default function RaiseTicket() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label htmlFor="ticket-priority" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-              Priority
-            </label>
+          </FormField>
+          <FormField id="ticket-priority" label="Priority">
             <select
               id="ticket-priority"
               value={priority}
               onChange={(event) => setPriority(event.target.value as TicketPriority)}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
             >
               {PRIORITIES.map((item) => (
                 <option key={item} value={item}>
@@ -113,24 +108,18 @@ export default function RaiseTicket() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="md:col-span-2">
-            <label htmlFor="ticket-subject" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-              Subject
-            </label>
+          </FormField>
+          <FormField id="ticket-subject" label="Subject" className="md:col-span-2">
             <input
               id="ticket-subject"
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               placeholder="Brief summary of the issue"
               required
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
-          </div>
-          <div className="md:col-span-2">
-            <label htmlFor="ticket-description" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-              Description
-            </label>
+          </FormField>
+          <FormField id="ticket-description" label="Description" className="md:col-span-2">
             <textarea
               id="ticket-description"
               value={description}
@@ -138,9 +127,9 @@ export default function RaiseTicket() {
               placeholder="Explain the issue, affected page, timings, and any steps already tried."
               rows={5}
               required
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
-          </div>
+          </FormField>
           <div className="md:col-span-2">
             <button
               type="submit"
@@ -158,11 +147,11 @@ export default function RaiseTicket() {
         ) : (
           <div className="space-y-2">
             {tickets.map((ticket) => (
-              <div key={ticket.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+              <div key={ticket.id} className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-[var(--text-secondary)]">{ticket.id}</span>
+                      <span className="text-xs font-semibold text-[var(--comp-text-secondary)]">{ticket.id}</span>
                       <span
                         className={`rounded-full border px-2 py-1 text-xs font-bold ${
                           PRIORITY_COLORS[(ticket.priority as TicketPriority) || "medium"]
@@ -175,11 +164,11 @@ export default function RaiseTicket() {
                       </span>
                     </div>
                     <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{ticket.subject}</h3>
-                    <div className="max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
+                    <div className="max-w-2xl text-sm leading-6 text-[var(--comp-text-secondary)]">
                       <Markdown>{ticket.description}</Markdown>
                     </div>
                   </div>
-                  <div className="space-y-1 text-right text-xs text-[var(--text-secondary)]">
+                  <div className="space-y-1 text-right text-xs text-[var(--comp-text-secondary)]">
                     <div>{ticket.category}</div>
                     <div>Assigned: {ticket.assignedTo}</div>
                     <div>Updated: {new Date(ticket.updatedAt).toLocaleString("en-IN")}</div>
