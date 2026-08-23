@@ -2,6 +2,8 @@ export { StatusBadge, Tag } from "./Badges";
 export type { StatusBadgeProps, TagProps, StatusPreset } from "./Badges";
 export { Chip } from "./Chip";
 export type { ChipProps } from "./Chip";
+export { ClearanceCard } from "./ClearanceCard";
+export type { ClearanceCardProps } from "./ClearanceCard";
 export { SegmentedControl } from "./SegmentedControl";
 export type {
   SegmentedControlProps,
@@ -28,6 +30,8 @@ export { PageHeader } from "./Layouts";
 export type { PageHeaderProps } from "./Layouts";
 export { Pagination } from "./Pagination";
 export type { PaginationProps } from "./Pagination";
+export { PasswordInput } from "./PasswordInput";
+export type { PasswordInputProps } from "./PasswordInput";
 export { ProgressBar, StarRating, StatCard } from "./Progress";
 export type { StatCardProps } from "./Progress";
 export { SectionCard } from "./SectionCard";

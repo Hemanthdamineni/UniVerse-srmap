@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Select } from "../../components/select";
 import { User, Briefcase, MapPin, DollarSign, Award, Linkedin, Github, Globe, FileText, Upload, CheckCircle2, Plus, X, Sparkles, ArrowRight, Trophy, RefreshCw, ShieldCheck, Copy, ExternalLink, Eye, Download } from "lucide-react";
 import { SkeletonBlock, SkeletonCard } from "../../components/ui/Skeletons";
+import { FileUploadZone } from "../../components/ui/FileUploadZone";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { useSession } from '../../hooks/useSession';
 import { track } from "../../lib/core/analytics";
@@ -137,10 +138,7 @@ const CareerProfilePage: React.FC = () => {
     }
   };
 
-  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  const handleResumeFile = async (file: File) => {
     setUploading(true);
     setMessage(null);
     try {
@@ -367,35 +365,16 @@ const CareerProfilePage: React.FC = () => {
                   </div>
                   <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="text-xs text-[var(--comp-accent)] hover:underline shrink-0">View</a>
                 </div>
-              ) : (
-                <div className="p-8 border-2 border-dashed rounded-lg text-center">
-                  <p className="text-xs text-[var(--comp-text-muted)] mb-2">No resume uploaded</p>
-                </div>
-              )}
-              
-              <div className="relative">
-                <input 
-                  type="file" 
-                  id="resume-upload" 
-                  className="hidden" 
-                accept=".pdf,.txt,.md" 
-                  onChange={handleResumeUpload}
-                  disabled={uploading}
-                />
-                <label htmlFor="resume-upload">
-                  <Button variant="outline" className="w-full" asChild disabled={uploading}>
-                    <span>
-                      {uploading ? (
-                        <SkeletonBlock width={16} height={16} circle className="mr-2 inline-block align-middle" />
-                      ) : (
-                        <Upload className="mr-2 h-4 w-4" />
-                      )}
-                      {profile?.resumeUrl ? 'Update Resume' : 'Upload Resume'}
-                    </span>
-                  </Button>
-                </label>
-              </div>
-              <p className="text-xs text-[var(--comp-text-muted)] text-center">PDF or text resume. Max 5MB.</p>
+              ) : null}
+
+              <FileUploadZone
+                onFile={(file) => void handleResumeFile(file)}
+                accept={[".pdf", ".txt", ".md"]}
+                maxSizeMb={5}
+                isUploading={uploading}
+                label={profile?.resumeUrl ? "Update resume" : "Upload resume"}
+                description="PDF, text, or Markdown. Max 5 MB."
+              />
 
               {resumeVersion ? (
                 <div className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] p-4 space-y-4">
