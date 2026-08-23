@@ -17,6 +17,7 @@ import {
   useAsyncPage,
   LmsFrame
 } from "./_shared/LmsPageShared";
+import { FileUploadZone } from "../../components/ui/FileUploadZone";
 import type {
   LmsResource,
   ResourceFormState
@@ -467,21 +468,14 @@ export function AddResourcePage() {
 
         {(form.type === "file" || form.type === "pyq") && (
           <div className="grid gap-3">
-            <div className="border-2 border-dashed border-[var(--comp-border)] rounded-lg p-6 text-center">
-              <input
-                type="file"
-                className="sr-only"
-                id="file-upload"
-                onChange={(event) => setForm({ ...form, file: event.target.files?.[0] || null })}
-                accept=".pdf,.zip,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer space-y-1">
-                <p className="text-[var(--comp-text-primary)] font-medium">Click or drag to upload a file</p>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Accepted: PDF, ZIP, DOCX, PPTX, TXT, MD, PNG, JPG (max 25MB)
-                </p>
-              </label>
-            </div>
+            <FileUploadZone
+              onFile={(file) => setForm({ ...form, file })}
+              accept={[".pdf", ".zip", ".docx", ".pptx", ".txt", ".md", ".png", ".jpg", ".jpeg"]}
+              maxSizeMb={25}
+              currentFile={form.file ? { name: form.file.name, size: form.file.size } : undefined}
+              label="Click or drag to upload a file"
+              description="Accepted: PDF, ZIP, DOCX, PPTX, TXT, MD, PNG, JPG (max 25MB)"
+            />
             {form.file && (
               <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--comp-surface)]">
                 <div className="flex items-center gap-3">

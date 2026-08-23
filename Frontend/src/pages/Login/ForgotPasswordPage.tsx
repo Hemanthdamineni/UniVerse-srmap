@@ -9,6 +9,7 @@ import {
   normalizeRegistrationNumber,
 } from "../../lib/core/auth";
 import { StatusMessage, type Tone } from "./LoginParts";
+import { PasswordInput } from "../../components/ui/PasswordInput";
 
 // Client-side backstops mirroring LoginPage; the backend enforces its own budgets.
 const CAPTCHA_FETCH_TIMEOUT_MS = 15_000;
@@ -372,14 +373,13 @@ export default function ForgotPasswordPage() {
                   <label htmlFor="newPassword" className="text-sm font-medium text-[var(--text-primary)]">
                     New Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="newPassword"
                     name="newPassword"
-                    type="password"
                     value={form.newPassword}
                     onChange={handleChange}
                     placeholder="Create a stronger password"
-                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 rounded-lg border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2"
                     autoComplete="new-password"
                   />
                 </div>
@@ -388,14 +388,13 @@ export default function ForgotPasswordPage() {
                   <label htmlFor="confirmPassword" className="text-sm font-medium text-[var(--text-primary)]">
                     Confirm Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
                     value={form.confirmPassword}
                     onChange={handleChange}
                     placeholder="Re-enter the new password"
-                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 rounded-lg border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2"
                     autoComplete="new-password"
                   />
                   {confirmPasswordError ? (

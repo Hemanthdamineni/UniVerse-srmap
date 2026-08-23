@@ -13,6 +13,7 @@ import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { StatusBadge } from "../../components/ui/Badges";
+import { ClearanceCard } from "../../components/ui/ClearanceCard";
 import { ConfirmDialog } from "../../components/dialog";
 import {
   getEndSemesterFeedbackStatus,
@@ -228,96 +229,6 @@ const STATUS_MAP = {
   "not-registered": { label: "Not Available", preset: "error" },
 } as const;
 
-// ── Feedback Clearance Card (matches FinanceClearanceCard from FeeDuesPage) ──────
-
-interface FeedbackClearanceCardProps {
-  title: string;
-  description: string;
-  notes?: string[];
-  iconColor?: string;
-  iconBgColor?: string;
-  icon?: React.ReactNode;
-}
-
-function FeedbackClearanceCard({
-  title,
-  description,
-  notes = [],
-  iconColor = "var(--comp-accent)",
-  iconBgColor = "color-mix(in srgb, var(--comp-accent) 12%, transparent)",
-  icon,
-}: FeedbackClearanceCardProps) {
-  return (
-    <div className="space-y-6">
-      {/* Clearance badge + headline */}
-      <div className="flex flex-col items-center py-4">
-        <div
-          className="mb-5 flex h-16 w-16 items-center justify-center rounded-full"
-          style={{
-            background: iconBgColor,
-          }}
-        >
-          {icon || (
-            <svg
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={iconColor}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          )}
-        </div>
-
-        <h2
-          className="mb-1 text-xl font-bold tracking-tight"
-          style={{ color: "var(--comp-text-primary)" }}
-        >
-          {title}
-        </h2>
-        <p
-          className="mx-auto max-w-sm text-center text-sm leading-6"
-          style={{ color: "var(--comp-text-secondary)" }}
-        >
-          {description}
-        </p>
-      </div>
-
-      {/* Notes */}
-      {notes.length > 0 && (
-        <div className="space-y-3">
-          <div
-            className="flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1"
-            style={{ color: "color-mix(in srgb, var(--comp-text-muted) 40%, transparent)" }}
-          >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em]">Notes</span>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {notes.map((note, index) => (
-              <div
-                key={`${index}-${note.slice(0, 32)}`}
-                className="rounded-xl border px-4 py-3.5 text-sm leading-6"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--comp-border) 50%, transparent)",
-                  background: "color-mix(in srgb, var(--surface) 60%, transparent)",
-                }}
-              >
-                {note}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // File-local renderer over raw rows; named to avoid colliding with the
 // shared ui/DataTable and erp ErpDataTable components.
 function FeedbackRowsTable({ rows }: { rows: TableRow[] }) {
@@ -529,7 +440,7 @@ function FeedbackAssistantSection({
 }) {
   if (disabled) {
     return (
-      <FeedbackClearanceCard
+      <ClearanceCard
         title="Feedback Not Available"
         description="End-semester feedback is not currently available. This is normal between feedback cycles."
         iconColor="var(--comp-accent)"
@@ -541,7 +452,7 @@ function FeedbackAssistantSection({
 
   if (pendingSubjects.length === 0 && status) {
     return (
-      <FeedbackClearanceCard
+      <ClearanceCard
         title={status.alreadySubmitted ? "All Feedback Submitted" : "No Pending Subjects"}
         description={status.alreadySubmitted
           ? "Everything already looks submitted for this cycle."

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { executePipeline, type BankDetailsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch, executeErpAction } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { FileUploadZone } from "../../components/ui/FileUploadZone";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
@@ -34,7 +35,6 @@ export default function BankDetailsPage({ blueprint }: Props) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -82,12 +82,6 @@ export default function BankDetailsPage({ blueprint }: Props) {
 
   const handleFieldChange = (label: string, value: string) => {
     setFormValues((prev) => ({ ...prev, [label]: value }));
-    setSubmitResult(null);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setSelectedFile(file);
     setSubmitResult(null);
   };
 
@@ -221,33 +215,15 @@ export default function BankDetailsPage({ blueprint }: Props) {
             <label className="block text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
               Cancelled Cheque / First page of Passbook
             </label>
-            <div
-              className="flex items-center gap-4 rounded-xl border px-4 py-3"
-              style={{ borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)" }}
-            >
-              <input disabled={submitting}
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="btn-secondary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                Choose file
-              </button>
-              <span className="text-sm" style={{ color: selectedFile ? "var(--comp-text-primary)" : "var(--comp-text-muted)" }}>
-                {selectedFile ? selectedFile.name : "No file chosen"}
-              </span>
-            </div>
+            <FileUploadZone
+              onFile={(file) => {
+                setSelectedFile(file);
+                setSubmitResult(null);
+              }}
+              accept={["image/*", ".pdf"]}
+              maxSizeMb={5}
+              currentFile={selectedFile ? { name: selectedFile.name, size: selectedFile.size } : undefined}
+            />
             <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>
               Upload a scanned copy of your cancelled cheque or first page of passbook. Max 5MB.
             </p>
