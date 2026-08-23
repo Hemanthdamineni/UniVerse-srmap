@@ -23,10 +23,10 @@ const INTERVIEW_TYPES = ["Technical", "HR", "Group Discussion", "Technical + HR"
 const TYPE_COLORS: Record<string, string> = {
   Technical: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
   HR: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
-  "Group Discussion": "border-purple-200 bg-purple-50 text-purple-800",
+  "Group Discussion": "border-[color-mix(in_srgb,var(--accent-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[color-mix(in_srgb,var(--accent-blue)_55%,var(--comp-text-primary))]",
   "Technical + HR": "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   "Coding Round": "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]",
-  "System Design": "border-cyan-200 bg-cyan-50 text-cyan-800",
+  "System Design": "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
 };
 
 export default function InterviewBooking({ adminMode = false }: { adminMode?: boolean }) {
@@ -226,7 +226,7 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
         ) : (
           <div className="space-y-3">
             {bookings.map((booking) => (
-              <div key={booking.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
+              <div key={booking.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">

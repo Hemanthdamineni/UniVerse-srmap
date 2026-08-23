@@ -92,7 +92,9 @@ describe("TrackEscalate", () => {
     bulkUpdateHelpdeskTickets.mockResolvedValue({ counts: { requested: 1, updated: 1, failed: 0 } });
   });
 
-  it("supports admin triage, required resolution summary, internal notes, and bulk action", async () => {
+  // Three sequential admin interactions take ~2s alone; give headroom over
+  // the 5s default so full-suite parallel runs don't time this out.
+  it("supports admin triage, required resolution summary, internal notes, and bulk action", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     render(<TrackEscalate adminMode />);
 

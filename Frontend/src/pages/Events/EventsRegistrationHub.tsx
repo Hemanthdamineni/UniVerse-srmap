@@ -41,7 +41,7 @@ export default function EventsRegistrationHub() {
       subtitle="University ERP event summaries stay separate from the internal events platform."
       variant="wide"
     >
-      <CompetitionCard className="p-5">
+      <CompetitionCard className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="m-0 text-lg font-semibold text-[var(--comp-text-primary)]">Platform events</h2>
@@ -54,10 +54,13 @@ export default function EventsRegistrationHub() {
       </CompetitionCard>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {paths.map((item) => {
+        {paths.map((item, index) => {
           const Icon = item.icon;
           return (
-            <CompetitionCard key={item.href} className="flex h-full flex-col gap-3 p-5">
+            <CompetitionCard
+              key={item.href}
+              className={`flex h-full flex-col gap-3 p-4 ${index === 0 ? "sm:col-span-2" : ""}`}
+            >
               <Icon size={24} className="text-[var(--comp-accent)]" />
               <div className="min-h-[88px]">
                 <h2 className="m-0 text-base font-semibold text-[var(--comp-text-primary)]">{item.title}</h2>
@@ -71,7 +74,7 @@ export default function EventsRegistrationHub() {
         })}
       </div>
 
-      <CompetitionCard className="p-5">
+      <CompetitionCard className="p-4">
         <h2 className="m-0 text-lg font-semibold text-[var(--comp-text-primary)]">ERP registration summary</h2>
         <p className="comp-body mt-1">
           Legacy ERP event-registration data is reference-only here. Platform registrations and submissions are

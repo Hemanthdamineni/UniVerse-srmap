@@ -11,11 +11,16 @@ import {
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 
-import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, SectionCard, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
 import { SubjectResultsTable } from "./components/SubjectResultsTable";
 import { InternalMarksBundledSection } from "./components/InternalMarksBundledSection";
 import { SgpaCgpaPredictor } from "./components/SgpaCgpaPredictor";
+
+// Strips erp-table-shell chrome so SubjectResultsTable reads as one flush
+// surface inside the `dashboard-card overflow-hidden p-0` section.
+const FLUSH_TABLE_SHELL =
+  "[&_.erp-table-shell]:rounded-none [&_.erp-table-shell]:border-0 [&_.erp-table-shell]:shadow-none";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -169,31 +174,15 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
 
       {data && (
         <>
-          {data.title && (
-            <p
-              data-page-contrast="true"
-              className="page-contrast-muted mb-4 text-sm font-medium"
-            >
-              {data.title}
-            </p>
-          )}
-
           {/* Internal Marks Section */}
           {internalMarks && (
             <InternalMarksBundledSection model={internalMarks} />
           )}
 
           {/* Subject Results Section */}
-          <section className="dashboard-card p-0">
-            <div className="border-b border-[var(--border)] px-5 py-4">
-              <h3
-                className="font-semibold"
-                style={{ color: "var(--comp-text-primary)" }}
-              >
-                Subject Results
-              </h3>
-            </div>
-            <div className="px-5 pb-5">
+          <section className="dashboard-card overflow-hidden p-0">
+            <TableCardHeader title="Subject Results" />
+            <div className={`px-3 pb-4 pt-3 md:p-0 ${FLUSH_TABLE_SHELL}`}>
               <SubjectResultsTable
                 subjects={data.subjects}
                 internalMarksByCode={internalMarksByCode}

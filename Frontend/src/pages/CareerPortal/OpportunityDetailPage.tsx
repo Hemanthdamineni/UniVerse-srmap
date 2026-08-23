@@ -11,6 +11,8 @@ import { useSession } from '../../hooks/useSession';
 import { PageContainer } from '../../components/layout/PageLayouts';
 import { cn } from '../../lib/core/utils';
 import { track } from '../../lib/core/analytics';
+import { Markdown } from '../../components/markdown';
+import { LoadingState } from '../../components/ui/Feedback';
 
 const AdaptiveTextRenderer = ({ text }: { text: string }) => {
   if (!text) return <span className="text-[var(--comp-text-muted)] italic">No content provided.</span>;
@@ -23,9 +25,11 @@ const AdaptiveTextRenderer = ({ text }: { text: string }) => {
     if (currentList.length > 0) {
       const useGrid = currentList.length > 6;
       elements.push(
-        <ul className={cn("list-disc pl-5 my-4 space-y-2", useGrid ? "sm:grid sm:grid-cols-2 sm:gap-x-8 sm:gap-y-2 sm:space-y-0" : "")} key={`list-${elements.length}`}>
+        <ul className={cn("list-disc pl-4 space-y-2", useGrid ? "sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-2 sm:space-y-0" : "")} key={`list-${elements.length}`}>
           {currentList.map((item, i) => (
-            <li key={i} className="text-[var(--comp-text-secondary)] leading-relaxed">{item.replace(/^[\*\-\•]\s*/, '')}</li>
+            <li key={i} className="text-[var(--comp-text-secondary)] leading-relaxed [&>*:first-child]:my-0">
+              <Markdown>{item.replace(/^[\*\-\•]\s*/, '').replace(/\\&/g, '&')}</Markdown>
+            </li>
           ))}
         </ul>
       );
@@ -37,7 +41,6 @@ const AdaptiveTextRenderer = ({ text }: { text: string }) => {
     const trimmed = line.trim();
     if (!trimmed) {
       flushList();
-      elements.push(<div key={`space-${index}`} className="h-2" />);
       return;
     }
 
@@ -50,7 +53,7 @@ const AdaptiveTextRenderer = ({ text }: { text: string }) => {
     if (isHeader) {
       flushList();
       elements.push(
-        <h3 key={`h-${index}`} className="text-lg font-semibold text-[var(--comp-text-primary)] mt-8 mb-4 border-b border-[var(--comp-border)] pb-2">
+        <h3 key={`h-${index}`} className="text-lg font-semibold text-[var(--comp-text-primary)] mt-6 mb-2 border-b border-[var(--comp-border)] pb-2">
           {trimmed.replace(/:$/, '').replace(/\\&/g, '&')}
         </h3>
       );
@@ -59,16 +62,16 @@ const AdaptiveTextRenderer = ({ text }: { text: string }) => {
     } else {
       flushList();
       elements.push(
-        <p key={`p-${index}`} className="my-3 leading-relaxed text-[var(--comp-text-secondary)]">
-          {trimmed.replace(/\\&/g, '&')}
-        </p>
+        <div key={`p-${index}`} className="leading-relaxed text-[var(--comp-text-secondary)]">
+          <Markdown>{trimmed.replace(/\\&/g, '&')}</Markdown>
+        </div>
       );
     }
   });
 
   flushList();
 
-  return <div className="adaptive-content">{elements}</div>;
+  return <div className="adaptive-content space-y-4">{elements}</div>;
 };
 
 const OpportunityDetailPage: React.FC = () => {
@@ -195,7 +198,7 @@ const OpportunityDetailPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="body-text p-12 text-center animate-pulse">Loading opportunity details...</div>;
+  if (loading) return <LoadingState variant="card" rows={4} />;
   if (error || !opp) return (
     <div className="p-12 text-center">
       <AlertCircle className="h-12 w-12 text-[var(--error)] mx-auto mb-4" />
@@ -225,11 +228,10 @@ const OpportunityDetailPage: React.FC = () => {
   const containerMaxWidth = isSparse ? "max-w-5xl" : "";
 
   return (
-    <PageContainer className={`space-y-8 ${containerMaxWidth}`}>
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate(-1)} 
-        className="mb-2"
+    <PageContainer className={`space-y-6 ${containerMaxWidth}`}>
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
@@ -237,20 +239,20 @@ const OpportunityDetailPage: React.FC = () => {
       {/* Hero Section - Full Width */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-[var(--comp-border)]">
         <div className="space-y-6 flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <TypeBadge type={opp.type} className="text-sm px-3 py-1" />
-            <ModeChip mode={opp.mode} className="text-sm px-3 py-1" />
-            <DeadlineBadge deadline={opp.deadline} className="text-sm px-3 py-1" />
+          <div className="flex flex-wrap items-center gap-2">
+            <TypeBadge type={opp.type} className="text-sm px-2 py-1" />
+            <ModeChip mode={opp.mode} className="text-sm px-2 py-1" />
+            <DeadlineBadge deadline={opp.deadline} className="text-sm px-2 py-1" />
           </div>
           
           <h1 className="page-title">{opp.title}</h1>
           
           <div className="body-text flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-1.5 font-medium">
+            <div className="flex items-center gap-1 font-medium">
               <Briefcase className="h-5 w-5" />
               {opp.company || opp.organizer || 'University Opportunity'}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <MapPin className="h-5 w-5" />
               {opp.location || (opp.isPanIndia ? 'Pan India' : 'Remote / Online')}
             </div>
@@ -258,12 +260,12 @@ const OpportunityDetailPage: React.FC = () => {
 
           <div className="flex flex-wrap gap-4 pt-2">
             {applied ? (
-              <Button disabled className="flex-1 sm:flex-none h-12 px-8 text-lg">
+              <Button disabled className="flex-1 sm:flex-none h-12 px-6 text-lg">
                 <CheckCircle2 className="mr-2 h-5 w-5" /> Already Applied
               </Button>
             ) : (
               <Button
-                className="flex-1 sm:flex-none h-12 px-8 text-lg"
+                className="flex-1 sm:flex-none h-12 px-6 text-lg"
                 onClick={handleApply}
               >
                 Apply Now <ExternalLink className="ml-2 h-5 w-5" />
@@ -271,7 +273,7 @@ const OpportunityDetailPage: React.FC = () => {
             )}
             <Button 
               variant="outline" 
-              className={applied ? "flex-1 sm:flex-none h-12 text-emerald-600 border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" : "flex-1 sm:flex-none h-12"}
+              className={applied ? "flex-1 sm:flex-none h-12 text-[var(--success)] border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" : "flex-1 sm:flex-none h-12"}
               onClick={handleAddToTracker}
               disabled={applied}
             >
@@ -291,7 +293,7 @@ const OpportunityDetailPage: React.FC = () => {
         </div>
         
         {/* Right side Image / Icon */}
-        <div className="hidden md:flex flex-shrink-0 items-center justify-center w-40 h-40 lg:w-48 lg:h-48 rounded-3xl bg-[var(--comp-surface-hover)] border border-[var(--comp-border)] overflow-hidden shadow-sm mr-4 lg:mr-12">
+        <div className="hidden md:flex flex-shrink-0 items-center justify-center w-40 h-40 lg:w-48 lg:h-48 rounded-3xl bg-[var(--comp-surface-hover)] border border-[var(--comp-border)] overflow-hidden shadow-sm">
           {opp.logoUrl || opp.imageUrl ? (
             <img src={opp.logoUrl || opp.imageUrl} alt={opp.company || "Company Logo"} className="w-full h-full object-contain p-4" />
           ) : (
@@ -301,7 +303,7 @@ const OpportunityDetailPage: React.FC = () => {
       </header>
 
       {/* Structured Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
@@ -310,7 +312,7 @@ const OpportunityDetailPage: React.FC = () => {
             <CardHeader className="border-b border-[var(--comp-border)] pb-4">
               <CardTitle className="text-lg">Description</CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4">
               <AdaptiveTextRenderer text={opp.description || ''} />
             </CardContent>
           </Card>
@@ -321,7 +323,7 @@ const OpportunityDetailPage: React.FC = () => {
               <CardHeader className="border-b border-[var(--comp-border)] pb-4">
                 <CardTitle className="text-lg">Requirements</CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4">
                 <AdaptiveTextRenderer text={opp.requirements} />
               </CardContent>
             </Card>
@@ -337,7 +339,7 @@ const OpportunityDetailPage: React.FC = () => {
                 </span>
               )}
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
                 {opp.skills.map(skill => {
                   const isMatched = opp.skillMatch?.matched.some(s => s.toLowerCase() === skill.toLowerCase());
@@ -457,7 +459,7 @@ const OpportunityDetailPage: React.FC = () => {
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--comp-text-muted)]">Matched</p>
                       <div className="flex flex-wrap gap-2">
                         {fit.matchedSkills.slice(0, 5).map((skill) => (
-                          <span key={skill} className="rounded-full border border-[color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-2.5 py-1 text-xs font-medium text-[var(--success)]">
+                          <span key={skill} className="rounded-full border border-[color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-2 py-1 text-xs font-medium text-[var(--success)]">
                             {skill}
                           </span>
                         ))}
@@ -470,7 +472,7 @@ const OpportunityDetailPage: React.FC = () => {
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--comp-text-muted)]">Gaps</p>
                       <div className="flex flex-wrap gap-2">
                         {fit.missingSkills.slice(0, 5).map((skill) => (
-                          <span key={skill} className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2.5 py-1 text-xs font-medium text-[var(--comp-text-secondary)]">
+                          <span key={skill} className="rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] px-2 py-1 text-xs font-medium text-[var(--comp-text-secondary)]">
                             {skill}
                           </span>
                         ))}
@@ -505,7 +507,7 @@ const OpportunityDetailPage: React.FC = () => {
       </div>
 
       {opp.similar && opp.similar.length > 0 ? (
-        <section className="mt-12 space-y-4 border-t border-[var(--comp-border)] pt-10">
+        <section className="space-y-4 border-t border-[var(--comp-border)] pt-6">
           <h2 className="section-title">Similar opportunities</h2>
           <p className="body-text">Same type as this listing, explore related openings.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -97,6 +97,7 @@ import type {
   ResourceFilterState,
   ResourceFormState
 } from "./_shared/LmsPageShared";
+import { Pagination } from "../../components/ui/Pagination";
 
 export function BrowsePage() {
   const [filters, setFilters] = useState<ResourceFilterState>({});
@@ -120,24 +121,13 @@ export function BrowsePage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-[var(--comp-text-muted)] tabular-nums">
-          Page {page} of {totalPages} · {total} resource{total === 1 ? "" : "s"}
+          {total} resource{total === 1 ? "" : "s"}
         </p>
-        <div className="flex gap-2">
-          <button
-            className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((value) => Math.max(1, value - 1))}
-          >
-            Previous
-          </button>
-          <button
-            className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((value) => value + 1)}
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(next) => { if (!loading) setPage(next); }}
+        />
       </div>
     </LmsFrame>
   );

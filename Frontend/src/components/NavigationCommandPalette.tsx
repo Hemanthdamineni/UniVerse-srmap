@@ -158,11 +158,12 @@ export default function NavigationCommandPalette() {
         type="button"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
+        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-[var(--comp-surface-hover)]"
       >
         <SearchIcon className="size-4" />
         <span className="hidden text-sm md:inline">Search pages</span>
-        <span className="rounded-md border border-[var(--border)] bg-white/70 px-1.5 py-0.5 text-[11px] leading-none text-[var(--text-secondary)]">
+        <span className="sr-only md:hidden">Search pages</span>
+        <span className="rounded-md border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-1.5 py-0.5 text-xs leading-none text-[var(--text-secondary)]">
           {shortcut}
         </span>
       </Button>

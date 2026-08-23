@@ -1,7 +1,7 @@
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { transformAttendance } from "./attendanceTransformers";
 import { transformCourseRegistration, transformCurriculum, transformTimetable } from "./academicTransformers";
-import { transformCurrentResults, transformInternalMarks } from "./examTransformers";
+import { transformCurrentResults, transformExamMarkDetails, transformInternalMarks } from "./examTransformers";
 import { transformProfileData } from "./profileTransformers";
 import {
   transformBankDetails,
@@ -24,6 +24,7 @@ const registry: Record<string, TransformerFn> = {
   "course-registration": transformCourseRegistration,
   curriculum: transformCurriculum,
   "results-current": transformCurrentResults,
+  "exam-mark-details": transformExamMarkDetails,
   "finance-dues": transformFeeDues,
   "finance-paid": transformFeesPaid,
   "bank-details": transformBankDetails,

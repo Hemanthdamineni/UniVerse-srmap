@@ -4,14 +4,15 @@
  * Pattern: FeeDuesPage. Fetches live ERP data, renders status + tables,
  * then directs the student to the official portal for submission.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
 import { extractSections, sanitizeText, type ParsedSection } from "../../lib/erp/sanitize";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { StatusBadge } from "../../components/ui/Badges";
 
-type Props = { blueprint: PageBlueprint };
+type Props = { blueprint: PageBlueprint; extraContent?: ReactNode };
 type TableRow = Record<string, string>;
 
 // ── Column key humanization ─────────────────────────────────────────────────
@@ -163,6 +164,13 @@ function isTitleRedundant(sectionTitle: string, pageHeading: string): boolean {
   return a === b || b.includes(a) || a.includes(b);
 }
 
+function isTextRedundant(text: string, reference: string): boolean {
+  const t = normHeading(text);
+  const r = normHeading(reference);
+  if (!t || !r) return false;
+  return t === r || t.includes(r) || r.includes(t);
+}
+
 function detectStatus(sections: ParsedSection[]): "registered" | "pending" | "not-registered" | null {
   const combined = sections.map((s) => `${s.title} ${s.text}`.toLowerCase()).join(" ");
   if (/registered|confirmed|success|approved|allocated/i.test(combined)) return "registered";
@@ -188,6 +196,18 @@ function hasStructuredPatterns(text: string): boolean {
   const pipeGroups = text.split("|").filter((part) => /\S+\s*:\s*\S+/.test(part.trim())).length;
   if (pipeGroups >= 2) return true;
   return false;
+}
+
+/** Detects ERP notice/alert text that should be styled as a callout box. */
+function isNoticeText(text: string): boolean {
+  if (!text) return false;
+  const trimmed = text.trim();
+  // Common notice patterns in ERP pages
+  return /^Note:/i.test(trimmed) ||
+    /^Please note:/i.test(trimmed) ||
+    /^Important:/i.test(trimmed) ||
+    /Students will be allowed to register for one facility/i.test(trimmed) ||
+    /Transport booking will be open/i.test(trimmed);
 }
 
 /**
@@ -231,6 +251,41 @@ function parseStructuredText(text: string): Array<{ label: string; value: string
 function StructuredTextField({ text, title }: { text: string; title: string }) {
   const isStructured = hasStructuredPatterns(text);
   const pairs = isStructured ? parseStructuredText(text) : [];
+  const isNotice = isNoticeText(text);
+
+  // Notice/alert text: render as a styled callout box
+  if (isNotice) {
+    return (
+      <div
+        className="flex items-start gap-3 rounded-xl p-4"
+        style={{
+          border: "1px solid color-mix(in srgb, var(--comp-warning) 30%, transparent)",
+          background: "color-mix(in srgb, var(--comp-warning) 8%, transparent)",
+        }}
+        role="alert"
+      >
+        <svg
+          className="mt-0.5 shrink-0"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--comp-warning)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" x2="12" y1="9" y2="13" />
+          <line x1="12" x2="12.01" y1="17" y2="17" />
+        </svg>
+        <div className="flex-1 text-sm leading-6" style={{ color: "var(--comp-text-primary)" }}>
+          {text}
+        </div>
+      </div>
+    );
+  }
 
   // Structured data: render as a key-value card grid
   if (isStructured && pairs.length >= 2 && pairs.length <= 30) {
@@ -250,7 +305,7 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
         <div className="grid gap-x-6 gap-y-0 md:grid-cols-2">
           <div className="divide-y" style={{ borderColor: "color-mix(in srgb, var(--comp-border) 40%, transparent)" }}>
             {leftCol.map((pair, pi) => (
-              <div key={pi} className="flex items-baseline justify-between gap-4 px-4 py-2.5">
+              <div key={pi} className="flex items-baseline justify-between gap-4 px-4 py-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--comp-text-muted)" }}>
                   {pair.label}
                 </span>
@@ -262,7 +317,7 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
           </div>
           <div className="divide-y md:border-l" style={{ borderColor: "color-mix(in srgb, var(--comp-border) 40%, transparent)" }}>
             {rightCol.map((pair, pi) => (
-              <div key={pi} className="flex items-baseline justify-between gap-4 px-4 py-2.5">
+              <div key={pi} className="flex items-baseline justify-between gap-4 px-4 py-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--comp-text-muted)" }}>
                   {pair.label}
                 </span>
@@ -294,31 +349,10 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
 // ── Sub-components ──────────────────────────────────────────────────────────
 
 const STATUS_MAP = {
-  registered: { label: "Registered", token: "--success" },
-  pending: { label: "Pending", token: "--warning" },
-  "not-registered": { label: "Not Registered", token: "--error" },
+  registered: { label: "Registered", preset: "success" },
+  pending: { label: "Pending", preset: "warning" },
+  "not-registered": { label: "Not Registered", preset: "error" },
 } as const;
-
-function StatusChip({ status }: { status: keyof typeof STATUS_MAP }) {
-  const { label, token } = STATUS_MAP[status];
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-      style={{
-        background: `color-mix(in srgb, var(${token}) 12%, transparent)`,
-        border: `1px solid color-mix(in srgb, var(${token}) 30%, transparent)`,
-        color: `var(${token})`,
-      }}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: `var(${token})` }}
-        aria-hidden="true"
-      />
-      {label}
-    </span>
-  );
-}
 
 function DataTable({ rows }: { rows: TableRow[] }) {
   if (!rows.length) return null;
@@ -365,7 +399,7 @@ function DataTable({ rows }: { rows: TableRow[] }) {
                           href={value}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide no-underline transition-colors hover:opacity-80"
+                          className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide no-underline transition-colors hover:opacity-80"
                           style={{
                             borderColor: "var(--comp-border)",
                             color: "var(--comp-text-primary)",
@@ -381,7 +415,7 @@ function DataTable({ rows }: { rows: TableRow[] }) {
                         </a>
                       ) : (
                         <span
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors hover:opacity-80"
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors hover:opacity-80"
                           style={{
                             borderColor: "var(--comp-border)",
                             color: "var(--comp-text-primary)",
@@ -466,7 +500,7 @@ function PortalCta({ meta }: { meta: RegMeta }) {
 
 function EmptyRegistration({ meta }: { meta: RegMeta }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <EmptyState
         title="No registration data available"
         description={meta.closedHint}
@@ -478,7 +512,7 @@ function EmptyRegistration({ meta }: { meta: RegMeta }) {
 
 // ── Main component ──────────────────────────────────────────────────────────
 
-export default function RegistrationErpPage({ blueprint }: Props) {
+export default function RegistrationErpPage({ blueprint, extraContent }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [responsesByKey, setResponsesByKey] = useState<Record<string, ErpPageResponse>>({});
@@ -540,7 +574,7 @@ export default function RegistrationErpPage({ blueprint }: Props) {
           {/* Status row */}
           {status && (
             <div className="flex items-center gap-3">
-              <StatusChip status={status} />
+              <StatusBadge label={STATUS_MAP[status].label} preset={STATUS_MAP[status].preset} dot />
               <span className="text-xs text-[var(--comp-text-muted)]">
                 Live data from university ERP
               </span>
@@ -561,17 +595,15 @@ export default function RegistrationErpPage({ blueprint }: Props) {
 
               {/* Text-only section: render as structured key-value cards */}
               {section.text && section.tables.length === 0 && (
-                <StructuredTextField text={section.text} title={section.title} />
+                (!section.title || isTitleRedundant(section.title, blueprint.heading) || !isTextRedundant(section.text, section.title)) ? (
+                  <StructuredTextField text={section.text} title={section.title} />
+                ) : null
               )}
 
               {/* Table sections */}
               {section.tables.map((rows, ti) => (
                 <DataTable key={ti} rows={rows} />
               ))}
-
-              {i < sections.length - 1 && (
-                <hr style={{ border: "none", borderTop: "1px solid var(--comp-border)", margin: "var(--space-md) 0" }} />
-              )}
             </div>
           ))}
 
@@ -579,6 +611,11 @@ export default function RegistrationErpPage({ blueprint }: Props) {
           <PortalCta meta={meta} />
         </div>
       )}
+
+      {/* Optional page-specific extensions (e.g. Buddy Finder, route admin)
+          rendered inside this shell so gutters stay aligned with the inset
+          content above regardless of load state. */}
+      {extraContent}
     </ErpPageShell>
   );
 }

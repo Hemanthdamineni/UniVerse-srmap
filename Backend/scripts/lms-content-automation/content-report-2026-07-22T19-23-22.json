@@ -1,0 +1,129 @@
+{
+  "timestamp": "2026-07-22T19:23:22.869Z",
+  "summary": {
+    "resources": 4,
+    "resourcesByType": [
+      {
+        "type": "quiz",
+        "c": 1
+      },
+      {
+        "type": "note",
+        "c": 1
+      },
+      {
+        "type": "link",
+        "c": 1
+      },
+      {
+        "type": "flashcard",
+        "c": 1
+      }
+    ],
+    "resourcesBySubject": [
+      {
+        "subjectCode": "CSE308",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE306",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE304",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE302",
+        "c": 1
+      }
+    ],
+    "guides": 41,
+    "guideSections": 311,
+    "roadmaps": 6,
+    "roadmapNodes": 55,
+    "questions": 182,
+    "topics": 231,
+    "resourcesGeneratedThisRun": 0,
+    "guidesGeneratedThisRun": 0,
+    "roadmapsGeneratedThisRun": 0,
+    "questionsGeneratedThisRun": 91
+  },
+  "stats": {
+    "resourcesCreated": 0,
+    "guidesCreated": 0,
+    "guideSectionsCreated": 0,
+    "roadmapsCreated": 0,
+    "roadmapNodesCreated": 0,
+    "roadmapEdgesCreated": 0,
+    "questionsCreated": 91,
+    "topicsCreated": 0,
+    "topicLinks": 0,
+    "errors": [],
+    "warnings": [
+      "CSE302 has only 1/5 resource types",
+      "CSE304 has only 1/5 resource types",
+      "CSE306 has only 1/5 resource types",
+      "CSE308 has only 1/5 resource types"
+    ],
+    "phases": [
+      {
+        "name": "Generating Resources",
+        "startedAt": "2026-07-22T19:23:22.750Z"
+      },
+      {
+        "name": "Generating Topics & Resource Links",
+        "startedAt": "2026-07-22T19:23:22.751Z"
+      },
+      {
+        "name": "Generating Guides",
+        "startedAt": "2026-07-22T19:23:22.763Z"
+      },
+      {
+        "name": "Generating Skill Roadmaps",
+        "startedAt": "2026-07-22T19:23:22.765Z"
+      },
+      {
+        "name": "Generating Question Bank",
+        "startedAt": "2026-07-22T19:23:22.765Z"
+      },
+      {
+        "name": "Content Verification",
+        "startedAt": "2026-07-22T19:23:22.866Z"
+      },
+      {
+        "name": "Content Critique & Gap Analysis",
+        "startedAt": "2026-07-22T19:23:22.868Z"
+      },
+      {
+        "name": "Generating Audit Report",
+        "startedAt": "2026-07-22T19:23:22.869Z"
+      }
+    ],
+    "issues": [
+      {
+        "type": "error",
+        "message": "No resources for CSE310: Software Engineering"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE312: Machine Learning Fundamentals"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE314: Theory of Computation"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE316: Compiler Design"
+      }
+    ]
+  },
+  "errors": [],
+  "warnings": [
+    "CSE302 has only 1/5 resource types",
+    "CSE304 has only 1/5 resource types",
+    "CSE306 has only 1/5 resource types",
+    "CSE308 has only 1/5 resource types"
+  ]
+}

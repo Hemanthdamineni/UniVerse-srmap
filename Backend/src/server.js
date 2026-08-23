@@ -1,3 +1,4 @@
+require("dotenv").config();
 const {
   PORT,
   SESSION_TTL_MS,
@@ -21,6 +22,9 @@ const {
   HELPDESK_DB_PATH,
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
+  ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
+  VACANT_ROOMS_DB_PATH,
+  PERSISTENT_TEAMS_DB_PATH,
   FEEDBACK_AUTOMATION_ENABLED,
   UPLOADS_DIR,
   LMS_FILES_DIR,
@@ -45,10 +49,13 @@ const { FeedbackAutomationService } = require("./services/campus/feedbackService
 const { ErpAggregationService } = require("./services/erp/erpAggregationService");
 const { ErpUiMapStore } = require("./services/erp/erpUiMapStore");
 const { ErpActionExecutor } = require("./services/erp/erpActionExecutor");
+const { AttendanceSnapshotStore } = require("./services/erp/attendanceSnapshotStore");
+const { VacantRoomStore } = require("./services/erp/vacantRoomStore");
 const { createApiContext } = require("./services/erp/erpClient");
 const { PagePolicyStore } = require("./services/core/sessionServices");
 const { EventsStore } = require("./services/events/eventsStore");
 const { createCompetitionStore } = require("./services/events/competitionStore");
+const { createPersistentTeamStore } = require("./services/events/persistentTeamStore");
 const { HelpdeskStore } = require("./services/campus/helpdeskStore");
 const { CampusFeedbackStore } = require("./services/campus/campusFeedbackStore");
 const { CareerStore } = require("./services/career/careerStore");
@@ -163,6 +170,9 @@ async function startServer() {
     eventsStore,
     dbPath: EVENTS_DB_PATH,
   });
+  const persistentTeamStore = createPersistentTeamStore({
+    dbPath: PERSISTENT_TEAMS_DB_PATH,
+  });
   const helpdeskStore = new HelpdeskStore({
     dbPath: HELPDESK_DB_PATH,
   });
@@ -230,6 +240,13 @@ async function startServer() {
   const externalSeeded = contentStore.seedExternalPages(EXTERNAL_PAGE_SEED_DATA);
   const eventsSeeded = contentStore.seedEvents(Array.isArray(eventsStore.events) ? eventsStore.events : []);
 
+  const attendanceSnapshotStore = new AttendanceSnapshotStore({
+    dbPath: ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
+  });
+  const vacantRoomStore = new VacantRoomStore({
+    dbPath: VACANT_ROOMS_DB_PATH,
+  });
+
   const app = createApp({
     sessionStore,
     discoveryRepository,
@@ -242,6 +259,7 @@ async function startServer() {
     campusFeedbackStore,
     careerStore,
     competitionStore,
+    persistentTeamStore,
     unifiedProfileStore,
     companionAnalyticsStore,
     lmsStore,
@@ -261,6 +279,28 @@ async function startServer() {
     integrityService,
     erpDumpService,
     uploadsDir: UPLOADS_DIR,
+    attendanceSnapshotStore,
+    vacantRoomStore,
+    erpDataSink: {
+      onLivePageFetched({ pageKey, sessionId, payload }) {
+        if (!sessionId || !payload) return;
+        erpAggregationService
+          .resolveUserKey(sessionId)
+          .then((userKey) => {
+            if (
+              (pageKey === "academic/attendance-details" || pageKey === "academic/student-attendance") &&
+              Array.isArray(payload.records)
+            ) {
+              attendanceSnapshotStore.record({ userKey, pageKey, records: payload.records });
+              return;
+            }
+            if (pageKey === "academic/time-table" && Array.isArray(payload.schedule)) {
+              vacantRoomStore.ingestTimetable(payload.schedule);
+            }
+          })
+          .catch(() => {});
+      },
+    },
   });
   const reminderTicker = setInterval(() => {
     try {

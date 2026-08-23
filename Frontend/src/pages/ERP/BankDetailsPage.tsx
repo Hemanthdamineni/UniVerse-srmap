@@ -124,12 +124,12 @@ export default function BankDetailsPage({ blueprint }: Props) {
 
       setSubmitResult({
         success: result.success,
-        message: result.message || (result.success ? "Bank details saved successfully." : "Failed to save bank details."),
+        message: result.message || (result.success ? "Bank details saved successfully." : "Couldn't save your bank details. Please try again."),
       });
     } catch (err: any) {
       setSubmitResult({
         success: false,
-        message: err.message || "Failed to save bank details.",
+        message: err.message || "Couldn't save your bank details. Please try again.",
       });
     } finally {
       setSubmitting(false);
@@ -188,7 +188,7 @@ export default function BankDetailsPage({ blueprint }: Props) {
           </div>
 
           {/* Two-column form grid */}
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {/* Left column */}
             <div className="space-y-4">
               {leftFields.map((field) => (
@@ -235,12 +235,7 @@ export default function BankDetailsPage({ blueprint }: Props) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors hover:opacity-80"
-                style={{
-                  borderColor: "var(--comp-border)",
-                  color: "var(--comp-text-primary)",
-                  background: "color-mix(in srgb, var(--comp-surface) 80%, transparent)",
-                }}
+                className="btn-secondary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -293,8 +288,7 @@ export default function BankDetailsPage({ blueprint }: Props) {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: "var(--comp-accent)" }}
+              className="comp-btn-primary min-h-[42px]"
             >
               {submitting ? (
                 <>

@@ -80,7 +80,7 @@ export default function AdminLmsModerationPage() {
 
       <div className="space-y-5">
         <SectionCard title="Community Health">
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-5">
             <StatCard label="Queue" value={String(summary.total)} />
             <StatCard label="Flagged" value={String(summary.flagged)} />
             <StatCard label="Visible" value={String(summary.visible)} />
@@ -90,12 +90,13 @@ export default function AdminLmsModerationPage() {
         </SectionCard>
 
         <SectionCard title="Review Queue">
-          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Moderation queue filters">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Moderation queue filters">
               {QUEUE_FILTERS.map((filter) => (
                 <button
                   key={filter.id}
                   type="button"
+                  aria-pressed={stateFilter === filter.id}
                   className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
                     stateFilter === filter.id
                       ? "bg-[var(--comp-accent)] text-white"
@@ -116,11 +117,11 @@ export default function AdminLmsModerationPage() {
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="divide-y divide-[var(--border)]">
             {(data?.items || []).map((resource) => {
               const flag = latestFlag(resource);
               return (
-                <article key={resource.id} className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4">
+                <article key={resource.id} className="py-3 first:pt-0 last:pb-0">
                   <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
@@ -164,23 +165,23 @@ export default function AdminLmsModerationPage() {
                         placeholder="Decision reason"
                         aria-label={`Decision reason for ${resource.id}`}
                       />
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
-                          className="rounded-full bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                          className="min-h-9 rounded-lg bg-[var(--success)] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
                           disabled={busyId === resource.id}
                           onClick={() => void decide(resource, "approve")}
                         >
                           Approve
                         </button>
                         <button
-                          className="rounded-full border border-[color-mix(in_srgb,var(--warning)_35%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--warning)] disabled:opacity-60"
+                          className="min-h-9 rounded-lg border border-[color-mix(in_srgb,var(--warning)_35%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--warning)] disabled:opacity-60"
                           disabled={busyId === resource.id}
                           onClick={() => void decide(resource, "hide")}
                         >
                           Hide
                         </button>
                         <button
-                          className="rounded-full border border-[color-mix(in_srgb,var(--error)_35%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] disabled:opacity-60"
+                          className="min-h-9 rounded-lg border border-[color-mix(in_srgb,var(--error)_35%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--error)] disabled:opacity-60"
                           disabled={busyId === resource.id}
                           onClick={() => void decide(resource, "remove")}
                         >

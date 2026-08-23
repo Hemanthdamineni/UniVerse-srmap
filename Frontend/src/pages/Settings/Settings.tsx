@@ -4,6 +4,7 @@
  * privacy toggles, theme selection, and data export.
  */
 
+import { Download } from "lucide-react";
 import { useState } from 'react';
 import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
 
@@ -15,49 +16,37 @@ function ToggleSwitch({ checked, onChange, label, description }: {
   label: string;
   description?: string;
 }) {
-  const labelId = `toggle-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-  const descriptionId = `${labelId}-description`;
+  const descriptionId = description
+    ? `toggle-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-description`
+    : undefined;
   return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--comp-border)',
-      gap: 'var(--space-md)',
-    }}>
-      <div id={labelId}>
-        <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: 'var(--comp-text-primary)' }}>{label}</p>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      aria-describedby={descriptionId}
+      onClick={() => onChange(!checked)}
+      className="flex min-h-11 w-full items-center justify-between gap-4 border-b border-[var(--comp-border)] py-2 text-left transition-colors hover:bg-[var(--comp-surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 outline-[var(--accent-blue)]"
+    >
+      <span>
+        <span className="block text-sm font-medium text-[var(--comp-text-primary)]">{label}</span>
         {description && (
-          <p id={descriptionId} style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--comp-text-muted)' }}>{description}</p>
+          <span id={descriptionId} className="mt-0.5 block text-xs text-[var(--comp-text-muted)]">{description}</span>
         )}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-labelledby={labelId}
-        aria-describedby={description ? descriptionId : undefined}
-        onClick={() => onChange(!checked)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onChange(!checked);
-          }
-        }}
-        style={{
-          width: 40, height: 22, borderRadius: 11,
-          background: checked ? 'var(--comp-accent)' : 'var(--comp-border)',
-          position: 'relative', flexShrink: 0,
-          transition: 'background 0.2s ease', cursor: 'pointer',
-        }}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`relative h-[22px] w-10 shrink-0 rounded-full transition-colors ${
+          checked ? 'bg-[var(--comp-accent)]' : 'bg-[var(--comp-border)]'
+        }`}
       >
-        <div style={{
-          width: 16, height: 16, borderRadius: '50%',
-          background: 'var(--background)', position: 'absolute', top: 3,
-          left: checked ? 21 : 3,
-          transition: 'left 0.2s ease',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-        }} />
-      </button>
-    </div>
+        <span
+          className="absolute left-[3px] top-[3px] h-4 w-4 rounded-full bg-[var(--background)] shadow-sm transition-transform"
+          style={{ transform: checked ? 'translateX(18px)' : 'translateX(0)' }}
+        />
+      </span>
+    </button>
   );
 }
 
@@ -81,18 +70,15 @@ export default function Settings() {
 
   return (
     <ErpPageShell title="Settings" source="Internal API" isLoading={false}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', maxWidth: 720 }}>
+      <div className="flex max-w-[720px] flex-col gap-6">
 
-        <div>
-          <h1 className="comp-heading-lg" style={{ margin: 0 }}>Settings & Preferences</h1>
-          <p className="comp-body" style={{ margin: '4px 0 0' }}>
-            Manage your notifications, privacy, and display preferences
-          </p>
-        </div>
+        <p className="comp-body mt-1">
+          Manage your notifications, privacy, and display preferences
+        </p>
 
         {/* Event Notifications */}
         <SectionCard title="Event Notifications">
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             <ToggleSwitch
               checked={eventReminders}
               onChange={setEventReminders}
@@ -128,7 +114,7 @@ export default function Settings() {
 
         {/* Privacy */}
         <SectionCard title="Privacy & Visibility">
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             <ToggleSwitch
               checked={profilePublic}
               onChange={setProfilePublic}
@@ -152,32 +138,29 @@ export default function Settings() {
 
         {/* Appearance */}
         <SectionCard title="Appearance">
-          <p className="comp-body" style={{ margin: '0 0 var(--space-md)', fontSize: '0.82rem' }}>
+          <p className="comp-body mb-4 text-sm">
             Choose how the platform looks to you
           </p>
-          <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+          <div className="flex gap-4">
             {(['system', 'light', 'dark'] as const).map((theme) => (
               <button
                 key={theme}
                 onClick={() => setSelectedTheme(theme)}
-                style={{
-                  flex: 1, padding: 'var(--space-md)',
-                  borderRadius: 12,
-                  border: `2px solid ${selectedTheme === theme ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                  background: selectedTheme === theme ? 'var(--comp-accent-light)' : 'var(--comp-surface)',
-                  cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-xs)',
-                }}
+                className={`flex flex-1 flex-col items-center gap-1 rounded-xl border-2 p-4 transition-colors ${
+                  selectedTheme === theme
+                    ? 'border-[var(--comp-accent)] bg-[var(--comp-accent-light)]'
+                    : 'border-[var(--comp-border)] bg-[var(--comp-surface)]'
+                }`}
                 aria-pressed={selectedTheme === theme}
               >
-                <span style={{ fontSize: '1.5rem' }}>
+                <span className="text-2xl">
                   {theme === 'system' ? '💻' : theme === 'light' ? '☀️' : '🌙'}
                 </span>
-                <span style={{
-                  fontSize: '0.82rem', fontWeight: 600,
-                  color: selectedTheme === theme ? 'var(--comp-accent)' : 'var(--comp-text-secondary)',
-                  textTransform: 'capitalize',
-                }}>
+                <span
+                  className={`text-sm font-semibold capitalize ${
+                    selectedTheme === theme ? 'text-[var(--comp-accent)]' : 'text-[var(--comp-text-secondary)]'
+                  }`}
+                >
                   {theme}
                 </span>
               </button>
@@ -187,42 +170,36 @@ export default function Settings() {
 
         {/* Data & Export */}
         <SectionCard title="Data & Export">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--comp-border)',
-            }}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-[var(--comp-border)] py-2">
               <div>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: 'var(--comp-text-primary)' }}>
+                <p className="text-sm font-medium text-[var(--comp-text-primary)]">
                   Export My Data
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--comp-text-muted)' }}>
+                <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">
                   Download all your registrations, submissions, and certificates
                 </p>
               </div>
-              <button className="comp-btn-ghost" style={{ fontSize: '0.82rem' }}>↓ Export</button>
+              <button className="comp-btn-ghost"><Download size={14} aria-hidden="true" /> Export</button>
             </div>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: 'var(--space-sm) 0',
-            }}>
+            <div className="flex items-center justify-between py-2">
               <div>
-                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500, color: 'var(--comp-text-primary)' }}>
+                <p className="text-sm font-medium text-[var(--comp-text-primary)]">
                   Clear Event Cache
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--comp-text-muted)' }}>
+                <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">
                   Reset locally cached event data for a fresh sync
                 </p>
               </div>
-              <button className="comp-btn-ghost" style={{ fontSize: '0.82rem', color: 'var(--status-live-text)' }}>Clear</button>
+              <button className="comp-btn-ghost" style={{ color: 'var(--status-live-text)' }}>Clear</button>
             </div>
           </div>
         </SectionCard>
 
         {/* Save */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-sm)' }}>
-          <button className="comp-btn-ghost" style={{ fontSize: '0.85rem' }}>Reset to Defaults</button>
-          <button className="comp-btn-primary" style={{ fontSize: '0.85rem' }}>Save Preferences</button>
+        <div className="flex justify-end gap-2">
+          <button className="comp-btn-ghost">Reset to Defaults</button>
+          <button className="comp-btn-primary">Save Preferences</button>
         </div>
       </div>
     </ErpPageShell>

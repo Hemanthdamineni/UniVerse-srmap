@@ -11,6 +11,7 @@ export type PageRenderer =
   | "timetable"
   | "attendance"
   | "curriculum"
+  | "vacant-rooms"
   | "results-current"
   | "results-earlier"
   | "finance-dues"

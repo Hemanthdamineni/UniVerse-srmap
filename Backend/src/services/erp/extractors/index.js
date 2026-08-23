@@ -25,7 +25,12 @@ const { extractOdMlDetails } = require("./extractOdMlDetails");
 const { extractAnnouncements } = require("./extractAnnouncements");
 const { extractBankDetails } = require("./extractBankDetails");
 const { extractEarlierInternalMarks } = require("./extractEarlierInternalMarks");
+const { extractEarlierInternalMarksSemester } = require("./extractEarlierInternalMarksSemester");
 const { extractGenericTable } = require("./extractGenericTable");
+const { extractTransport } = require("./extractTransport");
+const { extractHostel } = require("./extractHostel");
+const { extractTransportRegistrationAck } = require("./extractTransportRegistrationAck");
+const { extractTransportRegistrationForm } = require("./extractTransportRegistrationForm");
 
 // Convenience factory for generic-table pages with a specific expected title
 const genericFor = (title) => (html) => extractGenericTable(html, title);
@@ -55,15 +60,15 @@ const SUBITEM_EXTRACTORS = {
   "Examination|Exam Registration": genericFor("EXAM REGISTRATION"),
   "Examination|Exam Registration Details": genericFor("Exam Application Details"),
   // Semester N pages — AJAX responses loaded by Earlier Internal Marks,
-  // share the same internal-marks structure
-  "Examination|Semester 1": extractInternalMarks,
-  "Examination|Semester 2": extractInternalMarks,
-  "Examination|Semester 3": extractInternalMarks,
-  "Examination|Semester 4": extractInternalMarks,
-  "Examination|Semester 5": extractInternalMarks,
-  "Examination|Semester 6": extractInternalMarks,
-  "Examination|Semester 7": extractInternalMarks,
-  "Examination|Semester 8": extractInternalMarks,
+  // use dedicated extractor for the 6-column table structure
+  "Examination|Semester 1": extractEarlierInternalMarksSemester,
+  "Examination|Semester 2": extractEarlierInternalMarksSemester,
+  "Examination|Semester 3": extractEarlierInternalMarksSemester,
+  "Examination|Semester 4": extractEarlierInternalMarksSemester,
+  "Examination|Semester 5": extractEarlierInternalMarksSemester,
+  "Examination|Semester 6": extractEarlierInternalMarksSemester,
+  "Examination|Semester 7": extractEarlierInternalMarksSemester,
+  "Examination|Semester 8": extractEarlierInternalMarksSemester,
 
   // ── Finance ────────────────────────────────────────────────────────────────
   "Finance|Fee Due Details": extractFeeDues,
@@ -74,14 +79,13 @@ const SUBITEM_EXTRACTORS = {
 
   // ── Hostel ────────────────────────────────────────────────────────────────
   "Hostel|Room Details": genericFor("Room Details"),
-  "Hostel|Hostel Booking for Full Year": genericFor("Hostel Booking"),
+  "Hostel|Hostel Booking for Full Year": extractHostel,
   "Hostel|Hostel Layout & FAQs": genericFor("Hostel Layout & FAQs"),
   "Hostel|Hostel Refund Policy": genericFor("Hostel Refund Policy"),
 
   // ── Transport ─────────────────────────────────────────────────────────────
-  "Transport|Transport Registration": genericFor("TRANSPORT REGISTRATION"),
-  "Transport|Registration Acknowledgment": genericFor("Registration Acknowledgment"),
-  "Transport|Transport & FAQs": genericFor("Transport & FAQs"),
+  "Transport|Transport Registration": extractTransportRegistrationForm,
+  "Transport|Registration Acknowledgment": extractTransportRegistrationAck,
   "Transport|Transport Refund Policy": genericFor("Transport Refund Policy"),
 
   // ── SAP ───────────────────────────────────────────────────────────────────
@@ -307,6 +311,11 @@ function adaptToLegacyPayload(extracted) {
         tables.push(t.rows);
       }
     });
+  } else if (type === "transport-registration-ack" && Array.isArray(extracted.fields)) {
+    // Convert fields to a single-row table for legacy compatibility
+    const row = {};
+    extracted.fields.forEach((f) => { row[f.label] = f.value; });
+    tables.push([row]);
   }
 
   // Build meaningful text summary
@@ -314,6 +323,8 @@ function adaptToLegacyPayload(extracted) {
   if (type === "attendance" && extracted.period) {
     text = `${title} During the Period: ${extracted.period}`;
   } else if (type === "generic-table" && extracted.text) {
+    text = extracted.text;
+  } else if (type === "transport-registration-ack" && extracted.text) {
     text = extracted.text;
   }
 
@@ -386,5 +397,7 @@ module.exports = {
   extractAnnouncements,
   extractBankDetails,
   extractEarlierInternalMarks,
+  extractEarlierInternalMarksSemester,
   extractGenericTable,
+  extractTransportRegistrationAck,
 };

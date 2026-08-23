@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { executeErpAction, getErpBatch } from "../../lib/erp/index";
 import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erp/erpTransformers";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, TableCardHeader, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 // ERP-dependent base URL for receipt print endpoint — adjust if the ERP path changes
@@ -157,7 +157,7 @@ export default function FeePaidPage({ blueprint }: Props) {
       )}
 
       {data?.sections && data.sections.length > 0 ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {data.sections.map((section) => {
             const hasPrintAction = section.rows.some(
               (r) => r.printActionId && r.printReceiptId
@@ -177,12 +177,14 @@ export default function FeePaidPage({ blueprint }: Props) {
 
             return (
               <section key={section.sourcePageKey} className="dashboard-card overflow-hidden p-0">
-                <div className="border-b px-5 py-4" style={{ borderColor: 'var(--comp-border)' }}>
-                  <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{section.sourceLabel}</h3>
-                  <p className="mt-0.5 text-xs" style={{ color: 'var(--comp-text-muted)' }}>
-                    {section.rows.length} receipt{section.rows.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
+                <TableCardHeader
+                  title={section.sourceLabel}
+                  right={
+                    <span className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>
+                      {section.rows.length} receipt{section.rows.length !== 1 ? 's' : ''}
+                    </span>
+                  }
+                />
                 <div className="erp-table-shell rounded-none border-0 shadow-none overflow-x-auto">
                   <table className="erp-table w-full text-left">
                     <thead className="erp-table-head">
@@ -222,7 +224,7 @@ export default function FeePaidPage({ blueprint }: Props) {
                                   borderColor: 'var(--comp-border)',
                                   backgroundColor: printingId === row.stableKey ? 'transparent' : 'var(--comp-surface-hover)',
                                   color: printingId === row.stableKey ? 'var(--comp-text-muted)' : 'var(--comp-text-primary)',
-                                  transition: 'all 0.15s ease',
+                                  transition: 'border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast)',
                                 }}
                               >
                                 {printingId === row.stableKey ? 'Printing...' : 'Print'}
@@ -236,11 +238,10 @@ export default function FeePaidPage({ blueprint }: Props) {
                         </tr>
                       ))}
                       {section.rows.length === 0 && (
-                        <tr className="erp-table-row">
-                          <td colSpan={colCount || 1} className="erp-table-cell py-8 text-center italic" style={{ color: 'var(--comp-text-muted)' }}>
-                            No payment receipts found in this data source.
-                          </td>
-                        </tr>
+                        <TableEmptyRow
+                          colSpan={colCount || 1}
+                          message="No payment receipts found in this data source."
+                        />
                       )}
                     </tbody>
                   </table>

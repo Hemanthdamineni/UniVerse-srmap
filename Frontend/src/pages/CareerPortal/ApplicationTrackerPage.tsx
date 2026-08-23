@@ -3,9 +3,11 @@ import { listApplications, updateApplication, deleteApplication, type CareerAppl
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/ui/Layouts";
 import { SkeletonCard } from "../../components/ui/Skeletons";
-import { EmptyState } from "../../components/ui/Feedback";
+import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { ConfirmDialog } from "../../components/dialog";
 import { Trash2, Calendar, Building2, GripVertical, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { StatusBadge } from "../../components/ui/Badges";
+import { PageContainer } from "../../components/layout/PageLayouts";
 
 const COLUMNS: { id: CareerApplication["status"]; label: string }[] = [
   { id: "interested", label: "Interested" },
@@ -21,17 +23,23 @@ const ApplicationTrackerPage: React.FC = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [draggedAppId, setDraggedAppId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchApps();
   }, []);
 
   const fetchApps = async () => {
+    setLoading(true);
     try {
       const data = await listApplications();
       setApplications(data.items);
+      setLoadError("");
     } catch (err) {
       console.error("Failed to fetch applications", err);
+      setLoadError("Couldn't load your applications. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -75,27 +83,43 @@ const ApplicationTrackerPage: React.FC = () => {
 
     try {
       await updateApplication(appId, newStatus);
+      setActionError("");
     } catch (err) {
       console.error("Failed to update status", err);
       // Revert on failure
       setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: appToMove.status } : a));
+      setActionError(`Couldn't move "${appToMove.opportunityTitle}" to ${COLUMNS.find(c => c.id === newStatus)?.label ?? "that column"}. Please try again.`);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to remove this application from your tracker?")) return;
-    
+  const handleDelete = (id: string) => {
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    const app = applications.find(a => a.id === pendingDeleteId);
+    if (!app) return;
+    const { id, opportunityTitle } = app;
+    setPendingDeleteId(null);
+
     // Optimistic delete
     const previousApps = [...applications];
     setApplications(prev => prev.filter(a => a.id !== id));
-    
+
     try {
       await deleteApplication(id);
+      setActionError("");
     } catch (err) {
       console.error("Failed to delete application", err);
       setApplications(previousApps);
+      setActionError(`Couldn't remove "${opportunityTitle}" from your tracker. Please try again.`);
     }
   };
+
+  const pendingDeleteApp = useMemo(
+    () => applications.find(a => a.id === pendingDeleteId) ?? null,
+    [applications, pendingDeleteId],
+  );
 
   // Analytics computed
   const analytics = useMemo(() => {
@@ -110,17 +134,17 @@ const ApplicationTrackerPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-[1400px] space-y-4 p-4 sm:p-6">
+      <PageContainer surface="flat" className="max-w-[1400px] space-y-4">
         <SkeletonCard className="h-24" />
         <div className="flex gap-4 overflow-x-auto">
           {[1,2,3,4].map(i => <SkeletonCard key={i} className="h-96 min-w-[280px] flex-1" />)}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 p-4 sm:p-6 h-[calc(100vh-80px)] flex flex-col">
+    <PageContainer surface="flat" className="max-w-[1400px] space-y-4 flex min-h-0 flex-col">
       <PageHeader
         title="Application Tracker"
         subtitle="Manage your active job hunt"
@@ -131,7 +155,14 @@ const ApplicationTrackerPage: React.FC = () => {
         }
       />
 
-      {applications.length > 0 && (
+      {actionError ? (
+        <InlineError
+          message={actionError}
+          description="Your tracker is unchanged."
+        />
+      ) : null}
+
+      {!loadError && applications.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[var(--surface)] p-4 rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)]">
           <div className="flex flex-col">
             <span className="text-xs text-[var(--text-secondary)] uppercase font-semibold">Total Active</span>
@@ -152,7 +183,13 @@ const ApplicationTrackerPage: React.FC = () => {
         </div>
       )}
 
-      {applications.length === 0 ? (
+      {loadError ? (
+        <InlineError
+          title="Couldn't load your tracker"
+          message={loadError}
+          onRetry={() => void fetchApps()}
+        />
+      ) : applications.length === 0 ? (
         <EmptyState
           title="No applications tracked yet"
           description='Found an opportunity you like? Use "Add to Tracker" on the listing to manage it here.'
@@ -171,7 +208,7 @@ const ApplicationTrackerPage: React.FC = () => {
               return (
                 <div
                   key={column.id}
-                  className="w-72 shrink-0 lg:w-auto h-[400px] lg:h-[450px] flex flex-col rounded-xl bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_50%,transparent)] overflow-hidden shadow-sm"
+                  className="w-72 shrink-0 lg:w-auto min-h-[400px] max-h-[calc(100vh-260px)] flex flex-col rounded-xl bg-[color-mix(in_srgb,var(--surface)_50%,transparent)] border border-[color-mix(in_srgb,var(--border)_50%,transparent)] overflow-hidden shadow-sm"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, column.id)}
                 >
@@ -189,7 +226,7 @@ const ApplicationTrackerPage: React.FC = () => {
                         draggable
                         onDragStart={(e) => handleDragStart(e, app.id)}
                         onDragEnd={handleDragEnd}
-                        className="group relative flex flex-col gap-2 rounded-lg bg-[var(--background)] p-3 border border-[color-mix(in_srgb,var(--border)_95%,transparent)] shadow-sm hover:border-[var(--comp-accent)] hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
+                        className="group relative flex flex-col gap-2 rounded-lg bg-[var(--background)] p-2 border border-[color-mix(in_srgb,var(--border)_95%,transparent)] shadow-sm hover:border-[var(--comp-accent)] hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <Link 
@@ -200,37 +237,35 @@ const ApplicationTrackerPage: React.FC = () => {
                           </Link>
                           <button 
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(app.id); }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-muted)] hover:text-[var(--error)]"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--comp-text-muted)] hover:text-[var(--error)]"
                             title="Remove"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                         
-                        <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                        <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
                           <Building2 className="w-3.5 h-3.5" />
                           <span className="truncate">{app.company || "University Opportunity"}</span>
                         </div>
-                        
+
                         {app.status !== 'interested' && (
-                          <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
                             <Calendar className="w-3.5 h-3.5" />
                             <span>Applied {new Date(app.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                           </div>
                         )}
-                        
-                        {/* Drag handle hint for mobile */}
-                        <div className="absolute left-1/2 -bottom-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="bg-[var(--surface)] border border-[color-mix(in_srgb,var(--border)_95%,transparent)] rounded-full px-2 shadow-sm text-[var(--text-muted)]">
-                            <GripVertical className="w-3 h-3 rotate-90" />
-                          </div>
+
+                        {/* Drag handle hint — faintly always-visible for touch/coarse pointers and below lg */}
+                        <div className="mt-auto flex items-center justify-end opacity-60 lg:opacity-40 lg:group-hover:opacity-100 transition-opacity">
+                          <GripVertical className="w-3 h-3 rotate-90 text-[var(--comp-text-muted)]" />
                         </div>
                       </div>
                     ))}
                     
                     {columnApps.length === 0 && (
                       <div className="h-24 border-2 border-dashed border-[color-mix(in_srgb,var(--border)_30%,transparent)] rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-[var(--text-muted)]">Drop here</span>
+                        <span className="text-xs text-[var(--comp-text-muted)]">Drop here</span>
                       </div>
                     )}
                   </div>
@@ -240,7 +275,18 @@ const ApplicationTrackerPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+
+      <ConfirmDialog
+        open={pendingDeleteApp !== null}
+        onOpenChange={(open) => { if (!open) setPendingDeleteId(null); }}
+        title="Remove from tracker?"
+        description={`"${pendingDeleteApp?.opportunityTitle}" will be removed from your application tracker. You can add it again anytime from the opportunities listing.`}
+        confirmLabel="Remove"
+        cancelLabel="Keep it"
+        danger
+        onConfirm={() => void confirmDelete()}
+      />
+    </PageContainer>
   );
 };
 

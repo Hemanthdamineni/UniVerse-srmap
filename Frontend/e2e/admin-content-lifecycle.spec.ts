@@ -1,24 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+/**
+ * The content-lifecycle console lives at /admin/content-management behind the
+ * admin gate; the static prototype never grants admin, so students are
+ * redirected to the dashboard. The lifecycle workflow itself (preview, bulk
+ * execution, audit history) is covered by AdminContentManagementPage.test.tsx.
+ */
 test.describe("admin content lifecycle readiness", () => {
-  test("renders workflow map, previewed bulk lifecycle controls, and audit history", async ({ page }) => {
+  test("keeps the content console admin-gated", async ({ page }) => {
     await page.goto("/admin/content-management");
-
-    await expect(page.getByRole("heading", { name: "Learning Materials" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Admin Workflow Map" })).toBeVisible();
-    await expect(page.getByText("Bulk execution runs in one transaction after preview validation.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Admin Resource Queue" })).toBeVisible();
-    await expect(page.getByText("Operating Systems Revision Notes").first()).toBeVisible();
-
-    await page.getByLabel("Select Operating Systems Revision Notes").check();
-    await page.getByLabel("Bulk action").selectOption("archive");
-    await page.getByRole("button", { name: "Preview Bulk Action" }).click();
-    await expect(page.getByText(/published to archived/i).last()).toBeVisible();
-    await page.getByRole("button", { name: "Execute Preview" }).click();
-    await expect(page.getByText(/Bulk action updated/i)).toBeVisible();
-
-    await page.getByRole("button", { name: "History" }).first().click();
-    await expect(page.getByText("Change history and diff")).toBeVisible();
-    await expect(page.getByText("Title clarified")).toBeVisible();
+    await page.waitForURL("**/dashboard");
+    await expect(page.getByRole("heading", { name: /Welcome/ })).toBeVisible();
   });
 });

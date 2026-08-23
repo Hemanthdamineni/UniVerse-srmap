@@ -1,0 +1,2675 @@
+{
+  "timestamp": "2026-07-22T19:26:03.240Z",
+  "summary": {
+    "resources": 4,
+    "resourcesByType": [
+      {
+        "type": "quiz",
+        "c": 1
+      },
+      {
+        "type": "note",
+        "c": 1
+      },
+      {
+        "type": "link",
+        "c": 1
+      },
+      {
+        "type": "flashcard",
+        "c": 1
+      }
+    ],
+    "resourcesBySubject": [
+      {
+        "subjectCode": "CSE308",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE306",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE304",
+        "c": 1
+      },
+      {
+        "subjectCode": "CSE302",
+        "c": 1
+      }
+    ],
+    "guides": 41,
+    "guideSections": 311,
+    "roadmaps": 6,
+    "roadmapNodes": 55,
+    "questions": 273,
+    "topics": 231,
+    "resourcesGeneratedThisRun": 0,
+    "guidesGeneratedThisRun": 0,
+    "roadmapsGeneratedThisRun": 0,
+    "questionsGeneratedThisRun": 91
+  },
+  "stats": {
+    "resourcesCreated": 0,
+    "guidesCreated": 0,
+    "guideSectionsCreated": 0,
+    "roadmapsCreated": 0,
+    "roadmapNodesCreated": 0,
+    "roadmapEdgesCreated": 0,
+    "questionsCreated": 91,
+    "topicsCreated": 0,
+    "topicLinks": 0,
+    "errors": [
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Recurrence relations — substitution, recursion tree, master theorem (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Recurrence relations — substitution, recursion tree, master theorem (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Divide-and-conquer — merge sort, quick sort, binary search (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: B-trees (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: B-trees (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Fibonacci heaps (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Greedy — activity selection, Huffman coding, fractional knap-sack (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Amortized analysis — aggregate, accounting, potential methods (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Minimum spanning trees — Kruskal, Prim (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Shortest paths — Dijkstra, Bellman-Ford, Floyd-Warshall (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Randomized algorithms — randomized quick sort, hash tables, primality testing (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Online algorithms — ski rental, paging (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: Process concept — PCB, process states, context switching (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: Process concept — PCB, process states, context switching (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 1: Threads — user vs kernel threads, threading models, pthreads (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Monitors — condition variables, dining philosophers, readers-writers (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 2: Deadlocks — necessary conditions, RAG, deadlock prevention (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Paging — page tables, TLB, multi-level paging, inverted page tables (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 3: Segmentation — segment tables, segmentation with paging (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: Directory structure — single-level, tree, acyclic graph, general graph (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: Directory structure — single-level, tree, acyclic graph, general graph (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 4: File-system mounting, file sharing, protection (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: I/O software — interrupt handlers, device drivers, kernel I/O subsystem (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Operating Systems — Unit 5: Secondary storage structure — disk formatting, boot block, bad blocks (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: Entity-Relationship (ER) model — entities, attributes, relationships (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: Entity-Relationship (ER) model — entities, attributes, relationships (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: Relational model — relations, tuples, keys, integrity constraints (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 1: Relational algebra — select, project, join, division, rename (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: Multi-valued dependencies — 4NF, join dependencies — 5NF (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 2: ER-to-relational mapping (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Indexing — primary, secondary, clustering, B+tree, hash indexes (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Indexing — primary, secondary, clustering, B+tree, hash indexes (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 3: Bitmap indexes, composite indexes, index selection (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Concurrency control — lock-based, 2PL, timestamp ordering, multiversion (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 4: Deadlock detection in DBMS — wait-for graph, timeout (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: ARIES recovery algorithm (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Database Management Systems — Unit 5: Distributed databases — fragmentation, replication, CAP theorem (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Physical layer — signals, modulation, encoding, bandwidth (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Physical layer — signals, modulation, encoding, bandwidth (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Transmission media — guided, unguided, radio, satellite (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 1: Data link layer — framing, error detection (CRC, parity, checksum) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: IPv6 — address format, transition from IPv4, header comparison (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 2: Routing algorithms — Dijkstra (LS), distance vector (DV), RIP, OSPF, BGP (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: TCP — segment format, connection management (3-way handshake) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 3: TCP flow control — sliding window, advertised window (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: HTTP/HTTPS — request/response, caching, cookies, HTTP/2, HTTP/3 (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: HTTP/HTTPS — request/response, caching, cookies, HTTP/2, HTTP/3 (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 4: Email — SMTP, POP3, IMAP, MIME (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Symmetric key — DES, AES, key distribution (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Computer Networks — Unit 5: Public key — RSA, Diffie-Hellman, digital signatures, certificates (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Agile methodologies — Scrum, XP, Kanban (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Agile methodologies — Scrum, XP, Kanban (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 1: Requirement engineering — elicitation, analysis, specification (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: Design patterns — creational, structural, behavioral (GoF) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 2: UML — class, sequence, activity, state, component diagrams (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: Integration testing — top-down, bottom-up, sandwich (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 3: System testing — functional, performance, stress, security (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Risk management — identification, analysis, mitigation (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Risk management — identification, analysis, mitigation (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 4: Software configuration management — version control, Git workflows (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Reverse engineering, re-engineering, refactoring (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Software Engineering — Unit 5: Legacy systems — strategies for migration (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Probability refresher — Bayes theorem, distributions, MLE/MAP (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Probability refresher — Bayes theorem, distributions, MLE/MAP (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Linear regression — univariate, multivariate, polynomial, regularization (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: k-Nearest Neighbors — distance metrics, curse of dimensionality (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Naive Bayes — Gaussian, multinomial, Bernoulli variants (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Cluster evaluation — silhouette score, Davies-Bouldin index (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Cluster evaluation — silhouette score, Davies-Bouldin index (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Dimensionality reduction — PCA, SVD, t-SNE, UMAP (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (LINK)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Regularization — L1/L2, dropout, batch normalization, early stopping (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Convolutional neural networks — conv layers, pooling, architectures (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Metrics — accuracy, precision, recall, F1, ROC-AUC, log-loss, RMSE (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Hyperparameter tuning — grid search, random search, Bayesian optimization (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Non-deterministic finite automata (NFA) — ε-transitions, subset construction (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Non-deterministic finite automata (NFA) — ε-transitions, subset construction (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 1: Regular expressions — operators, algebraic laws, DFA equivalence (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: CFG ↔ PDA equivalence, Chomsky normal form (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free languages — pumping lemma, closure properties (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Decidable and recognizable languages, recursive and r.e. sets (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Decidable and recognizable languages, recursive and r.e. sets (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 3: Undecidability — diagonalization, halting problem (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: The class NP — verifiers, NP-completeness, Cook-Levin theorem (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 4: NP-complete problems — SAT, 3SAT, clique, vertex cover, Hamiltonian (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Interactive proofs — IP = PSPACE, zero-knowledge proofs (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Theory of Computation — Unit 5: Circuit complexity — P/poly, circuit depth, NC (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Lexical analysis — tokens, lexemes, patterns (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Lexical analysis — tokens, lexemes, patterns (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 1: Regular expressions for tokens — identifiers, numbers, keywords (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Top-down parsing — recursive descent, predictive parsing (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: Top-down parsing — recursive descent, predictive parsing (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 2: LL(1) grammars — first & follow sets, parsing table construction (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Parser generators — YACC, Bison (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 3: Semantic analysis — type systems, type checking, attribute grammars (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Local optimizations — constant folding, algebraic simplification, copy propagation (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Local optimizations — constant folding, algebraic simplification, copy propagation (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 4: Global optimizations — data-flow analysis (reaching definitions, liveness) (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (QUIZ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (PYQ)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (FLASHCARD)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Register allocation — graph coloring, linear scan (NOTE)",
+        "error": "column index out of range"
+      },
+      {
+        "msg": "Failed to create resource: Compiler Design — Unit 5: Runtime environments — activation records, stack management, heap allocation (NOTE)",
+        "error": "column index out of range"
+      }
+    ],
+    "warnings": [
+      "CSE302 has only 1/5 resource types",
+      "CSE304 has only 1/5 resource types",
+      "CSE306 has only 1/5 resource types",
+      "CSE308 has only 1/5 resource types"
+    ],
+    "phases": [
+      {
+        "name": "Generating Resources",
+        "startedAt": "2026-07-22T19:26:03.088Z"
+      },
+      {
+        "name": "Generating Topics & Resource Links",
+        "startedAt": "2026-07-22T19:26:03.122Z"
+      },
+      {
+        "name": "Generating Guides",
+        "startedAt": "2026-07-22T19:26:03.132Z"
+      },
+      {
+        "name": "Generating Skill Roadmaps",
+        "startedAt": "2026-07-22T19:26:03.135Z"
+      },
+      {
+        "name": "Generating Question Bank",
+        "startedAt": "2026-07-22T19:26:03.136Z"
+      },
+      {
+        "name": "Content Verification",
+        "startedAt": "2026-07-22T19:26:03.237Z"
+      },
+      {
+        "name": "Content Critique & Gap Analysis",
+        "startedAt": "2026-07-22T19:26:03.240Z"
+      },
+      {
+        "name": "Generating Audit Report",
+        "startedAt": "2026-07-22T19:26:03.240Z"
+      }
+    ],
+    "issues": [
+      {
+        "type": "error",
+        "message": "No resources for CSE310: Software Engineering"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE312: Machine Learning Fundamentals"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE314: Theory of Computation"
+      },
+      {
+        "type": "error",
+        "message": "No resources for CSE316: Compiler Design"
+      }
+    ]
+  },
+  "errors": [
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Asymptotic notations — Big O, Ω, Θ (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Recurrence relations — substitution, recursion tree, master theorem (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Recurrence relations — substitution, recursion tree, master theorem (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 1: Divide-and-conquer — merge sort, quick sort, binary search (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Red-black trees (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: B-trees (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: B-trees (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 2: Fibonacci heaps (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Elements of dynamic programming — optimal substructure, overlapping subproblems (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: DP — rod cutting, matrix-chain multiplication, LCS, 0/1 knap-sack (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Greedy — activity selection, Huffman coding, fractional knap-sack (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 3: Amortized analysis — aggregate, accounting, potential methods (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Graph representations — adjacency matrix, adjacency list (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: BFS, DFS — applications (topological sort, strongly connected components) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Minimum spanning trees — Kruskal, Prim (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 4: Shortest paths — Dijkstra, Bellman-Ford, Floyd-Warshall (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Approximation algorithms — vertex cover, TSP, set cover (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Randomized algorithms — randomized quick sort, hash tables, primality testing (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Design and Analysis of Algorithms — Unit 5: Online algorithms — ski rental, paging (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: OS structures — kernel types, system calls, OS services (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: Process concept — PCB, process states, context switching (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: Process concept — PCB, process states, context switching (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 1: Threads — user vs kernel threads, threading models, pthreads (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: The critical-section problem — Peterson's solution, hardware support (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Semaphores — counting vs binary, wait/signal, classic problems (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Monitors — condition variables, dining philosophers, readers-writers (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 2: Deadlocks — necessary conditions, RAG, deadlock prevention (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Memory hierarchy — cache, RAM, secondary storage (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Contiguous allocation — fixed/ dynamic partitioning, fragmentation (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Paging — page tables, TLB, multi-level paging, inverted page tables (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 3: Segmentation — segment tables, segmentation with paging (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: File concepts — attributes, operations, access methods (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: Directory structure — single-level, tree, acyclic graph, general graph (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: Directory structure — single-level, tree, acyclic graph, general graph (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 4: File-system mounting, file sharing, protection (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: I/O hardware — ports, buses, device controllers, DMA (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: I/O software — interrupt handlers, device drivers, kernel I/O subsystem (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Operating Systems — Unit 5: Secondary storage structure — disk formatting, boot block, bad blocks (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: DBMS architecture — 3-level schema, data independence (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: Entity-Relationship (ER) model — entities, attributes, relationships (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: Entity-Relationship (ER) model — entities, attributes, relationships (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: Relational model — relations, tuples, keys, integrity constraints (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 1: Relational algebra — select, project, join, division, rename (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Functional dependencies — Armstrong's axioms, closure, canonical cover (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Normal forms — 1NF, 2NF, 3NF, BCNF, decomposition into 3NF/BCNF (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: Multi-valued dependencies — 4NF, join dependencies — 5NF (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 2: ER-to-relational mapping (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Storage structures — heap, sorted, hashed files (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Indexing — primary, secondary, clustering, B+tree, hash indexes (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Indexing — primary, secondary, clustering, B+tree, hash indexes (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 3: Bitmap indexes, composite indexes, index selection (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Transaction concepts — ACID properties, transaction states (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Schedules — serial, non-serial, conflict/view serializability (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Concurrency control — lock-based, 2PL, timestamp ordering, multiversion (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 4: Deadlock detection in DBMS — wait-for graph, timeout (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Recovery — failure classification, log-based recovery, checkpointing (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: ARIES recovery algorithm (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Database Management Systems — Unit 5: Distributed databases — fragmentation, replication, CAP theorem (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Network models — OSI, TCP/IP, encapsulation, multiplexing (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Physical layer — signals, modulation, encoding, bandwidth (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Physical layer — signals, modulation, encoding, bandwidth (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Transmission media — guided, unguided, radio, satellite (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 1: Data link layer — framing, error detection (CRC, parity, checksum) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Network layer design — virtual circuits, datagrams (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: IPv4 — addressing (classful, CIDR), subnets, NAT, DHCP (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: IPv6 — address format, transition from IPv4, header comparison (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 2: Routing algorithms — Dijkstra (LS), distance vector (DV), RIP, OSPF, BGP (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: Transport layer services — multiplexing, demultiplexing (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: UDP — segment format, checksum, use cases (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: TCP — segment format, connection management (3-way handshake) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 3: TCP flow control — sliding window, advertised window (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: DNS — hierarchical naming, resolution, caching (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: HTTP/HTTPS — request/response, caching, cookies, HTTP/2, HTTP/3 (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: HTTP/HTTPS — request/response, caching, cookies, HTTP/2, HTTP/3 (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 4: Email — SMTP, POP3, IMAP, MIME (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Security fundamentals — confidentiality, integrity, availability (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Symmetric key — DES, AES, key distribution (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Computer Networks — Unit 5: Public key — RSA, Diffie-Hellman, digital signatures, certificates (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Software life-cycle models — waterfall, iterative, spiral, agile (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Agile methodologies — Scrum, XP, Kanban (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Agile methodologies — Scrum, XP, Kanban (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 1: Requirement engineering — elicitation, analysis, specification (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Design principles — modularity, cohesion, coupling, SOLID (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Architectural styles — layered, client-server, MVC, microservices (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: Design patterns — creational, structural, behavioral (GoF) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 2: UML — class, sequence, activity, state, component diagrams (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Testing fundamentals — verification vs validation, V-model (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Unit testing — JUnit, test-driven development (TDD) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: Integration testing — top-down, bottom-up, sandwich (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 3: System testing — functional, performance, stress, security (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Project planning — estimation (LOC, FP, COCOMO), scheduling (PERT, Gantt) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Risk management — identification, analysis, mitigation (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Risk management — identification, analysis, mitigation (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 4: Software configuration management — version control, Git workflows (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Software maintenance — corrective, adaptive, perfective, preventive (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Reverse engineering, re-engineering, refactoring (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Software Engineering — Unit 5: Legacy systems — strategies for migration (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: ML categories — supervised, unsupervised, reinforcement learning (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Probability refresher — Bayes theorem, distributions, MLE/MAP (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Probability refresher — Bayes theorem, distributions, MLE/MAP (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 1: Linear regression — univariate, multivariate, polynomial, regularization (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Decision trees — ID3, C4.5, CART, pruning, handling missing values (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Ensemble methods — bagging, random forests, boosting (AdaBoost, XGBoost) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: k-Nearest Neighbors — distance metrics, curse of dimensionality (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 2: Naive Bayes — Gaussian, multinomial, Bernoulli variants (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Clustering — k-means, hierarchical, DBSCAN, Gaussian mixture models (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Cluster evaluation — silhouette score, Davies-Bouldin index (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Cluster evaluation — silhouette score, Davies-Bouldin index (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 3: Dimensionality reduction — PCA, SVD, t-SNE, UMAP (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Perceptron, multi-layer perceptron, activation functions (LINK)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Backpropagation — chain rule, gradient descent in networks (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Regularization — L1/L2, dropout, batch normalization, early stopping (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 4: Convolutional neural networks — conv layers, pooling, architectures (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Model evaluation — cross-validation, bias-variance tradeoff, learning curves (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Metrics — accuracy, precision, recall, F1, ROC-AUC, log-loss, RMSE (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Machine Learning Fundamentals — Unit 5: Hyperparameter tuning — grid search, random search, Bayesian optimization (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Deterministic finite automata (DFA) — definition, design, minimization (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Non-deterministic finite automata (NFA) — ε-transitions, subset construction (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Non-deterministic finite automata (NFA) — ε-transitions, subset construction (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 1: Regular expressions — operators, algebraic laws, DFA equivalence (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free grammars — derivation, parse trees, ambiguity removal (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Pushdown automata — design, acceptance (empty stack, final state) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: CFG ↔ PDA equivalence, Chomsky normal form (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 2: Context-free languages — pumping lemma, closure properties (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Turing machine — definition, design, variants (multitape, non-deterministic) (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Decidable and recognizable languages, recursive and r.e. sets (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Decidable and recognizable languages, recursive and r.e. sets (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 3: Undecidability — diagonalization, halting problem (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: Time complexity — DTIME, NTIME, the class P (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: The class NP — verifiers, NP-completeness, Cook-Levin theorem (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 4: NP-complete problems — SAT, 3SAT, clique, vertex cover, Hamiltonian (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Probabilistic computation — RP, BPP, ZPP, randomized reductions (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Interactive proofs — IP = PSPACE, zero-knowledge proofs (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Theory of Computation — Unit 5: Circuit complexity — P/poly, circuit depth, NC (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Phases of a compiler — analysis-synthesis model, symbol table (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Lexical analysis — tokens, lexemes, patterns (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Lexical analysis — tokens, lexemes, patterns (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 1: Regular expressions for tokens — identifiers, numbers, keywords (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Context-free grammars for programming languages (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Top-down parsing — recursive descent, predictive parsing (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: Top-down parsing — recursive descent, predictive parsing (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 2: LL(1) grammars — first & follow sets, parsing table construction (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Bottom-up parsing — shift-reduce, handle pruning (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: LR parsing — LR(0), SLR, CLR, LALR(1) parsing tables (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Parser generators — YACC, Bison (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 3: Semantic analysis — type systems, type checking, attribute grammars (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Basic blocks and flow graphs (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Local optimizations — constant folding, algebraic simplification, copy propagation (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Local optimizations — constant folding, algebraic simplification, copy propagation (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 4: Global optimizations — data-flow analysis (reaching definitions, liveness) (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (QUIZ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (PYQ)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Code generation — target machine, instruction selection, register allocation (FLASHCARD)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Register allocation — graph coloring, linear scan (NOTE)",
+      "error": "column index out of range"
+    },
+    {
+      "msg": "Failed to create resource: Compiler Design — Unit 5: Runtime environments — activation records, stack management, heap allocation (NOTE)",
+      "error": "column index out of range"
+    }
+  ],
+  "warnings": [
+    "CSE302 has only 1/5 resource types",
+    "CSE304 has only 1/5 resource types",
+    "CSE306 has only 1/5 resource types",
+    "CSE308 has only 1/5 resource types"
+  ]
+}

@@ -81,7 +81,7 @@ export default function InternalMarks({ marksData }: { marksData?: any }) {
               key={subject.code}
               type="button"
               onClick={() => navigate("/exams/current-semester-results")}
-              className="group flex flex-col justify-center gap-1 rounded-lg border border-[var(--comp-border)] px-2.5 py-1 text-left transition-colors hover:border-[var(--comp-border-strong)] hover:bg-[var(--comp-surface-hover)] overflow-hidden"
+              className="group flex flex-col justify-center gap-1 rounded-lg border border-[var(--comp-border)] px-3 py-1 text-left transition-colors hover:border-[var(--comp-border-strong)] hover:bg-[var(--comp-surface-hover)] overflow-hidden"
               style={{
                 opacity: mounted ? 1 : 0,
                 transition: `opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)`,

@@ -1,3 +1,11 @@
+:root {
+  /* Vertical chrome around the dashboard grid on desktop:
+     PageContainer py-4 (32px) + surface p-6 (48px) + border (~2px).
+     The /dashboard route renders no breadcrumbs bar; if breadcrumbs are
+     ever enabled there, add their height (~41px) to this token. */
+  --dash-chrome: 82px;
+}
+
 @layer components {
   .dashboard-background {
     position: relative;
@@ -84,10 +92,10 @@
     background-color: var(--page-contrast-chip-bg, rgba(255, 255, 255, 0.92));
     box-shadow: var(--page-contrast-chip-shadow, none);
     transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background-color 0.2s ease,
-      box-shadow 0.2s ease;
+      color 0.2s var(--ease-spring),
+      border-color 0.2s var(--ease-spring),
+      background-color 0.2s var(--ease-spring),
+      box-shadow 0.2s var(--ease-spring);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }
@@ -97,9 +105,9 @@
     border-color: var(--border);
     background-color: var(--background);
     transition:
-      color 0.2s ease,
-      border-color 0.2s ease,
-      background-color 0.2s ease;
+      color 0.2s var(--ease-spring),
+      border-color 0.2s var(--ease-spring),
+      background-color 0.2s var(--ease-spring);
   }
 
   .page-contrast-outline:hover {
@@ -107,7 +115,7 @@
   }
 
   .dashboard-card {
-    border-radius: 8px;
+    border-radius: var(--border-radius-md);
     background: var(--dash-card-bg);
     border: 1px solid var(--dash-card-border);
     box-shadow: var(--dash-card-shadow);
@@ -118,7 +126,7 @@
   }
 
   .dashboard-subcard {
-    border-radius: 8px;
+    border-radius: var(--border-radius-md);
     background: var(--dash-subcard-bg);
     border: 1px solid var(--dash-subcard-border);
     color: var(--text-primary);
@@ -126,10 +134,10 @@
 
   .erp-table-shell {
     overflow-x: auto;
-    border-radius: 8px;
+    border-radius: var(--border-radius-md);
     border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
     background: var(--background);
-    box-shadow: 0 10px 24px rgba(10, 38, 42, 0.08);
+    box-shadow: var(--dash-card-shadow);
   }
 
   .erp-table {

@@ -78,7 +78,7 @@ export function RoundStatusCard({
       {/* Deadline */}
       {round.submissionDeadline && (
         <div className="comp-round-deadline">
-          <span className="comp-body" style={{ color: 'var(--comp-text-muted)', fontSize: '0.78rem' }}>
+          <span className="comp-body" style={{ color: 'var(--comp-text-muted)', fontSize: 'var(--text-sm)' }}>
             Deadline:{' '}
             {new Date(round.submissionDeadline).toLocaleDateString('en-IN', {
               weekday: 'short',
@@ -136,7 +136,7 @@ export function RoundStatusCard({
             onClick={onSubmit}
             className="comp-btn-primary"
             aria-label={`Submit work for ${round.title}`}
-            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ fontSize: 'var(--text-sm)', padding: '6px 14px' }}
           >
             Submit Work
           </button>
@@ -146,7 +146,7 @@ export function RoundStatusCard({
             onClick={onViewResult}
             className="comp-btn-ghost"
             aria-label={`View result for ${round.title}`}
-            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ fontSize: 'var(--text-sm)', padding: '6px 14px' }}
           >
             View My Result
           </button>
@@ -156,7 +156,7 @@ export function RoundStatusCard({
             onClick={onViewSubmissions}
             className="comp-btn-ghost"
             aria-label={`View submissions for ${round.title}`}
-            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ fontSize: 'var(--text-sm)', padding: '6px 14px' }}
           >
             View Submissions
           </button>
@@ -166,7 +166,7 @@ export function RoundStatusCard({
             onClick={onEvaluate}
             className="comp-btn-ghost"
             aria-label={`Evaluate submissions for ${round.title}`}
-            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ fontSize: 'var(--text-sm)', padding: '6px 14px' }}
           >
             Evaluate
           </button>
@@ -176,7 +176,7 @@ export function RoundStatusCard({
             onClick={onShortlist}
             className="comp-btn-ghost"
             aria-label={`Shortlist for ${round.title}`}
-            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ fontSize: 'var(--text-sm)', padding: '6px 14px' }}
           >
             Shortlist
           </button>

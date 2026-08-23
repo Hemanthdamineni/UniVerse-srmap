@@ -117,6 +117,14 @@ const CAMPUS_FEEDBACK_DB_PATH =
   process.env.CAMPUS_FEEDBACK_DB_PATH || path.join(__dirname, "../../data/campus-feedback.sqlite");
 const CAREER_DB_PATH =
   process.env.CAREER_DB_PATH || path.join(__dirname, "../../data/career.sqlite");
+const ERP_ATTENDANCE_SNAPSHOTS_DB_PATH =
+  process.env.ERP_ATTENDANCE_SNAPSHOTS_DB_PATH ||
+  path.join(__dirname, "../../data/erp-attendance-snapshots.sqlite");
+const VACANT_ROOMS_DB_PATH =
+  process.env.VACANT_ROOMS_DB_PATH || path.join(__dirname, "../../data/vacant-rooms.sqlite");
+const PERSISTENT_TEAMS_DB_PATH =
+  process.env.PERSISTENT_TEAMS_DB_PATH ||
+  path.join(__dirname, "../../data/persistent-teams.sqlite");
 /** Comma-separated roles that may review manual career submissions (overrides built-in defaults). */
 const CAREER_SUBMISSION_REVIEW_ROLES = process.env.CAREER_SUBMISSION_REVIEW_ROLES || "";
 const CAREER_CACHE_TTL_SEC = Number(process.env.CAREER_CACHE_TTL_SEC || 90);
@@ -210,6 +218,9 @@ module.exports = {
   HELPDESK_DB_PATH,
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
+  ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
+  VACANT_ROOMS_DB_PATH,
+  PERSISTENT_TEAMS_DB_PATH,
   CAREER_SUBMISSION_REVIEW_ROLES,
   CAREER_CACHE_TTL_SEC,
   CAREER_LOAD_TEST_TOKEN,

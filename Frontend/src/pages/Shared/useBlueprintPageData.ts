@@ -36,7 +36,12 @@ export function useBlueprintPageData(blueprint: PageBlueprint, reloadToken = 0):
     fetchSessionProfile()
       .then((profile) => {
         if (!active) return;
-        setSessionProfile(profile);
+        // The loading effect below depends on sessionProfile; keeping the
+        // stored reference when the refreshed profile is identical prevents
+        // a second full fetch of every ERP key on each page visit.
+        setSessionProfile((prev) =>
+          JSON.stringify(prev) === JSON.stringify(profile) ? prev : profile
+        );
       })
       .catch(() => {
         if (!active) return;

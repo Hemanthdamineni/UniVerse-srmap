@@ -31,6 +31,9 @@
   --status-selected-text: #166534;
   --status-rejected-bg: #fff1f2;
   --status-rejected-text: #9f1239;
+  --status-success-bg: var(--status-open-bg);
+  --status-success-text: var(--status-open-text);
+  --status-success-border: var(--status-open-border);
 
   /* Deadline urgency */
   --deadline-safe: #15803d;
@@ -42,6 +45,7 @@
   --comp-accent-hover: #0d3438;
   --comp-accent-light: #e6f0f1;
   --comp-accent-fg: #ffffff;
+  --comp-warning: #92400e;
 
   /* Spacing design tokens */
   --space-xs: 4px;
@@ -104,10 +108,15 @@
   --text-dark: var(--contrast-2);
   
   /* Accent Colors */
+  --accent: var(--comp-accent);
   --accent-blue: #34AEBE;
   --accent-green: #33A33F;
   --accent-yellow: #DDE03C;
   --accent-orange: #FFB906;
+
+  /* Foreground colors paired to filled backgrounds (see dark overrides) */
+  --on-accent: #ffffff;
+  --on-success: #ffffff;
   
   /* Status Colors */
   --success: #1f7a2a;
@@ -188,7 +197,41 @@
   --comp-accent: #34AEBE;
   --comp-accent-hover: #288a99;
   --comp-accent-light: #0d2d32;
-  --comp-accent-fg: #ffffff;
+  --comp-accent-fg: #0A3035;
+  --comp-warning: #FFCA28;
+
+  /* Status chip families — translucent tints over dark surfaces */
+  --status-open-bg: color-mix(in srgb, var(--success) 16%, transparent);
+  --status-open-text: #7fd49a;
+  --status-open-border: color-mix(in srgb, var(--success) 38%, transparent);
+  --status-pending-bg: color-mix(in srgb, var(--warning) 16%, transparent);
+  --status-pending-text: #ffd54f;
+  --status-pending-border: color-mix(in srgb, var(--warning) 40%, transparent);
+  --status-closed-bg: color-mix(in srgb, #8ab8be 14%, transparent);
+  --status-closed-text: #8ab8be;
+  --status-closed-border: #2a4a52;
+  --status-live-bg: color-mix(in srgb, var(--error) 16%, transparent);
+  --status-live-text: #ff8a80;
+  --status-live-border: color-mix(in srgb, var(--error) 42%, transparent);
+  --status-selected-bg: color-mix(in srgb, var(--success) 18%, transparent);
+  --status-selected-text: #7fd49a;
+  --status-rejected-bg: color-mix(in srgb, var(--error) 14%, transparent);
+  --status-rejected-text: #ff8a80;
+
+  /* Deadline urgency — brightened for dark backgrounds */
+  --deadline-safe: #66d98a;
+  --deadline-warn: #ffb74d;
+  --deadline-urgent: #ff8a80;
+
+  /* Accent green readable on dark surfaces */
+  --accent-green: #57c46a;
+
+  /* Filled backgrounds flip bright in dark — foregrounds must flip dark */
+  --on-accent: #06282c;
+  --on-success: #08270f;
+
+  /* Keyboard focus ring must stay ≥3:1 against dark surfaces */
+  --comp-focus-ring: 2px solid #7fd8e4;
 
   /* Header / Footer — muted surface in dark mode with accent border */
   --header-bg: var(--bg-primary);

@@ -33,7 +33,10 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
   const atRiskCount = records.filter((r) => r.attendancePct < 75).length;
   const avgPct = records.reduce((sum, r) => sum + r.attendancePct, 0) / records.length;
   const lowestPct = Math.min(...records.map((r) => r.attendancePct));
+  const safeCount = records.filter((r) => r.attendancePct >= 75).length;
 
+  // Secondary stats: one visual weight (text-sm value + label-text caption);
+  // the average above them carries the headline role.
   const subjects = records.map((record) => ({
     subject: record.subjectCode,
     fullSubject: record.subjectCode,
@@ -42,46 +45,48 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
     fill: getTierColor(record.attendancePct),
   }));
 
-  const chartConfig = { attendance: { label: "Attendance", color: "#34AEBE" } };
+  const secondaryStats = [
+    { key: "lowest", caption: "Lowest", value: `${lowestPct.toFixed(0)}%`, color: "var(--error)" },
+    { key: "safe", caption: "Safe", value: `${safeCount}/${subjects.length}`, color: "var(--success)" },
+    {
+      key: "risk",
+      caption: "Risk",
+      value: `${atRiskCount}`,
+      color: atRiskCount > 0 ? "var(--error)" : "var(--comp-text-secondary)",
+      tinted: atRiskCount > 0,
+    },
+  ];
+
+  const chartConfig = { attendance: { label: "Attendance", color: "var(--accent-blue)" } };
   const needsAngle = subjects.length > 5;
 
   return (
-    <div className="flex h-full flex-col p-3">
-      <div className="mb-2 flex shrink-0 items-center justify-between">
-        <h2 className="section-title font-bold">Attendance</h2>
-      </div>
+    <div className="flex h-full flex-col p-4">
+      <h2 className="card-title mb-3 font-semibold shrink-0">Attendance</h2>
 
-      <div className="mb-2 grid shrink-0 grid-cols-4 gap-1.5">
-        <div className="flex flex-col rounded border px-2 py-1.5" style={{ borderColor: "var(--comp-border)" }}>
-          <span className="text-sm font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{avgPct.toFixed(0)}%</span>
-          <span className="text-[10px]" style={{ color: "var(--comp-text-secondary)" }}>Avg</span>
-        </div>
-        <div className="flex flex-col rounded border px-2 py-1.5" style={{ borderColor: "var(--comp-border)" }}>
-          <span className="text-sm font-bold tabular-nums" style={{ color: "var(--error)" }}>{lowestPct.toFixed(0)}%</span>
-          <span className="text-[10px]" style={{ color: "var(--comp-text-secondary)" }}>Lowest</span>
-        </div>
-        <div className="flex flex-col rounded border px-2 py-1.5" style={{ borderColor: "var(--comp-border)" }}>
-          <span className="text-sm font-bold tabular-nums" style={{ color: "var(--success)" }}>{records.filter((r) => r.attendancePct >= 75).length}/{subjects.length}</span>
-          <span className="text-[10px]" style={{ color: "var(--comp-text-secondary)" }}>Safe</span>
-        </div>
-        <div
-          className="flex flex-col rounded border px-2 py-1.5"
-          style={{
-            borderColor: atRiskCount > 0 ? "color-mix(in srgb, var(--error) 30%, var(--comp-border))" : "var(--comp-border)",
-          }}
-        >
-          <span
-            className="text-sm font-bold tabular-nums"
-            style={{ color: atRiskCount > 0 ? "var(--error)" : "var(--comp-text-secondary)" }}
+      {/* Headline average + secondary stat tiles */}
+      <div className="mb-3 shrink-0 rounded border border-[var(--comp-border)] p-2 flex items-baseline justify-between gap-2">
+        <span className="text-xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{avgPct.toFixed(0)}%</span>
+        <span className="label-text">Avg</span>
+      </div>
+      <div className="mb-2 grid shrink-0 grid-cols-3 gap-2">
+        {secondaryStats.map(({ key, caption, value, color, tinted }) => (
+          <div
+            key={key}
+            className="flex flex-col rounded border p-2"
+            style={{
+              borderColor: tinted ? "color-mix(in srgb, var(--error) 30%, var(--comp-border))" : "var(--comp-border)",
+              background: tinted ? "color-mix(in srgb, var(--error) 12%, var(--comp-surface))" : undefined,
+            }}
           >
-            {atRiskCount}
-          </span>
-          <span className="text-[10px]" style={{ color: "var(--comp-text-secondary)" }}>Risk</span>
-        </div>
+            <span className="text-sm font-semibold tabular-nums" style={{ color }}>{value}</span>
+            <span className="label-text">{caption}</span>
+          </div>
+        ))}
       </div>
 
       <div className="flex-1 min-h-0">
-        <ChartContainer config={chartConfig} className="h-full w-full">
+        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
           <BarChart
             data={subjects}
             margin={{ top: 4, right: 4, left: 0, bottom: needsAngle ? 26 : 10 }}
@@ -109,7 +114,7 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
               tick={{ fill: "var(--comp-text-secondary)" }}
             />
             <ChartTooltip
-              cursor={{ fill: "rgba(0,0,0,0.08)" }}
+              cursor={{ fill: "color-mix(in srgb, var(--text-primary) 8%, transparent)" }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;

@@ -3,15 +3,18 @@ import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import BasicInfo from "./BasicInfo";
 import Schedule from "./Schedule";
 const Attendance = lazy(() => import("./Attendance"));
-const InternalMarks = lazy(() => import("./InternalMarks"));
+// InternalMarks is intentionally not rendered on the dashboard anymore.
+// The component (and its tests) stay intact in ./InternalMarks.tsx for future reuse.
+// const InternalMarks = lazy(() => import("./InternalMarks"));
 import QuickLinks from "./QuickLinks";
 import WeekCalendar from "./WeekCalendar";
 import ToDo from "./ToDo";
 import WelcomeCard from "./WelcomeCard";
-import UpcomingEventsWidget from "./UpcomingEventsWidget";
-import CareerWidget from "./CareerWidget";
+import FirstRunGuide from "./FirstRunGuide";
+import CampusHubWidget from "./CampusHubWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, hasSessionAuth } from "../../lib/core/session";
+import { hasSeenOnboarding } from "../../lib/core/onboarding";
 import { getErpBatch } from "../../lib/erp/index";
 import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
 import { InlineError } from "../../components/ui/Feedback";
@@ -28,11 +31,14 @@ function Dashboard() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [feedbackPendingCount, setFeedbackPendingCount] = useState(0);
+  const [showFirstRunGuide, setShowFirstRunGuide] = useState(() => !hasSeenOnboarding());
   const dashboardRef = useRef<HTMLDivElement | null>(null);
 
   usePageContrast(dashboardRef, [loading, profileLoading, error, profileError, selectedDate]);
 
   useEffect(() => {
+    let active = true;
+
     if (!hasSessionAuth()) {
       setError("Your session has expired. Please log in to continue.");
       setLoading(false);
@@ -46,54 +52,66 @@ function Dashboard() {
     setLoading(true);
     getErpBatch([
       "academic/time-table",
-      "examination/internal-mark-details",
       "academic/attendance-details",
     ])
       .then((batch) => {
+        if (!active) return;
         // Pass the full batch to setData so widgets can call
         // readExtractedPage(rawData, "<pageKey>") correctly.
         setData(batch);
         setLoading(false);
       })
-      .catch((err: Error) => { setError(err.message); setLoading(false); });
+      .catch((err: Error) => {
+        if (!active) return;
+        setError(err.message);
+        setLoading(false);
+      });
 
     setProfileLoading(true);
     fetchSessionProfile()
       .then((profile) => {
+        if (!active) return;
         setProfileData(profile);
         setProfileLoading(false);
       })
       .catch((err: Error) => {
+        if (!active) return;
         setProfileError(err.message || 'No profile data available');
         setProfileLoading(false);
       });
 
     getEndSemesterFeedbackStatus()
       .then((status) => {
+        if (!active) return;
         setFeedbackPendingCount(status.totalPending || 0);
       })
       .catch(() => {
+        if (!active) return;
         setFeedbackPendingCount(0);
       });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading || profileLoading) {
     return (
       <DashboardLayout>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <div className="space-y-4 md:col-span-9">
-          <SkeletonCard className="h-12" />
-          <SkeletonCard className="h-[180px]" />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-9">
-            <SkeletonCard className="h-[220px] md:col-span-2" />
-            <SkeletonCard className="h-[220px] md:col-span-4" />
-            <SkeletonCard className="h-[220px] md:col-span-3" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:h-[calc(100vh-var(--dash-chrome))]">
+        <div className="grid gap-4 md:col-span-9">
+          <SkeletonCard className="h-14" />
+          <SkeletonCard className="h-[150px]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <SkeletonCard className="h-[280px]" />
+            <SkeletonCard className="h-[280px]" />
+            <SkeletonCard className="h-[280px]" />
           </div>
-          <SkeletonCard className="h-[230px]" />
+          <SkeletonCard className="h-[170px]" />
         </div>
-        <div className="space-y-4 md:col-span-3">
+        <div className="grid gap-4 md:col-span-3">
           <SkeletonCard className="h-[180px]" />
-          <SkeletonCard className="h-[500px]" />
+          <SkeletonCard className="h-[420px]" />
         </div>
       </div>
       </DashboardLayout>
@@ -138,55 +156,69 @@ function Dashboard() {
 
   return (
     <DashboardLayout>
-    <div ref={dashboardRef} className="grid grid-cols-1 gap-4 md:grid-cols-12">
-      <div className="space-y-4 md:col-span-9">
+    <div ref={dashboardRef} className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:h-[calc(100vh-var(--dash-chrome))]">
+      {/* Vertical share: welcome/basic info size to content, widget row gets
+          3 parts and To-Do 2 parts of the remaining height. Minimums keep
+          card controls (tabs, CTAs) usable on shorter desktop screens. The
+          one-time first-run guide adds its own auto row while visible. */}
+      {/* Mobile (<md): both zone wrappers dissolve via display:contents so the
+          leaf cards interleave in reading order — Welcome → Basic Info →
+          Week Calendar → Schedule → Attendance → Quick Links → Campus Hub →
+          To-Do (the max-md:order utilities lift the rail pair above the
+          engagement row). md+: wrappers are real grid zones again
+          (main 9 / rail 3) and every max-md:* utility goes inert, so the xl
+          two-zone template lays out exactly as before. */}
+      <div className={`grid min-h-0 gap-4 max-md:contents md:col-span-9 ${showFirstRunGuide ? "grid-rows-[auto_auto_auto_minmax(340px,3fr)_minmax(210px,2fr)]" : "grid-rows-[auto_auto_minmax(340px,3fr)_minmax(210px,2fr)]"}`}>
         <div data-page-contrast="true" className="page-contrast-fg">
-          <WelcomeCard profileData={profileData} />
+          {/* Card chassis required: with the flat page surface the brand wedge
+              passes behind this bare block on narrow viewports and the greeting
+              rendered dark-on-dark (~1.1:1). Opaque card restores legibility. */}
+          <SectionCard className="overflow-hidden p-4">
+            <WelcomeCard profileData={profileData} />
+          </SectionCard>
         </div>
+
+        {showFirstRunGuide && (
+          <FirstRunGuide onDismiss={() => setShowFirstRunGuide(false)} />
+        )}
 
         <SectionCard interactive title="Basic Info" className="overflow-hidden p-4">
           <BasicInfo profileData={profileData} />
         </SectionCard>
 
-        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-12">
-          {/* Row 1: Academic Data (7/5 split) */}
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-7 min-h-[320px]">
-            <Suspense fallback={<SkeletonCard className="h-[320px] w-full" />}>
-              <InternalMarks marksData={data} />
-            </Suspense>
-          </SectionCard>
-
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-5 min-h-[320px]">
-            <Suspense fallback={<SkeletonCard className="h-[320px] w-full" />}>
-              <Attendance attendanceData={data} />
-            </Suspense>
-          </SectionCard>
-
-          {/* Row 2: Navigation & Discovery (4/4/4 split) */}
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
+        {/* Single row: Attendance | Student Tasks | Campus Hub. At mobile the
+            row group sorts after the rail pair (max-md:order-2) and within it
+            Attendance leads (primary daily check) — desktop cells unchanged. */}
+        <div className="grid min-h-0 grid-cols-1 items-stretch gap-4 max-md:order-2 md:grid-cols-2 xl:grid-cols-3">
+          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-2">
             <QuickLinks feedbackPendingCount={feedbackPendingCount} />
           </SectionCard>
 
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
-            <UpcomingEventsWidget />
+          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-3">
+            <CampusHubWidget />
           </SectionCard>
 
-          <SectionCard interactive className="overflow-hidden p-0 md:col-span-4 min-h-[280px]">
-            <CareerWidget />
+          {/* Attendance width reduced from 5 to 3 columns (equal thirds) */}
+          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 md:col-span-2 xl:col-span-1 xl:min-h-0 max-md:order-1">
+            <Suspense fallback={<SkeletonCard className="h-full w-full" />}>
+              <Attendance attendanceData={data} />
+            </Suspense>
           </SectionCard>
         </div>
 
-        <SectionCard interactive className="overflow-hidden p-0">
+        <SectionCard interactive className="overflow-hidden p-0 max-md:order-2">
           <ToDo selectedDate={selectedDate} profileData={profileData} />
         </SectionCard>
       </div>
 
-      <div className="space-y-4 md:col-span-3">
-        <SectionCard interactive className="overflow-hidden p-3">
+      {/* Rail dissolves into the outer grid below md so Week Calendar and
+          Schedule can slot in after Basic Info (max-md:order-1). */}
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 max-md:contents md:col-span-3">
+        <SectionCard interactive className="overflow-hidden p-4 max-md:order-1">
           <WeekCalendar onDateSelect={setSelectedDate} />
         </SectionCard>
 
-        <SectionCard interactive className="overflow-hidden p-0">
+        <SectionCard interactive className="overflow-hidden p-0 max-md:order-1">
           <Schedule scheduleData={data} selectedDate={selectedDate} />
         </SectionCard>
       </div>

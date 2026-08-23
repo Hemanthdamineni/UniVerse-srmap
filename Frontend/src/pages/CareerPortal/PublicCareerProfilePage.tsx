@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Award, Briefcase, Download, Github, Globe, Linkedin, ShieldCheck, Trophy, UserRound } from "lucide-react";
 import { Button } from "../../components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/card";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { getPublicCareerProfile, type PublicCareerProfile } from "../../lib/career/profileApi";
 import { track } from "../../lib/core/analytics";
 import { downloadPublicCareerProfileMarkdown } from "../../lib/career/publicProfileExport";
@@ -69,19 +70,22 @@ const PublicCareerProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
+      <main>
+        <PageContainer surface="flat" className="max-w-5xl space-y-6">
         <div className="h-48 animate-pulse rounded-lg bg-[var(--comp-surface-hover)]" />
         <div className="grid gap-6 md:grid-cols-3">
           <div className="h-40 animate-pulse rounded-lg bg-[var(--comp-surface-hover)]" />
           <div className="h-40 animate-pulse rounded-lg bg-[var(--comp-surface-hover)] md:col-span-2" />
         </div>
+        </PageContainer>
       </main>
     );
   }
 
   if (error || !profile) {
     return (
-      <main className="mx-auto max-w-2xl p-6 sm:p-10">
+      <main>
+        <PageContainer surface="flat" className="max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle>Profile unavailable</CardTitle>
@@ -93,6 +97,7 @@ const PublicCareerProfilePage: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
+        </PageContainer>
       </main>
     );
   }
@@ -107,7 +112,8 @@ const PublicCareerProfilePage: React.FC = () => {
   };
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
+    <main>
+      <PageContainer surface="flat" className="max-w-5xl space-y-6">
       <section className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="flex gap-4">
@@ -153,7 +159,7 @@ const PublicCareerProfilePage: React.FC = () => {
               </p>
               <p className="text-sm text-[var(--comp-text-muted)]">Profile completeness</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-lg border border-[var(--comp-border)] p-3">
                 <p className="text-xl font-semibold text-[var(--comp-text-primary)]">{profile.stats.visibleSkillCount}</p>
                 <p className="text-xs text-[var(--comp-text-muted)]">Skills</p>
@@ -238,6 +244,7 @@ const PublicCareerProfilePage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </PageContainer>
     </main>
   );
 };

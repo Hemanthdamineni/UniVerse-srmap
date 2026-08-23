@@ -26,6 +26,10 @@ const { createCompanionAnalyticsRoutes } = require("./routes/companionAnalyticsR
 const { createAttendanceRoutes } = require("./routes/attendanceRoutes");
 const { createMetricsRoutes } = require("./routes/metricsRoutes");
 const { createTelemetryRoutes } = require("./routes/telemetryRoutes");
+const { createAcademicCalendarRoutes } = require("./routes/academicCalendarRoutes");
+const { createFacultyCabinRoutes } = require("./routes/facultyCabinRoutes");
+const { createVacantRoomRoutes } = require("./routes/vacantRoomRoutes");
+const { createPersistentTeamRoutes } = require("./routes/persistentTeamRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createRequestContextMiddleware } = require("./middleware/requestContext");
 const { createAdminContextMiddleware } = require("./middleware/adminContext");
@@ -45,6 +49,7 @@ function createApp({
   campusFeedbackStore,
   careerStore,
   competitionStore,
+  persistentTeamStore,
   unifiedProfileStore,
   companionAnalyticsStore,
   lmsStore,
@@ -64,6 +69,9 @@ function createApp({
   integrityService,
   erpDumpService,
   uploadsDir,
+  vacantRoomStore,
+  attendanceSnapshotStore,
+  erpDataSink,
 }) {
   const app = express();
 
@@ -78,12 +86,15 @@ function createApp({
     const certificatesPath = path.join(eventsStore.dataDir, "../certificates");
     fs.mkdirSync(submissionsPath, { recursive: true });
     fs.mkdirSync(certificatesPath, { recursive: true });
-    app.use("/files/submissions", express.static(submissionsPath));
-    app.use("/files/certificates", express.static(certificatesPath));
+    // Uploaded artifacts are immutable once written; let browsers reuse them
+    // instead of revalidating on every render.
+    const uploadedFilesStatic = { maxAge: "7d" };
+    app.use("/files/submissions", express.static(submissionsPath, uploadedFilesStatic));
+    app.use("/files/certificates", express.static(certificatesPath, uploadedFilesStatic));
   }
   if (uploadsDir) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    app.use("/uploads", express.static(uploadsDir));
+    app.use("/uploads", express.static(uploadsDir, { maxAge: "1h" }));
   }
   app.use("/api", createGlobalRateLimitMiddleware({ redisClient }));
   app.use(
@@ -130,7 +141,7 @@ function createApp({
   app.use("/api", createAuthRoutes({ sessionStore, erpDumpService }));
   app.use("/api", createAdminRoutes({ sessionStore, adminPassword: contentAdminPassword }));
   if (FEATURE_ERP_V2_API) {
-    app.use("/api", createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor }));
+    app.use("/api", createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor, dataSink: erpDataSink }));
   }
   app.use("/api", createExternalRoutes({ externalDataStore }));
   if (contentStore) {
@@ -200,6 +211,15 @@ function createApp({
       })
     );
   }
+  if (persistentTeamStore) {
+    app.use(
+      "/api",
+      createPersistentTeamRoutes({
+        persistentTeamStore,
+        sessionStore,
+      })
+    );
+  }
   if (unifiedProfileStore) {
     app.use(
       "/api",
@@ -235,7 +255,15 @@ function createApp({
       })
     );
   }
-  app.use("/api", createAttendanceRoutes({ sessionStore }));
+  app.use(
+    "/api",
+    createAttendanceRoutes({ sessionStore, attendanceSnapshotStore, erpAggregationService })
+  );
+  app.use("/api", createAcademicCalendarRoutes());
+  app.use("/api", createFacultyCabinRoutes());
+  if (vacantRoomStore) {
+    app.use("/api", createVacantRoomRoutes({ vacantRoomStore }));
+  }
   app.use("/api", createScrapeRoutes({ erpAggregationService, erpLiveService }));
   app.use((error, req, res, next) => {
     if (res.headersSent) {

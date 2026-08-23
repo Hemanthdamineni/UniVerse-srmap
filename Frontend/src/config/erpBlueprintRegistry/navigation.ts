@@ -26,6 +26,15 @@ export const MAIN_NAV: NavSection[] = [
       },
       {
         type: "group",
+        label: "Campus Tools",
+        icon: "/assets/icons/Dashboard.png",
+        domain: "campus",
+        children: [
+          { type: "link", label: "Vacant Rooms", route: "/campus/vacant-rooms", domain: "campus", access: "B" },
+        ],
+      },
+      {
+        type: "group",
         label: "Exams/Results",
         icon: "/assets/icons/Exams.png",
         domain: "erp",
@@ -55,18 +64,6 @@ export const MAIN_NAV: NavSection[] = [
           { type: "link", label: "Transport Registration", route: "/registration/transport-registration", domain: "campus", access: "B" },
         ],
       },
-      {
-        type: "group",
-        label: "Campus Services",
-        icon: "/assets/icons/Dashboard.png",
-        domain: "campus",
-        children: [
-          { type: "link", label: "Transport Routes", route: "/transport-hostel/routes", domain: "campus", access: "B" },
-          { type: "link", label: "Hostel Booking", route: "/transport-hostel/hostel-booking", domain: "campus", access: "B" },
-          { type: "link", label: "Route Details", route: "/transport-hostel/route-details", domain: "campus", access: "B" },
-          { type: "link", label: "Room Details", route: "/transport-hostel/room-details", domain: "campus", access: "B" },
-        ],
-      },
 
       {
         type: "group",
@@ -74,7 +71,6 @@ export const MAIN_NAV: NavSection[] = [
         icon: "/assets/icons/NotificationIcon.png",
         domain: "mixed",
         children: [
-          { type: "link", label: "Feedback Dashboard", route: "/feedback/dashboard", domain: "campus", access: "B" },
           { type: "link", label: "Course Feedback", route: "/feedback/course-feedback", domain: "erp", access: "B" },
           { type: "link", label: "Events Feedback", route: "/feedback/events-feedback", domain: "campus", access: "A" },
           { type: "link", label: "Hostel & Mess Feedback", route: "/feedback/hostel-mess-feedback", domain: "campus", access: "A" },
@@ -144,7 +140,7 @@ export const MAIN_NAV: NavSection[] = [
     items: [
       {
         type: "group",
-        label: "Discover",
+        label: "Browse & Discover",
         icon: "/assets/icons/Library.png",
         domain: "lms",
         children: [

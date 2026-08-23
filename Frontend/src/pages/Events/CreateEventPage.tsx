@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CalendarDays, CheckCircle2, Eye, Info, UploadCloud } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
+import { Stepper } from "../../components/competition/Stepper";
 import { createEvent } from "../../lib/campus/campusApi";
 import { track } from "../../lib/core/analytics";
 
@@ -149,7 +150,7 @@ const savedDraft: any = (() => {
       track("create_event_completed", { mode: "stitch_wizard", isCompetition });
       navigate(createdEvent?.id ? `/events/${createdEvent.id}/manage` : "/events/my-created");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create event.");
+      setError(err instanceof Error ? err.message : "Couldn't create the event. Please check the details and try again.");
     } finally {
       setBusy(false);
     }
@@ -161,17 +162,12 @@ const savedDraft: any = (() => {
       subtitle="Set up a new institutional event, manage participants, and assign curators."
       variant="wide"
     >
-      <div className="create-wizard-steps" aria-label="Create event steps">
-        {stepLabels.map((label, index) => {
-          const current = (index + 1) as WizardStep;
-          return (
-            <button key={label} className={step === current ? "is-active" : ""} onClick={() => setStep(current)} type="button">
-              <span>{index + 1}</span>
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <Stepper
+        steps={stepLabels}
+        activeIndex={step - 1}
+        onSelect={(index) => setStep((index + 1) as WizardStep)}
+        ariaLabel="Create event steps"
+      />
 
       {error ? <ErrorMessage message={error} onRetry={() => setError("")} preservedInput /> : null}
 

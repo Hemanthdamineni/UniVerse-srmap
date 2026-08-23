@@ -48,7 +48,7 @@ function FeaturedEventCard({ event, index }: { event: EventSummary; index: numbe
   const registrations = event.registeredCount ?? event.registrationCount ?? 0;
 
   return (
-    <CompetitionCard className="mb-5 grid overflow-hidden md:grid-cols-[1fr_1.5fr]">
+    <CompetitionCard className="grid overflow-hidden md:grid-cols-[1fr_1.5fr]">
       <div
         className="min-h-52 bg-cover bg-center md:min-h-full"
         style={{ backgroundImage: getEventImage(event, index) }}
@@ -57,21 +57,21 @@ function FeaturedEventCard({ event, index }: { event: EventSummary; index: numbe
         <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{event.category || "Featured Event"}</span>
         <h2 className="m-0 text-2xl font-bold leading-tight text-[var(--text-primary)]">{event.title || "Untitled Event"}</h2>
         <p className="m-0 text-sm text-[var(--text-secondary)]">{event.description || "No description available."}</p>
-        <div className="flex flex-wrap gap-4 text-sm">
-          <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="inline-flex items-center gap-1 text-[var(--text-secondary)]">
             <Building2 size={14} /> {event.department || "Campus"}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+          <span className="inline-flex items-center gap-1 text-[var(--text-secondary)]">
             <Users size={14} /> {registrations ? `${registrations.toLocaleString("en-IN")} registered` : "Open"}
           </span>
         </div>
-        <div className="mt-2 flex gap-3">
+        <div className="mt-2 flex flex-wrap gap-2">
           <button className="comp-btn-primary" onClick={() => navigate(`/events/${encodeURIComponent(event.id)}`)}>
             View Details
           </button>
           {event.prizes && (
-            <span className="inline-flex items-center text-sm font-semibold text-[var(--comp-text-secondary)]">
-              🏅 {event.prizes}
+            <span className="inline-flex min-w-0 max-w-[260px] items-center gap-1 text-sm font-semibold text-[var(--comp-text-secondary)]" title={event.prizes}>
+              🏅 <span className="truncate">{event.prizes}</span>
             </span>
           )}
         </div>
@@ -95,23 +95,22 @@ function EventCard({ event, index }: { event: EventSummary; index: number }) {
       >
         <span className="absolute right-2.5 top-2.5 rounded-full bg-[color-mix(in_srgb,var(--accent-orange)_14%,var(--background)_86%)] px-2 py-1 text-[11px] font-bold uppercase text-[color-mix(in_srgb,var(--accent-orange)_70%,var(--text-primary)_30%)]">{deadlineLabel(event)}</span>
       </button>
-      <div className="grid gap-2 p-5">
-        <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{event.category || "Event"}</p>
-        <h2 className="m-0 min-h-[2.5em] text-[1.06rem] font-semibold leading-tight text-[var(--text-primary)]">{event.title || "Untitled Event"}</h2>
-        <p className="m-0 inline-flex min-h-5 items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[var(--text-secondary)]">
+      <div className="grid gap-2 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{event.category || "Event"}</p>
+          <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] px-2 py-1 text-[11px] font-bold uppercase text-[var(--accent)] tracking-wider">
+            {registrations ? `${registrations.toLocaleString("en-IN")} Reg.` : "Open"}
+          </span>
+        </div>
+        <h2 className="m-0 text-base font-semibold leading-tight line-clamp-2 text-[var(--text-primary)]">{event.title || "Untitled Event"}</h2>
+        <p className="m-0 inline-flex min-h-5 items-center gap-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[var(--text-secondary)]">
           <Building2 size={14} />
           {event.department || eventVenue(event)}
         </p>
         <div className="my-1 h-px bg-[var(--border)]" />
-        <div className="grid grid-cols-2 gap-3">
-          <span>
-            <small className="block text-[11px] font-bold uppercase text-[var(--text-secondary)]">Prizes</small>
-            <strong className="text-sm text-[var(--text-primary)]">{event.prizes || "Merit"}</strong>
-          </span>
-          <span>
-            <small className="block text-[11px] font-bold uppercase text-[var(--text-secondary)]">Reg.</small>
-            <strong className="text-sm text-[var(--text-primary)]">{registrations ? registrations.toLocaleString("en-IN") : "Open"}</strong>
-          </span>
+        <div className="min-w-0">
+          <small className="block text-[11px] font-bold uppercase text-[var(--text-secondary)]">Prizes</small>
+          <strong className="block text-sm text-[var(--text-primary)] line-clamp-2" title={event.prizes || "Merit"}>{event.prizes || "Merit"}</strong>
         </div>
         <Link className="comp-btn-ghost mt-2" to={`/events/${encodeURIComponent(event.id)}`}>
           {isOrganizerAction ? "Review" : "View Details"}
@@ -139,7 +138,7 @@ function RecommendationRail({
   if (!visible.length) return null;
 
   return (
-    <section className="py-1" aria-label="Recommended events">
+    <section className="pt-4" aria-label="Recommended events">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="m-0 inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
@@ -150,7 +149,7 @@ function RecommendationRail({
         </div>
         <span className="text-xs font-semibold text-[var(--text-secondary)]">Profile signals</span>
       </div>
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         {visible.map(({ recommendation, event }) => (
           <Link
             key={recommendation.impressionId || recommendation.itemId}
@@ -178,18 +177,18 @@ function RecommendationRail({
                 </p>
                 <h3 className="m-0 mt-1 text-base font-semibold leading-snug text-[var(--text-primary)]">{event.title}</h3>
               </div>
-              <span className="rounded-full border border-[color-mix(in_srgb,var(--accent-blue)_28%,var(--border))] px-2 py-0.5 text-xs font-semibold text-[var(--accent-blue)]">
+              <span className="rounded-full border border-[color-mix(in_srgb,var(--accent-blue)_28%,var(--border))] px-2 py-1 text-xs font-semibold text-[var(--accent-blue)]">
                 {Math.round(recommendation.score * 100)}%
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {recommendation.reasons.slice(0, 2).map((reason) => (
-                <span key={reason} className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
+                <span key={reason} className="rounded-full border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-secondary)]">
                   {reason}
                 </span>
               ))}
             </div>
-            <p className="m-0 mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+            <p className="m-0 mt-3 inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
               <Building2 size={13} />
               {event.department || eventVenue(event)}
             </p>
@@ -299,8 +298,8 @@ export default function EventsListingPage() {
       }
       variant="wide"
     >
-      <section className="dashboard-card grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_1fr_auto]" aria-label="Event filters">
-        <label>
+      <section className="dashboard-card grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_1fr_1fr_auto]" aria-label="Event filters">
+        <label className="md:col-span-2">
           <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Search</span>
           <div className="flex h-11 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] px-3">
             <Search size={16} />
@@ -328,11 +327,11 @@ export default function EventsListingPage() {
             </Select>
           </div>
         </label>
-        <div className="inline-grid h-11 grid-flow-col items-center gap-1 rounded-xl bg-[var(--dash-subcard-bg)] p-1" role="group" aria-label="Format">
+        <div className="inline-grid h-11 grid-flow-col auto-cols-fr items-center gap-1 rounded-xl bg-[var(--dash-subcard-bg)] p-1" role="group" aria-label="Format">
           {formats.map((item) => (
             <button
               key={item}
-              className={`h-8 min-w-20 rounded-lg border-0 px-2 text-sm ${format === item ? "bg-[var(--background)] text-[var(--text-primary)]" : "bg-transparent text-[var(--text-secondary)]"}`}
+              className={`h-8 min-w-10 rounded-lg border-0 px-2 text-[13px] sm:min-w-20 sm:text-sm ${format === item ? "bg-[var(--background)] text-[var(--text-primary)]" : "bg-transparent text-[var(--text-secondary)]"}`}
               onClick={() => setFormat(item)}
               type="button"
             >
@@ -348,15 +347,15 @@ export default function EventsListingPage() {
       ) : null}
 
       {loading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-4">
           {[1, 2, 3, 4, 5].map((item) => <SkeletonCard key={item} />)}
         </div>
       ) : filteredEvents.length ? (
-        <>
+        <div className="flex flex-col gap-6">
           {filteredEvents.length > 0 ? (
             <FeaturedEventCard event={filteredEvents[0]} index={0} />
           ) : null}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-4">
             {filteredEvents.slice(1).map((event, index) => <EventCard key={event.id} event={event} index={index + 1} />)}
             <Link className="grid min-h-36 place-items-center content-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--dash-subcard-bg)] text-center no-underline text-[var(--text-primary)]" to="/events/create">
               <Plus size={24} />
@@ -364,11 +363,11 @@ export default function EventsListingPage() {
               <span className="text-xs text-[var(--text-secondary)]">Host a department activity</span>
             </Link>
           </div>
-          <div className="mt-8 flex items-center justify-between gap-4 border-t border-[var(--border)] pt-5 text-sm text-[var(--text-secondary)]">
+          <div className="flex items-center justify-between gap-4 border-t border-[var(--border)] pt-4 text-sm text-[var(--text-secondary)]">
             <span data-page-contrast="true">Showing {filteredEvents.length} of {events.length} active events</span>
             <span data-page-contrast="true" className="inline-flex items-center gap-2"><Users size={15} /> Registration data updates live</span>
           </div>
-        </>
+        </div>
       ) : (
         <CompetitionEmptyPanel
           title={query || category !== categories[0] || department !== departments[0] || format !== formats[0] || dateRange !== dateRanges[0] ? "No matching events" : "No events are open right now"}

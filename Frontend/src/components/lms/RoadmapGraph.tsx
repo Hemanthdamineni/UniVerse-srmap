@@ -46,9 +46,9 @@ function RoadmapProgressHeader({
         <div
           className="h-full rounded-full"
           style={{ 
-            width: `${percentage}%`, 
+            width: `${percentage}%`,
             background: 'var(--success)',
-            transition: 'transform var(--duration-slow) var(--ease-out)'
+            transition: 'width var(--duration-slow) var(--ease-spring)'
           }}
         />
       </div>
@@ -83,7 +83,7 @@ function RoadmapNodeItem({
             borderStyle: (isOptional && !isCompleted && !isCurrent) ? 'dashed' : 'solid',
             background: isCompleted ? 'var(--success)' : 'var(--comp-surface)',
             boxShadow: isCurrent ? '0 0 0 4px color-mix(in srgb, var(--comp-accent) 15%, transparent)' : 'none',
-            transition: 'all var(--duration-normal) var(--ease-out)',
+            transition: 'all var(--duration-normal) var(--ease-spring)',
           }}
         >
           {isCompleted && (
@@ -101,7 +101,7 @@ function RoadmapNodeItem({
           opacity: isLocked ? 0.6 : 1,
           border: isCurrent ? '1px solid var(--comp-accent)' : '1px solid var(--comp-border)',
           boxShadow: isCurrent ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-          transition: 'all var(--duration-normal) var(--ease-out)',
+          transition: 'all var(--duration-normal) var(--ease-spring)',
         }}
       >
         <div className="flex-1 space-y-2 min-w-0">

@@ -113,7 +113,7 @@ test("indexes sections by pageKey using scrape targets", () => {
   assert.equal(hints.capabilities.executableActionCount, 1);
 });
 
-test("marks bank save mutation as blocked in wave 1", () => {
+test("allows bank save mutation in wave 2", () => {
   const store = makeStore();
   const hints = store.getUiHints("finance/bank-details");
 
@@ -122,8 +122,7 @@ test("marks bank save mutation as blocked in wave 1", () => {
 
   const action = hints.sections[0].actions[0];
   assert.equal(action.kind, "mutation");
-  assert.equal(action.enabled, false);
-  assert.match(String(action.disabledReason || ""), /bank save/i);
+  assert.equal(action.enabled, true);
 });
 
 test("resolves action by pageKey and actionId", () => {

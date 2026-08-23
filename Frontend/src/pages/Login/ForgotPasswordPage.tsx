@@ -8,6 +8,7 @@ import {
   normalizeCaptchaImageSource,
   normalizeRegistrationNumber,
 } from "../../lib/core/auth";
+import { StatusMessage, type Tone } from "./LoginParts";
 
 // Client-side backstops mirroring LoginPage; the backend enforces its own budgets.
 const CAPTCHA_FETCH_TIMEOUT_MS = 15_000;
@@ -17,22 +18,6 @@ const REQUEST_TIMEOUT_MS = 60_000;
 const CAPTCHA_RETRY_CODES = new Set(["CAPTCHA_EXPIRED", "INVALID_CAPTCHA"]);
 
 type Step = "initiate" | "change" | "done";
-type Tone = "neutral" | "error" | "success";
-
-function StatusMessage({ tone, message }: { tone: Tone; message: string }) {
-  if (!message) return null;
-
-  const toneClasses =
-    tone === "success"
-      ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
-      : tone === "error"
-        ? "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
-        : "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]";
-
-  return <div className={`rounded-xl border px-4 py-3 text-sm ${toneClasses}`}>{message}</div>;
-}
-
-
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -296,7 +281,7 @@ export default function ForgotPasswordPage() {
                     value={form.username}
                     onChange={handleChange}
                     placeholder="AP24110000000"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="username"
                   />
                 </div>
@@ -319,7 +304,7 @@ export default function ForgotPasswordPage() {
                   </div>
                   <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)]">
                     <div className="flex items-center">
-                      <div className="flex min-h-[70px] w-[172px] items-center justify-center border-r border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-white px-3 py-2">
+                      <div className="flex min-h-[72px] w-[172px] items-center justify-center border-r border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-white px-3 py-2">
                         {captchaBase64 ? (
                           <img
                             src={captchaBase64}
@@ -336,7 +321,7 @@ export default function ForgotPasswordPage() {
                         value={form.captcha}
                         onChange={handleChange}
                         placeholder="Enter captcha"
-                        className="min-h-[70px] flex-1 bg-transparent px-4 text-sm outline-none"
+                        className="min-h-[72px] flex-1 bg-transparent px-3 text-sm outline-none"
                       />
                     </div>
                   </div>
@@ -363,7 +348,7 @@ export default function ForgotPasswordPage() {
                     name="username"
                     value={form.username}
                     onChange={handleChange}
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,white)] px-4 py-3 text-sm text-[var(--text-secondary)]"
+                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[color-mix(in_srgb,var(--surface)_40%,white)] px-3 py-2 text-sm text-[var(--text-secondary)]"
                     readOnly
                   />
                 </div>
@@ -378,7 +363,7 @@ export default function ForgotPasswordPage() {
                     value={form.otp}
                     onChange={handleChange}
                     placeholder="Enter the OTP"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="one-time-code"
                   />
                 </div>
@@ -394,7 +379,7 @@ export default function ForgotPasswordPage() {
                     value={form.newPassword}
                     onChange={handleChange}
                     placeholder="Create a stronger password"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="new-password"
                   />
                 </div>
@@ -410,7 +395,7 @@ export default function ForgotPasswordPage() {
                     value={form.confirmPassword}
                     onChange={handleChange}
                     placeholder="Re-enter the new password"
-                    className="w-full rounded-xl border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--comp-accent)]"
+                    className="min-h-11 w-full rounded-lg border border-[color-mix(in_srgb,var(--border)_95%,transparent)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition focus:border-[var(--comp-accent)]"
                     autoComplete="new-password"
                   />
                   {confirmPasswordError ? (

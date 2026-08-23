@@ -5,9 +5,10 @@ import type { ErpPageResponse } from "../../lib/erp/index";
 import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { AttendanceModel, ErpGenericTable } from "../../lib/erp/erpTransformers";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { calculateBunkCapacity } from "./components/BunkCalculator";
+import { AttendanceTrendSection } from "./components/AttendanceTrendSection";
 
 interface AttendanceDetailsPageProps {
   blueprint: PageBlueprint;
@@ -66,45 +67,37 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
 
       {model && (
         <>
-          <StudentAttendanceCard />
+          <AttendanceTrendSection refreshTrigger={refreshTrigger} />
 
-          {model.studentAttendanceTables && (
-            <TodayAttendanceSection tables={model.studentAttendanceTables} />
-          )}
-
-          <div className="erp-table-shell mt-10">
-            <table className="erp-table table-fixed">
-              <thead className="erp-table-head">
-                <tr>
-                  <th className="erp-table-head-cell label-text">Subject Code</th>
-                  <th className="erp-table-head-cell label-text">Subject</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Conducted</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Entered</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">OD/ML</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Present</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">OD/ML %</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Attendance %</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Bunk</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Needed</th>
-                  <th className="erp-table-head-cell label-text erp-table-align-center">Status</th>
-                  <th className="erp-table-head-cell label-text">LMS</th>
-                </tr>
-              </thead>
-              <tbody className="erp-table-body">
-                {model.records.length === 0 ? (
-                  <tr className="erp-table-row">
-                    <td colSpan={12} className="erp-table-cell py-12">
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3" style={{ color: 'var(--comp-text-muted)' }} aria-hidden="true">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>No attendance records</p>
-                        <p className="mt-0.5 text-xs" style={{ color: 'var(--comp-text-muted)' }}>No attendance records are available for the current semester.</p>
-                      </div>
-                    </td>
+          {/* MAIN attendance summary table */}
+          <section>
+            <h2 className="label-text mb-3">Attendance Summary</h2>
+            <div className="erp-table-shell">
+              <table className="erp-table">
+                <thead className="erp-table-head">
+                  <tr>
+                    <th className="erp-table-head-cell label-text">Subject Code</th>
+                    <th className="erp-table-head-cell label-text">Subject</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Conducted</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Entered</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">OD/ML</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Present</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">OD/ML %</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Attendance %</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Bunk</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Needed</th>
+                    <th className="erp-table-head-cell label-text erp-table-align-center">Status</th>
+                    <th className="erp-table-head-cell label-text">LMS</th>
                   </tr>
-                ) : (
+                </thead>
+                <tbody className="erp-table-body">
+                  {model.records.length === 0 ? (
+                    <TableEmptyRow
+                      colSpan={12}
+                      message="No attendance records"
+                      hint="No attendance records are available for the current semester."
+                    />
+                  ) : (
                   model.records.map((rec) => {
                     const bunk = calculateBunkCapacity(
                       rec.classesConducted,
@@ -120,8 +113,8 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                         : "var(--error)";
                     return (
                       <tr key={rec.subjectCode} className="erp-table-row">
-                        <td className="erp-table-cell erp-table-cell-strong">{rec.subjectCode}</td>
-                        <td className="erp-table-cell">{rec.subjectDescription}</td>
+                        <td className="erp-table-cell erp-table-cell-strong min-w-[130px]">{rec.subjectCode}</td>
+                        <td className="erp-table-cell min-w-[180px]">{rec.subjectDescription}</td>
                         <td className="erp-table-cell erp-table-align-center">{rec.classesConducted}</td>
                         <td className="erp-table-cell erp-table-align-center">{rec.attendanceEntered}</td>
                         <td className="erp-table-cell erp-table-align-center">{rec.odMlTaken}</td>
@@ -162,10 +155,11 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                 </tbody>
               </table>
             </div>
+          </section>
 
           {model.notes.length > 0 && (
             <section className="dashboard-card p-4">
-              <h2 className="mb-2 text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Notes</h2>
+              <h2 className="label-text mb-2">Notes</h2>
               <ul className="space-y-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
                 {model.notes.map((note, i) => (
                   <li key={i} className="flex gap-2">
@@ -180,6 +174,13 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
           {model.odMlTables && model.odMlTables.length > 0 && (
             <OdMlDetailsSection title="OD/ML Details" tables={model.odMlTables} />
           )}
+
+          {model.studentAttendanceTables && (
+            <TodayAttendanceSection tables={model.studentAttendanceTables} />
+          )}
+
+          {/* Mark attendance — collapsed into a slim trailing section */}
+          <StudentAttendanceCard />
         </>
       )}
     </ErpPageShell>
@@ -223,35 +224,36 @@ function StudentAttendanceCard() {
   };
 
   return (
-    <div className="mb-8 dashboard-card overflow-hidden">
-      <div className="flex flex-col md:flex-row">
-        {/* Left: label area */}
-        <div className="border-b border-[var(--comp-border)] md:border-b-0 md:border-r px-6 py-5 md:w-5/12 lg:w-2/5 bg-[color-mix(in_srgb,var(--surface)_60%,var(--background))]">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--comp-text-secondary)] mb-2">Online Attendance</p>
-          <h2 className="text-base font-bold text-[var(--comp-text-primary)] leading-snug">Mark today's session</h2>
-          <p className="mt-1.5 text-sm text-[var(--comp-text-secondary)] leading-relaxed max-w-xs">
-            Enter the 7-character code shared by your faculty to confirm your presence.
-          </p>
-        </div>
+    <section className="dashboard-card overflow-hidden p-0" aria-label="Online attendance marking">
+      <div className="px-5 py-3">
+        {formError && (
+          <div className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--error)_8%,transparent)] border border-[color-mix(in_srgb,var(--error)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--error)]">
+            <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5zm-.75 6a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75z"/></svg>
+            {formError}
+          </div>
+        )}
+        {success && (
+          <div className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--success)_8%,transparent)] border border-[color-mix(in_srgb,var(--success)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--success)]">
+            <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.28 5.03a.75.75 0 0 0-1.06-1.06L7 8.19 5.78 6.97a.75.75 0 0 0-1.06 1.06l1.75 1.75a.75.75 0 0 0 1.06 0l3.75-3.75z"/></svg>
+            Attendance marked successfully.
+          </div>
+        )}
 
-        {/* Right: form area */}
-        <div className="flex-1 px-6 py-5">
-          {formError && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--error)_8%,transparent)] border border-[color-mix(in_srgb,var(--error)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--error)]">
-              <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5zm-.75 6a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75z"/></svg>
-              {formError}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--success)_8%,transparent)] border border-[color-mix(in_srgb,var(--success)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--success)]">
-              <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.28 5.03a.75.75 0 0 0-1.06-1.06L7 8.19 5.78 6.97a.75.75 0 0 0-1.06 1.06l1.75 1.75a.75.75 0 0 0 1.06 0l3.75-3.75z"/></svg>
-              Attendance marked successfully.
-            </div>
-          )}
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex-1 min-w-0">
-                <label htmlFor="attendanceCode" className="comp-label block mb-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Label block */}
+          <div className="min-w-0">
+            <h2 className="label-text">Online Attendance</h2>
+            <p className="mt-1 text-sm font-semibold leading-snug text-[var(--comp-text-primary)]">Mark today's session</p>
+            <p className="text-xs leading-relaxed text-[var(--comp-text-secondary)]">
+              Enter the 7-character code shared by your faculty to confirm your presence.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="shrink-0 md:pl-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0">
+                <label htmlFor="attendanceCode" className="mb-1 block text-xs font-medium" style={{ color: 'var(--comp-text-secondary)' }}>
                   Attendance Code
                 </label>
                 <input
@@ -264,7 +266,7 @@ function StudentAttendanceCard() {
                     if (success) setSuccess(false);
                   }}
                   placeholder="e.g. A123456"
-                  className="w-full rounded-lg border border-[var(--comp-border-strong)] bg-[var(--background)] px-3.5 py-2.5 font-mono text-sm tracking-[0.08em] text-[var(--comp-text-primary)] transition-colors placeholder:text-[var(--comp-text-muted)] focus:border-[var(--comp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50"
+                  className="w-full rounded-lg border border-[var(--comp-border-strong)] bg-[var(--background)] px-3.5 py-2 font-mono text-sm tracking-[0.08em] text-[var(--comp-text-primary)] transition-colors placeholder:text-[var(--comp-text-muted)] focus:border-[var(--comp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50 sm:w-56"
                   maxLength={7}
                   disabled={submitting}
                   autoComplete="off"
@@ -274,44 +276,45 @@ function StudentAttendanceCard() {
               <button
                 type="submit"
                 disabled={submitting || code.trim().length !== 7}
-                className="comp-btn-primary shrink-0 min-h-[42px] px-7 text-sm"
+                className="comp-btn-primary min-h-[42px] shrink-0"
               >
                 {submitting ? "Marking..." : "Mark Attendance"}
               </button>
             </div>
-            <p className="mt-2 text-xs text-[var(--comp-text-muted)]">
-              First alphabet followed by 6 digits, e.g. <span className="font-mono">A123456</span>
-            </p>
           </form>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
 function TodayAttendanceSection({ tables }: { tables: ErpGenericTable[] }) {
   // Flatten all rows across tables (Today Attendance is always one table)
   const allTables = tables.filter(t => t.columns.length > 0);
+  const hasAnyRows = allTables.some(t => t.rows.length > 0);
 
   return (
-    <div className="mt-10">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--comp-text-primary)] pl-1">
-        Today's Attendance
-      </h2>
+    <section>
+      <h2 className="label-text mb-3">Today's Attendance</h2>
 
-      {allTables.length === 0 || allTables.every(t => t.rows.length === 0) ? (
-        <div className="erp-table-shell px-6 py-12 flex flex-col items-center justify-center text-center gap-3">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--comp-text-muted)] opacity-60">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <path d="M16 2v4M8 2v4M3 10h18"/>
-            <path d="M9 16l2 2 4-4"/>
-          </svg>
-          <div>
-            <p className="text-sm font-semibold text-[var(--comp-text-primary)]">No sessions recorded yet</p>
-            <p className="mt-1 text-xs text-[var(--comp-text-muted)] max-w-xs">
-              Today's attendance will appear here once your faculty marks sessions. Mark your attendance using the code above.
-            </p>
-          </div>
+      {!hasAnyRows ? (
+        <div className="erp-table-shell">
+          <table className="erp-table">
+            <thead className="erp-table-head">
+              <tr>
+                {(allTables[0]?.columns ?? []).map((col) => (
+                  <th key={col} className="erp-table-head-cell label-text">{col}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="erp-table-body">
+              <TableEmptyRow
+                colSpan={Math.max(allTables[0]?.columns.length ?? 1, 1)}
+                message="No sessions recorded yet"
+                hint="Today's attendance will appear here once your faculty marks sessions. Mark your attendance using the form below."
+              />
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="space-y-6">
@@ -353,7 +356,7 @@ function TodayAttendanceSection({ tables }: { tables: ErpGenericTable[] }) {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -364,8 +367,8 @@ function OdMlDetailsSection({ title, tables }: { title: string; tables: ErpGener
   const normalizedSectionTitle = normalizeTitle(title);
 
   return (
-    <div className="mt-10">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--comp-text-primary)] pl-1">{title}</h2>
+    <section>
+      <h2 className="label-text mb-3">{title}</h2>
       <div className="space-y-6">
         {tables.map((table, index) => {
           const showInnerTitle =
@@ -391,11 +394,7 @@ function OdMlDetailsSection({ title, tables }: { title: string; tables: ErpGener
                   </thead>
                   <tbody className="erp-table-body">
                     {table.rows.length === 0 ? (
-                      <tr className="erp-table-row">
-                        <td colSpan={table.columns.length} className="erp-table-cell py-8 text-center text-sm italic text-[var(--comp-text-muted)]">
-                          No records found.
-                        </td>
-                      </tr>
+                      <TableEmptyRow colSpan={table.columns.length} message="No records found." />
                     ) : (
                       table.rows.map((row, rowIndex) => (
                         <tr key={rowIndex} className="erp-table-row">
@@ -414,6 +413,6 @@ function OdMlDetailsSection({ title, tables }: { title: string; tables: ErpGener
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -1,12 +1,40 @@
 @layer components {
   .lms-input {
     @apply rounded-xl border px-3 py-2 text-sm outline-none transition-colors;
+    /* selects/inputs carry intrinsic min-widths; let them shrink in fluid grids */
+    min-width: 0;
+    width: 100%;
     border-color: color-mix(in srgb, var(--comp-accent) 10%, transparent);
     background-color: var(--comp-surface);
     color: var(--comp-text-primary);
   }
   .lms-input:focus {
     border-color: var(--info);
+  }
+
+  .lms-btn {
+    @apply inline-flex min-h-9 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .lms-btn-primary {
+    background: var(--comp-accent);
+    color: var(--comp-accent-fg);
+  }
+  .lms-btn-primary:hover {
+    background: var(--comp-accent-hover);
+  }
+  .lms-btn-ghost {
+    border: 1px solid var(--comp-border);
+    color: var(--comp-text-secondary);
+    background: transparent;
+  }
+  .lms-btn-ghost:hover {
+    border-color: var(--comp-accent);
+    color: var(--comp-accent);
+  }
+  .lms-btn-danger {
+    border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+    color: var(--error);
+    background: color-mix(in srgb, var(--error) 8%, transparent);
   }
 }
 

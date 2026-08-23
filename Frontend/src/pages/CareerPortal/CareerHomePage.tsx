@@ -70,7 +70,7 @@ const CareerHomePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer className="space-y-8">
+    <PageContainer className="space-y-6">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="page-title">Career Portal</h1>
@@ -121,7 +121,7 @@ const CareerHomePage: React.FC = () => {
       {/* Personalized for You (Phase 4) */}
       {!error && personalizedOpps.length > 0 && (
         <section className="dashboard-card p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[var(--comp-accent)]" />
               <h2 className="section-title">Personalized for you</h2>
@@ -130,7 +130,7 @@ const CareerHomePage: React.FC = () => {
               Update Profile
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {personalizedOpps.map(opp => (
               <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
@@ -163,13 +163,13 @@ const CareerHomePage: React.FC = () => {
         </div>
         
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : latestOpps.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {latestOpps.map(opp => (
               <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}

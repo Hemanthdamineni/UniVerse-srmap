@@ -267,7 +267,7 @@ export default function AcademicTrackerPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SectionCard title="GPA Prediction">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-sm font-medium text-[var(--comp-text-primary)]">Sem 4 SGPA</label>
                     <Input

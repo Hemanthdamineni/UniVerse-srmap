@@ -192,4 +192,29 @@ describe("Schedule", () => {
     const completedBadges = screen.getAllByText("Completed");
     expect(completedBadges.length).toBeGreaterThan(0);
   });
+
+  it("handles new format with em dash: 'CODE(ROOM) — Full Subject Name'", () => {
+    const data = makeTimetableData({
+      days: [
+        {
+          day: "Monday",
+          slots: [
+            { classDetails: "CSE401(C311) — CODING SKILLS - III" },
+            { classDetails: "" },
+            { classDetails: "" },
+          ],
+        },
+      ],
+      subjects: [
+        { code: "CSE401", name: "CODING SKILLS - III", faculty: "Dr. Shreeram Hudda", room: "C 311" },
+      ],
+    });
+    mockExecutePipeline.mockReturnValue({ isValid: true, data });
+    renderSchedule({}, MONDAY);
+    // Should match subject by code and show faculty/room from subjects
+    // CSS capitalize transforms text, so "CODING SKILLS - III" becomes "Coding Skills - Iii"
+    expect(screen.getByText("Coding Skills - Iii")).toBeInTheDocument();
+    expect(screen.getByText("Dr. Shreeram Hudda")).toBeInTheDocument();
+    expect(screen.getByText(/Lecture - C 311/)).toBeInTheDocument();
+  });
 });

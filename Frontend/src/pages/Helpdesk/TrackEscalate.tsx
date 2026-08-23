@@ -6,6 +6,7 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
+import { Markdown } from "../../components/markdown";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   bulkUpdateHelpdeskTickets,
@@ -134,17 +135,18 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
       />
 
       <SectionCard title={adminMode && admin.unlocked ? "All Tickets" : "Your Tickets"}>
-        <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="space-y-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex flex-wrap gap-2">
           {(["all", "new", "in-progress", "escalated", "breached", "resolved"] as const).map((queue) => (
             <button
               key={queue}
               type="button"
               onClick={() => setFilterQueue(queue)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
                 filterQueue === queue
-                  ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
-                  : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                  ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-[var(--comp-accent-fg)]"
+                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
               }`}
             >
               {queue} {queue !== "all" ? `(${counts.queues?.[queue] || 0})` : ""}
@@ -152,7 +154,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
           ))}
           </div>
           <form
-            className="flex gap-2"
+            className="flex w-full flex-1 basis-56 gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               void loadTickets();
@@ -162,7 +164,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search tickets"
-              className="min-h-10 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="min-h-10 min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
             <button
               type="submit"
@@ -174,10 +176,10 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
         </div>
 
         {adminMode && admin.unlocked ? (
-          <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div className="flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
               {workload.slice(0, 4).map((item) => (
-                <span key={`${item.assignedTeam}-${item.ownerName}`} className="rounded-full border border-[var(--border)] px-3 py-1.5">
+                <span key={`${item.assignedTeam}-${item.ownerName}`} className="rounded-full border border-[var(--border)] px-3 py-1">
                   {item.ownerName}: {item.total} active, {item.breached} breached
                 </span>
               ))}
@@ -198,9 +200,9 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
         ) : (
           <div className="space-y-3">
             {filtered.map((ticket) => (
-              <div key={ticket.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
+              <div key={ticket.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       {adminMode && admin.unlocked ? (
                         <input
@@ -218,27 +220,29 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                       ) : null}
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">{ticket.id}</span>
                       <span
-                        className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+                        className={`rounded-full border px-2 py-1 text-xs font-bold ${
                           STATUS_COLORS[ticket.status] || "border-[var(--comp-border)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)]"
                         }`}
                       >
                         {ticket.status}
                       </span>
-                      <span className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]">
+                      <span className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2 py-1 text-xs font-semibold text-[var(--comp-text-primary)]">
                         {ticket.priority}
                       </span>
                       {ticket.slaBreached ? (
-                        <span className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--error)]">
+                        <span className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-2 py-1 text-xs font-semibold text-[var(--error)]">
                           SLA Breached
                         </span>
                       ) : null}
-                      <span className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+                      <span className="rounded-full border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
                         {ticket.queueState || "new"}
                       </span>
                     </div>
-                    <h3 className="mt-1.5 text-base font-semibold text-[var(--comp-text-primary)]">{ticket.subject}</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{ticket.description}</p>
-                    <div className="mt-2 grid gap-1 text-xs text-[var(--text-secondary)] md:grid-cols-3">
+                    <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{ticket.subject}</h3>
+                    <div className="text-sm leading-6 text-[var(--text-secondary)]">
+                      <Markdown>{ticket.description}</Markdown>
+                    </div>
+                    <div className="grid gap-1 text-xs text-[var(--text-secondary)] md:grid-cols-3">
                       <div>Category: {ticket.category}</div>
                       <div>Owner: {ticket.ownerName || ticket.assignedTo}</div>
                       <div>Team: {ticket.assignedTeam || "Unassigned"}</div>
@@ -247,34 +251,36 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                     </div>
 
                     {ticket.replies?.length ? (
-                      <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--comp-surface-hover)] p-3">
+                      <div className="bg-[color-mix(in_srgb,var(--comp-surface-hover)_55%,transparent)] p-3">
                         <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
                           Conversation
                         </h4>
-                        <div className="mt-2 space-y-2">
+                        <div className="divide-y divide-[var(--border)]">
                           {ticket.replies.slice(0, 3).map((reply) => (
-                            <div key={reply.id} className="rounded-xl bg-white p-3 text-sm">
+                            <div key={reply.id} className="py-2 text-sm">
                               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
                                 <span>
                                   {reply.authorName} · {reply.authorRole}
                                 </span>
                                 <span>{new Date(reply.createdAt).toLocaleString("en-IN")}</span>
                               </div>
-                              <p className="mt-1 text-[var(--text-secondary)]">{reply.message}</p>
+                              <div className="mt-1 text-[var(--text-secondary)]">
+                                <Markdown>{reply.message}</Markdown>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : null}
                     {adminMode && admin.unlocked && ticket.auditTrail?.length ? (
-                      <div className="mt-3 text-xs text-[var(--text-secondary)]">
+                      <div className="text-xs text-[var(--text-secondary)]">
                         Latest audit: {ticket.auditTrail[0].action} by {ticket.auditTrail[0].actorName} on{" "}
                         {new Date(ticket.auditTrail[0].createdAt).toLocaleString("en-IN")}
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="flex min-w-[220px] flex-col gap-2">
+                  <div className="flex min-w-0 flex-1 basis-56 flex-col gap-2">
                     {!(adminMode && admin.unlocked) && (ticket.status === "open" || ticket.status === "in-progress") ? (
                       <button
                         type="button"
@@ -284,7 +290,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             `Ticket ${ticket.id} escalated.`
                           )
                         }
-                        className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
+                        className="rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                       >
                         Escalate
                       </button>
@@ -311,7 +317,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                                   `Ticket ${ticket.id} moved to ${status}.`
                                 )
                               }
-                              className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
+                              className="rounded-lg border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                             >
                               Mark {status}
                             </button>
@@ -323,7 +329,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             setAssignmentDrafts((prev) => ({ ...prev, [ticket.id]: event.target.value }))
                           }
                           placeholder="Owner or team"
-                          className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
+                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
                         />
                         <button
                           type="button"
@@ -344,7 +350,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               `Ticket ${ticket.id} reassigned.`
                             )
                           }
-                          className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
+                          className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
                         >
                           Assign
                         </button>
@@ -354,7 +360,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             setResolutionDrafts((prev) => ({ ...prev, [ticket.id]: event.target.value }))
                           }
                           placeholder="Resolution summary"
-                          className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
+                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
                         />
                         <button
                           type="button"
@@ -374,7 +380,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               `Ticket ${ticket.id} resolved.`
                             )
                           }
-                          className="rounded-full bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
+                          className="rounded-lg bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
                         >
                           Resolve
                         </button>
@@ -384,7 +390,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             setReplyDrafts((prev) => ({ ...prev, [ticket.id]: event.target.value }))
                           }
                           placeholder="Add admin reply or resolution note"
-                          className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
+                          className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
                         />
                         <button
                           type="button"
@@ -405,7 +411,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               }))
                             )
                           }
-                          className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
+                          className="rounded-lg bg-[var(--comp-accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
                         >
                           Public Reply
                         </button>
@@ -428,7 +434,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               }))
                             )
                           }
-                          className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
+                          className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
                         >
                           Internal Note
                         </button>
@@ -440,6 +446,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
             ))}
           </div>
         )}
+        </div>
       </SectionCard>
     </ErpPageShell>
   );

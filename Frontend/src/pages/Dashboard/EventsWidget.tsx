@@ -1,3 +1,4 @@
+// Dormant: superseded by CampusHubWidget; retained for prototype/reference parity.
 import { useNavigate } from "react-router-dom";
 
 export default function EventsWidget() {
@@ -13,7 +14,7 @@ export default function EventsWidget() {
         <p className="body-text text-sm mb-4">Discover hackathons, guest lectures, and campus competitions to level up your skills.</p>
         
         <div className="space-y-2">
-          <div className="p-2.5 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] flex items-center justify-between cursor-pointer hover:bg-[var(--comp-surface-hover)] transition-colors" onClick={() => navigate("/events")}>
+          <div className="p-3 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] flex items-center justify-between cursor-pointer hover:bg-[var(--comp-surface-hover)] transition-colors" onClick={() => navigate("/events")}>
             <div>
               <p className="text-sm font-semibold text-[var(--comp-text-primary)]">CodeSprint 2026</p>
               <p className="text-xs text-[var(--comp-text-secondary)]">Hackathon • Tomorrow, 9 AM</p>

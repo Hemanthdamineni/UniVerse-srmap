@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 14px;
+  gap: var(--space-md);
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   background: color-mix(in srgb, var(--background) 94%, var(--surface) 6%);
@@ -29,7 +29,8 @@
   letter-spacing: 0;
 }
 
-.event-detail-hero p {
+.event-detail-hero p,
+.event-detail-hero-copy {
   max-width: 820px;
   margin: 0;
   color: var(--text-secondary);
@@ -41,7 +42,7 @@
 .event-detail-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px 26px;
+  gap: var(--space-md) var(--space-lg);
   color: var(--text-primary);
 }
 
@@ -53,16 +54,30 @@
 }
 
 .event-detail-layout {
-  margin-top: 34px;
+  margin-top: var(--space-xl);
 }
 
 .event-detail-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-md);
   position: sticky;
   top: 100px;
   align-self: start;
+}
+
+/* Below lg the sidebar dissolves so its cards join .competition-grid directly
+   with the action card first (hero → action → main sections → nav). This must
+   live here, not in max-lg:* utilities: these files are unlayered author CSS,
+   which beats Tailwind's layered utilities regardless of specificity. */
+@media not all and (min-width: 64rem) {
+  .event-detail-sidebar {
+    display: contents;
+  }
+
+  .event-detail-action-card {
+    order: -1;
+  }
 }
 
 .event-detail-nav {
@@ -103,16 +118,20 @@
 .event-detail-main,
 .event-round-list {
   display: grid;
-  gap: 22px;
+  gap: var(--space-lg);
 }
 
-.event-detail-panel,
+.event-detail-panel {
+  padding: var(--space-xl);
+}
+
 .event-round-card {
-  padding: 34px;
+  padding: var(--space-lg);
 }
 
 .event-detail-panel p,
-.event-round-card p {
+.event-round-card p,
+.event-detail-body {
   color: var(--text-secondary);
   font-size: var(--text-base);
   line-height: 1.6;
@@ -125,7 +144,7 @@
 
 .event-timeline {
   display: grid;
-  gap: 18px;
+  gap: var(--space-md);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -134,11 +153,11 @@
 .event-timeline li {
   display: grid;
   grid-template-columns: 18px 1fr;
-  gap: 12px;
+  gap: 0 12px;
   color: var(--text-secondary);
 }
 
-.event-timeline li span {
+.event-timeline-dot {
   width: 12px;
   height: 12px;
   border-radius: 999px;
@@ -146,8 +165,46 @@
   margin-top: 6px;
 }
 
+.event-timeline-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.event-timeline-label {
+  color: var(--text-secondary);
+}
+
+.event-timeline-date {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.event-rules-list {
+  margin: 0;
+  padding-left: var(--space-md);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.event-rules-list li {
+  padding-left: 4px;
+}
+
+.event-rules-list li::marker {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .event-detail-notice {
-  margin-top: 18px;
+  margin-top: var(--space-md);
   border-radius: 8px;
   background: color-mix(in srgb, var(--success) 16%, var(--background) 84%);
   color: color-mix(in srgb, var(--success) 74%, var(--text-primary) 26%);
@@ -180,7 +237,7 @@
 .event-detail-action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .event-detail-action-buttons button {

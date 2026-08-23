@@ -26,7 +26,7 @@ export function GuidesListPage() {
       <SectionCard title="Find a guide">
         <div className="flex flex-wrap items-center gap-2">
           <input
-            className="lms-input min-w-56 flex-1 py-1.5 text-sm"
+            className="lms-input min-w-48 flex-1 py-1.5 text-sm sm:min-w-56"
             placeholder="Search by title, description, or subject"
             aria-label="Search guides"
             value={query}

@@ -526,7 +526,7 @@ function ExperiencePanel({
           <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">
             {experiences.find((e) => e.id === editingId) ? 'Edit Experience' : 'Add Experience'}
           </h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               value={draft.company}
               onChange={(e) => setDraft({ ...draft, company: e.target.value })}
@@ -836,7 +836,7 @@ const ResumeBuilder: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--comp-text-primary)]">Resume Builder</h1>
+          <h1 className="page-title">Resume Builder</h1>
           <p className="text-sm text-[var(--comp-text-muted)] mt-1">
             Fill in your details and see a live preview. Data is saved locally.
           </p>

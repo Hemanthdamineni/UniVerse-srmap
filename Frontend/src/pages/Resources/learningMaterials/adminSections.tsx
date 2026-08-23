@@ -126,7 +126,7 @@ function AdminResourceQueueItem({
   onDelete: AdminQueueHandlers["onDelete"];
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
           <input

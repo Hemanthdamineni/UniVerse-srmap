@@ -14,10 +14,12 @@ const EventDetailPageNew = lazy(() => import("../pages/Events/EventDetailPageNew
 const CertificateClaimPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.CertificateClaimPage })));
 const CertificateTemplatePage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.CertificateTemplatePage })));
 const MyTeamsPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.MyTeamsPage })));
+const PersistentTeamPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.PersistentTeamPage })));
 const RegistrationFlowPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.RegistrationFlowPage })));
 const RolesPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.RolesPage })));
 const TeamDetailPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.TeamDetailPage })));
 const TeamFormationPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.TeamFormationPage })));
+const InvitationsPage = lazy(() => import("../pages/Events/EventWorkflowPages").then(m => ({ default: m.InvitationsPage })));
 const EventsListingPage = lazy(() => import("../pages/Events/EventsListingPage"));
 const LeaderboardPage = lazy(() => import("../pages/Events/LeaderboardPage"));
 const MyActivityPage = lazy(() => import("../pages/Events/MyActivityPage"));
@@ -44,11 +46,14 @@ export const eventRoutes = [
   { path: "/events/my-teams", element: <MyTeamsPage /> },
   { path: "/events/my-created", element: <MyCreatedEventsPage /> },
 
+  { path: "/teams/persistent/:teamId", element: <PersistentTeamPage /> },
+
   { path: "/events/attendance", element: <EventAttendance /> },
   { path: "/events/:eventId", element: withEventProvider(<EventDetailPageNew />) },
   { path: "/events/:eventId/register", element: withEventProvider(<RegistrationFlowPage />) },
   { path: "/events/:eventId/teams/create", element: withEventProvider(<TeamFormationPage />) },
   { path: "/events/:eventId/teams/:teamId", element: withEventProvider(<TeamDetailPage />) },
+  { path: "/events/:eventId/invitations", element: withEventProvider(<InvitationsPage />) },
   { path: "/events/:eventId/submit/:roundId", element: withEventProvider(<SubmissionPage />) },
   { path: "/events/:eventId/my-results/:roundId", element: withEventProvider(<MyResultsPage />) },
   { path: "/events/:eventId/leaderboard/:roundId", element: withEventProvider(<LeaderboardPage />) },

@@ -5,6 +5,7 @@ import type {
   InternalMarkSubject,
 } from "../../../lib/erp/erpTransformers";
 import { AssessmentBreakdownTable } from "./AssessmentBreakdownTable";
+import { TableEmptyRow } from "../../../components/erp/ErpPrimitives";
 
 interface SubjectResultsTableProps {
   subjects: CurrentResultModel["subjects"];
@@ -66,14 +67,7 @@ export function SubjectResultsTable({
           </thead>
           <tbody className="erp-table-body">
             {subjects.length === 0 ? (
-              <tr className="erp-table-row">
-                <td
-                  colSpan={7}
-                  className="erp-table-cell py-8 text-center text-sm italic text-[var(--comp-text-muted)]"
-                >
-                  No subject results found.
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={7} message="No subject results found." />
             ) : (
               subjects.map((subject, index) => {
                 const subjectKey = `${subject.subjectCode}-${index}`;
@@ -192,7 +186,7 @@ export function SubjectResultsTable({
             return (
               <div
                 key={subjectKey}
-                className="rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4"
+                className="space-y-3 rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -219,7 +213,7 @@ export function SubjectResultsTable({
                     </button>
                   ) : null}
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <span className="text-[var(--comp-text-secondary)]">
                     Semester: {subject.semester}
                   </span>
@@ -234,7 +228,7 @@ export function SubjectResultsTable({
                   </span>
                 </div>
                 {isExpanded && internalMark ? (
-                  <div className="mt-4 rounded-xl bg-[var(--comp-surface-hover)] p-3 text-sm">
+                  <div className="rounded-xl bg-[var(--comp-surface-hover)] p-3 text-sm">
                     <p className="font-semibold text-[var(--comp-text-primary)]">
                       {internalMark.marksObtained.toFixed(2)} /{" "}
                       {internalMark.maxMarks.toFixed(2)}

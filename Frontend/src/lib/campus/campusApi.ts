@@ -280,6 +280,12 @@ const STATIC_EVENTS: EventSummary[] = [
     prizes: "₹25,000 prize pool",
     eligibility: "Teams of 2–4 students",
     isCompetition: true,
+    competitionConfig: {
+      isCompetition: true,
+      submissionScope: "team",
+      maxTeamSize: 4,
+      rounds: [],
+    },
     tags: ["hackathon", "prototype"],
   },
   {

@@ -18,10 +18,10 @@ const variantClasses = {
 } as const
 
 const sizeClasses = {
-  default: "h-9 px-4 py-2 has-[>svg]:px-3",
-  sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-  lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-  icon: "size-9",
+  default: "h-9 px-4 py-2 has-[>svg]:px-3 max-md:h-11",
+  sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 max-md:h-10",
+  lg: "h-10 rounded-md px-6 has-[>svg]:px-4 max-md:h-11",
+  icon: "size-9 max-md:size-11",
 } as const
 
 type ButtonVariant = keyof typeof variantClasses

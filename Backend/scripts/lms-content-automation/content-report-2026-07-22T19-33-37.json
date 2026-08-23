@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-07-22T19:33:38.039Z",
+  "summary": {
+    "resources": 318,
+    "resourcesByType": [
+      {
+        "type": "note",
+        "c": 136
+      },
+      {
+        "type": "quiz",
+        "c": 71
+      },
+      {
+        "type": "flashcard",
+        "c": 54
+      },
+      {
+        "type": "pyq",
+        "c": 47
+      },
+      {
+        "type": "link",
+        "c": 10
+      }
+    ],
+    "resourcesBySubject": [
+      {
+        "subjectCode": "CSE308",
+        "c": 44
+      },
+      {
+        "subjectCode": "CSE306",
+        "c": 43
+      },
+      {
+        "subjectCode": "CSE312",
+        "c": 40
+      },
+      {
+        "subjectCode": "CSE302",
+        "c": 40
+      },
+      {
+        "subjectCode": "CSE310",
+        "c": 39
+      },
+      {
+        "subjectCode": "CSE304",
+        "c": 39
+      },
+      {
+        "subjectCode": "CSE316",
+        "c": 37
+      },
+      {
+        "subjectCode": "CSE314",
+        "c": 36
+      }
+    ],
+    "guides": 41,
+    "guideSections": 311,
+    "roadmaps": 6,
+    "roadmapNodes": 55,
+    "questions": 455,
+    "topics": 231,
+    "resourcesGeneratedThisRun": 0,
+    "guidesGeneratedThisRun": 0,
+    "roadmapsGeneratedThisRun": 0,
+    "questionsGeneratedThisRun": 91
+  },
+  "stats": {
+    "resourcesCreated": 0,
+    "guidesCreated": 0,
+    "guideSectionsCreated": 0,
+    "roadmapsCreated": 0,
+    "roadmapNodesCreated": 0,
+    "roadmapEdgesCreated": 0,
+    "questionsCreated": 91,
+    "topicsCreated": 0,
+    "topicLinks": 1750,
+    "errors": [],
+    "warnings": [
+      "CSE314 has only 4/5 resource types",
+      "CSE316 has only 4/5 resource types"
+    ],
+    "phases": [
+      {
+        "name": "Generating Resources",
+        "startedAt": "2026-07-22T19:33:37.861Z"
+      },
+      {
+        "name": "Generating Topics & Resource Links",
+        "startedAt": "2026-07-22T19:33:37.890Z"
+      },
+      {
+        "name": "Generating Guides",
+        "startedAt": "2026-07-22T19:33:37.924Z"
+      },
+      {
+        "name": "Generating Skill Roadmaps",
+        "startedAt": "2026-07-22T19:33:37.926Z"
+      },
+      {
+        "name": "Generating Question Bank",
+        "startedAt": "2026-07-22T19:33:37.926Z"
+      },
+      {
+        "name": "Content Verification",
+        "startedAt": "2026-07-22T19:33:38.034Z"
+      },
+      {
+        "name": "Content Critique & Gap Analysis",
+        "startedAt": "2026-07-22T19:33:38.037Z"
+      },
+      {
+        "name": "Generating Audit Report",
+        "startedAt": "2026-07-22T19:33:38.038Z"
+      }
+    ],
+    "issues": []
+  },
+  "errors": [],
+  "warnings": [
+    "CSE314 has only 4/5 resource types",
+    "CSE316 has only 4/5 resource types"
+  ]
+}

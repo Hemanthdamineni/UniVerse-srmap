@@ -43,43 +43,19 @@ function createScrapeRoutes({ erpAggregationService, erpLiveService }) {
   });
 
   router.get("/scrape/examination/earlier-internal-marks/semester/:semester", async (req, res) => {
-    try {
-      if (!erpLiveService) {
-        const error = new Error("Live ERP service unavailable");
-        error.status = 503;
-        throw error;
-      }
-
-      const sessionId = resolveSessionId(req);
-      if (!sessionId) {
-        const error = new Error("sessionId is required");
-        error.status = 401;
-        throw error;
-      }
-
-      const semester = Number.parseInt(String(req.params.semester || ""), 10);
-      if (!Number.isInteger(semester) || semester <= 0) {
-        const error = new Error("Valid semester number is required");
-        error.status = 400;
-        throw error;
-      }
-
-      const payload = await erpLiveService.fetchEarlierInternalMarksSemester(sessionId, semester);
-      setStandardHeaders(res, req, {
-        source: "live",
-        policyMode: "live-only",
-      });
-      return res.json(payload);
-    } catch (error) {
-      if (shouldClearSessionCookie(error)) {
-        clearSessionCookie(res, req);
-      }
-      return sendApiError(res, req, error, {
-        extra: {
-          pageKey: "examination/earlier-internal-marks/semester",
-        },
+    const semester = Number.parseInt(String(req.params.semester || ""), 10);
+    if (!Number.isInteger(semester) || semester <= 0) {
+      return sendApiError(res, req, {
+        status: 400,
+        message: "Valid semester number is required",
+        code: "BAD_REQUEST",
       });
     }
+    await handleScrapeRequest(
+      res,
+      req,
+      `examination/earlier-internal-marks/semester/${semester}`
+    );
   });
 
   // Backward compatibility for existing frontend calls like:

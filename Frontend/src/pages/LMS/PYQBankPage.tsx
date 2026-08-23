@@ -117,12 +117,12 @@ export function PYQBankPage() {
         <div className="flex gap-2">
           <Link
             to={`/resources/subject/${encodeURIComponent(code)}`}
-            className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)] no-underline"
+            className="lms-btn lms-btn-ghost no-underline"
           >
             Subject overview
           </Link>
           <button
-            className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]"
+            className="lms-btn lms-btn-ghost"
             onClick={() => navigate("/resources/add")}
           >
             Contribute a PYQ

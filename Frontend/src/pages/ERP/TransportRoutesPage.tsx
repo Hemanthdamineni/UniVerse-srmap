@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch, type ErpBatchPageResult } from "../../lib/erp/index";
 import { readExtracted } from "../../lib/erp/shared";
-import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { Bus, MapPin, Clock, User, Truck, Shield } from "lucide-react";
@@ -97,12 +97,12 @@ function getColumns(isAdmin: boolean): Column<TransportRoute>[] {
     {
       header: "Status",
       accessor: (v) => (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`erp-status-pill ${
           v.status === "active"
-            ? "bg-green-100 text-green-800"
+            ? "erp-status-pill-success"
             : v.status === "maintenance"
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-gray-100 text-gray-800"
+            ? "erp-status-pill-warning"
+            : "erp-status-pill-info"
         }`}>
           <Shield className="inline h-3 w-3 mr-1" />
           {v.status}
@@ -188,27 +188,25 @@ export default function TransportRoutesPage({ blueprint }: Props) {
       source="Live ERP"
       isLoading={loading}
     >
-      <SectionCard title="Transport Routes">
-        {error && (
-          <InlineError message={error} onRetry={() => window.location.reload()} />
-        )}
-        {!error && data.length === 0 && !loading && (
-          <EmptyState
-            title="No transport routes found"
-            description="Transport route data will appear here when available from the ERP system."
-          />
-        )}
-        {!error && data.length > 0 && (
-          <DataTable
-            data={data}
-            columns={columns}
-            keyExtractor={(row) => row.routeId || row.routeName}
-            isLoading={loading}
-            emptyTitle="No routes available"
-            stickyHeader
-          />
-        )}
-      </SectionCard>
+      {error && (
+        <InlineError message={error} onRetry={() => window.location.reload()} />
+      )}
+      {!error && data.length === 0 && !loading && (
+        <EmptyState
+          title="No transport routes found"
+          description="Transport route data will appear here when available from the ERP system."
+        />
+      )}
+      {!error && data.length > 0 && (
+        <DataTable
+          data={data}
+          columns={columns}
+          keyExtractor={(row) => row.routeId || row.routeName}
+          isLoading={loading}
+          emptyTitle="No routes available"
+          stickyHeader
+        />
+      )}
     </ErpPageShell>
   );
 }

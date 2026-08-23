@@ -1,0 +1,566 @@
+[
+  {
+    "id": "pyq-cse-y1-s1",
+    "type": "learning_material",
+    "title": "CSE 101 — Previous Year Papers",
+    "description": "Previous year question papers for FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "CSE101",
+      "subjectName": "FUNDAMENTALS OF COMPUTING AND PROGRAMMING IN C"
+    },
+    "resources": [
+      {
+        "title": "CSE 101 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1I269swZRaOR4twyjks__LH-JcPXAWRgO/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 101 Mid Semester Set 2 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1BUfocNIRESAy6dYzL6zVq64tUDFPZv17/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 101 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/13hSwS34LpJNs5nzB7QLx8OuLBO94rP6Y/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      },
+      {
+        "title": "CSE 101 End Semester Set 2 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1NLk2_Ywq9p4_YnFyRAtn3husO2CX-0cq/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s2",
+    "type": "learning_material",
+    "title": "FIC 103 — Previous Year Papers",
+    "description": "Previous year question papers for CALCULUS FOR ENGINEERS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "FIC103",
+      "subjectName": "CALCULUS FOR ENGINEERS"
+    },
+    "resources": [
+      {
+        "title": "FIC 103 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1nKX6u_zMevgKY6D0I6G53WYFvAcwNuFk/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 103 Mid Semester Set 2 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/11XI5eth_6RT-Pc2lCbfFj7bD7pGlLBDI/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 103 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/187D8H-GqbcBO34d24UMEJRc_TPrGe9Bg/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s3",
+    "type": "learning_material",
+    "title": "FIC 105 — Previous Year Papers",
+    "description": "Previous year question papers for PRINCIPLES OF ECONOMICS AND MANAGEMENT (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "FIC105",
+      "subjectName": "PRINCIPLES OF ECONOMICS AND MANAGEMENT"
+    },
+    "resources": [
+      {
+        "title": "FIC 105 Mid Semester  (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1k6D8C-_821XYhll7_ltdsViaju7bm3v1/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 105 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1PoRA9LY32bkWUiI92Ux-VIa-o0DG-ZlN/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s4",
+    "type": "learning_material",
+    "title": "CSE 102 — Previous Year Papers",
+    "description": "Previous year question papers for DATA STRUCTURES (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "CSE102",
+      "subjectName": "DATA STRUCTURES"
+    },
+    "resources": [
+      {
+        "title": "CSE 102 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1n_gYAsqtkD4fXiaxsz2VURfG0hF4kCUW/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 102 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1GxGNFsmjhaOTODP_-krKBKfmoM3JRczY/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s5",
+    "type": "learning_material",
+    "title": "FIC 117 — Previous Year Papers",
+    "description": "Previous year question papers for LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "FIC117",
+      "subjectName": "LINEAR ALGEBRA AND DIFFERENTIAL EQUATIONS"
+    },
+    "resources": [
+      {
+        "title": "FIC 117 Mid Semester Set  (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1qXHXX_PdwUfc0mz0ue0wKwMIlRQEDn-r/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 117 End Semester Set  (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1a2ZT1mcLAj5cpuT1XYEvZUysY7AgElH0/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s6",
+    "type": "learning_material",
+    "title": "FIC 120 — Previous Year Papers",
+    "description": "Previous year question papers for FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "FIC120",
+      "subjectName": "FOUNDATIONS OF ELECTRICAL AND ELECTRONICS ENGINEERING"
+    },
+    "resources": [
+      {
+        "title": "FIC 120 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1bQl2yhW0JjgtrFatlAvzazeyJ31aYtfp/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 120 Mid Semester Set 2 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/13e_M6c3XtnbL1sIBg4p4fNRjphnHY1sh/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 120 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1Q1oSn9el2DnQLsB5wopWJyffJNsu4ZoX/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y1-s7",
+    "type": "learning_material",
+    "title": "FIC 102 — Previous Year Papers",
+    "description": "Previous year question papers for ENGINEERING PHYSICS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "1",
+      "subjectCode": "FIC102",
+      "subjectName": "ENGINEERING PHYSICS"
+    },
+    "resources": [
+      {
+        "title": "FIC 102 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1A-aCy-OkIW607YEOWknUjKh-0o9XX4j0/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC 102 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1Sp420vrNLRoovqXRlx36p3Zfs07ww_Ub/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y2-s1",
+    "type": "learning_material",
+    "title": "AEC-108 — Previous Year Papers",
+    "description": "Previous year question papers for PROBLEM SOLVING SKILLS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "2",
+      "subjectCode": "AEC108",
+      "subjectName": "PROBLEM SOLVING SKILLS"
+    },
+    "resources": [
+      {
+        "title": "AEC 108 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1zlU5qnxRgsW5H-iTeqzF5zKywmCpDnWe/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "AEC 108 Mid Semester Set 2 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1Uycl-uhZK0goYa9EgGUo9Ok1ZmEu02Sj/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "AEC 108 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1Jf21G3pggXIBHEFl86IKZtycZRHKiQ9i/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y2-s2",
+    "type": "learning_material",
+    "title": "CSE-202 — Previous Year Papers",
+    "description": "Previous year question papers for OOPS WITH C++ (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "2",
+      "subjectCode": "CSE202",
+      "subjectName": "OOPS WITH C++"
+    },
+    "resources": [
+      {
+        "title": "CSE 202 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1MeswjVxRDNOlRbvqljMedDEqlaCByifH/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 202 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1NyzbytT75WFMsBjPUWlRrbf02X2hR85O/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y2-s3",
+    "type": "learning_material",
+    "title": "CSE-203 — Previous Year Papers",
+    "description": "Previous year question papers for DISCRETE MATHEMATICS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "2",
+      "subjectCode": "CSE203",
+      "subjectName": "DISCRETE MATHEMATICS"
+    },
+    "resources": [
+      {
+        "title": "CSE 203 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1GFY9Lq2h_Ke_R69pZ3_AFNksJo2DpvWT/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 203 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1bYTEBHI2Eltly2qgoRFP3ei7dz7c4Qb5/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y2-s4",
+    "type": "learning_material",
+    "title": "CSE-204 — Previous Year Papers",
+    "description": "Previous year question papers for DESIGN AND ANALYSIS OF ALGORITHMS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "2",
+      "subjectCode": "CSE204",
+      "subjectName": "DESIGN AND ANALYSIS OF ALGORITHMS"
+    },
+    "resources": [
+      {
+        "title": "CSE 204 Mid Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1jATM7Q4OxMa45QOtcgssOA_aaOKiPwx4/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 204 End Semester Set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1EWKsjNh4r7NjvP2AYFOjBKA9JSLfsc8g/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-cse-y2-s5",
+    "type": "learning_material",
+    "title": "CSE-207 — Previous Year Papers",
+    "description": "Previous year question papers for DIGITAL ELECTRONICS (Computer Science & Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "CSE",
+      "year": "2",
+      "subjectCode": "CSE207",
+      "subjectName": "DIGITAL ELECTRONICS"
+    },
+    "resources": [
+      {
+        "title": "CSE 207 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1YhZnunmgmQ3xEEXPUrJZYx77gr-mNgTK/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "CSE 207 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/10BA1qaIzlNFd4wM2kESCVMBx0rbBOQ-n/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s1",
+    "type": "learning_material",
+    "title": "ECE-101 — Previous Year Papers",
+    "description": "Previous year question papers for FUNDAMENTALS-OF ELECTRICAL-CIRCUITS (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "ECE101",
+      "subjectName": "FUNDAMENTALS-OF ELECTRICAL-CIRCUITS"
+    },
+    "resources": [
+      {
+        "title": "ECE-101 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1tsmCeHu5EwghIVyjxf89PCbLvutTCWeg/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "ECE-101 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1sz-de2_KktejYDe8pAyzbrMcyf8aA9xQ/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s2",
+    "type": "learning_material",
+    "title": "ECE-102 — Previous Year Papers",
+    "description": "Previous year question papers for MICROELECTRONIC DEVICES AND CIRCUIT (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "ECE102",
+      "subjectName": "MICROELECTRONIC DEVICES AND CIRCUIT"
+    },
+    "resources": [
+      {
+        "title": "ECE-102 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1ZtITcQhBYWBwB3uljZ51d1qhcvaPanz1/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "ECE-102 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1LJ4XoQJXC5Q75MZ-YXHV9s5QtCXGehWU/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s3",
+    "type": "learning_material",
+    "title": "FIC-104 — Previous Year Papers",
+    "description": "Previous year question papers for FUNDAMENTALS OF COMPUTING AND PROGRAMING IN C (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "FIC104",
+      "subjectName": "FUNDAMENTALS OF COMPUTING AND PROGRAMING IN C"
+    },
+    "resources": [
+      {
+        "title": "FIC-104 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1ZtITcQhBYWBwB3uljZ51d1qhcvaPanz1/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC-104 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1cvqnJArQuRc3IktPUJepseiQ0pzOTRVc/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s4",
+    "type": "learning_material",
+    "title": "FIC-102 — Previous Year Papers",
+    "description": "Previous year question papers for ENGINEERING PHYSICS (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "FIC102",
+      "subjectName": "ENGINEERING PHYSICS"
+    },
+    "resources": [
+      {
+        "title": "FIC-102 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1ZtITcQhBYWBwB3uljZ51d1qhcvaPanz1/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC-102 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1zkKTQeyxnFUOuvxy_LRvISHZNxOM743-/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s5",
+    "type": "learning_material",
+    "title": "FIC-103 — Previous Year Papers",
+    "description": "Previous year question papers for CALCULUS FOR ENGINEERS (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "FIC103",
+      "subjectName": "CALCULUS FOR ENGINEERS"
+    },
+    "resources": [
+      {
+        "title": "FIC-103 Mid Semester set 1 (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1hpQvMaxjG-UbKrN_Xk4e0K70lxxCKO6w/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC-103 Mid Semester set 2(2024)",
+        "url_or_path": "https://drive.google.com/file/d/1R0oeYrp7jDDNJ0j3p7VqeFPkTEjLGhsb/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC-103 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1X0CYKZQNU-YG9sZO5fa8SaA0rf_DukEj/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  },
+  {
+    "id": "pyq-ece-y1-s6",
+    "type": "learning_material",
+    "title": "FIC-117 — Previous Year Papers",
+    "description": "Previous year question papers for LINEAR ALGEBRA AND DIFFERNTIAL EQUATIONS (Electronics & Communication Engineering",
+    "category": "resources/previous-year-papers",
+    "metadata": {
+      "courseCode": "ECE",
+      "year": "1",
+      "subjectCode": "FIC117",
+      "subjectName": "LINEAR ALGEBRA AND DIFFERNTIAL EQUATIONS"
+    },
+    "resources": [
+      {
+        "title": "FIC-117 Mid Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1wRk-y043HlQQtYCuJzjyBKGCf4hnohNs/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "Mid Semester"
+      },
+      {
+        "title": "FIC-117 End Semester (2024)",
+        "url_or_path": "https://drive.google.com/file/d/1nV5M30l2UQM7JheAt6Dw7uIVyuPhA0he/view?usp=sharing",
+        "mime_type": "application/pdf",
+        "size_bytes": null,
+        "exam": "End Semester"
+      }
+    ]
+  }
+]

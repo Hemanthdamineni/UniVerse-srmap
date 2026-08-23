@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 // ErpPageShell section-card layout; timetable structure unchanged.
 import { getErpBatch } from "../../lib/erp/index";
 import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { TimetableModel } from "../../lib/erp/erpTransformers";
+import { getFacultyCabins, buildCabinLookup } from "../../lib/erp/facultyApi";
+import type { FacultyCabin } from "../../lib/erp/types";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, TableCardHeader, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 interface TimetablePageProps {
@@ -14,6 +16,7 @@ interface TimetablePageProps {
 
 export default function TimetablePage({ blueprint }: TimetablePageProps) {
   const [model, setModel] = useState<TimetableModel | null>(null);
+  const [cabins, setCabins] = useState<FacultyCabin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
@@ -23,6 +26,15 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
     let active = true;
     setLoading(true);
     setEmptyMessage(null);
+
+    // Cabins are supplementary: a failure here never blocks the timetable.
+    getFacultyCabins()
+      .then((data) => {
+        if (active) setCabins(data);
+      })
+      .catch(() => {
+        if (active) setCabins([]);
+      });
 
     getErpBatch(blueprint.fetchKeys)
       .then((batch) => {
@@ -54,6 +66,11 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
 
   const { timeSlots, days, subjects } = model ?? { timeSlots: [], days: [], subjects: [] };
 
+  const cabinLookup = useMemo(
+    () => (model && cabins.length > 0 ? buildCabinLookup(model.subjects, cabins) : new Map<string, string>()),
+    [model, cabins],
+  );
+
   return (
     <ErpPageShell
       title={blueprint.heading}
@@ -80,7 +97,7 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
                   <th className="erp-table-head-cell label-text w-28">Day</th>
                   {timeSlots.length > 0 ? (
                     timeSlots.map((slot, i) => (
-                      <th key={i} className="erp-table-head-cell label-text erp-table-align-center min-w-[130px]">
+                      <th key={i} className="erp-table-head-cell label-text erp-table-align-center w-32">
                         {slot}
                       </th>
                     ))
@@ -91,20 +108,11 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
               </thead>
               <tbody className="erp-table-body">
                 {days.length === 0 ? (
-                  <tr className="erp-table-row">
-                    <td colSpan={timeSlots.length > 0 ? timeSlots.length + 1 : 2} className="erp-table-cell py-12">
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3" style={{ color: 'var(--comp-text-muted)' }} aria-hidden="true">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>No schedule data available</p>
-                        <p className="mt-0.5 text-xs" style={{ color: 'var(--comp-text-muted)' }}>Your class timetable hasn't been published yet. Check back later or contact your department.</p>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableEmptyRow
+                    colSpan={timeSlots.length > 0 ? timeSlots.length + 1 : 2}
+                    message="No schedule data available"
+                    hint="Your class timetable hasn't been published yet. Check back later or contact your department."
+                  />
                 ) : (
                   days.map((dayRow) => (
                     <tr key={dayRow.day} className="erp-table-row">
@@ -130,9 +138,7 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
           {/* Subject Legend */}
           {subjects.length > 0 && (
             <section className="dashboard-card overflow-hidden p-0">
-              <div className="border-b px-4 py-3" style={{ borderColor: 'var(--comp-border)' }}>
-                <h2 className="text-sm font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Course Details & Faculty</h2>
-              </div>
+              <TableCardHeader title="Course Details & Faculty" />
               <div className="erp-table-shell rounded-none border-0 shadow-none">
                 <table className="erp-table text-left">
                   <thead className="erp-table-head">
@@ -151,7 +157,18 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
                         <td className="erp-table-cell erp-table-cell-strong">{sub.code}</td>
                         <td className="erp-table-cell">{sub.name}</td>
                         <td className="erp-table-cell">{sub.ltpc}</td>
-                        <td className="erp-table-cell">{sub.faculty}</td>
+                        <td className="erp-table-cell">
+                          {sub.faculty}
+                          {cabinLookup.get(sub.faculty) ? (
+                            <span
+                              className="mt-0.5 block text-xs"
+                              style={{ color: "var(--comp-text-muted)" }}
+                              title="Faculty cabin location"
+                            >
+                              {cabinLookup.get(sub.faculty)}
+                            </span>
+                          ) : null}
+                        </td>
                         <td className="erp-table-cell">{sub.room || "—"}</td>
                         <td className="erp-table-cell">
                           <Link

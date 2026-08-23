@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeAll, describe, expect, it, vi, beforeEach } from "vitest";
 import type { PageBlueprint } from "../../../config/erpBlueprints";
 import LearningMaterialsPage from "../LearningMaterialsPage";
@@ -287,11 +288,13 @@ function renderPage(props: Partial<{
   adminMode?: boolean;
 }> = {}) {
   return render(
-    <LearningMaterialsPage
-      blueprint={props.blueprint ?? testBlueprint}
-      advanced={props.advanced ?? false}
-      adminMode={props.adminMode ?? false}
-    />
+    <MemoryRouter>
+      <LearningMaterialsPage
+        blueprint={props.blueprint ?? testBlueprint}
+        advanced={props.advanced ?? false}
+        adminMode={props.adminMode ?? false}
+      />
+    </MemoryRouter>
   );
 }
 
@@ -655,9 +658,9 @@ describe("Filter interaction", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Recommendation form
+// Contribute Resource pointer (canonical student intake)
 // ---------------------------------------------------------------------------
-describe("Recommendation form", () => {
+describe("Contribute Resource pointer", () => {
   beforeEach(() => {
     mockUseLearningMaterialsData.mockReturnValue(
       dataMockValue({
@@ -673,83 +676,18 @@ describe("Recommendation form", () => {
     );
   });
 
-  it("renders the Recommend a Resource section", () => {
+  it("points students to Contribute Resource instead of a duplicate intake form", () => {
     renderPage();
-    expect(screen.getByText("Recommend a Resource")).toBeInTheDocument();
+    expect(screen.queryByText("Recommend a Resource")).not.toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Contribute Resource/i });
+    expect(link).toHaveAttribute("href", "/resources/add");
   });
 
-  it("submits the recommendation form and calls createResourceRecommendation", async () => {
-    lmsModule.createResourceRecommendation.mockResolvedValue({ id: "new-rec" });
-    renderPage();
+  it("does not show the contribute pointer in admin mode", () => {
+    mockUseAdminAccess.mockReturnValue(adminAccessValue({ unlocked: true }));
+    renderPage({ adminMode: true });
 
-    const titleInput = screen.getByLabelText("Resource Title");
-    const urlInput = screen.getByLabelText("Resource URL");
-    const submitButton = screen.getByText("Submit Recommendation");
-
-    await userEvent.type(titleInput, "Great OS Tutorial");
-    await userEvent.type(urlInput, "https://example.com/os-tutorial");
-    await userEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(lmsModule.createResourceRecommendation).toHaveBeenCalledTimes(1);
-    });
-    const payload = lmsModule.createResourceRecommendation.mock.calls[0][0];
-    expect(payload.title).toBe("Great OS Tutorial");
-    expect(payload.url).toBe("https://example.com/os-tutorial");
-    expect(payload.year).toBe(2);
-    expect(payload.courseCode).toBe("CSE");
-    expect(payload.subjectCode).toBe("CSE201");
-  });
-
-  it("shows warning when submitting with an empty URL", async () => {
-    renderPage();
-
-    const submitButton = screen.getByText("Submit Recommendation");
-    // Use fireEvent.submit on the form to bypass HTML5 required-attribute validation
-    const form = submitButton.closest("form")!;
-    fireEvent.submit(form);
-
-    // The component shows a warning banner when URL is empty
-    expect(await screen.findByText("Provide a URL or upload a file first.")).toBeInTheDocument();
-    expect(lmsModule.createResourceRecommendation).not.toHaveBeenCalled();
-  });
-
-  it("uploads a file and populates the URL and kind fields", async () => {
-    const uploadedResource = {
-      fileName: "notes.pdf",
-      mimeType: "application/pdf",
-      sizeBytes: 12345,
-      url: "https://uploads.example.com/notes.pdf",
-    };
-    lmsModule.uploadResourceFile.mockResolvedValue(uploadedResource);
-    renderPage();
-
-    const fileInput = screen.getByLabelText(/Resource URL/).closest("div")!.querySelector('input[type="file"]')!;
-    await userEvent.upload(fileInput, uploadedFile);
-
-    await waitFor(() => {
-      expect(lmsModule.uploadResourceFile).toHaveBeenCalledWith(uploadedFile);
-    });
-  });
-
-  it("shows uploading indicator while file is uploading", async () => {
-    // Keep the promise pending to see the loading state
-    lmsModule.uploadResourceFile.mockReturnValue(new Promise(() => {}));
-    renderPage();
-
-    const fileInput = screen.getByLabelText(/Resource URL/).closest("div")!.querySelector('input[type="file"]')!;
-    await userEvent.upload(fileInput, uploadedFile);
-
-    expect(await screen.findByText("Uploading file...")).toBeInTheDocument();
-  });
-
-  it("changes resource kind dropdown for recommendation form", async () => {
-    renderPage();
-
-    const kindSelect = screen.getByDisplayValue("Web / YouTube Link");
-    await userEvent.selectOptions(kindSelect, "pdf");
-
-    expect(screen.getByDisplayValue("PDF")).toBeInTheDocument();
+    expect(screen.queryByText(/Contribute Resource/)).not.toBeInTheDocument();
   });
 });
 
@@ -821,7 +759,6 @@ describe("Admin mode visibility", () => {
     // "Publish Resource" appears as both the section title and the submit button text
     const publishElements = screen.getAllByText("Publish Resource");
     expect(publishElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Submit Recommendation")).toBeInTheDocument(); // non-admin section always present
   });
 
   it("enters edit mode when the Edit button is clicked and shows Update Resource", async () => {
@@ -1111,14 +1048,14 @@ describe("Recommendation review (admin)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Non-admin recommendation form (student-facing)
+// Non-admin mode (student view)
 // ---------------------------------------------------------------------------
-describe("Student recommendation (non-admin)", () => {
-  it("renders the Recommend a Resource section even in non-admin mode", () => {
+describe("Non-admin mode (student view)", () => {
+  it("points students to the canonical Contribute Resource flow", () => {
     mockUseLearningMaterialsData.mockReturnValue(dataMockValue());
     renderPage({ adminMode: false });
 
-    expect(screen.getByText("Recommend a Resource")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Contribute Resource/i })).toHaveAttribute("href", "/resources/add");
   });
 
   it("does not render admin-only sections in non-admin mode", () => {

@@ -347,8 +347,8 @@ const rowMapperMethods = {
         routeNamespace: "/api/feedback/end-semester",
         editableThroughCampusModeration: false,
       },
-      unofficial: {
-        label: "Unofficial campus feedback",
+      campus: {
+        label: "Campus feedback",
         owner: "Campus community feedback with admin moderation",
         routeNamespace: "/api/campus-feedback",
         statuses: Object.values(MODERATION_STATUS),
@@ -376,7 +376,7 @@ const optionMethods = {
     return {
       type,
       items: [...fixed, ...rows],
-      governance: this.getGovernance().unofficial,
+      governance: this.getGovernance().campus,
     };
   },
 
@@ -585,7 +585,7 @@ const submissionMethods = {
           feedbackId: id,
           action: "legacy_imported",
           toStatus: MODERATION_STATUS.PENDING,
-          reason: "Migrated from legacy browser-local unofficial feedback",
+          reason: "Migrated from legacy browser-local campus feedback",
           user,
         });
 
@@ -648,7 +648,7 @@ const listingModerationMethods = {
         offset: pagination.offset,
         total: Number(totalRow?.count || 0),
       },
-      governance: this.getGovernance().unofficial,
+      governance: this.getGovernance().campus,
     };
   },
 
@@ -707,7 +707,7 @@ const listingModerationMethods = {
         offset: pagination.offset,
         total: Number(filteredTotalRow?.count || 0),
       },
-      governance: this.getGovernance().unofficial,
+      governance: this.getGovernance().campus,
     };
   },
 

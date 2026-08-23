@@ -17,6 +17,10 @@ vi.mock("./InternalMarks", () => ({
   ),
 }));
 
+vi.mock("./CampusHubWidget", () => ({
+  default: () => <div data-testid="campus-hub-widget">Campus Hub Widget</div>,
+}));
+
 vi.mock("../../hooks/usePageContrast", () => ({
   usePageContrast: vi.fn(),
 }));
@@ -101,6 +105,9 @@ function renderDashboard() {
 describe("Dashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Existing suites cover the returning-user layout; first-run tests opt
+    // out by removing this flag.
+    window.localStorage.setItem("erp.onboarding.seenVersion", "1");
   });
 
   // --- Loading state ---
@@ -189,7 +196,6 @@ describe("Dashboard", () => {
     mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({
       "academic/time-table": {},
-      "examination/internal-mark-details": {},
       "academic/attendance-details": {},
     });
     mockFetchSessionProfile.mockResolvedValue(mockProfile);
@@ -207,10 +213,13 @@ describe("Dashboard", () => {
     // Basic Info section
     expect(screen.getByText("Basic Info")).toBeInTheDocument();
 
+    // InternalMarks was removed from the dashboard (code kept in ./InternalMarks.tsx)
+    expect(screen.queryByTestId("internal-marks-widget")).not.toBeInTheDocument();
+
+    // Combined Events + Career widget
+    expect(screen.getByTestId("campus-hub-widget")).toBeInTheDocument();
+
     // Lazy loaded widgets (React.lazy needs waitFor to resolve)
-    await waitFor(() => {
-      expect(screen.getByTestId("internal-marks-widget")).toBeInTheDocument();
-    });
     await waitFor(() => {
       expect(screen.getByTestId("attendance-widget")).toBeInTheDocument();
     });
@@ -276,7 +285,6 @@ describe("Dashboard", () => {
     await waitFor(() => {
       expect(mockGetErpBatch).toHaveBeenCalledWith([
         "academic/time-table",
-        "examination/internal-mark-details",
         "academic/attendance-details",
       ]);
     });
@@ -315,5 +323,23 @@ describe("Dashboard", () => {
 
     // Should not crash — feedbackPendingCount defaults to 0
     expect(screen.queryByText(/course feedback/)).not.toBeInTheDocument();
+  });
+
+  // --- First-run onboarding ---
+
+  it("shows the first-run guide and personal greeting for first-time logins", async () => {
+    window.localStorage.removeItem("erp.onboarding.seenVersion");
+    mockHasSessionAuth.mockReturnValue(true);
+    mockGetErpBatch.mockResolvedValue({});
+    mockFetchSessionProfile.mockResolvedValue(mockProfile);
+    mockGetEndSemesterFeedbackStatus.mockResolvedValue({ totalPending: 0 });
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Welcome, Alice!")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Synced with your SRM account")).toBeInTheDocument();
+    expect(screen.queryByText("Welcome back!")).not.toBeInTheDocument();
   });
 });

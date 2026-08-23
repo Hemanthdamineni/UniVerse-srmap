@@ -6,6 +6,7 @@ import {
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import {
   applyToCareerOpportunity,
   createCareerOpportunity,
@@ -26,7 +27,7 @@ const INPUT_CLASS = "min-h-[44px] w-full rounded-xl border border-[var(--border)
 
 const TYPE_COLORS: Record<string, string> = {
   internship: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]",
-  hackathon: "border-purple-200 bg-purple-50 text-purple-800",
+  hackathon: "border-[color-mix(in_srgb,var(--accent-blue)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[color-mix(in_srgb,var(--accent-blue)_55%,var(--comp-text-primary))]",
   competition: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
   workshop: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
   job: "border-[color-mix(in_srgb,var(--comp-accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-text-primary)]",
@@ -50,6 +51,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
   const [opportunities, setOpportunities] = useState<CareerOpportunity[]>([]);
   const [filterType, setFilterType] = useState<string>("All");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [submissions, setSubmissions] = useState<CareerSubmission[]>([]);
   const [reviewReasons, setReviewReasons] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState("");
@@ -61,7 +63,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
       const data = await listCareerOpportunities(
         {
           ...(filterType !== "All" ? { type: filterType } : {}),
-          ...(search.trim() ? { query: search.trim() } : {}),
+          ...(debouncedSearch.trim() ? { query: debouncedSearch.trim() } : {}),
         },
         adminMode && admin.unlocked ? admin.adminHeaders : undefined
       );
@@ -89,7 +91,8 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
 
   useEffect(() => {
     void loadOpportunities();
-  }, [admin.adminHeaders, admin.unlocked, adminMode, filterType, search]);
+    // debouncedSearch (not search) keeps typing from firing a request per keystroke.
+  }, [admin.adminHeaders, admin.unlocked, adminMode, filterType, debouncedSearch]);
 
   useEffect(() => {
     void loadSubmissions();
@@ -351,7 +354,7 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                         placeholder="Review reason"
                         aria-label={`Review reason for ${submission.id}`}
                       />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           type="button"
                           className="rounded-full bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white"
@@ -393,8 +396,8 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
                 onClick={() => setFilterType(type)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   filterType === type
-                    ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
-                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                    ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-[var(--on-accent)]"
+                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 }`}
               >
                 {type}

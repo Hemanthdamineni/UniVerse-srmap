@@ -179,7 +179,7 @@ export default function AcademicInsights() {
                               {opportunity.organization || opportunity.type}
                             </p>
                           </div>
-                          <span className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+                          <span className="rounded-full border border-[var(--border)] px-3 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
                             {Math.round(opportunity.confidence * 100)}% confidence
                           </span>
                         </div>

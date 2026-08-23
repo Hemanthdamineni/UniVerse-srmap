@@ -1,0 +1,662 @@
+{
+  "timestamp": "2026-07-23T12:58:56.843Z",
+  "overallCompleteness": 98,
+  "subjectCoverage": [
+    {
+      "subjectCode": "CSE302",
+      "subjectName": "Design and Analysis of Algorithms",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 19,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "quiz"
+          ],
+          "typesMissing": [
+            "pyq"
+          ],
+          "resourceCount": 13,
+          "gapScore": 20
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 14,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 64,
+      "averageGapScore": 4,
+      "overallCompleteness": 96,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE304",
+      "subjectName": "Operating Systems",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "quiz"
+          ],
+          "typesMissing": [
+            "pyq"
+          ],
+          "resourceCount": 7,
+          "gapScore": 20
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 10,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "quiz"
+          ],
+          "typesMissing": [
+            "pyq"
+          ],
+          "resourceCount": 7,
+          "gapScore": 20
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 42,
+      "averageGapScore": 8,
+      "overallCompleteness": 92,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE306",
+      "subjectName": "Database Management Systems",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 9,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 46,
+      "averageGapScore": 0,
+      "overallCompleteness": 100,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE308",
+      "subjectName": "Computer Networks",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 9,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 46,
+      "averageGapScore": 0,
+      "overallCompleteness": 100,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE310",
+      "subjectName": "Software Engineering",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "quiz"
+          ],
+          "typesMissing": [
+            "pyq"
+          ],
+          "resourceCount": 7,
+          "gapScore": 20
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 10,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 43,
+      "averageGapScore": 4,
+      "overallCompleteness": 96,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE312",
+      "subjectName": "Machine Learning Fundamentals",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 10,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 44,
+      "averageGapScore": 0,
+      "overallCompleteness": 100,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE314",
+      "subjectName": "Theory of Computation",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 41,
+      "averageGapScore": 0,
+      "overallCompleteness": 100,
+      "priority": "LOW"
+    },
+    {
+      "subjectCode": "CSE316",
+      "subjectName": "Compiler Design",
+      "unitCoverage": {
+        "Unit 1": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 2": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 3": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 11,
+          "gapScore": 0
+        },
+        "Unit 4": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 8,
+          "gapScore": 0
+        },
+        "Unit 5": {
+          "typesPresent": [
+            "flashcard",
+            "link",
+            "note",
+            "pyq",
+            "quiz"
+          ],
+          "typesMissing": [],
+          "resourceCount": 7,
+          "gapScore": 0
+        }
+      },
+      "totalResources": 42,
+      "averageGapScore": 0,
+      "overallCompleteness": 100,
+      "priority": "LOW"
+    }
+  ],
+  "qualitySignals": [
+    {
+      "dimension": "Resource Type Distribution",
+      "finding": "note: 156, quiz: 71, flashcard: 54, pyq: 47, link: 40",
+      "severity": "info",
+      "examples": []
+    },
+    {
+      "dimension": "Subject Balance",
+      "finding": "Resource distribution is uneven (41–64 per subject). Consider balancing.",
+      "severity": "info",
+      "examples": [
+        "CSE302: 64",
+        "CSE308: 46",
+        "CSE306: 46",
+        "CSE312: 44",
+        "CSE310: 43",
+        "CSE316: 42",
+        "CSE304: 42",
+        "CSE314: 41"
+      ]
+    }
+  ],
+  "accessibilityIssues": [],
+  "recommendations": [
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE302",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE304",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE306",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE308",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE310",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE312",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE314",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "medium",
+      "area": "Resource Types — CSE316",
+      "recommendation": "Missing resource types: note, quiz, flashcard, pyq, link. Adding these will improve learning diversity.",
+      "impact": "Broader resource types support different learning styles"
+    },
+    {
+      "priority": "low",
+      "area": "Content Enhancement",
+      "recommendation": "Add video lecture links and interactive coding exercises as supplementary resources.",
+      "impact": "Multimedia content increases engagement and understanding"
+    },
+    {
+      "priority": "low",
+      "area": "Assessment Enhancement",
+      "recommendation": "Create timed quiz resources that simulate actual exam conditions with weighted marking.",
+      "impact": "Exam-simulating quizzes improve student confidence and time management"
+    }
+  ],
+  "summary": {
+    "highPriorityActions": 0,
+    "mediumPriorityActions": 8,
+    "lowPriorityActions": 2,
+    "averageCompleteness": 98
+  }
+}

@@ -3,6 +3,7 @@
  * Shows locked/published states, animated score reveal, and certificate download.
  */
 
+import { GraduationCap } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CompetitionPageShell } from '../../components/competition/CompetitionChrome';
@@ -78,20 +79,18 @@ export default function MyResultsPage() {
 
   return (
     <CompetitionPageShell
-      title="Your Performance"
-      subtitle="Detailed breakdown of your event results."
+      title="Round Results"
+      subtitle="Detailed breakdown of your performance in this round."
       variant="wide"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+      <div className="flex flex-col gap-6">
 
         <Link
           to={`/events/${encodeURIComponent(eventId)}`}
-          style={{ fontSize: '0.8rem', color: 'var(--comp-text-secondary)', textDecoration: 'none' }}
+          className="text-[0.8rem] no-underline text-[var(--comp-text-secondary)]"
         >
           ← Back to Event
         </Link>
-
-        <h1 className="comp-heading-xl" style={{ margin: 0 }}>Round Results</h1>
 
         {error && <ErrorMessage message={error} />}
 
@@ -113,27 +112,10 @@ export default function MyResultsPage() {
 
             {/* Score card — animated reveal */}
             {typeof result.totalScore === 'number' && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'var(--comp-surface)',
-                  border: '2px solid var(--comp-accent)',
-                  borderRadius: 16,
-                  padding: 'var(--space-xl)',
-                }}
-              >
+              <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[var(--comp-accent)] bg-[var(--comp-surface)] p-10">
                 <p className="comp-label">Your Score</p>
                 <p
-                  style={{
-                    fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-                    fontWeight: 800,
-                    color: 'var(--comp-accent)',
-                    lineHeight: 1,
-                    margin: 0,
-                  }}
+                  className="m-0 text-[clamp(2.5rem,6vw,4rem)] font-extrabold leading-none text-[var(--comp-accent)]"
                   aria-label={`Score: ${result.totalScore}`}
                 >
                   {result.totalScore}
@@ -149,7 +131,7 @@ export default function MyResultsPage() {
             {/* Criteria breakdown */}
             {criteria.length > 0 && result.criteriaScores && (
               <div>
-                <p className="comp-heading-md" style={{ margin: '0 0 8px' }}>Criteria Breakdown</p>
+                <p className="comp-heading-md m-0 mb-2">Criteria Breakdown</p>
                 <EvaluationCriteriaTable
                   criteria={criteria}
                   scores={result.criteriaScores}
@@ -160,9 +142,9 @@ export default function MyResultsPage() {
 
             {/* Remarks */}
             {result.remarks && (
-              <div style={{ background: 'var(--comp-accent-light)', borderRadius: 10, padding: 'var(--space-md)' }}>
-                <p className="comp-label" style={{ margin: '0 0 4px' }}>Evaluator Remarks</p>
-                <p className="comp-body" style={{ margin: 0 }}>{result.remarks}</p>
+              <div className="rounded-lg bg-[var(--comp-accent-light)] p-4">
+                <p className="comp-label m-0 mb-1">Evaluator Remarks</p>
+                <p className="comp-body m-0">{result.remarks}</p>
               </div>
             )}
 
@@ -177,17 +159,16 @@ export default function MyResultsPage() {
                 href={certificatePath}
                 target="_blank"
                 rel="noreferrer"
-                className="comp-btn-primary"
-                style={{ alignSelf: 'flex-start' }}
+                className="comp-btn-primary self-start"
                 aria-label="Download certificate"
               >
-                🎓 Download Certificate
+                <GraduationCap size={14} aria-hidden="true" /> Download Certificate
               </a>
             )}
           </>
         )}
 
-        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'auto', paddingTop: 'var(--space-sm)' }}>
+        <div className="mt-auto flex gap-2 pt-2">
           <Link
             to={`/events/${encodeURIComponent(eventId)}/leaderboard/${encodeURIComponent(roundId)}`}
             className="comp-btn-ghost"

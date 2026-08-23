@@ -125,7 +125,7 @@ export function ExamFeedbackPage() {
             ))}
           </div>
           <button
-            className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="lms-btn lms-btn-primary"
             disabled={Object.keys(votes).length === 0}
             onClick={async () => {
               const feedbackItems = Object.entries(votes).map(([resourceId, helpful]) => ({ resourceId, helpful }));
@@ -136,7 +136,7 @@ export function ExamFeedbackPage() {
             Submit feedback
           </button>
           {submitted ? (
-            <p className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-medium" style={{ color: "var(--success)" }}>
+            <p className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-medium text-[var(--success)]">
               Thanks — your feedback helps other students pick exam-proven resources.
             </p>
           ) : null}

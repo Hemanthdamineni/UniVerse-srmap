@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { ErpPageShell, SectionCard, EmptyStateCard } from "../../components/erp/ErpPrimitives";
+import { useEffect, useState, useMemo } from "react";
+import { ErpPageShell, SectionCard, KpiGrid, EmptyStateCard } from "../../components/erp/ErpPrimitives";
 import { StarRating } from "../../components/ui/Progress";
+import { FeedbackStatusPill } from "../../components/ui/Feedback";
+import { Pagination } from "../../components/ui/Pagination";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   getAdminCampusFeedback,
@@ -33,17 +35,6 @@ function formatDate(value: string) {
   return date.toLocaleString();
 }
 
-function StatusPill({ status }: { status: CampusFeedbackStatus }) {
-  const className =
-    status === "approved"
-      ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
-      : status === "rejected"
-        ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
-        : "border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]";
-
-  return <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${className}`}>{status}</span>;
-}
-
 export default function AdminCampusFeedbackPage() {
   const admin = useAdminAccess();
   const [type, setType] = useState<"" | CampusFeedbackType>("");
@@ -56,6 +47,14 @@ export default function AdminCampusFeedbackPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
+
+  // KPI data for overview section
+  const kpis = useMemo(() => [
+    { label: "Total Submissions", value: String(counts.total || 0) },
+    { label: "Pending Moderation", value: String(counts.pending || 0) },
+    { label: "Approved", value: String(counts.approved || 0) },
+    { label: "Rejected", value: String(counts.rejected || 0) },
+  ], [counts]);
 
   async function loadQueue() {
     setLoading(true);
@@ -109,14 +108,6 @@ export default function AdminCampusFeedbackPage() {
       loadingMessage="Loading campus feedback queue..."
       onRefresh={loadQueue}
     >
-      <div className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_22%,var(--border))] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-secondary)]">
-        <div className="font-semibold text-[var(--comp-text-primary)]">Unofficial feedback only</div>
-        <p className="mt-1 leading-6">
-          This queue moderates /api/campus-feedback submissions. Official ERP course feedback stays
-          under /api/feedback/end-semester and is not editable here.
-        </p>
-      </div>
-
       {message ? (
         <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-2 text-sm font-medium text-[var(--success)]">
           {message}
@@ -127,6 +118,8 @@ export default function AdminCampusFeedbackPage() {
           {error}
         </div>
       ) : null}
+
+      <KpiGrid items={kpis} />
 
       <SectionCard title="Queue Controls">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
@@ -182,40 +175,14 @@ export default function AdminCampusFeedbackPage() {
       </SectionCard>
 
       <SectionCard title="Moderation Queue">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--text-secondary)]">
-          <span>
-            Showing {entries.length ? pagination.offset + 1 : 0}-
-            {Math.min(pagination.offset + entries.length, pagination.total)} of {pagination.total}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setPagination((current) => ({
-                  ...current,
-                  offset: Math.max(0, current.offset - current.limit),
-                }))
-              }
-              disabled={pagination.offset === 0 || loading}
-              className="min-h-9 rounded-lg border border-[var(--border)] px-3 py-1.5 font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPagination((current) => ({
-                  ...current,
-                  offset: current.offset + current.limit,
-                }))
-              }
-              disabled={pagination.offset + pagination.limit >= pagination.total || loading}
-              className="min-h-9 rounded-lg border border-[var(--border)] px-3 py-1.5 font-semibold text-[var(--text-primary)] transition hover:border-[var(--comp-accent)] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          className="mb-3"
+          currentPage={Math.floor(pagination.offset / pagination.limit) + 1}
+          totalPages={Math.max(1, Math.ceil(pagination.total / pagination.limit))}
+          onPageChange={(page) =>
+            setPagination((current) => ({ ...current, offset: (page - 1) * current.limit }))
+          }
+        />
         {entries.length === 0 ? (
           <EmptyStateCard message="No campus feedback matches the selected queue." />
         ) : (
@@ -225,7 +192,7 @@ export default function AdminCampusFeedbackPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{entry.targetLabel}</h3>
-                    <StatusPill status={entry.status} />
+                    <FeedbackStatusPill status={entry.status} />
                     <span className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
                       {entry.typeLabel}
                     </span>
@@ -263,12 +230,12 @@ export default function AdminCampusFeedbackPage() {
                     rows={3}
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                   />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => decide(entry, "approved")}
                       disabled={busyId === entry.id || entry.status !== "pending"}
-                      className="min-h-10 rounded-lg bg-[var(--success)] px-3 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                      className="min-h-9 rounded-lg bg-[var(--success)] px-3 py-1 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Approve
                     </button>
@@ -276,7 +243,7 @@ export default function AdminCampusFeedbackPage() {
                       type="button"
                       onClick={() => decide(entry, "rejected")}
                       disabled={busyId === entry.id || entry.status !== "pending"}
-                      className="min-h-10 rounded-lg bg-[var(--error)] px-3 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                      className="min-h-9 rounded-lg bg-[var(--error)] px-3 py-1 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Reject
                     </button>

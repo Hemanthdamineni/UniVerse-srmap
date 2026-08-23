@@ -212,6 +212,7 @@ function isAllowedMutationUrl(url) {
     "students/transaction/mobilenumberverificationotp.jsp",
     "students/transaction/studentattendanceresources.jsp",
     "students/transaction/studentsonlinepaymentresponse.jsp",
+    "students/transaction/studentbankdetailsresource.jsp",
   ]);
 
   return allowlist.has(normalized);
@@ -237,7 +238,7 @@ function mutationBlockReason(url) {
   }
 
   if (normalized.includes("studentbankdetailsresource.jsp")) {
-    return "Blocked in wave 1: bank save requires attachment upload integration.";
+    return null; // Allowed: bank details form submission
   }
 
   return "Blocked in wave 1: endpoint not allowlisted.";

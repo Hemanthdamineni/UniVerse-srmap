@@ -1,0 +1,311 @@
+/* Markdown rendering system (streamdown-based, ported from the terax renderer).
+ *
+ * Three responsibilities:
+ *  1. Theme bridge — streamdown's dist ships Tailwind utilities that reference
+ *     shadcn-style color tokens (background/foreground/muted/border/primary).
+ *     Map them onto this app's design tokens so every markdown surface is
+ *     theme-native in both light and dark mode.
+ *  2. Syntax token palette — `tok-*` classes painted by the Lezer highlighter
+ *     (components/markdown/highlight.ts), retinted from terax's violet/blue
+ *     hues toward this app's deep-teal brand family.
+ *  3. Small doc-scope helpers — shimmer keyframes + reading-size scope.
+ */
+
+/* The app toggles `.dark` AND `[data-theme="dark"]` on <html> (ThemeToggle.tsx).
+ * Tailwind v4 defaults to prefers-color-scheme; rebind `dark:` to the app toggle. */
+@custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
+
+/* Scan streamdown's shipped classes so they survive Tailwind's build. */
+@source "../../node_modules/streamdown/dist";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--comp-surface);
+  --color-card-foreground: var(--comp-text-primary);
+  --color-popover: var(--background);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--comp-accent);
+  --color-primary-foreground: var(--comp-accent-fg);
+  --color-secondary: var(--comp-surface-hover);
+  --color-secondary-foreground: var(--comp-text-primary);
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--comp-text-secondary);
+  --color-accent: var(--comp-accent-light);
+  --color-accent-foreground: var(--comp-accent);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--accent-blue);
+  --color-sidebar: var(--sidebar-bg);
+}
+
+/* ---------------------------------------------------------------------------
+ * Document scope
+ * ------------------------------------------------------------------------- */
+
+.md-doc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.md-doc > *:first-child {
+  margin-top: 0;
+}
+
+.md-doc > *:last-child {
+  margin-bottom: 0;
+}
+
+.md-doc a:not([data-streamdown="footnote-backref"]) {
+  color: var(--md-link);
+  text-decoration-color: color-mix(in srgb, var(--md-link) 45%, transparent);
+  text-underline-offset: 2px;
+}
+
+.md-doc a:hover {
+  text-decoration-color: var(--md-link);
+}
+
+/* ---------------------------------------------------------------------------
+ * Math (KaTeX via streamdown's plugins.math extension point)
+ * ------------------------------------------------------------------------- */
+
+/* KaTeX's 1.21em default reads oversized next to 0.95rem doc body. */
+.md-doc .katex {
+  font-size: 1.06em;
+}
+
+/* Long equations scroll instead of blowing out the layout. */
+.md-doc .katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+.md-doc .katex-display > .katex {
+  font-size: 1.12em;
+}
+
+/* ---------------------------------------------------------------------------
+ * Text shimmer (loading placeholders inside code-block chrome)
+ * ------------------------------------------------------------------------- */
+
+@keyframes md-shimmer {
+  from {
+    background-position: 100% center;
+  }
+  to {
+    background-position: 0% center;
+  }
+}
+
+.md-shimmer {
+  background-repeat: no-repeat, padding-box;
+  background-size:
+    250% 100%,
+    auto;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - var(--shimmer-spread)),
+      var(--background),
+      transparent calc(50% + var(--shimmer-spread))
+    ),
+    linear-gradient(var(--comp-text-muted), var(--comp-text-muted));
+  animation: md-shimmer var(--shimmer-duration, 2s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-shimmer {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Syntax token palette for Lezer `classHighlighter` output.
+ * Retinted from terax (violet/blue dominant) toward the brand's deep teal /
+ * cyan family with warm amber accents. Class names follow @lezer/highlight
+ * defaults; light/dark split via the app theme attributes.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --md-link: #096b78;
+  --tok-keyword: oklch(0.44 0.1 210);
+  --tok-name: oklch(0.3 0.04 220);
+  --tok-type: oklch(0.5 0.09 195);
+  --tok-property: oklch(0.47 0.1 45);
+  --tok-operator: oklch(0.52 0.03 220);
+  --tok-comment: oklch(0.55 0.02 210);
+  --tok-string: oklch(0.48 0.12 150);
+  --tok-number: oklch(0.55 0.13 70);
+  --tok-bool: oklch(0.52 0.14 40);
+  --tok-regexp: oklch(0.5 0.13 25);
+  --tok-meta: oklch(0.5 0.08 200);
+  --tok-tag: oklch(0.47 0.12 30);
+  --tok-attr: oklch(0.52 0.11 85);
+  --tok-punctuation: oklch(0.5 0.02 220);
+  --tok-heading: oklch(0.42 0.09 210);
+  --tok-link: oklch(0.55 0.1 205);
+  --tok-invalid: oklch(0.55 0.22 25);
+}
+
+[data-theme="dark"],
+.dark {
+  --md-link: #4fc3f7;
+  --tok-keyword: oklch(0.82 0.09 185);
+  --tok-name: oklch(0.92 0.01 210);
+  --tok-type: oklch(0.84 0.08 190);
+  --tok-property: oklch(0.84 0.09 60);
+  --tok-operator: oklch(0.74 0.03 210);
+  --tok-comment: oklch(0.62 0.02 210);
+  --tok-string: oklch(0.84 0.11 145);
+  --tok-number: oklch(0.86 0.12 75);
+  --tok-bool: oklch(0.84 0.12 50);
+  --tok-regexp: oklch(0.8 0.12 20);
+  --tok-meta: oklch(0.8 0.07 195);
+  --tok-tag: oklch(0.82 0.1 35);
+  --tok-attr: oklch(0.85 0.1 90);
+  --tok-punctuation: oklch(0.72 0.02 210);
+  --tok-heading: oklch(0.84 0.08 190);
+  --tok-link: oklch(0.8 0.1 195);
+  --tok-invalid: oklch(0.7 0.22 25);
+}
+
+.tok-keyword,
+.tok-modifier,
+.tok-self,
+.tok-controlKeyword,
+.tok-operatorKeyword {
+  color: var(--tok-keyword);
+}
+
+.tok-atom,
+.tok-bool {
+  color: var(--tok-bool);
+}
+
+.tok-number,
+.tok-integer,
+.tok-float {
+  color: var(--tok-number);
+}
+
+.tok-string,
+.tok-string2,
+.tok-special.tok-string,
+.tok-character {
+  color: var(--tok-string);
+}
+
+.tok-regexp {
+  color: var(--tok-regexp);
+}
+
+.tok-comment,
+.tok-lineComment,
+.tok-blockComment,
+.tok-docComment {
+  color: var(--tok-comment);
+  font-style: italic;
+}
+
+.tok-variableName,
+.tok-name {
+  color: var(--tok-name);
+}
+
+.tok-typeName,
+.tok-className,
+.tok-namespace {
+  color: var(--tok-type);
+}
+
+.tok-propertyName,
+.tok-definition.tok-propertyName {
+  color: var(--tok-property);
+}
+
+.tok-function,
+.tok-function.tok-variableName,
+.tok-function.tok-definition.tok-variableName,
+.tok-macroName {
+  color: var(--tok-name);
+  font-weight: 500;
+}
+
+.tok-definition.tok-variableName,
+.tok-local.tok-variableName {
+  color: var(--tok-name);
+}
+
+.tok-operator,
+.tok-derefOperator,
+.tok-arithmeticOperator,
+.tok-logicOperator,
+.tok-bitwiseOperator,
+.tok-compareOperator,
+.tok-updateOperator {
+  color: var(--tok-operator);
+}
+
+.tok-punctuation,
+.tok-bracket,
+.tok-paren,
+.tok-brace,
+.tok-squareBracket,
+.tok-separator {
+  color: var(--tok-punctuation);
+}
+
+.tok-meta,
+.tok-annotation,
+.tok-processingInstruction,
+.tok-special {
+  color: var(--tok-meta);
+}
+
+.tok-tagName,
+.tok-angleBracket {
+  color: var(--tok-tag);
+}
+
+.tok-attributeName {
+  color: var(--tok-attr);
+}
+
+.tok-attributeValue {
+  color: var(--tok-string);
+}
+
+.tok-heading,
+.tok-heading1,
+.tok-heading2,
+.tok-heading3,
+.tok-heading4,
+.tok-heading5,
+.tok-heading6 {
+  color: var(--tok-heading);
+  font-weight: 600;
+}
+
+.tok-link,
+.tok-url {
+  color: var(--tok-link);
+  text-decoration: underline;
+}
+
+.tok-strong {
+  font-weight: 600;
+}
+
+.tok-emphasis {
+  font-style: italic;
+}
+
+.tok-invalid {
+  color: var(--tok-invalid);
+  text-decoration: underline wavy;
+}

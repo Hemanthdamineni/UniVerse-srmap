@@ -4,6 +4,7 @@ import { usePageContrast } from "../../hooks/usePageContrast";
 import { sanitizeErpDisplayText } from "../../lib/erp/displayText";
 import { PageContainer } from "../layout/PageLayouts";
 import { SkeletonBlock } from "../ui/Skeletons";
+import { EmptyState } from "../ui/Feedback";
 
 export function sanitizeVisibleText(value: unknown, fallback = "") {
   return sanitizeErpDisplayText(value, fallback);
@@ -16,11 +17,14 @@ export type PageSourceLabel =
   | "Internal API"
   | "Placeholder";
 
-export type StatusTone = "success" | "warning" | "info" | "locked";
+export type StatusTone = "success" | "warning" | "info" | "error" | "locked";
 
 export interface KpiItem {
   label: string;
   value: string;
+  trend?: number; // 1 for positive, -1 for negative
+  trendLabel?: string;
+  subtitle?: string;
 }
 
 export interface DataTableModel {
@@ -90,7 +94,9 @@ export function ErpPageShell({
   loadingMessage = "Loading...",
   onRefresh,
   headerActions,
-  surface = "card",
+  // Flat by default: SectionCard children already carry dashboard-card
+  // chrome; an extra card surface here would nest borders.
+  surface = "flat",
   children,
 }: ErpPageShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -105,25 +111,14 @@ export function ErpPageShell({
 
   return (
     <PageContainer className="relative" surface={surface}>
-      <div ref={shellRef}>
-        <div className="mb-4 flex items-center justify-between gap-4">
+      <div ref={shellRef} className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 data-page-contrast="true" className="page-contrast-fg page-title text-xl md:text-2xl">
+            <h1 data-page-contrast="true" className="page-contrast-fg page-title">
               {title}
             </h1>
-            <div className="hidden">
-              <SourceBadge source={source} />
-              {updatedAt ? (
-                <span
-                  data-page-contrast="true"
-                  className="page-contrast-chip rounded-full border px-3 py-1 text-xs font-medium"
-                >
-                  Updated {formatTimestamp(updatedAt)}
-                </span>
-              ) : null}
-            </div>
           </div>
-          <div className="flex items-center gap-3">{headerActionsSlot}</div>
+          <div className="flex flex-wrap items-center gap-3">{headerActionsSlot}</div>
         </div>
         <div className="space-y-4">{children}</div>
       </div>
@@ -133,28 +128,11 @@ export function ErpPageShell({
   );
 }
 
-function SourceBadge({ source }: { source: PageSourceLabel }) {
-  const classNameBySource: Record<PageSourceLabel, string> = {
-    "Live ERP": "",
-    "Dump Snapshot": "opacity-95",
-    "External SQLite": "opacity-95",
-    "Internal API": "opacity-95",
-    Placeholder: "opacity-90",
-  };
-
-  return (
-    <span
-      data-page-contrast="true"
-      className={`page-contrast-chip rounded-full border px-3 py-1 text-xs font-semibold ${classNameBySource[source]}`}
-    >
-      {source}
-    </span>
-  );
-}
-
 function PageLoadingOverlay({ message }: { message: string }) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 backdrop-blur-sm px-6"
       style={{ background: "color-mix(in srgb, var(--comp-accent) 6%, transparent)" }}
     >
@@ -168,12 +146,78 @@ function PageLoadingOverlay({ message }: { message: string }) {
   );
 }
 
-export function SectionCard({ title = "Section", children }: { title?: string; children: ReactNode }) {
+export function SectionCard({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <section className="dashboard-card p-3 md:p-4">
-      <h2 className="mb-2 text-base md:text-lg font-semibold text-[var(--comp-text-primary)]">{sanitizeVisibleText(title, "Section")}</h2>
-      <div className="space-y-3">{children}</div>
+    <section className="dashboard-card p-4">
+      <div className="space-y-3">
+        {title ? (
+          <h2 className="text-base md:text-lg font-semibold text-[var(--comp-text-primary)]">{sanitizeVisibleText(title)}</h2>
+        ) : null}
+        {children}
+      </div>
     </section>
+  );
+}
+
+/**
+ * Standard title bar for a flush table section (`dashboard-card overflow-hidden p-0`).
+ * Renders the header row directly above the table so the card reads as one surface.
+ */
+export function TableCardHeader({ title, right }: { title: string; right?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--comp-border)] px-5 py-3">
+      <h2 className="card-title">{sanitizeVisibleText(title)}</h2>
+      {right ? <div className="flex shrink-0 items-center gap-2">{right}</div> : null}
+    </div>
+  );
+}
+
+/**
+ * Full-width empty state for use inside a <tbody>: a single colSpan cell wrapping
+ * EmptyStateCard's content minus its border, padded py-8.
+ */
+export function TableEmptyRow({
+  colSpan,
+  message,
+  hint,
+}: {
+  colSpan: number;
+  message: string;
+  hint?: string;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="erp-table-cell p-0">
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+          {/* File-question icon — matches the Application Tracker EmptyState icon */}
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{ color: "var(--comp-text-muted)", opacity: 0.7 }}
+          >
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+            <circle cx="10" cy="13" r="2" />
+            <path d="m20 17-1.09-1.09a2 2 0 0 0-2.82 0L10 22" />
+          </svg>
+          <p className="text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
+            {sanitizeVisibleText(message)}
+          </p>
+          {hint ? (
+            <p className="max-w-xs text-xs leading-5" style={{ color: "var(--comp-text-muted)" }}>
+              {sanitizeVisibleText(hint)}
+            </p>
+          ) : null}
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -182,6 +226,8 @@ export function StatusBanner({ message }: { message: StatusMessage }) {
     success: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
     warning: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]",
     info: "border-[color-mix(in_srgb,var(--comp-accent)_25%,transparent)] bg-[var(--comp-surface-hover)] text-[var(--comp-text-primary)]",
+    error:
+      "border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]",
     locked:
       "border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]",
   };
@@ -197,11 +243,35 @@ export function KpiGrid({ items }: { items: KpiItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <div key={item.label} className="dashboard-card p-4">
           <p className="text-sm text-[var(--comp-text-secondary)]">{item.label}</p>
-          <p className="mt-1 text-2xl font-semibold text-[var(--comp-text-primary)]">{item.value}</p>
+          <div className="mt-1 flex items-end gap-2">
+            <p className="text-2xl font-semibold text-[var(--comp-text-primary)]">{item.value}</p>
+            {item.trend !== undefined && (
+              <span
+                className="text-xs font-medium flex items-center gap-1"
+                style={{
+                  color: item.trend > 0 ? "var(--success)" : "var(--error)",
+                }}
+              >
+                {item.trend > 0 ? (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                ) : (
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                )}
+                {item.trendLabel && <span>{item.trendLabel}</span>}
+              </span>
+            )}
+          </div>
+          {item.subtitle && (
+            <p className="mt-1 text-xs" style={{ color: "var(--comp-text-muted)" }}>{item.subtitle}</p>
+          )}
         </div>
       ))}
     </div>
@@ -315,45 +385,5 @@ export function EmptyStateCard({
   message: string;
   action?: ReactNode;
 }) {
-  return (
-    <div
-      className="flex flex-col items-center justify-center p-10 text-center rounded-xl"
-      style={{
-        border: "1.5px dashed color-mix(in srgb, var(--comp-text-muted) 25%, transparent)",
-        background: "color-mix(in srgb, var(--comp-surface) 80%, transparent)",
-      }}
-    >
-      <div
-        className="mb-4"
-        style={{ color: "var(--comp-text-muted)", opacity: 0.7 }}
-      >
-        {/* File-question icon — matches the Application Tracker EmptyState icon */}
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-          <polyline points="14 2 14 8 20 8" />
-          <circle cx="10" cy="13" r="2" />
-          <path d="m20 17-1.09-1.09a2 2 0 0 0-2.82 0L10 22" />
-        </svg>
-      </div>
-      <h3
-        className="mb-1 text-base font-semibold"
-        style={{ color: "var(--comp-text-primary)" }}
-      >
-        {title}
-      </h3>
-      <p
-        className="max-w-xs text-sm leading-6"
-        style={{ color: "var(--comp-text-secondary)" }}
-      >
-        {message}
-      </p>
-      {action ? <div className="mt-4">{action}</div> : null}
-    </div>
-  );
-}
-
-function formatTimestamp(timestamp: string) {
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return timestamp;
-  return date.toLocaleString();
+  return <EmptyState title={title} description={message} action={action} className="p-10" />;
 }

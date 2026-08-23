@@ -49,11 +49,11 @@ export default function WeeklyLeaderboard({
                   style={{ background: "var(--comp-border)" }}
                 >
                   <div
-                    className="h-full rounded-full"
+                    className="h-full w-full origin-left rounded-full"
                     style={{
-                      width: `${pct}%`,
+                      transform: `scaleX(${pct / 100})`,
                       background: isPodium ? "var(--comp-accent)" : "var(--comp-text-muted)",
-                      transition: "width var(--duration-slow) var(--ease-spring)",
+                      transition: "transform var(--duration-slow) var(--ease-spring)",
                     }}
                   />
                 </div>

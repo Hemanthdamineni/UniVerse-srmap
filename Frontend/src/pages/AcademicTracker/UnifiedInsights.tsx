@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CheckCircle2, MousePointerClick, Route, ShieldCheck, Target, UserRoundCog } from "lucide-react";
 import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import { StatusBadge } from "../../components/ui/Badges";
+
 import {
   getLmsUnifiedInsights,
   recordLmsTrackerRecommendationEvent,
@@ -25,17 +27,6 @@ function ScoreBar({ value, max }: { value: number; max: number }) {
       <div className="h-full rounded-full bg-[var(--comp-accent)]" style={{ width: `${width}%` }} />
     </div>
   );
-}
-
-function StatusPill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "warning" }) {
-  const toneClass =
-    tone === "success"
-      ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
-      : tone === "warning"
-        ? "border-[color-mix(in_srgb,var(--warning)_28%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]"
-        : "border-[var(--border)] bg-[var(--background)] text-[var(--text-secondary)]";
-
-  return <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneClass}`}>{children}</span>;
 }
 
 export default function UnifiedInsights() {
@@ -153,9 +144,9 @@ export default function UnifiedInsights() {
                       LMS, Career, Events, skills, achievements, and privacy signals share one contract.
                     </p>
                   </div>
-                  <StatusPill tone={profile?.contractVersion === "unified-profile-v1" ? "success" : "warning"}>
+                  <StatusBadge preset={profile?.contractVersion === "unified-profile-v1" ? "success" : "warning"}>
                     {profile?.contractVersion || "not loaded"}
-                  </StatusPill>
+                  </StatusBadge>
                 </div>
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -192,7 +183,7 @@ export default function UnifiedInsights() {
                           {recommendation.domain} · {recommendation.label} · {pct(recommendation.score)} match
                         </p>
                       </div>
-                      <StatusPill>{recommendation.itemType}</StatusPill>
+                      <StatusBadge>{recommendation.itemType}</StatusBadge>
                     </div>
                     <ul className="mt-3 space-y-1 text-xs text-[var(--text-secondary)]">
                       {recommendation.reasons.slice(0, 2).map((reason) => (
@@ -225,12 +216,12 @@ export default function UnifiedInsights() {
                       <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{node.label}</h3>
                       <p className="mt-1 text-xs text-[var(--text-secondary)]">{node.value}</p>
                     </div>
-                    <StatusPill tone={node.status === "ready" ? "success" : node.status === "missing" ? "warning" : "neutral"}>
+                    <StatusBadge preset={node.status === "ready" ? "success" : node.status === "missing" ? "warning" : "neutral"}>
                       {node.status.replace("_", " ")}
-                    </StatusPill>
+                    </StatusBadge>
                   </div>
                   <p className="mt-3 text-xs text-[var(--text-secondary)]">Confidence {pct(node.confidence)}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {node.inputsUsed.slice(0, 3).map((input) => (
                       <span key={input} className="rounded-md bg-[var(--background)] px-2 py-1 text-[11px] text-[var(--text-secondary)]">
                         {input}
@@ -258,9 +249,9 @@ export default function UnifiedInsights() {
                     <p className="text-sm text-[var(--text-secondary)]">Resume score</p>
                     <p className="text-3xl font-semibold text-[var(--comp-text-primary)]">{Math.round(insights.atsScore.score)}%</p>
                   </div>
-                  <StatusPill tone={insights.atsScore.hasResume ? "success" : "warning"}>
+                  <StatusBadge preset={insights.atsScore.hasResume ? "success" : "warning"}>
                     {insights.atsScore.hasResume ? "resume attached" : "resume missing"}
-                  </StatusPill>
+                  </StatusBadge>
                 </div>
               </div>
               <div className="space-y-3">
@@ -290,7 +281,7 @@ export default function UnifiedInsights() {
                           {skill.opportunityDemand} active match{skill.opportunityDemand === 1 ? "" : "es"} need this skill
                         </p>
                       </div>
-                      <StatusPill>{pct(skill.confidence)} confidence</StatusPill>
+                      <StatusBadge>{pct(skill.confidence)} confidence</StatusBadge>
                     </div>
                     <ul className="mt-3 space-y-1 text-xs text-[var(--text-secondary)]">
                       {skill.reasons.map((reason) => (
@@ -322,10 +313,10 @@ export default function UnifiedInsights() {
                         {opportunity.organization || opportunity.type} · deadline {opportunity.deadline || "not listed"}
                       </p>
                     </div>
-                    <StatusPill tone="success">
+                    <StatusBadge preset="success">
                       <ShieldCheck className="mr-1 inline h-3 w-3" />
                       eligible
-                    </StatusPill>
+                    </StatusBadge>
                   </div>
                   <div className="mt-3 grid gap-2 text-xs text-[var(--text-secondary)] sm:grid-cols-2">
                     <p>Matched: {opportunity.matchedSkills.join(", ") || "profile signals"}</p>
@@ -369,9 +360,9 @@ export default function UnifiedInsights() {
                         <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{action.title}</h3>
                         <p className="mt-1 text-sm text-[var(--text-secondary)]">{action.description}</p>
                       </div>
-                      <StatusPill tone={action.priority === "high" ? "warning" : "neutral"}>
+                      <StatusBadge preset={action.priority === "high" ? "warning" : "neutral"}>
                         {action.domain} · {action.priority}
-                      </StatusPill>
+                      </StatusBadge>
                     </div>
                     <p className="mt-2 text-xs text-[var(--text-secondary)]">
                       Why: {action.reasons[0] || "Derived from profile graph signals."}

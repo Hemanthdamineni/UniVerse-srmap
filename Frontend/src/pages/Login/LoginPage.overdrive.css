@@ -242,6 +242,25 @@
   border-color: var(--comp-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08) !important;
 }
+/* ── Mobile: single-column card, marketing panel hidden ── */
+@media (max-width: 760px) {
+  .login-page-shell {
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+  .login-card {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    min-height: 0;
+  }
+  .login-identity-panel {
+    display: none;
+  }
+  .login-form-panel {
+    padding: 32px 24px;
+  }
+}
+
 /* ── Dark mode ── */
 [data-theme="dark"] .login-identity-panel {
   background:

@@ -59,5 +59,4 @@ export function StatusMessage({ tone, message }: { tone: Tone; message: string }
   );
 }
 
-export const LABEL: CSSProperties = { display: "block", fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--comp-text-secondary)", marginBottom: "7px" };
-export const INPUT: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "11px 14px", fontSize: "0.875rem", borderRadius: "10px", border: "1px solid color-mix(in srgb, var(--border) 90%, transparent)", background: "var(--background)", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", transition: "border-color 0.2s ease, box-shadow 0.2s ease" };
+export const INPUT: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "10px 12px", fontSize: "var(--text-sm)", borderRadius: "var(--border-radius-md)", border: "1px solid color-mix(in srgb, var(--border) 90%, transparent)", background: "var(--background)", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", transition: "border-color 0.2s ease, box-shadow 0.2s ease" };

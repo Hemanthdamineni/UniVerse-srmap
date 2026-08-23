@@ -1,37 +1,43 @@
 /* Competition Platform — Create Event Wizard */
 
+/* Step indicator styles are owned by <Stepper> (components/competition/Stepper.tsx),
+   which renders either interactive buttons or passive pills with the same visuals.
+   --stepper-count lets non-4-step flows size their columns without extra CSS. */
 .create-wizard-steps {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 34px;
+  grid-template-columns: repeat(var(--stepper-count, 4), 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
 }
 
-.create-wizard-steps button {
+.create-wizard-steps .stepper-step {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   border: 0;
   background: transparent;
   color: var(--text-secondary);
   font-size: var(--text-lg);
   font-weight: 600;
+}
+
+.create-wizard-steps button {
   cursor: pointer;
 }
 
-.create-wizard-steps button::after {
+.create-wizard-steps .stepper-step::after {
   content: "";
   height: 1px;
   flex: 1;
   background: var(--border);
 }
 
-.create-wizard-steps button:last-child::after {
+.create-wizard-steps .stepper-step:last-child::after {
   display: none;
 }
 
-.create-wizard-steps span {
+.create-wizard-steps .stepper-step > span {
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -43,11 +49,11 @@
   font-weight: 600;
 }
 
-.create-wizard-steps button.is-active {
+.create-wizard-steps .stepper-step.is-active {
   color: var(--text-primary);
 }
 
-.create-wizard-steps button.is-active span {
+.create-wizard-steps .stepper-step.is-active > span {
   background: var(--text-primary);
   color: var(--background);
   box-shadow: 0 12px 28px rgba(10, 48, 53, 0.18);
@@ -60,7 +66,9 @@
 .create-wizard-main,
 .create-wizard-side {
   display: grid;
-  gap: 22px;
+  /* minmax(0, …) keeps wide form controls from inflating past the viewport */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
 }
 
 .create-wizard-card,
@@ -76,8 +84,8 @@
 .create-tip-card h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 0 24px;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-lg);
   color: var(--text-primary);
   font-size: var(--text-xl);
   font-weight: 600;
@@ -86,18 +94,18 @@
 .create-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin: 18px 0;
+  gap: var(--space-md);
+  margin: var(--space-md) 0;
 }
 
 .create-choice-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--space-md);
 }
 
 .create-choice-row.compact {
-  margin: 18px 0;
+  margin: var(--space-md) 0;
 }
 
 .create-choice-row button {
@@ -106,7 +114,7 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--background) 94%, var(--surface) 6%);
   color: var(--text-primary);
-  padding: 18px;
+  padding: var(--space-md);
   text-align: left;
   cursor: pointer;
 }
@@ -136,10 +144,10 @@
 
 .create-round-editor {
   display: grid;
-  gap: 12px;
+  gap: var(--space-sm);
   border-top: 1px solid var(--border);
-  padding-top: 18px;
-  margin-top: 18px;
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
 }
 
 .create-banner-card > div {
@@ -162,8 +170,8 @@
 
 .create-schedule-card p {
   display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 10px;
+  grid-template-columns: 32px 1fr;
+  gap: var(--space-sm);
   align-items: center;
 }
 
@@ -179,7 +187,7 @@
 .create-review-list {
   display: grid;
   grid-template-columns: 160px 1fr;
-  gap: 14px 20px;
+  gap: var(--space-sm) var(--space-md);
   margin: 0;
 }
 
@@ -199,18 +207,18 @@
   z-index: 50;
   display: flex;
   justify-content: space-between;
-  gap: 20px;
-  margin: 44px 0 0;
+  gap: var(--space-md);
+  margin: var(--space-xl) 0 0;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   background: color-mix(in srgb, var(--background) 94%, var(--surface) 6%);
-  padding: 22px 28px;
+  padding: var(--space-md) var(--space-lg);
   box-shadow: var(--dash-card-shadow);
 }
 
 .create-wizard-footer > div {
   display: flex;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 @media (max-width: 1024px) {
@@ -222,7 +230,7 @@
   }
 
   .event-detail-hero {
-    padding: 22px;
+    padding: var(--space-lg);
   }
 
   .activity-dashboard-grid {
@@ -253,7 +261,7 @@
   .competition-content,
   .competition-page-shell-wide .competition-content,
   .competition-page-shell-focus .competition-content {
-    padding: 22px 16px 36px;
+    padding: 24px 16px 36px;
   }
 
   .competition-grid.two,
@@ -309,10 +317,12 @@
   .create-choice-row,
   .create-review-list,
   .create-wizard-steps {
-    grid-template-columns: 1fr;
+    /* minmax(0, …): datetime inputs have a large intrinsic width that a
+       plain 1fr track would honour, leaking past narrow viewports. */
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .create-wizard-steps button::after {
+  .create-wizard-steps .stepper-step::after {
     display: none;
   }
 

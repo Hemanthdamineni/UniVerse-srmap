@@ -15,14 +15,39 @@ function extractIp(req) {
   return forwarded || req.ip || "unknown";
 }
 
+// Infra probes run every few seconds from monitors and docker healthchecks;
+// counting them would burn limiter budget (and Redis round-trips) for no gain.
+const RATE_LIMIT_BYPASS_PATHS = new Set(["/health", "/live", "/ready", "/metrics", "/telemetry"]);
+
+function isBypassedPath(req) {
+  return RATE_LIMIT_BYPASS_PATHS.has(req.path);
+}
+
 function memoryRateLimiter() {
   const buckets = new Map();
+  const SWEEP_THRESHOLD = 5000;
+
+  function sweep(windowStart) {
+    for (const [key, entry] of buckets) {
+      if (!entry.some((timestamp) => timestamp >= windowStart)) {
+        buckets.delete(key);
+      }
+    }
+  }
 
   return async function memoryLimiter(req, res, next) {
+    if (isBypassedPath(req)) {
+      return next();
+    }
+
     const now = Date.now();
     const ip = extractIp(req);
     const key = `${RATE_LIMIT_REDIS_PREFIX}:mem:${ip}`;
     const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+    if (buckets.size > SWEEP_THRESHOLD) {
+      sweep(windowStart);
+    }
 
     const entry = buckets.get(key) || [];
     const recent = entry.filter((timestamp) => timestamp >= windowStart);
@@ -52,24 +77,28 @@ function memoryRateLimiter() {
 
 function redisRateLimiter(redisClient) {
   return async function redisLimiter(req, res, next) {
+    if (isBypassedPath(req)) {
+      return next();
+    }
+
     const ip = extractIp(req);
     const key = `${RATE_LIMIT_REDIS_PREFIX}:${ip}`;
     const ttlSec = Math.max(1, Math.ceil(RATE_LIMIT_WINDOW_MS / 1000));
 
     try {
+      // Single Redis round-trip in the steady state: INCR, and only pay a
+      // second op when this is the first hit of a fresh window.
       const count = await redisClient.incr(key);
       if (count === 1) {
         await redisClient.expire(key, ttlSec);
       }
 
-      const ttl = await redisClient.ttl(key);
       const remaining = Math.max(0, RATE_LIMIT_MAX - count);
       res.setHeader("x-ratelimit-limit", String(RATE_LIMIT_MAX));
       res.setHeader("x-ratelimit-remaining", String(remaining));
-      res.setHeader("x-ratelimit-reset", String(Math.max(0, ttl)));
 
       if (count > RATE_LIMIT_MAX) {
-        res.setHeader("retry-after", String(Math.max(1, ttl)));
+        res.setHeader("retry-after", String(ttlSec));
         return res.status(429).json({
           success: false,
           error: {

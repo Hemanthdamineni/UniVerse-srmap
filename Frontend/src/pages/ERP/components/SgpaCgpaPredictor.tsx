@@ -198,11 +198,11 @@ export function SgpaCgpaPredictor({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
       <div className="space-y-4">
-        <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="font-semibold" style={{ color: "var(--comp-text-primary)" }}>
                 {isManualMode ? "Manual Mode" : "Auto Mode"}
               </p>
@@ -265,7 +265,7 @@ export function SgpaCgpaPredictor({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-semibold" style={{ color: "var(--comp-text-primary)" }}>
@@ -300,7 +300,7 @@ export function SgpaCgpaPredictor({
             plannerSubjects.map((subject) => (
               <div
                 key={subject.id}
-                className="grid gap-3 rounded-2xl p-3 md:grid-cols-[1fr_100px_140px_72px]"
+                className="grid grid-cols-[minmax(0,1fr)] gap-3 rounded-2xl p-3 md:grid-cols-[minmax(0,1fr)_6rem_9rem_4.5rem]"
                 style={{
                   background: "var(--comp-surface)",
                   border: "1px solid var(--comp-border)",
@@ -313,7 +313,7 @@ export function SgpaCgpaPredictor({
                       updatePlannerSubject(subject.id, "name", event.target.value)
                     }
                     placeholder="Subject name"
-                    className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                    className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                   />
                 ) : (
                   <div
@@ -339,7 +339,7 @@ export function SgpaCgpaPredictor({
                       Number(event.target.value || 0)
                     )
                   }
-                  className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                 />
 
                 <select
@@ -347,7 +347,7 @@ export function SgpaCgpaPredictor({
                   onChange={(event) =>
                     updatePlannerSubject(subject.id, "grade", event.target.value)
                   }
-                  className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                 >
                   {GRADE_OPTIONS.map((grade) => (
                     <option key={grade || "empty"} value={grade}>

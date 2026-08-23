@@ -25,25 +25,43 @@ export default function AdminSystemControlsPage() {
       </SectionCard>
       <SectionCard title="Quick Admin Links">
         <div className="flex flex-wrap gap-2">
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/events-management">
+          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold text-white" to="/admin/events-management">
             Events Management
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/content-management">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/content-management"
+          >
             Content Management
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/helpdesk-tickets">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/helpdesk-tickets"
+          >
             Helpdesk Tickets
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/helpdesk-faqs">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/helpdesk-faqs"
+          >
             Helpdesk FAQs
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/career-opportunities">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/career-opportunities"
+          >
             Career Opportunities
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/career-interviews">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/career-interviews"
+          >
             Career Interviews
           </Link>
-          <Link className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" to="/admin/career-alumni">
+          <Link
+            className="rounded-full border border-[var(--comp-border)] bg-transparent px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] transition hover:bg-[var(--comp-surface-hover)]"
+            to="/admin/career-alumni"
+          >
             Career Alumni
           </Link>
         </div>

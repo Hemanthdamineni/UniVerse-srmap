@@ -1,3 +1,4 @@
+// Dormant: superseded by CampusHubWidget; retained for prototype/reference parity.
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Clock, AlertCircle, RefreshCw, ArrowRight } from "lucide-react";
@@ -71,7 +72,7 @@ export default function CareerWidget() {
           <button
             onClick={loadData}
             type="button"
-            className="flex items-center gap-1.5 rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-1.5 text-xs font-medium"
+            className="flex items-center gap-2 rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-xs font-medium"
           >
             <RefreshCw size={12} />
             Retry
@@ -153,16 +154,16 @@ export default function CareerWidget() {
             </div>
             <div className="mt-2 flex items-center justify-between">
               <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium"
                 style={{
                   backgroundColor: `color-mix(in srgb, var(--deadline-urgent) 15%, transparent)`,
                   color: "var(--deadline-urgent)",
                 }}
               >
-                <Clock size={10} />
+                <Clock size={12} />
                 {formatTimeUntil(op.deadline)}
               </span>
-              <span className="text-[10px] uppercase font-semibold text-[var(--comp-text-muted)]">
+              <span className="text-xs uppercase font-semibold text-[var(--comp-text-muted)]">
                 {op.type}
               </span>
             </div>

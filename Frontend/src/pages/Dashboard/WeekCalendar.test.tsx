@@ -55,7 +55,8 @@ describe("WeekCalendar", () => {
     renderCalendar(onDateSelect);
     onDateSelect.mockClear();
 
-    const rightArrow = screen.getByText("→");
+    // Nav buttons are icon-only and identified by accessible name
+    const rightArrow = screen.getByRole("button", { name: "Next week" });
     fireEvent.click(rightArrow);
 
     const weekStart = new Date();
@@ -78,7 +79,8 @@ describe("WeekCalendar", () => {
     renderCalendar(onDateSelect);
     onDateSelect.mockClear();
 
-    const leftArrow = screen.getByText("←");
+    // Nav buttons are icon-only and identified by accessible name
+    const leftArrow = screen.getByRole("button", { name: "Previous week" });
     fireEvent.click(leftArrow);
 
     const weekStart = new Date();
@@ -101,8 +103,9 @@ describe("WeekCalendar", () => {
     renderCalendar(onDateSelect);
     onDateSelect.mockClear();
 
+    // Icon-only nav buttons carry aria-labels; day buttons do not
     const dayButtons = screen.getAllByRole("button").filter(
-      (btn) => btn.textContent !== "←" && btn.textContent !== "→",
+      (btn) => btn.getAttribute("aria-label") === null,
     );
     if (dayButtons.length > 0) {
       fireEvent.click(dayButtons[0]);
@@ -112,8 +115,9 @@ describe("WeekCalendar", () => {
 
   it("renders all date numbers for the current week", () => {
     renderCalendar();
+    // Icon-only nav buttons carry aria-labels; day buttons do not
     const dayButtons = screen.getAllByRole("button").filter(
-      (btn) => btn.textContent !== "←" && btn.textContent !== "→",
+      (btn) => btn.getAttribute("aria-label") === null,
     );
     expect(dayButtons.length).toBe(7);
   });

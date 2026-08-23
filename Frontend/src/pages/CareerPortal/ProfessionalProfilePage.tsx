@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { SectionCard } from "../../components/ui/SectionCard";
+import { StatusBanner } from "../../components/erp/ErpPrimitives";
+import { FileUploadZone } from "../../components/ui/FileUploadZone";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { ProgressBar } from "../../components/ui/Progress";
 import { Button } from "../../components/button";
@@ -11,7 +13,7 @@ import { Input } from "../../components/input";
 import { getProfile, updateProfile, createResumeVersion, mergeResumeToProfile, listResumeVersions, type CareerProfile, type ResumeVersion } from "../../lib/career/careerApi";
 import { getUnifiedProfile, listProfileSkills, syncProfileAchievements, type UnifiedProfile, type UnifiedProfileSkill } from "../../lib/career/profileApi";
 import { useSession } from "../../hooks/useSession";
-import { Upload, FileText, Award, CheckCircle2, ChevronRight, Plus, X } from "lucide-react";
+import { FileText, Award, CheckCircle2, ChevronRight, Plus, X } from "lucide-react";
 import { SkeletonCard } from "../../components/ui/Skeletons";
 
 interface ResumeUpload {
@@ -61,7 +63,7 @@ export default function ProfessionalProfilePage() {
         skills: profile.skills,
       });
     } catch {
-      setMessage({ type: "error", text: "Failed to save profile." });
+      setMessage({ type: "error", text: "Couldn't save your profile. Check your connection and try again." });
     } finally {
       setSaving(false);
     }
@@ -92,7 +94,7 @@ export default function ProfessionalProfilePage() {
       setMessage({ type: "success", text: "Resume parsed successfully." });
     } catch {
       setResume((prev) => ({ ...prev, uploading: false }));
-      setMessage({ type: "error", text: "Failed to parse resume." });
+      setMessage({ type: "error", text: `Couldn't read "${file.name}". Try a different resume file.` });
     }
   };
 
@@ -105,7 +107,7 @@ export default function ProfessionalProfilePage() {
       const refreshedProfile = await getProfile();
       setProfile(refreshedProfile);
     } catch {
-      setMessage({ type: "error", text: "Failed to merge resume data." });
+      setMessage({ type: "error", text: "Couldn't merge your resume into the profile. Please try again." });
     }
   };
 
@@ -117,7 +119,7 @@ export default function ProfessionalProfilePage() {
       setUnified(refreshed);
       setMessage({ type: "success", text: "Achievements synchronized." });
     } catch {
-      setMessage({ type: "error", text: "Failed to sync achievements." });
+      setMessage({ type: "error", text: "Couldn't sync achievements right now. Please try again." });
     } finally {
       setSyncingAchievements(false);
     }
@@ -143,13 +145,13 @@ export default function ProfessionalProfilePage() {
     <PageContainer>
       <div className="space-y-6 py-6">
         {message && (
-          <div className={`rounded-xl border p-4 text-sm ${
-            message.type === "success"
-              ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,transparent)] text-[var(--success)]"
-              : "border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_8%,transparent)] text-[var(--error)]"
-          }`}>
-            {message.text}
-          </div>
+          <StatusBanner
+            message={{
+              id: "profile-message",
+              tone: message.type === "success" ? "success" : "error",
+              text: message.text,
+            }}
+          />
         )}
 
         {/* Identity Panel */}
@@ -257,26 +259,13 @@ export default function ProfessionalProfilePage() {
         {/* Proof Panel (Resume) */}
         <SectionCard title="Proof" description="Upload a resume to parse and merge structured data into your profile.">
           <div className="space-y-4">
-            <div className="flex items-center gap-4 rounded-xl border-2 border-dashed border-[var(--comp-border)] p-6">
-              <Upload className="h-8 w-8 text-[var(--comp-text-muted)]" />
-              <div className="flex-1">
-                <p className="text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>Upload Resume</p>
-                <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>PDF, DOCX, or TXT up to 5MB</p>
-              </div>
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt"
-                className="hidden"
-                id="resume-upload"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleResumeUpload(file);
-                }}
-              />
-              <Button disabled={resume.uploading} onClick={() => document.getElementById("resume-upload")?.click()}>
-                {resume.uploading ? "Uploading..." : "Browse"}
-              </Button>
-            </div>
+            <FileUploadZone
+              onFile={handleResumeUpload}
+              accept={[".pdf", ".docx", ".txt"]}
+              maxSizeMb={5}
+              isUploading={resume.uploading}
+              label="Upload Resume"
+            />
 
             {resume.version && (
               <div className="rounded-xl border border-[var(--comp-border)] p-4">
@@ -370,7 +359,7 @@ export default function ProfessionalProfilePage() {
 
 function computeCompleteness(p: CareerProfile): number {
   let score = 0;
-  let max = 100;
+  const max = 100;
   if (p.bio && p.bio.trim().length > 20) score += 20;
   if (p.linkedinUrl) score += 15;
   if (p.githubUrl) score += 15;

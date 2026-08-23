@@ -35,21 +35,31 @@ function extractBankDetails(html) {
 
     let value = "";
     let fieldType = "text";
+    let fieldName = "";
     let options = [];
 
     if (inputEl.length) {
       value = inputEl.attr("value") || inputEl.val() || "";
       fieldType = inputEl.attr("type") || "text";
+      fieldName = inputEl.attr("name") || inputEl.attr("id") || "";
     } else if (selectEl.length) {
       fieldType = "select";
+      fieldName = selectEl.attr("name") || selectEl.attr("id") || "";
       selectEl.find("option").each((_i, opt) => {
         options.push({ value: $(opt).attr("value"), label: cleanText($(opt).text()) });
       });
       value = selectEl.val() || "";
+    } else {
+      // Check for file input
+      const fileEl = $(cells[1]).find("input[type=file]");
+      if (fileEl.length) {
+        fieldType = "file";
+        fieldName = fileEl.attr("name") || fileEl.attr("id") || "";
+      }
     }
 
     if (label && label !== "Save") {
-      fields.push({ label, value, fieldType, options: options.length ? options : undefined });
+      fields.push({ label, value, fieldType, name: fieldName || undefined, options: options.length ? options : undefined });
     }
   });
 

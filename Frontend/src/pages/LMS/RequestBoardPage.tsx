@@ -13,6 +13,7 @@ import {
   useAsyncPage,
   LmsFrame
 } from "./_shared/LmsPageShared";
+import { ConfirmDialog } from "../../components/dialog";
 import type { LmsRequest } from "./_shared/LmsPageShared";
 
 const REQUEST_STATUSES = ["open", "fulfilled", "closed"] as const;
@@ -33,6 +34,7 @@ export function RequestBoardPage() {
     [statusFilter, subjectFilter]
   );
   const [listError, setListError] = useState("");
+  const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
 
   const requests: LmsRequest[] = data?.items || [];
   // "My requests" is a client-side view over the fetched page (owner close needs
@@ -40,6 +42,18 @@ export function RequestBoardPage() {
   const visibleRequests = mineOnly && currentRegNo
     ? requests.filter((request) => request.userId === currentRegNo)
     : requests;
+
+  async function handleCloseConfirmed() {
+    if (!pendingCloseId) return;
+    const requestId = pendingCloseId;
+    setPendingCloseId(null);
+    try {
+      await closeLmsRequest(requestId);
+      await refresh({ status: statusFilter, subjectCode: subjectFilter });
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Couldn't close this request. Please try again.");
+    }
+  }
 
   const refresh = async (params: Record<string, unknown>) => {
     setListError("");
@@ -90,11 +104,7 @@ export function RequestBoardPage() {
             }}
           />
           <button
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-              mineOnly
-                ? "bg-[var(--comp-accent)] text-white"
-                : "border border-[var(--comp-border)] text-[var(--comp-text-secondary)]"
-            }`}
+            className={`lms-btn ${mineOnly ? "lms-btn-primary" : "lms-btn-ghost"}`}
             aria-pressed={mineOnly}
             onClick={() => setMineOnly((value) => !value)}
           >
@@ -127,16 +137,8 @@ export function RequestBoardPage() {
                   )}
                   {canClose && (
                     <button
-                      className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--warning)]"
-                      onClick={async () => {
-                        if (!window.confirm("Close this request?")) return;
-                        try {
-                          await closeLmsRequest(request.id);
-                          await refresh({ status: statusFilter, subjectCode: subjectFilter });
-                        } catch (err) {
-                          setListError(err instanceof Error ? err.message : "Unable to close this request.");
-                        }
-                      }}
+                      className="lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]"
+                      onClick={() => setPendingCloseId(request.id)}
                     >
                       Close request
                     </button>
@@ -166,6 +168,15 @@ export function RequestBoardPage() {
           }}
         />
       </SectionCard>
+
+      <ConfirmDialog
+        open={pendingCloseId !== null}
+        onOpenChange={(open) => { if (!open) setPendingCloseId(null); }}
+        title="Close this request?"
+        description="It will be marked as closed on the request board so others know it no longer needs fulfilling."
+        confirmLabel="Close request"
+        onConfirm={() => void handleCloseConfirmed()}
+      />
     </LmsFrame>
   );
 }
@@ -212,7 +223,7 @@ function RequestForm({ onSubmit }: { onSubmit: () => Promise<void> }) {
       <textarea className="mt-3 min-h-24 w-full lms-input" placeholder="Description (optional)" aria-label="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
       {formError ? <InlineError message={formError} /> : null}
       <button
-        className="mt-3 rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        className="mt-3 lms-btn lms-btn-primary"
         disabled={busy}
         onClick={() => void handleSubmit()}
       >
