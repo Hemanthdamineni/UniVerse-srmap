@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
+import { sessionKeys } from "../lib/core/queryKeys";
 import { useAdminMode } from "../contexts/AdminModeContext";
 
 function SidebarContrastText({ text, className = "" }: { text: string; className?: string }) {
@@ -54,6 +56,7 @@ export default function Sidebar() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentPath = normalizeRoute(location.pathname);
   const isActiveRoute = useCallback((route: string) => normalizeRoute(route) === currentPath, [currentPath]);
 
@@ -139,7 +142,10 @@ export default function Sidebar() {
       };
     }
 
-    fetchSessionProfile()
+    // Shared ['session','profile'] cache: dedups against Dashboard/Blueprint
+    // requests and skips the network within staleTime.
+    queryClient
+      .fetchQuery({ queryKey: sessionKeys.profile, queryFn: fetchSessionProfile })
       .then((profile) => {
         if (!active) return;
         setProfileData(profile);
@@ -152,12 +158,15 @@ export default function Sidebar() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [queryClient]);
 
   const handleLogout = useCallback(async () => {
     await logoutSession();
+    // Drop every cached query (profile, ERP pages, …) so a following login
+    // on this tab never sees the previous user's data.
+    queryClient.clear();
     navigate("/login");
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   const profilePhoto =
     typeof profileData?.photo === "string"

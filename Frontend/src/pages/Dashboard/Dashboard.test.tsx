@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import Dashboard from "./Dashboard";
+import { createTestQueryClient } from "../../test/testUtils";
 
 // React.lazy resolves asynchronously; mock lazy-loaded widgets as
 // non-lazy so they render within the same microtask.
@@ -95,11 +97,17 @@ const mockProfile = {
 };
 
 function renderDashboard() {
-  return render(
-    <MemoryRouter>
-      <Dashboard />
-    </MemoryRouter>,
-  );
+  const queryClient = createTestQueryClient();
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 describe("Dashboard", () => {

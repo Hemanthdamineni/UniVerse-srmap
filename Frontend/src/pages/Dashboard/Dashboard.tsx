@@ -1,5 +1,6 @@
 // Dashboard grid unchanged; widgets use SectionCard/SkeletonCard/InlineError from shared UI.
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import BasicInfo from "./BasicInfo";
 import Schedule from "./Schedule";
 const Attendance = lazy(() => import("./Attendance"));
@@ -14,6 +15,7 @@ import FirstRunGuide from "./FirstRunGuide";
 import CampusHubWidget from "./CampusHubWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, hasSessionAuth } from "../../lib/core/session";
+import { sessionKeys } from "../../lib/core/queryKeys";
 import { hasSeenOnboarding } from "../../lib/core/onboarding";
 import { getErpBatch } from "../../lib/erp/index";
 import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
@@ -33,6 +35,7 @@ function Dashboard() {
   const [feedbackPendingCount, setFeedbackPendingCount] = useState(0);
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(() => !hasSeenOnboarding());
   const dashboardRef = useRef<HTMLDivElement | null>(null);
+  const queryClient = useQueryClient();
 
   usePageContrast(dashboardRef, [loading, profileLoading, error, profileError, selectedDate]);
 
@@ -68,7 +71,9 @@ function Dashboard() {
       });
 
     setProfileLoading(true);
-    fetchSessionProfile()
+    // Shared ['session','profile'] cache — dedups with Sidebar/Blueprint.
+    queryClient
+      .fetchQuery({ queryKey: sessionKeys.profile, queryFn: fetchSessionProfile })
       .then((profile) => {
         if (!active) return;
         setProfileData(profile);

@@ -1,6 +1,6 @@
 # React Query Migration Plan
 
-**Status:** Proposed — not started. No production code has been changed by this document.
+**Status:** Implementation in progress — **Phase 0 ✅ and Phase 1 ✅ shipped & validated 2026-08-23** (tsc/lint/build clean; 95 files / 1161 tests green; devtools confirmed absent from prod bundle). Phases 2–6 not started.
 **Scope:** `Frontend/src` server-state fetching and mutations.
 **Baseline verified 2026-08-22:** `@tanstack/react-query@^5.85.0` installed; `QueryClientProvider` already wraps the app (`AppProviders.tsx` → `lib/core/queryClient.ts`: `staleTime` 30s, `gcTime` 5m, `retry: 1`, mutation retry 0, `refetchOnWindowFocus: false`); **zero** `useQuery`/`useMutation` usages exist.
 

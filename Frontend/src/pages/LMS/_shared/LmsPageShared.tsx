@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { SetStateAction } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 // LMS shell: InlineError in frame; StatCard momentum row; resource preview uses comp-surface tokens.
 import { ErpPageShell, SectionCard } from "../../../components/erp/ErpPrimitives";
@@ -173,31 +175,44 @@ export function buildResourcePayload(form: ResourceFormState) {
   };
 }
 
-export function useAsyncPage<T>(loader: () => Promise<T>, deps: unknown[]) {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Instance-unique fallback key part. Deps alone cannot distinguish two
+// useAsyncPage calls with identical signatures (e.g. nine loaders on
+// LmsHomePage all keyed []), so every hook instance owns its cache slice by
+// default. Pass cacheKeyPart to opt into sharing an entry across pages.
+let asyncPageInstanceCounter = 0;
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(null);
-    loader()
-      .then((value) => {
-        if (active) setData(value);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Request failed");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, deps);
+export function useAsyncPage<T>(loader: () => Promise<T>, deps: unknown[], cacheKeyPart?: string | number) {
+  const queryClient = useQueryClient();
+  const instanceKey = useRef(`i${++asyncPageInstanceCounter}`);
 
-  return { data, setData, loading, error };
+  // Every call site passes primitive deps (strings/numbers/booleans — audited
+  // during the React Query migration), so hashing them into the key is stable.
+  const key = ["lms", "async", cacheKeyPart ?? instanceKey.current, ...deps] as const;
+
+  const query = useQuery({
+    queryKey: key,
+    queryFn: loader,
+    staleTime: 30_000,
+    // Keep the previous key's payload on screen while new filters/ids load,
+    // matching the pre-migration behavior where `data` survived dep changes.
+    placeholderData: keepPreviousData,
+  });
+
+  const setData = useCallback(
+    (value: SetStateAction<T | null>) => {
+      queryClient.setQueryData<T | null>(key, (prev) =>
+        typeof value === "function" ? (value as (current: T | null) => T | null)(prev ?? null) : value
+      );
+    },
+    [queryClient, key]
+  );
+
+  return {
+    data: query.data ?? null,
+    setData,
+    loading: query.isPending || query.isPlaceholderData,
+    error: query.error instanceof Error ? query.error.message : query.error ? String(query.error) : null,
+  };
 }
 
 export function LmsFrame({
