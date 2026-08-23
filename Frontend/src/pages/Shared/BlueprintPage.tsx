@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isPlaceholderBlueprint, type PageBlueprint } from "../../config/erpBlueprints";
 import {
-  DataTable,
   EmptyStateCard,
+  ErpDataTable,
   ErpPageShell,
   SectionCard,
   StatusBanner,
@@ -103,7 +103,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
               ) : null}
 
               {section.tables.map((table, tableIndex) => (
-                <DataTable key={`${table.title || section.title}-${tableIndex}`} table={table} />
+                <ErpDataTable key={`${table.title || section.title}-${tableIndex}`} table={table} />
               ))}
             </SectionCard>
           ))}

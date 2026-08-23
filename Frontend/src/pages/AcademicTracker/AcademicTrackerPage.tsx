@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ErpPageShell, SectionCard, StatusBanner, KpiGrid } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
-import { DataTable } from "../../components/ui/DataTable";
 import { ProgressBar, StatCard } from "../../components/ui/Progress";
 import { Input } from "../../components/input";
 import { Button } from "../../components/button";
