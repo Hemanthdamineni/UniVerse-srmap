@@ -354,7 +354,9 @@ const STATUS_MAP = {
   "not-registered": { label: "Not Registered", preset: "error" },
 } as const;
 
-function DataTable({ rows }: { rows: TableRow[] }) {
+// File-local renderer over raw rows; named to avoid colliding with the
+// shared ui/DataTable and erp ErpDataTable components.
+function RegistrationRowsTable({ rows }: { rows: TableRow[] }) {
   if (!rows.length) return null;
   const columns = Object.keys(rows[0]);
 
@@ -602,7 +604,7 @@ export default function RegistrationErpPage({ blueprint, extraContent }: Props) 
 
               {/* Table sections */}
               {section.tables.map((rows, ti) => (
-                <DataTable key={ti} rows={rows} />
+                <RegistrationRowsTable key={ti} rows={rows} />
               ))}
             </div>
           ))}

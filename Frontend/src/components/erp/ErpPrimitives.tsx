@@ -278,7 +278,9 @@ export function KpiGrid({ items }: { items: KpiItem[] }) {
   );
 }
 
-export function DataTable({ table }: { table: DataTableModel }) {
+// Named ErpDataTable to disambiguate from the generic ui/DataTable: this one
+// renders a parsed blueprint DataTableModel, not column definitions.
+export function ErpDataTable({ table }: { table: DataTableModel }) {
   if (table.columns.length === 0 || table.rows.length === 0) {
     return <EmptyStateCard message="No table rows available." />;
   }
