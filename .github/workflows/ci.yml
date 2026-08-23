@@ -55,6 +55,15 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Lint
+        run: npx eslint .
+
+      - name: Metadata audit
+        run: npm run audit:metadata
+
+      - name: API contract audit
+        run: npm run audit:api-contracts
+
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -79,3 +88,44 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  responsive-audit:
+    name: Responsive Layout Audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start static prototype server
+        run: |
+          VITE_STATIC_PROTOTYPE=true npm run dev -- --host 127.0.0.1 --port 5173 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:5173/ > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:5173/ > /dev/null
+
+      - name: Run responsive audit
+        run: npm run audit:responsive -- --widths 320,768,1440 --out "$RUNNER_TEMP/responsive-audit"
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: responsive-audit-report
+          path: ${{ runner.temp }}/responsive-audit/report.json
+          if-no-files-found: ignore

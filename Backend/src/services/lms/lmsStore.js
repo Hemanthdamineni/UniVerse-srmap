@@ -689,16 +689,16 @@ const learningDiscoveryMethods = {
           LIMIT 8
         `
       )
-      .all()
-      .map((row) => this.attachResourceUserState(this.mapResource(row), userId));
-    const topRated = this.getResources({ sort: "quality", limit: 8, page: 1 }, { userId }).items;
+      .all();
     const examReady = this.db
       .prepare(
         "SELECT * FROM lms_resources WHERE isDeleted = 0 AND moderationState < 2 AND examProvenScore > 2.0 ORDER BY examProvenScore DESC LIMIT 8"
       )
-      .all()
-      .map((row) => this.attachResourceUserState(this.mapResource(row), userId));
-    return { trending, topRated, examReady };
+      .all();
+    const trendingMapped = this.attachResourcesUserState(trending.map((row) => this.mapResource(row)), userId);
+    const examReadyMapped = this.attachResourcesUserState(examReady.map((row) => this.mapResource(row)), userId);
+    const topRated = this.getResources({ sort: "quality", limit: 8, page: 1 }, { userId }).items;
+    return { trending: trendingMapped, topRated, examReady: examReadyMapped };
   },
 
   getSubjectOverview(subjectCode, userId) {
@@ -2068,7 +2068,10 @@ const resourceMethods = {
     const rows = this.db.prepare(query.sql).all(...query.params);
     const total = Number(this.db.prepare(countQuery.sql).get(...countQuery.params)?.total || 0);
     return {
-      items: rows.map((row) => this.attachResourceUserState(this.mapResource(row), userId)),
+      items: this.attachResourcesUserState(
+        rows.map((row) => this.mapResource(row)),
+        userId
+      ),
       pagination: {
         page: Math.max(1, toInteger(filters.page, 1)),
         limit: clamp(toInteger(filters.limit, 20), 1, 50),
@@ -2139,6 +2142,61 @@ const resourceMethods = {
           }
         : null,
     };
+  },
+
+  // Batch form of attachResourceUserState for list endpoints: one IN query
+  // per table instead of four point lookups per row.
+  attachResourcesUserState(resources, userId) {
+    if (!userId || !Array.isArray(resources) || resources.length === 0) {
+      return resources;
+    }
+    const ids = [...new Set(resources.map((resource) => resource?.id).filter(Boolean))];
+    if (!ids.length) return resources;
+    const placeholders = ids.map(() => "?").join(",");
+
+    const setUpvoted = new Set(
+      this.db
+        .prepare(`SELECT resourceId FROM lms_upvotes WHERE userId = ? AND resourceId IN (${placeholders})`)
+        .all(userId, ...ids)
+        .map((row) => row.resourceId)
+    );
+    const setBookmarked = new Set(
+      this.db
+        .prepare(`SELECT resourceId FROM lms_bookmarks WHERE userId = ? AND resourceId IN (${placeholders})`)
+        .all(userId, ...ids)
+        .map((row) => row.resourceId)
+    );
+    const setOutdated = new Set(
+      this.db
+        .prepare(`SELECT resourceId FROM lms_outdated_marks WHERE userId = ? AND resourceId IN (${placeholders})`)
+        .all(userId, ...ids)
+        .map((row) => row.resourceId)
+    );
+    const ratingById = new Map(
+      this.db
+        .prepare(
+          `SELECT resourceId, rating, review, dimensionTags FROM lms_ratings WHERE userId = ? AND resourceId IN (${placeholders})`
+        )
+        .all(userId, ...ids)
+        .map((row) => [row.resourceId, row])
+    );
+
+    return resources.map((resource) => {
+      const rating = ratingById.get(resource.id);
+      return {
+        ...resource,
+        userUpvoted: setUpvoted.has(resource.id),
+        userBookmarked: setBookmarked.has(resource.id),
+        userMarkedOutdated: setOutdated.has(resource.id),
+        userRating: rating
+          ? {
+              rating: rating.rating,
+              review: rating.review,
+              dimensionTags: parseJson(rating.dimensionTags, []),
+            }
+          : null,
+      };
+    });
   },
 
   getResource(id, userId = "", { includeHiddenOwn = false, isAdmin = false } = {}) {

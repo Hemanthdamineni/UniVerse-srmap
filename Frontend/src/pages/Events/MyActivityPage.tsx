@@ -30,7 +30,7 @@ function ActivityEventRow({ event }: { event: EventSummary }) {
       <span className="competition-pill">{event.status || "Active"}</span>
       <div className="activity-event-actions">
         <Link className="comp-btn-ghost" to={`/events/${event.id}`}>View</Link>
-        {round ? <Link className="comp-btn-primary" to={`/events/${event.id}/submit/${round.roundId}`}>Submit</Link> : null}
+        {round ? <Link className="comp-btn-primary" to={`/events/${event.id}/submit/${round.roundId}`}>Submit entry</Link> : null}
       </div>
     </CompetitionCard>
   );
@@ -88,6 +88,10 @@ export default function MyActivityPage() {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                role="tab"
+                id={`activity-tab-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                aria-controls="activity-tabpanel"
                 className={activeTab === tab.id ? "is-active" : ""}
                 onClick={() => setTab(tab.id)}
                 type="button"
@@ -97,6 +101,7 @@ export default function MyActivityPage() {
             ))}
           </div>
 
+          <div id="activity-tabpanel" role="tabpanel" aria-labelledby={`activity-tab-${activeTab}`}>
           {error ? <ErrorMessage message={error} onRetry={loadEvents} /> : null}
 
           {loading ? (
@@ -130,6 +135,7 @@ export default function MyActivityPage() {
           ) : (
             <CompetitionEmptyPanel title="No results published" description="Your evaluated rounds will appear here after organizers publish results." />
           )}
+          </div>
         </div>
 
         <aside className="activity-side-column">

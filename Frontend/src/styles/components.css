@@ -19,8 +19,8 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-sm) var(--space-md);
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: var(--border-radius-md);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast), box-shadow var(--transition-fast);
@@ -70,4 +70,89 @@
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* ── First-run guide (one-time dashboard orientation) ── */
+.first-run-guide {
+  border: 0.5px solid var(--comp-border);
+  background: color-mix(in srgb, var(--comp-accent) 4%, var(--comp-surface));
+  border-radius: var(--border-radius-lg, 12px);
+  padding: var(--space-md, 16px) var(--space-lg, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md, 16px);
+  flex-wrap: wrap;
+  opacity: 1;
+  transform: translateY(0);
+  animation: first-run-enter 420ms var(--ease-spring) both;
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.first-run-guide--leaving {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@keyframes first-run-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.first-run-guide__title {
+  margin: 0;
+  font-size: var(--text-base, 0.95rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--comp-text-primary);
+}
+
+.first-run-guide__body {
+  margin: 4px 0 0;
+  font-size: var(--text-sm, 0.85rem);
+  line-height: 1.55;
+  color: var(--comp-text-secondary);
+}
+
+.first-run-guide__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-sm, 0.85rem);
+  color: var(--comp-text-secondary);
+  white-space: nowrap;
+}
+
+.first-run-kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--comp-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--comp-accent) 10%, transparent);
+  color: var(--comp-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .first-run-guide {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .first-run-guide__hint {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-run-guide {
+    animation: none;
+    transition: none;
+  }
 }

@@ -114,7 +114,7 @@ export default function ShortlistPage() {
       subtitle="Apply selection rules and publish round results."
       variant="wide"
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         <Link
           to={`/events/${encodeURIComponent(eventId)}/manage`}
@@ -184,26 +184,26 @@ export default function ShortlistPage() {
           ) : evaluated.length === 0 ? (
             <EmptyState icon="📋" title="No evaluated submissions" description="Submit evaluations before applying shortlist." />
           ) : (
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1">
               {evaluated.map((row, idx) => {
                 const isSelected = previewIds.has(row.id);
                 return (
                   <div
                     key={row.id}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2 ${
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
                       isSelected
                         ? 'border-[var(--status-open-border)] bg-[var(--status-open-bg)]'
                         : 'border-[var(--border)] bg-[var(--dash-subcard-bg)]'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <span className="min-w-7 font-bold text-[var(--comp-accent)]">#{idx + 1}</span>
                       <span className="text-sm text-[var(--text-primary)]">{row.submittedBy}</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-[var(--text-primary)]">{row.totalScore}</span>
                       {isSelected && (
-                        <span className="rounded-full bg-[var(--status-open-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--status-open-text)]">
+                        <span className="rounded-full bg-[var(--status-open-bg)] px-2 py-1 text-[11px] font-bold text-[var(--status-open-text)]">
                           ✓ Shortlist
                         </span>
                       )}

@@ -22,9 +22,12 @@ const AdminHelpdeskTicketsPage = lazy(() => import("../pages/Admin/AdminHelpdesk
 const AdminLmsModerationPage = lazy(() => import("../pages/Admin/AdminLmsModerationPage"));
 const AdminSystemControlsPage = lazy(() => import("../pages/Admin/AdminSystemControlsPage"));
 const AcademicHubPage = lazy(() => import("../pages/AcademicTracker/AcademicHubPage"));
+const AcademicProgressPage = lazy(() => import("../pages/AcademicTracker/AcademicProgressPage"));
+const AcademicPlannerPage = lazy(() => import("../pages/AcademicTracker/AcademicPlannerPage"));
+const AcademicAdvisingPage = lazy(() => import("../pages/AcademicTracker/AcademicAdvisingPage"));
 const AlumniConnect = lazy(() => import("../pages/CareerPortal/AlumniConnect"));
-const TransportRoutesPage = lazy(() => import("../pages/ERP/TransportRoutesPage"));
-const HostelBookingPage = lazy(() => import("../pages/ERP/HostelBookingPage"));
+const HostelRegistrationPage = lazy(() => import("../pages/ERP/HostelRegistrationPage"));
+const TransportRegistrationPage = lazy(() => import("../pages/ERP/TransportRegistrationPage"));
 const ApplicationTrackerPage = lazy(() => import("../pages/CareerPortal/ApplicationTrackerPage"));
 const BookmarksPage = lazy(() => import("../pages/CareerPortal/BookmarksPage"));
 const CareerHomePage = lazy(() => import("../pages/CareerPortal/CareerHomePage"));
@@ -35,6 +38,7 @@ const SkillGapPage = lazy(() => import("../pages/CareerPortal/SkillGapPage"));
 const SubmitOpportunityPage = lazy(() => import("../pages/CareerPortal/SubmitOpportunityPage"));
 const ProfessionalProfilePage = lazy(() => import("../pages/CareerPortal/ProfessionalProfilePage"));
 const AttendanceDetailsPage = lazy(() => import("../pages/ERP/AttendanceDetailsPage"));
+const VacantRoomsPage = lazy(() => import("../pages/ERP/VacantRoomsPage"));
 const BankDetailsPage = lazy(() => import("../pages/ERP/BankDetailsPage"));
 const CurriculumPage = lazy(() => import("../pages/ERP/CurriculumPage"));
 const DocumentErpPage = lazy(() => import("../pages/ERP/DocumentErpPage"));
@@ -51,7 +55,6 @@ const TimetablePage = lazy(() => import("../pages/ERP/TimetablePage"));
 const EventsFeedback = lazy(() => import("../pages/Feedback/EventsFeedback"));
 const HostelMessFeedback = lazy(() => import("../pages/Feedback/HostelMessFeedback"));
 const TransportFeedback = lazy(() => import("../pages/Feedback/TransportFeedback"));
-const FeedbackDashboard = lazy(() => import("../pages/Feedback/FeedbackDashboard"));
 const CourseFeedbackAssistantPage = lazy(() => import("../pages/Feedback/CourseFeedbackAssistantPage"));
 const EventsRegistrationHub = lazy(() => import("../pages/Events/EventsRegistrationHub"));
 const HelpdeskFAQs = lazy(() => import("../pages/Helpdesk/FAQs"));
@@ -66,14 +69,14 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/helpdesk/track-escalate": <TrackEscalate />,
   "/registration/events-registration": <EventsRegistrationHub />,
   "/feedback/events-feedback": <EventsFeedback />,
-  "/feedback/dashboard": <FeedbackDashboard />,
   "/feedback/hostel-mess-feedback": <HostelMessFeedback />,
   "/feedback/transport-feedback": <TransportFeedback />,
-  "/transport-hostel/routes": <TransportRoutesPage blueprint={{ route: "/transport-hostel/routes", heading: "Transport Routes", fetchKeys: ["transport/transport-&-faqs"], renderer: "generic" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native", loadingMessage: "Loading transport routes..." }} />,
-  "/transport-hostel/hostel-booking": <HostelBookingPage blueprint={{ route: "/transport-hostel/hostel-booking", heading: "Hostel Booking", fetchKeys: ["hostel/hostel-booking-for-full-year"], renderer: "generic" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native", loadingMessage: "Loading hostel info..." }} />,
-  "/academic-tracker/progress-overview": <AcademicHubPage />,
+  "/registration/hostel-registration": <HostelRegistrationPage blueprint={{ route: "/registration/hostel-registration", heading: "Hostel Registration", fetchKeys: ["hostel/hostel-booking-for-full-year"], renderer: "document" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native" }} />,
+  "/registration/transport-registration": <TransportRegistrationPage blueprint={{ route: "/registration/transport-registration", heading: "Transport Registration", fetchKeys: ["transport/transport-registration", "transport/registration-acknowledgment", "transport/transport-&-faqs"], renderer: "document" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native" }} />,
   "/academic-tracker/academic-insights": <AcademicHubPage />,
-  "/academic-tracker/unified-insights": <AcademicHubPage />,
+  "/academic-tracker/progress": <AcademicProgressPage />,
+  "/academic-tracker/planner": <AcademicPlannerPage />,
+  "/academic-tracker/advising": <AcademicAdvisingPage />,
   "/career": <CareerHomePage />,
   "/career/opportunities": <OpportunitiesPage />,
   "/career/opportunities/:id": <OpportunityDetailPage />,
@@ -130,6 +133,8 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
       component = <LearningMaterialsPage blueprint={blueprint} advanced />;
     } else if (blueprint.renderer === "attendance") {
       component = <AttendanceDetailsPage blueprint={blueprint} />;
+    } else if (blueprint.renderer === "vacant-rooms") {
+      component = <VacantRoomsPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "timetable") {
       component = <TimetablePage blueprint={blueprint} />;
     } else if (blueprint.renderer === "curriculum") {

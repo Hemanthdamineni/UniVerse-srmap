@@ -11,6 +11,7 @@ import {
   useAsyncPage,
   LmsFrame
 } from "../_shared/LmsPageShared";
+import { ConfirmDialog } from "../../../components/dialog";
 import type {
   LmsGuide,
   LmsResource,
@@ -20,6 +21,7 @@ import type {
 export function MyContributionsPage() {
   const { data, setData, loading, error } = useAsyncPage(() => getMyContributions(), []);
   const [actionError, setActionError] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<LmsResource | null>(null);
 
   const resources = ((data?.resources as LmsResource[]) || []);
   const guides = ((data?.guides as LmsGuide[]) || []);
@@ -46,14 +48,16 @@ export function MyContributionsPage() {
     }
   }, [actionError]);
 
-  const handleDelete = async (resource: LmsResource) => {
-    if (!window.confirm(`Move "${resource.title}" to deleted? You can restore it from this page.`)) return;
+  const handleDelete = async () => {
+    const resource = pendingDelete;
+    if (!resource) return;
+    setPendingDelete(null);
     setActionError("");
     try {
       await deleteLmsResource(resource.id);
       await refresh();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Unable to delete this resource.");
+      setActionError(err instanceof Error ? err.message : "Couldn't delete this resource. Please try again.");
     }
   };
 
@@ -80,12 +84,12 @@ export function MyContributionsPage() {
             <div key={resource.id} className="dashboard-card flex items-center justify-between gap-3 p-4">
               <Link
                 to={`/resources/${resource.id}`}
-                className="min-w-0 flex-1 no-underline"
+                className="min-w-0 flex-1 no-underline space-y-1"
               >
                 <p className="truncate text-sm font-semibold text-[var(--comp-text-primary)] hover:text-[var(--info)]">
                   {resource.title}
                 </p>
-                <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">
+                <p className="text-xs text-[var(--comp-text-muted)]">
                   {[resource.type, resource.subjectCode, `↑ ${resource.upvotes}`, `${resource.viewCount} views`]
                     .filter(Boolean)
                     .join(" · ")}
@@ -94,13 +98,13 @@ export function MyContributionsPage() {
               <div className="flex shrink-0 gap-2">
                 <Link
                   to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}
-                  className="rounded-full border border-[var(--comp-border)] px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] no-underline"
+                  className="lms-btn lms-btn-ghost no-underline"
                 >
                   Edit
                 </Link>
                 <button
-                  className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)]"
-                  onClick={() => void handleDelete(resource)}
+                  className="lms-btn lms-btn-danger"
+                  onClick={() => setPendingDelete(resource)}
                 >
                   Delete
                 </button>
@@ -115,15 +119,15 @@ export function MyContributionsPage() {
           <div className="space-y-2">
             {deletedResources.map((resource) => (
               <div key={resource.id} className="dashboard-card flex items-center justify-between gap-3 p-4 opacity-70">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 space-y-1">
                   <p className="truncate text-sm font-semibold text-[var(--comp-text-primary)]">{resource.title}</p>
-                  <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">
+                  <p className="text-xs text-[var(--comp-text-muted)]">
                     {[resource.type, resource.subjectCode].filter(Boolean).join(" · ")}
                     {resource.deletedAt ? ` · deleted ${new Date(resource.deletedAt).toLocaleDateString()}` : ""}
                   </p>
                 </div>
                 <button
-                  className="shrink-0 rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--success)]"
+                  className="shrink-0 lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
                   onClick={() => void handleRestore(resource)}
                 >
                   Restore
@@ -155,6 +159,16 @@ export function MyContributionsPage() {
           {roadmaps.length === 0 ? <p className="body-text">No roadmaps published yet.</p> : null}
         </div>
       </SectionCard>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+        title="Delete this resource?"
+        description={`"${pendingDelete?.title}" will be moved to your deleted list. You can restore it from this page.`}
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => void handleDelete()}
+      />
     </LmsFrame>
   );
 }

@@ -63,27 +63,25 @@ export default function AdminEventApprovalsPage() {
   const displayItems = (filter === 'all' ? localItems : localItems.filter((i) => i.status === filter));
 
   return (
-    <ErpPageShell title="Event Approvals" source="Internal API" isLoading={loading} loadingMessage="Loading approval queue...">
+    <ErpPageShell
+      title="Event Approvals"
+      source="Internal API"
+      isLoading={loading}
+      loadingMessage="Loading approval queue..."
+      headerActions={
+        pendingCount > 0 ? (
+          <span className="rounded-full bg-[var(--status-pending-bg)] px-3 py-1 text-xs font-semibold text-[var(--status-pending-text)]">
+            {pendingCount} Pending Review
+          </span>
+        ) : null
+      }
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-          <div>
-            <h1 className="comp-heading-lg" style={{ margin: 0 }}>Event Approvals Queue</h1>
-            <p className="comp-body" style={{ margin: '4px 0 0' }}>
-              Review and approve proposed campus events
-            </p>
-          </div>
-          {pendingCount > 0 && (
-            <span style={{
-              padding: '6px 14px', borderRadius: 20,
-              background: 'var(--status-pending-bg)', color: 'var(--status-pending-text)',
-              fontSize: '0.82rem', fontWeight: 700,
-            }}>
-              {pendingCount} Pending Review
-            </span>
-          )}
-        </div>
+        {/* Subtitle */}
+        <p className="comp-body" style={{ margin: 0 }}>
+          Review and approve proposed campus events
+        </p>
 
         {/* Filter tabs */}
         <DataToolbar
@@ -94,13 +92,11 @@ export default function AdminEventApprovalsPage() {
                   key={f}
                   onClick={() => setFilter(f)}
                   aria-pressed={filter === f}
-                  style={{
-                    padding: '6px 14px', borderRadius: 20, fontSize: '0.82rem', fontWeight: 600,
-                    border: `1px solid ${filter === f ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                    background: filter === f ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                    color: filter === f ? '#fff' : 'var(--comp-text-secondary)',
-                    cursor: 'pointer', textTransform: 'capitalize',
-                  }}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize transition-colors ${
+                    filter === f
+                      ? 'border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white'
+                      : 'border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-secondary)] hover:border-[var(--comp-border-strong)]'
+                  }`}
                 >
                   {f}
                 </button>
@@ -155,12 +151,11 @@ export default function AdminEventApprovalsPage() {
                       </button>
                     </>
                   ) : (
-                    <span style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700,
-                      background: item.status === 'approved' ? 'var(--status-open-bg)' : 'var(--status-live-bg)',
-                      color: item.status === 'approved' ? 'var(--status-open-text)' : 'var(--status-live-text)',
-                      textTransform: 'uppercase',
-                    }}>
+                    <span className={`rounded-full px-2 py-1 text-xs font-bold uppercase ${
+                      item.status === 'approved'
+                        ? 'bg-[var(--status-open-bg)] text-[var(--status-open-text)]'
+                        : 'bg-[var(--status-live-bg)] text-[var(--status-live-text)]'
+                    }`}>
                       {item.status}
                     </span>
                   )}

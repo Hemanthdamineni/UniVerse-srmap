@@ -18,6 +18,16 @@ import {
   isPrototypeEventRegistered,
   savePrototypeEventTeam,
   setPrototypeEventRegistration,
+  getPrototypeEventInvitations,
+  deletePrototypeEventTeam,
+  getPrototypePersistentTeams,
+  getPrototypePersistentTeam,
+  savePrototypePersistentTeam,
+  deletePrototypePersistentTeam,
+  getPrototypeTeamInvitations,
+  savePrototypeTeamInvitation,
+  updatePrototypeTeamInvitationStatus,
+  deletePrototypeTeamInvitation,
 } from './prototypeEventState';
 
 // ─── Error Types ─────────────────────────────────────────────────────────────
@@ -158,6 +168,38 @@ export interface TeamRecruitmentPost {
   createdAt: string;
   updatedAt: string;
   team: Team;
+}
+
+export interface TeamInvitation {
+  id: string;
+  eventId: string;
+  teamId: string;
+  teamName: string;
+  inviteeRegisterNumber: RegNo;
+  inviterRegisterNumber: RegNo;
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  createdAt: string;
+}
+
+// ─── Persistent Teams ───────────────────────────────────────────────────────────
+
+export interface PersistentTeam {
+  id: string;
+  name: string;
+  leaderRegNo: RegNo;
+  members: TeamMember[];
+  createdAt: string;
+}
+
+export interface PersistentTeamInvitation {
+  id: string;
+  teamId: string;
+  teamName: string;
+  inviteeRegisterNumber: RegNo;
+  inviterRegisterNumber: RegNo;
+  eventId?: string; // Optional - if set, this is for event registration
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  createdAt: string;
 }
 
 export interface TeamMatchCandidate {
@@ -409,10 +451,125 @@ export async function inviteMember(
 }
 
 export async function acceptInvite(eventId: string, invitationId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    // In prototype mode, just invalidate cache - UI will re-fetch
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
   await safeFetch(() =>
     requestData<Record<string, unknown>>(
       `${compBase(eventId)}/invitations/${enc(invitationId)}/accept`,
       { method: 'POST', body: JSON.stringify({}) }
+    )
+  );
+  eventCache.invalidate(`team:${eventId}`);
+}
+
+export async function declineInvitation(eventId: string, invitationId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<Record<string, unknown>>(
+      `${compBase(eventId)}/invitations/${enc(invitationId)}/decline`,
+      { method: 'POST', body: JSON.stringify({}) }
+    )
+  );
+  eventCache.invalidate(`team:${eventId}`);
+}
+
+export async function getMyInvitations(eventId: string): Promise<TeamInvitation[]> {
+  if (isStaticPrototype()) {
+    return getPrototypeEventInvitations(eventId);
+  }
+  return safeFetch(() =>
+    requestData<TeamInvitation[]>(`${compBase(eventId)}/invitations/my-invitations`)
+  );
+}
+
+export async function leaveTeam(eventId: string, teamId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    const team = getPrototypeEventTeam(eventId);
+    if (team && team.id === teamId) {
+      const currentRegNo = getCurrentRegNo();
+      if (team.leaderRegNo === currentRegNo) {
+        throw new Error('Team leader cannot leave without transferring leadership first.');
+      }
+      team.members = team.members.filter(m => m.regNo !== currentRegNo);
+      savePrototypeEventTeam(team);
+    }
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<Record<string, unknown>>(
+      `${compBase(eventId)}/teams/${enc(teamId)}/members/me`,
+      { method: 'DELETE' }
+    )
+  );
+  eventCache.invalidate(`team:${eventId}`);
+}
+
+export async function deleteTeam(eventId: string, teamId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    deletePrototypeEventTeam(eventId);
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<Record<string, unknown>>(
+      `${compBase(eventId)}/teams/${enc(teamId)}`,
+      { method: 'DELETE' }
+    )
+  );
+  eventCache.invalidate(`team:${eventId}`);
+}
+
+export async function transferLeadership(eventId: string, teamId: string, newLeaderId: RegNo): Promise<void> {
+  if (isStaticPrototype()) {
+    const team = getPrototypeEventTeam(eventId);
+    if (team && team.id === teamId) {
+      const currentRegNo = getCurrentRegNo();
+      if (team.leaderRegNo !== currentRegNo) {
+        throw new Error('Only the team leader can transfer leadership.');
+      }
+      if (!team.members.some(m => m.regNo === newLeaderId && m.status === 'accepted')) {
+        throw new Error('New leader must already be an accepted team member.');
+      }
+      team.leaderRegNo = newLeaderId;
+      savePrototypeEventTeam(team);
+    }
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<Record<string, unknown>>(
+      `${compBase(eventId)}/teams/${enc(teamId)}/leader`,
+      { method: 'PUT', body: JSON.stringify({ newLeaderId }) }
+    )
+  );
+  eventCache.invalidate(`team:${eventId}`);
+}
+
+export async function cancelInvitation(eventId: string, teamId: string, inviteeRegisterNumber: RegNo): Promise<void> {
+  if (isStaticPrototype()) {
+    const team = getPrototypeEventTeam(eventId);
+    if (team && team.id === teamId) {
+      const currentRegNo = getCurrentRegNo();
+      if (team.leaderRegNo !== currentRegNo) {
+        throw new Error('Only the team leader can cancel invitations.');
+      }
+      team.members = team.members.filter(m => m.regNo !== inviteeRegisterNumber);
+      savePrototypeEventTeam(team);
+    }
+    eventCache.invalidate(`team:${eventId}`);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<Record<string, unknown>>(
+      `${compBase(eventId)}/teams/${enc(teamId)}/invite/${enc(inviteeRegisterNumber)}`,
+      { method: 'DELETE' }
     )
   );
   eventCache.invalidate(`team:${eventId}`);
@@ -591,6 +748,180 @@ export async function removeRole(eventId: string, regNo: RegNo): Promise<void> {
     })
   );
   eventCache.invalidate(`event:${eventId}`);
+}
+
+// ─── Persistent Teams ─────────────────────────────────────────────────────────
+
+export async function getMyPersistentTeams(): Promise<PersistentTeam[]> {
+  if (isStaticPrototype()) {
+    const { getPrototypePersistentTeams } = await import('./prototypeEventState');
+    return getPrototypePersistentTeams();
+  }
+  return safeFetch(() =>
+    requestData<PersistentTeam[]>(`/api/teams/persistent`)
+  );
+}
+
+export async function createPersistentTeam(
+  name: string,
+  inviteRegNos: string[]
+): Promise<PersistentTeam> {
+  const currentRegNo = getCurrentRegNo();
+  if (isStaticPrototype()) {
+    const { savePrototypePersistentTeam } = await import('./prototypeEventState');
+    const team: PersistentTeam = {
+      id: `persistent-team-${Date.now()}`,
+      name,
+      leaderRegNo: currentRegNo ?? '',
+      members: [
+        { regNo: currentRegNo ?? '', name: currentRegNo ?? '', joinedAt: new Date().toISOString(), status: 'accepted' as const },
+        ...inviteRegNos.map(regNo => ({ regNo, name: regNo, joinedAt: new Date().toISOString(), status: 'pending' as const }))
+      ],
+      createdAt: new Date().toISOString(),
+    };
+    savePrototypePersistentTeam(team);
+
+    // Create invitations for invited members
+    const { savePrototypeTeamInvitation } = await import('./prototypeEventState');
+    for (const regNo of inviteRegNos) {
+      savePrototypeTeamInvitation({
+        id: `invite-${Date.now()}-${regNo}`,
+        teamId: team.id,
+        teamName: team.name,
+        inviteeRegisterNumber: regNo,
+        inviterRegisterNumber: currentRegNo ?? '',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return team;
+  }
+  const result = await safeFetch(() =>
+    requestData<PersistentTeam>(`/api/teams/persistent`, {
+      method: 'POST',
+      body: JSON.stringify({ name, inviteRegNos }),
+    })
+  );
+  // TODO: invalidate persistent teams cache
+  return result;
+}
+
+export async function deletePersistentTeam(teamId: string): Promise<void> {
+  if (isStaticPrototype()) {
+    const { deletePrototypePersistentTeam } = await import('./prototypeEventState');
+    return deletePrototypePersistentTeam(teamId);
+  }
+  await safeFetch(() =>
+    requestData<void>(`/api/teams/persistent/${teamId}`, {
+      method: 'DELETE',
+    })
+  );
+  // TODO: invalidate persistent teams cache
+}
+
+export async function inviteToPersistentTeam(
+  teamId: string,
+  inviteRegNos: string[]
+): Promise<PersistentTeamInvitation[]> {
+  const currentRegNo = getCurrentRegNo();
+  if (isStaticPrototype()) {
+    const { savePrototypeTeamInvitation } = await import('./prototypeEventState');
+    const { getPrototypePersistentTeam } = await import('./prototypeEventState');
+    const team = getPrototypePersistentTeam(teamId);
+    if (!team) throw new Error('Team not found');
+    const invitations: PersistentTeamInvitation[] = [];
+    for (const regNo of inviteRegNos) {
+      const invitation: PersistentTeamInvitation = {
+        id: `invite-${Date.now()}-${regNo}`,
+        teamId,
+        teamName: team.name,
+        inviteeRegisterNumber: regNo,
+        inviterRegisterNumber: currentRegNo ?? '',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+      savePrototypeTeamInvitation(invitation);
+      invitations.push(invitation);
+    }
+    return invitations;
+  }
+  const result = await safeFetch(() =>
+    requestData<PersistentTeamInvitation[]>(`/api/teams/persistent/${teamId}/invitations`, {
+      method: 'POST',
+      body: JSON.stringify({ inviteRegNos }),
+    })
+  );
+  // TODO: invalidate cache
+  return result;
+}
+
+export async function getMyPersistentTeamInvitations(): Promise<PersistentTeamInvitation[]> {
+  if (isStaticPrototype()) {
+    const { getPrototypeTeamInvitations } = await import('./prototypeEventState');
+    const { getCurrentRegNo } = await import('../core/identity');
+    const regNo = getCurrentRegNo();
+    return regNo ? getPrototypeTeamInvitations(regNo) : [];
+  }
+  return safeFetch(() =>
+    requestData<PersistentTeamInvitation[]>(`/api/teams/persistent/invitations`)
+  );
+}
+
+export async function respondToPersistentTeamInvitation(
+  invitationId: string,
+  accept: boolean
+): Promise<void> {
+  if (isStaticPrototype()) {
+    const { updatePrototypeTeamInvitationStatus, getPrototypeTeamInvitations, getPrototypePersistentTeam, savePrototypePersistentTeam } = await import('./prototypeEventState');
+    const { getCurrentRegNo } = await import('../core/identity');
+    const regNo = getCurrentRegNo();
+    if (!regNo) return;
+    const invitations = getPrototypeTeamInvitations(regNo);
+    const invitation = invitations.find(inv => inv.id === invitationId);
+    if (!invitation) return;
+    updatePrototypeTeamInvitationStatus(regNo, invitation.teamId, accept ? 'accepted' : 'declined');
+
+    // If accepted, add to team members
+    if (accept) {
+      const { getPrototypePersistentTeam, savePrototypePersistentTeam } = await import('./prototypeEventState');
+      const team = getPrototypePersistentTeam(invitation.teamId);
+      if (team) {
+        const memberExists = team.members.some(m => m.regNo === regNo);
+        if (!memberExists) {
+          team.members.push({ regNo, name: regNo, joinedAt: new Date().toISOString(), status: 'accepted' });
+          savePrototypePersistentTeam(team);
+        }
+      }
+    }
+    return;
+  }
+  await safeFetch(() =>
+    requestData<void>(`/api/teams/persistent/invitations/${invitationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ accept }),
+    })
+  );
+  // TODO: invalidate cache
+}
+
+export async function cancelPersistentTeamInvitation(
+  teamId: string,
+  inviteeRegNo: string
+): Promise<void> {
+  if (isStaticPrototype()) {
+    const { deletePrototypeTeamInvitation } = await import('./prototypeEventState');
+    const { getCurrentRegNo } = await import('../core/identity');
+    const regNo = getCurrentRegNo();
+    if (!regNo) return;
+    deletePrototypeTeamInvitation(inviteeRegNo, teamId);
+    return;
+  }
+  await safeFetch(() =>
+    requestData<void>(`/api/teams/persistent/${teamId}/invitations/${encodeURIComponent(inviteeRegNo)}`, {
+      method: 'DELETE',
+    })
+  );
+  // TODO: invalidate cache
 }
 
 // ─── Announcements ────────────────────────────────────────────────────────────

@@ -70,7 +70,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close
-        className="absolute right-3 top-3 rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:bg-[color-mix(in_srgb,var(--comp-surface)_88%,var(--comp-accent))] hover:text-[var(--text-primary)]"
+        className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-md text-[var(--text-secondary)] transition-colors hover:bg-[color-mix(in_srgb,var(--comp-surface)_88%,var(--comp-accent))] hover:text-[var(--text-primary)] max-md:right-1 max-md:top-1 max-md:size-11"
         aria-label="Close"
       >
         <XIcon className="size-4" />
@@ -137,4 +137,57 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  ConfirmDialog,
+}
+
+// ── ConfirmDialog ──────────────────────────────────────────────────
+
+export interface ConfirmDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: React.ReactNode;
+  confirmLabel: string;
+  cancelLabel?: string;
+  danger?: boolean;
+  busy?: boolean;
+  busyLabel?: string;
+  onConfirm: () => void;
+}
+
+function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  cancelLabel = "Cancel",
+  danger = false,
+  busy = false,
+  busyLabel = "Working...",
+  onConfirm,
+}: ConfirmDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent {...(description ? {} : { "aria-describedby": undefined })}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description ? <DialogDescription>{description}</DialogDescription> : null}
+        </DialogHeader>
+        <DialogFooter>
+          <button type="button" className="comp-btn-ghost" onClick={() => onOpenChange(false)} disabled={busy}>
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={`comp-btn-primary ${danger ? "text-[var(--error)]" : ""}`}
+            onClick={onConfirm}
+            disabled={busy}
+          >
+            {busy ? busyLabel : confirmLabel}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

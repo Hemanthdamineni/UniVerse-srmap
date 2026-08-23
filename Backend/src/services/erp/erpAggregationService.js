@@ -741,6 +741,10 @@ const circuitAndCacheMethods = {
     const entry = {
       pageKey,
       data,
+      // fetchLive already ran validateLivePayload on this data right before
+      // calling writeCache; fromCache uses the marker to skip re-validating
+      // the whole payload tree on every read.
+      validatedPayload: true,
       fetchedAt: new Date(fetchedAtMs).toISOString(),
       staleAt: staleAtMs,
       expiresAt: expiresAtMs,
@@ -885,17 +889,21 @@ const fetcherMethods = {
       return null;
     }
 
-    const payloadValidation = validateLivePayload(pageKey, entry.data, {
-      targets: this.getTargetsForPage(pageKey),
-    });
-    if (!payloadValidation.valid) {
-      await this.cacheStore.delete(cacheKey);
+    // Entries written by writeCache were validated at fetch time; only
+    // legacy/unmarked entries pay the payload-tree re-validation on read.
+    if (entry.validatedPayload !== true) {
+      const payloadValidation = validateLivePayload(pageKey, entry.data, {
+        targets: this.getTargetsForPage(pageKey),
+      });
+      if (!payloadValidation.valid) {
+        await this.cacheStore.delete(cacheKey);
 
-      if (recordMetrics) {
-        erpCacheResultTotal.inc({ result: "miss" });
-        updateCacheHitRatio({ policy: policyMode, result: "miss" });
+        if (recordMetrics) {
+          erpCacheResultTotal.inc({ result: "miss" });
+          updateCacheHitRatio({ policy: policyMode, result: "miss" });
+        }
+        return null;
       }
-      return null;
     }
 
     if (this.isFresh(entry)) {

@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-07-22T19:21:03.969Z",
+  "coverageAnalysis": [
+    {
+      "subjectCode": "CSE302",
+      "subjectName": "Design and Analysis of Algorithms",
+      "unitsCovered": "1/5",
+      "typesCovered": "1/5",
+      "totalResources": 1,
+      "coverageScore": 20
+    },
+    {
+      "subjectCode": "CSE304",
+      "subjectName": "Operating Systems",
+      "unitsCovered": "1/5",
+      "typesCovered": "1/5",
+      "totalResources": 1,
+      "coverageScore": 20
+    },
+    {
+      "subjectCode": "CSE306",
+      "subjectName": "Database Management Systems",
+      "unitsCovered": "1/5",
+      "typesCovered": "1/5",
+      "totalResources": 1,
+      "coverageScore": 20
+    },
+    {
+      "subjectCode": "CSE308",
+      "subjectName": "Computer Networks",
+      "unitsCovered": "1/5",
+      "typesCovered": "1/5",
+      "totalResources": 1,
+      "coverageScore": 20
+    },
+    {
+      "subjectCode": "CSE310",
+      "subjectName": "Software Engineering",
+      "unitsCovered": "0/5",
+      "typesCovered": "0/5",
+      "totalResources": 0,
+      "coverageScore": 0
+    },
+    {
+      "subjectCode": "CSE312",
+      "subjectName": "Machine Learning Fundamentals",
+      "unitsCovered": "0/5",
+      "typesCovered": "0/5",
+      "totalResources": 0,
+      "coverageScore": 0
+    },
+    {
+      "subjectCode": "CSE314",
+      "subjectName": "Theory of Computation",
+      "unitsCovered": "0/5",
+      "typesCovered": "0/5",
+      "totalResources": 0,
+      "coverageScore": 0
+    },
+    {
+      "subjectCode": "CSE316",
+      "subjectName": "Compiler Design",
+      "unitsCovered": "0/5",
+      "typesCovered": "0/5",
+      "totalResources": 0,
+      "coverageScore": 0
+    }
+  ],
+  "qualitySignals": [
+    {
+      "metric": "Resources with content",
+      "value": "3/4",
+      "score": 75
+    }
+  ],
+  "recommendations": [
+    "Add more PYQs for: CSE302, CSE304, CSE306, CSE308, CSE310, CSE312, CSE314, CSE316",
+    "Review the verification report for any flagged issues",
+    "Consider adding video lecture references as link-type resources",
+    "Add more difficult-level questions to the question bank for advanced learners"
+  ]
+}

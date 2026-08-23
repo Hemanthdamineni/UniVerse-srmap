@@ -80,12 +80,7 @@ const scrapeTargets = {
 
   "hostel/room-details": [{ dropdown: "Hostel", subitem: "Room Details" }],
   "transport-hostel/room-details": [{ dropdown: "Hostel", subitem: "Room Details" }],
-  "transport-hostel/faqs": [
-    { dropdown: "Hostel", subitem: "Hostel Layout & FAQs" },
-    { dropdown: "Transport", subitem: "Transport & FAQs" },
-  ],
   "hostel/hostel-layout-&-faqs": [{ dropdown: "Hostel", subitem: "Hostel Layout & FAQs" }],
-  "transport/transport-&-faqs": [{ dropdown: "Transport", subitem: "Transport & FAQs" }],
   "transport-hostel/refund-change-requests": [
     { dropdown: "Hostel", subitem: "Hostel Refund Policy" },
     { dropdown: "Transport", subitem: "Transport Refund Policy" },

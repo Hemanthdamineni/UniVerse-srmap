@@ -1,6 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { sanitizeVisibleText } from "../../components/erp/ErpPrimitives";
 import { executePipeline, type TimetableModel } from "../../lib/erp/erpTransformers";
+import {
+  describeSlotTiming,
+  findFocusSlotIndex,
+  SLOT_WINDOWS,
+} from "../../lib/erp/scheduleTiming";
 import { StatusBadge } from "../../components/ui/Badges";
 
 const TIME_SLOTS = [
@@ -12,17 +17,6 @@ const TIME_SLOTS = [
   { slot: "6", time: "2:00 pm" },
   { slot: "7", time: "3:00 pm" },
   { slot: "8", time: "4:00 pm" },
-];
-
-const SLOT_WINDOWS = [
-  { startHour: 9, startMinute: 0, endHour: 9, endMinute: 50 },
-  { startHour: 10, startMinute: 0, endHour: 10, endMinute: 50 },
-  { startHour: 11, startMinute: 0, endHour: 11, endMinute: 50 },
-  { startHour: 12, startMinute: 0, endHour: 12, endMinute: 50 },
-  { startHour: 13, startMinute: 0, endHour: 13, endMinute: 50 },
-  { startHour: 14, startMinute: 0, endHour: 14, endMinute: 50 },
-  { startHour: 15, startMinute: 0, endHour: 15, endMinute: 50 },
-  { startHour: 16, startMinute: 0, endHour: 17, endMinute: 30 },
 ];
 
 const DAY_ALIASES: Record<string, string[]> = {
@@ -63,7 +57,15 @@ function extractCourseInfo(rawValue: string) {
 
   const compact = trimmed.replace(/\s+/g, " ").trim();
   const bracketMatch = compact.match(/\[([^\]]+)\]/);
-  const token = bracketMatch ? bracketMatch[1] : compact;
+  let token = bracketMatch ? bracketMatch[1] : compact;
+
+  // Handle new format: "CSE401(C311) — CODING SKILLS - III"
+  // Extract just the code(room) part before the em dash
+  const dashIndex = token.indexOf(" — ");
+  if (dashIndex > 0) {
+    token = token.substring(0, dashIndex).trim();
+  }
+
   const match = token.match(/^([A-Z]{2,}\s*\d{2,4}(?:\s*[A-Z])?)\s*(?:\(|-)??\s*([^()-]+?)?\s*(?:\)|-)?$/i);
 
   if (match) {
@@ -83,30 +85,6 @@ function extractCourseInfo(rawValue: string) {
   };
 }
 
-function startOfDay(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
-}
-
-function deriveSlotStatus(targetDate: Date, slotIndex: number) {
-  const dateDiff = startOfDay(targetDate) - startOfDay(new Date());
-  if (dateDiff < 0) return "Completed";
-  if (dateDiff > 0) return "Upcoming";
-
-  const now = new Date();
-  const slot = SLOT_WINDOWS[slotIndex];
-  if (!slot) return "Scheduled";
-
-  const start = new Date(targetDate);
-  start.setHours(slot.startHour, slot.startMinute, 0, 0);
-
-  const end = new Date(targetDate);
-  end.setHours(slot.endHour, slot.endMinute, 0, 0);
-
-  if (now < start) return "Upcoming";
-  if (now > end) return "Completed";
-  return "Live";
-}
-
 function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; selectedDate?: Date }) {
   const targetDate = selectedDate || new Date();
   const currentDay = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -120,6 +98,14 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
     ? timetable.timeSlots
     : TIME_SLOTS.map(({ time }) => time);
   const daySchedule = timetable?.days.find((day) => matchesDayLabel(day.day, currentDay)) || null;
+  // Day closing boundary comes from the standard slot windows (the long last
+  // lab slot ends 17:30) rather than a hardcoded literal.
+  const closingTimeLabel = (() => {
+    const lastWindow = SLOT_WINDOWS[SLOT_WINDOWS.length - 1];
+    return new Date(2000, 0, 1, lastWindow.endHour, lastWindow.endMinute)
+      .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+      .toLowerCase();
+  })();
 
   const scheduleEntries = referenceTimes.map((time, index) => {
     const classInfo = sanitizeVisibleText(daySchedule?.slots[index]?.classDetails);
@@ -143,7 +129,7 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
       timetable?.subjects.find((subject) => normalizeCodeToken(subject.code) === normalizeCodeToken(classInfo)) ||
       timetable?.subjects.find((subject) => normalizeText(subject.name) === normalizeText(classInfo)) ||
       null;
-    const status = deriveSlotStatus(targetDate, index);
+    const timing = describeSlotTiming(targetDate, index);
 
     return {
       time,
@@ -152,55 +138,98 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
       professor: sanitizeVisibleText(courseDetail?.faculty || "Faculty TBA"),
       type: "Lecture",
       room: sanitizeVisibleText(courseDetail?.room || courseInfo?.room, "TBA"),
-      status,
+      status: timing.status,
+      timingLabel: timing.label,
       isEmpty: false,
     };
   });
 
-  return (
-    <div className="grid grid-rows-17 grid-cols-12 grid-flow-row-dense p-2 h-full overflow-y-auto">
-      {/* Header */}
-      <div className="row-span-1 col-span-12 m-2">
-        <h1 className="section-title font-bold">Schedule</h1>
-      </div>
+  const entryRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const hasAutoScrolledRef = useRef(false);
 
-      {/* Schedule Entries */}
-      {scheduleEntries.map((entry, index) => (
-        <div key={index} className="row-span-2 col-span-12 grid grid-cols-12 mt-2">
-          <div className="col-span-2 items-start">
-            <p className="label-text" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '12px' }}>{entry.time}</p>
-          </div>
-          {entry.isEmpty ? (
-            <div className="col-span-10 dashboard-subcard p-2 flex items-center justify-center">
-              <p className="body-text text-sm italic">Free Period</p>
-            </div>
-          ) : (
-            <div className="col-span-10 dashboard-subcard p-2">
-              <div className="flex flex-col h-full justify-between">
-                <p className="text-[14px] leading-none capitalize truncate" style={{ color: 'var(--comp-text-primary)' }}>
-                  {entry.coursename}
+  const focusSlotIndex = useMemo(
+    () =>
+      findFocusSlotIndex(
+        scheduleEntries.length,
+        (index) => !scheduleEntries[index]?.isEmpty,
+        targetDate,
+      ),
+    [scheduleEntries, targetDate],
+  );
+
+  useEffect(() => {
+    if (focusSlotIndex < 0 || hasAutoScrolledRef.current) return;
+    const node = entryRefs.current[focusSlotIndex];
+    if (!node || typeof node.scrollIntoView !== "function") return;
+    hasAutoScrolledRef.current = true;
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    node.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+  }, [focusSlotIndex]);
+
+  return (
+    <div className="flex h-full flex-col overflow-y-auto p-4">
+      <h2 className="card-title mb-3 font-semibold shrink-0">Schedule</h2>
+
+      {/* Slot list: flat column rhythm via gap; auto-scroll-to-live targets
+          these rows (unchanged behavior). */}
+      <div className="flex flex-col gap-2">
+        {scheduleEntries.map((entry, index) => (
+          <div
+            key={index}
+            ref={(el) => {
+              entryRefs.current[index] = el;
+            }}
+            className="flex items-stretch gap-2"
+          >
+            <div className="flex w-16 shrink-0 flex-col items-start gap-0.5 pt-2 min-[480px]:w-20">
+              {entry.time.split(/\s+TO\s+/i).map((part, i) => (
+                <p key={i} className="label-text leading-tight">
+                  {part}
                 </p>
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-[12px] leading-none flex-1 truncate" style={{ color: 'var(--comp-text-primary)' }}>{entry.professor}</p>
-                  <p className="text-[10px] leading-none ml-2" style={{ color: 'var(--comp-text-muted)' }}>
-                    [{entry.courseid}]
+              ))}
+            </div>
+            {entry.isEmpty ? (
+              <div className="flex-1 dashboard-subcard p-2 flex items-center justify-center">
+                <p className="body-text text-sm italic">Free Period</p>
+              </div>
+            ) : (
+              <div className="flex-1 min-w-0 dashboard-subcard p-2">
+                <div className="flex flex-col h-full justify-between">
+                  <p className="text-sm leading-none capitalize truncate" style={{ color: 'var(--comp-text-primary)' }}>
+                    {entry.coursename}
                   </p>
-                </div>
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-[10px] leading-none" style={{ color: 'var(--comp-text-muted)' }}>
-                    {entry.type} - {entry.room}
-                  </p>
-                  <StatusBadge status={entry.status} className="text-[10px] ml-2" />
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs leading-none flex-1 truncate" style={{ color: 'var(--comp-text-primary)' }}>{entry.professor}</p>
+                    <p className="text-xs leading-none ml-2 shrink-0" style={{ color: 'var(--comp-text-muted)' }}>
+                      [{entry.courseid}]
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs leading-none truncate" style={{ color: 'var(--comp-text-muted)' }}>
+                      {entry.type} - {entry.room}
+                    </p>
+                    <span className="ml-2 shrink-0 flex items-center gap-2">
+                      {entry.timingLabel ? (
+                        <span
+                          className="text-xs leading-none font-semibold"
+                          style={{ color: entry.status === "Live" ? "var(--warning)" : "var(--comp-text-muted)" }}
+                        >
+                          {entry.timingLabel}
+                        </span>
+                      ) : null}
+                      <StatusBadge status={entry.status} />
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      ))}
+            )}
+          </div>
+        ))}
 
-      {/* Footer */}
-      <div className="row-span-1 col-span-12">
-        <h1 className="text-[12px]" style={{ color: 'var(--comp-text-muted)' }}>5:30 pm</h1>
+        {/* Closing boundary of the teaching day */}
+        <p className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{closingTimeLabel}</p>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "../../components/popover";
 import { EmptyState } from "../../components/ui/Feedback";
+import { Check, RotateCcw, Trash2, X } from "lucide-react";
 
 interface Task {
   id: string;
@@ -107,26 +108,26 @@ function ToDo({ selectedDate, profileData }: { selectedDate?: Date; profileData?
 
   return (
     <div className="h-full p-4 flex flex-col">
-      {/* Header with tabs */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex space-x-6">
+      {/* Header with tabs — mb-3 aligns this row with sibling widget headers */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           <button
             onClick={() => setActiveTab('assigned')}
-            className="pb-2 border-b-2 transition-colors"
+            className="py-2 border-b-2 transition-colors"
             style={tabStyle(activeTab === 'assigned', 'var(--comp-accent)')}
           >
             To-Do-List ({counts.assigned})
           </button>
           <button
             onClick={() => setActiveTab('missing')}
-            className="pb-2 border-b-2 transition-colors"
+            className="py-2 border-b-2 transition-colors"
             style={tabStyle(activeTab === 'missing', 'var(--error)')}
           >
             Missing ({counts.missing})
           </button>
           <button
             onClick={() => setActiveTab('done')}
-            className="pb-2 border-b-2 transition-colors"
+            className="py-2 border-b-2 transition-colors"
             style={tabStyle(activeTab === 'done', 'var(--success)')}
           >
             Done ({counts.done})
@@ -135,13 +136,13 @@ function ToDo({ selectedDate, profileData }: { selectedDate?: Date; profileData?
 
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
-            <button className="btn-primary min-h-0 px-3 py-1 rounded-lg text-sm">
+            <button className="btn-primary px-3 py-2 rounded-lg text-sm">
               + Add Task
             </button>
           </PopoverTrigger>
-          <PopoverContent side="top" className="w-96 shadow-lg" style={{ background: 'var(--comp-surface)', border: '1px solid var(--comp-border)' }}>
+          <PopoverContent side="top" className="w-[min(24rem,calc(100vw-2rem))] shadow-lg" style={{ background: 'var(--comp-surface)', border: '1px solid var(--comp-border)' }}>
             <div className="space-y-3 p-2">
-              <h3 className="card-title font-bold mb-4">Add New Task</h3>
+              <h3 className="card-title font-bold">Add New Task</h3>
               <input
                 type="text"
                 placeholder="Task title"
@@ -165,7 +166,7 @@ function ToDo({ selectedDate, profileData }: { selectedDate?: Date; profileData?
                 className="w-full p-3 rounded-lg text-sm"
                 style={{ border: '1px solid var(--comp-border)', background: 'var(--comp-surface)', color: 'var(--comp-text-primary)' }}
               />
-              <div className="flex space-x-3 pt-4">
+              <div className="flex gap-3 pt-4">
                 <button
                   onClick={addTask}
                   disabled={!newTask.title.trim()}
@@ -186,20 +187,20 @@ function ToDo({ selectedDate, profileData }: { selectedDate?: Date; profileData?
       </div>
 
       {/* Selected date info */}
-      <div className="mb-4 body-text text-sm">
+      <div className="mb-2 body-text text-sm">
         Tasks for: {selectedDate ? selectedDate.toLocaleDateString() : 'Today'}
       </div>
 
       {/* Tasks list */}
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className="min-h-0 flex-1 overflow-y-auto space-y-2">
         {filteredTasks.length === 0 ? (
           <EmptyState title={`No ${activeTab} tasks`} description={`No ${activeTab} tasks for this date.`} />
         ) : (
           filteredTasks.map((task) => (
-            <div key={task.id} className="rounded-lg p-3" style={{ border: '0.5px solid var(--comp-border)', transition: `background var(--transition-fast)` }}>
+            <div key={task.id} className="rounded-lg border border-[var(--comp-border)] p-3" style={{ transition: `background var(--transition-fast)` }}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="px-2 py-1 rounded text-xs" style={{ background: 'var(--comp-surface-hover)', color: 'var(--comp-text-secondary)' }}>
                       {task.category}
                     </span>
@@ -210,54 +211,54 @@ function ToDo({ selectedDate, profileData }: { selectedDate?: Date; profileData?
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center gap-2 ml-4">
                   {activeTab === 'assigned' && (
                     <>
                       <button
                         onClick={() => updateTaskStatus(task.id, 'done')}
-                        className="p-1 rounded text-xs"
+                        className="flex h-8 w-8 items-center justify-center rounded text-[var(--success)] hover:bg-[var(--comp-surface-hover)] transition-colors"
                         title="Mark as done"
-                        style={{ color: 'var(--success)' }}
+                        aria-label="Mark as done"
                       >
-                        ✓
+                        <Check className="h-4 w-4" aria-hidden="true" />
                       </button>
                       <button
                         onClick={() => updateTaskStatus(task.id, 'missing')}
-                        className="p-1 rounded text-xs"
+                        className="flex h-8 w-8 items-center justify-center rounded text-[var(--error)] hover:bg-[var(--comp-surface-hover)] transition-colors"
                         title="Mark as missing"
-                        style={{ color: 'var(--error)' }}
+                        aria-label="Mark as missing"
                       >
-                        ✗
+                        <X className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </>
                   )}
                   {activeTab === 'missing' && (
                     <button
                       onClick={() => updateTaskStatus(task.id, 'done')}
-                      className="p-1 rounded text-xs"
+                      className="flex h-8 w-8 items-center justify-center rounded text-[var(--success)] hover:bg-[var(--comp-surface-hover)] transition-colors"
                       title="Mark as done"
-                      style={{ color: 'var(--success)' }}
+                      aria-label="Mark as done"
                     >
-                      ✓
+                      <Check className="h-4 w-4" aria-hidden="true" />
                     </button>
                   )}
                   {activeTab === 'done' && (
                     <button
                       onClick={() => updateTaskStatus(task.id, 'assigned')}
-                      className="p-1 rounded text-xs"
+                      className="flex h-8 w-8 items-center justify-center rounded text-[var(--comp-accent)] hover:bg-[var(--comp-surface-hover)] transition-colors"
                       title="Move back to assigned"
-                      style={{ color: 'var(--comp-accent)' }}
+                      aria-label="Move back to assigned"
                     >
-                      ↶
+                      <RotateCcw className="h-4 w-4" aria-hidden="true" />
                     </button>
                   )}
                   <button
                     onClick={() => deleteTask(task.id)}
-                    className="p-1 rounded text-xs"
+                    className="flex h-8 w-8 items-center justify-center rounded text-[var(--error)] hover:bg-[var(--comp-surface-hover)] transition-colors"
                     title="Delete task"
-                    style={{ color: 'var(--error)' }}
+                    aria-label="Delete task"
                   >
-                    🗑
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>

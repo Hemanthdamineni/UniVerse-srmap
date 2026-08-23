@@ -5,8 +5,30 @@ const {
 } = require("../services/erp/erpClient");
 const { resolveSessionId } = require("../utils/cookies");
 
-function createAttendanceRoutes({ sessionStore }) {
+function createAttendanceRoutes({
+  sessionStore,
+  attendanceSnapshotStore,
+  erpAggregationService,
+}) {
   const router = express.Router();
+
+  router.get("/attendance/history", async (req, res) => {
+    try {
+      const sessionId = resolveSessionId(req);
+      if (!sessionId) {
+        return res.status(401).json({ success: false, error: "Authentication required." });
+      }
+      if (!attendanceSnapshotStore || !erpAggregationService) {
+        return res.status(503).json({ success: false, error: "Attendance history is not available." });
+      }
+      const userKey = await erpAggregationService.resolveUserKey(sessionId);
+      const history = attendanceSnapshotStore.history(userKey) || [];
+      return res.json({ success: true, data: history });
+    } catch (error) {
+      const status = error.status || 500;
+      return res.status(status).json({ success: false, error: error.message });
+    }
+  });
 
   router.post("/attendance/mark", async (req, res) => {
     const {

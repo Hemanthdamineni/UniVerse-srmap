@@ -6,11 +6,17 @@ import React, { useMemo } from 'react';
 import { cn } from '../../lib/core/utils';
 
 export interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  status: string;
+  status?: string;
   label?: string;
+  /** Explicit tone override; skips keyword resolution from `status`. */
+  preset?: StatusPreset;
+  /** Renders a small indicator dot tinted by the preset. */
+  dot?: boolean;
 }
 
 type Preset = 'open' | 'pending' | 'closed' | 'live' | 'selected' | 'rejected';
+
+export type StatusPreset = Preset | 'success' | 'warning' | 'error' | 'neutral';
 
 function resolvePreset(status: string): Preset {
   const norm = status.toLowerCase();
@@ -40,20 +46,28 @@ function resolvePreset(status: string): Preset {
   return 'open';
 }
 
-const presetClass: Record<Preset, string> = {
+const presetClass: Record<StatusPreset, string> = {
   open: 'status-badge-open',
   pending: 'status-badge-pending',
   closed: 'status-badge-closed',
   live: 'status-badge-live',
   selected: 'status-badge-selected',
   rejected: 'status-badge-rejected',
+  success: 'status-badge-success',
+  warning: 'status-badge-warning',
+  error: 'status-badge-error',
+  neutral: 'status-badge-neutral',
 };
 
-export function StatusBadge({ status, label, className, ...props }: StatusBadgeProps) {
-  const preset = useMemo(() => resolvePreset(status), [status]);
+export function StatusBadge({ status, label, preset, dot = false, className, children, ...props }: StatusBadgeProps) {
+  const resolved = useMemo(
+    () => preset ?? (status !== undefined ? resolvePreset(status) : 'neutral'),
+    [preset, status]
+  );
   return (
-    <span className={cn('status-badge', presetClass[preset], className)} {...props}>
-      {label ?? status}
+    <span className={cn('status-badge', presetClass[resolved], className)} {...props}>
+      {dot && <span className="status-badge-dot" aria-hidden="true" />}
+      {label ?? status ?? children}
     </span>
   );
 }
@@ -71,7 +85,7 @@ export interface TagProps {
 }
 
 export function Tag({ className, children, variant = "default" }: TagProps) {
-  const baseStyles = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border";
+  const baseStyles = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border";
   
   const variants = {
     default: "bg-[var(--comp-surface-hover)] text-[var(--comp-text-secondary)] border-[var(--comp-border)]",

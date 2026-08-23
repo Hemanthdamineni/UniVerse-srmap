@@ -7,7 +7,8 @@ import {
   listQuestionBank,
   upvoteQuestionBankItem,
   useAsyncPage,
-  LmsFrame
+  LmsFrame,
+  EmptyView
 } from "./_shared/LmsPageShared";
 import type {
   LmsGuide,
@@ -18,7 +19,7 @@ import type {
   ResourceFormState
 } from "./_shared/LmsPageShared";
 import type { QuestionBankItem, LmsPagination } from "../../lib/lms/resources";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
 
 const QUESTION_DIFFICULTIES = [
   { value: "easy", label: "Easy" },
@@ -247,14 +248,14 @@ export function QuestionBankPage() {
 
           <div className="flex gap-3">
             <button
-              className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
+              className="lms-btn lms-btn-primary"
               disabled={busy}
               onClick={handleAddQuestion}
             >
               {busy ? "Adding..." : "Add question"}
             </button>
             <button
-              className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]"
+              className="lms-btn lms-btn-ghost"
               onClick={async () => {
                 setQuizMessage("");
                 try {
@@ -278,9 +279,9 @@ export function QuestionBankPage() {
       </SectionCard>
 
       <SectionCard title={`Browse Questions ${subjectCode ? `(${subjectCode})` : ""}`}>
-        <div className="space-y-3">
+        <div className="divide-y divide-[var(--comp-border)]">
           {(data?.items || []).map((item) => (
-            <div key={String(item.id)} className="dashboard-card space-y-2 p-4">
+            <div key={String(item.id)} className="space-y-2 py-3">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="text-base font-semibold text-[var(--comp-text-primary)] flex-1">{String(item.question || "")}</h3>
                 <span className="rounded-full px-2 py-0.5 text-xs font-medium shrink-0" style={{
@@ -299,13 +300,11 @@ export function QuestionBankPage() {
                 {(Array.isArray(item.options) ? item.options : []).map((option, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded px-2 py-1"
                     style={{
                       background: index === item.correctIndex
                         ? "color-mix(in srgb, var(--success) 8%, transparent)"
                         : "transparent",
-                      borderRadius: "4px",
-                      padding: "2px 6px",
                     }}
                   >
                     <span className="w-5 h-5 flex items-center justify-center text-xs font-medium rounded-full shrink-0" style={{
@@ -345,9 +344,10 @@ export function QuestionBankPage() {
           ))}
 
           {(data?.items || []).length === 0 && subjectCode && (
-            <p className="text-sm text-[var(--text-secondary)] text-center py-8">
-              No questions found for this subject code. Add the first one above!
-            </p>
+            <EmptyView
+              title="No questions found for this subject code"
+              description="Add the first one above!"
+            />
           )}
         </div>
       </SectionCard>

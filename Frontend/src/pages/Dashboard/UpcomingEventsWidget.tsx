@@ -1,3 +1,4 @@
+// Dormant: superseded by CampusHubWidget; retained for prototype/reference parity.
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowRight, Calendar, Clock, RefreshCw } from "lucide-react";
@@ -126,7 +127,7 @@ export default function UpcomingEventsWidget() {
           <button
             onClick={fetchEvents}
             type="button"
-            className="flex items-center gap-1.5 rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-1.5 text-xs font-medium text-[var(--comp-text-primary)] transition-colors hover:bg-[var(--comp-surface-hover)]"
+            className="flex items-center gap-2 rounded-md border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-xs font-medium text-[var(--comp-text-primary)] transition-colors hover:bg-[var(--comp-surface-hover)]"
           >
             <RefreshCw size={14} />
             Retry
@@ -195,7 +196,7 @@ export default function UpcomingEventsWidget() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <span
-                    className="mb-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    className="mb-2 inline-block rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide"
                     style={{
                       backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`,
                       color,
@@ -211,7 +212,7 @@ export default function UpcomingEventsWidget() {
 
               <div className="mt-2 flex items-center justify-between">
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                  className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium"
                   style={{
                     backgroundColor: `color-mix(in srgb, ${dl.isUrgent ? "var(--deadline-urgent)" : "var(--deadline-safe)"} 15%, transparent)`,
                     color: dl.isUrgent
@@ -228,7 +229,7 @@ export default function UpcomingEventsWidget() {
                     navigate(`/events/${encodeURIComponent(event.id)}`);
                   }}
                   type="button"
-                  className="rounded-md border border-[var(--comp-accent)] px-2.5 py-1 text-xs font-medium text-[var(--comp-accent)] transition-colors hover:bg-[var(--comp-accent)] hover:text-white"
+                  className="rounded-md border border-[var(--comp-accent)] px-3 py-1 text-xs font-medium text-[var(--comp-accent)] transition-colors hover:bg-[var(--comp-accent)] hover:text-white"
                 >
                   View
                 </button>

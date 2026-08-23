@@ -17,7 +17,7 @@ import ResourceGrid from "../../../components/lms/ResourceGrid";
 import RoadmapGraph from "../../../components/lms/RoadmapGraph";
 import TopicMasteryHeatmap from "../../../components/lms/TopicMasteryHeatmap";
 import WeeklyLeaderboard from "../../../components/lms/WeeklyLeaderboard";
-import { Markdown } from "../../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../../components/markdown";
 import {
   addRoadmapNode,
   buildQuizFromQuestionBank,
@@ -219,14 +219,14 @@ export function LmsFrame({
           message={error}
           description="Your ERP session may have expired, or the LMS service may be temporarily unavailable."
           action={
-            <Link to="/resources" className="rounded-md border border-[var(--comp-border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
+            <Link to="/resources" className="lms-btn lms-btn-ghost no-underline">
               Back to LMS home
             </Link>
           }
           className="mb-4"
         />
       ) : null}
-      <div className="space-y-5">{children}</div>
+      <div className="space-y-6">{children}</div>
     </ErpPageShell>
   );
 }
@@ -278,7 +278,7 @@ export function renderResourceBody(resource: LmsResource) {
   }
   if (resource.renderType === "markdown" || resource.renderType === "note" || resource.type === "note") {
     return (
-      <div className="rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-5">
+      <div className="rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4">
         {resource.noteContent ? (
           <Markdown>{resource.noteContent}</Markdown>
         ) : (

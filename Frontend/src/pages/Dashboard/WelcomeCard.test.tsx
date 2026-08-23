@@ -9,6 +9,8 @@ vi.mock("../../lib/core/identity", () => ({
 
 import { getCurrentProfileName, getCurrentRegNo } from "../../lib/core/identity";
 
+const ONBOARDING_SEEN_KEY = "erp.onboarding.seenVersion";
+
 function renderCard(profileData?: Record<string, unknown> | null) {
   return render(<WelcomeCard profileData={profileData} />);
 }
@@ -16,6 +18,8 @@ function renderCard(profileData?: Record<string, unknown> | null) {
 describe("WelcomeCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to returning-user behavior; first-run tests opt out below.
+    window.localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
   });
 
   it("renders welcome message", () => {
@@ -54,11 +58,35 @@ describe("WelcomeCard", () => {
     expect(screen.getByText("Welcome back!")).toBeInTheDocument();
   });
 
-  it("renders notification bell button", () => {
+  it("renders no interactive controls (decorative bell was removed)", () => {
     vi.mocked(getCurrentProfileName).mockReturnValue("Dana");
     vi.mocked(getCurrentRegNo).mockReturnValue("");
     renderCard({});
-    const bellButton = document.querySelector("button");
-    expect(bellButton).toBeInTheDocument();
+    // The bell button was removed: it had no handler and its permanently
+    // lit red dot implied false notifications.
+    expect(document.querySelector("button")).not.toBeInTheDocument();
+  });
+
+  // --- First-login variant ---
+
+  it("greets first-time users by first name", () => {
+    window.localStorage.removeItem(ONBOARDING_SEEN_KEY);
+    vi.mocked(getCurrentProfileName).mockReturnValue("Alice Johnson");
+    vi.mocked(getCurrentRegNo).mockReturnValue("AP23110010419");
+
+    renderCard({});
+
+    expect(screen.getByText("Welcome, Alice!")).toBeInTheDocument();
+    expect(screen.queryByText("Welcome back!")).not.toBeInTheDocument();
+    expect(screen.getByText(/Register No\. AP23110010419/)).toBeInTheDocument();
+  });
+
+  it("falls back to a generic greeting when no name is available", () => {
+    window.localStorage.removeItem(ONBOARDING_SEEN_KEY);
+    vi.mocked(getCurrentProfileName).mockReturnValue("");
+
+    renderCard(null);
+
+    expect(screen.getByText("Welcome!")).toBeInTheDocument();
   });
 });

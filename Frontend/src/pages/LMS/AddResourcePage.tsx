@@ -475,9 +475,9 @@ export function AddResourcePage() {
                 onChange={(event) => setForm({ ...form, file: event.target.files?.[0] || null })}
                 accept=".pdf,.zip,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg"
               />
-              <label htmlFor="file-upload" className="cursor-pointer">
+              <label htmlFor="file-upload" className="cursor-pointer space-y-1">
                 <p className="text-[var(--comp-text-primary)] font-medium">Click or drag to upload a file</p>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Accepted: PDF, ZIP, DOCX, PPTX, TXT, MD, PNG, JPG (max 25MB)
                 </p>
               </label>
@@ -539,7 +539,7 @@ export function AddResourcePage() {
               <h4 className="font-medium text-[var(--comp-text-primary)]">Quiz Questions</h4>
               <button
                 type="button"
-                className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white"
+                className="lms-btn lms-btn-primary"
                 onClick={addQuizQuestion}
               >
                 + Add Question
@@ -552,8 +552,9 @@ export function AddResourcePage() {
               </p>
             )}
 
+            <div className="divide-y divide-[var(--comp-border)]">
             {quizQuestions.map((q, qIndex) => (
-              <div key={q.id} className="dashboard-card p-4 space-y-3 border border-[var(--comp-border)]">
+              <div key={q.id} className="space-y-3 py-3">
                 <div className="flex items-center justify-between">
                   <h5 className="font-medium text-[var(--comp-text-primary)]">Question {qIndex + 1}</h5>
                   <button
@@ -624,6 +625,7 @@ export function AddResourcePage() {
                 />
               </div>
             ))}
+            </div>
 
             {quizQuestions.length > 0 && readingTimePreview && (
               <p className="text-xs text-[var(--text-secondary)]">
@@ -639,7 +641,7 @@ export function AddResourcePage() {
               <h4 className="font-medium text-[var(--comp-text-primary)]">Flashcards</h4>
               <button
                 type="button"
-                className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white"
+                className="lms-btn lms-btn-primary"
                 onClick={addFlashcardCard}
               >
                 + Add Card
@@ -652,8 +654,9 @@ export function AddResourcePage() {
               </p>
             )}
 
+            <div className="divide-y divide-[var(--comp-border)]">
             {flashcardCards.map((card, cIndex) => (
-              <div key={card.id} className="dashboard-card p-4 space-y-3 border border-[var(--comp-border)]">
+              <div key={card.id} className="space-y-3 py-3">
                 <div className="flex items-center justify-between">
                   <h5 className="font-medium text-[var(--comp-text-primary)]">Card {cIndex + 1}</h5>
                   <button
@@ -684,6 +687,7 @@ export function AddResourcePage() {
                 </div>
               </div>
             ))}
+            </div>
 
             {flashcardCards.length > 0 && readingTimePreview && (
               <p className="text-xs text-[var(--text-secondary)]">
@@ -695,14 +699,14 @@ export function AddResourcePage() {
 
         <div className="flex gap-3">
           <button
-            className="rounded-full bg-[var(--comp-accent)] px-5 py-2.5 text-sm font-semibold text-white"
+            className="lms-btn lms-btn-primary"
             disabled={busy}
             onClick={handleSubmit}
           >
             {busy ? "Saving..." : submitLabel}
           </button>
           <button
-            className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-5 py-2.5 text-sm font-semibold text-[var(--comp-text-primary)]"
+            className="lms-btn lms-btn-ghost"
             onClick={async () => {
               setSessionMessage("");
               try {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ErpPageShell, SectionCard, EmptyStateCard } from "../../components/erp/ErpPrimitives";
 import { StarRating } from "../../components/ui/Progress";
+import { FeedbackStatusPill } from "../../components/ui/Feedback";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   createCampusFeedbackOption,
@@ -111,30 +112,12 @@ function wasLegacyMigrated(type: CampusFeedbackType) {
   return window.localStorage.getItem(`campus-feedback-migrated-${type}`) === "1";
 }
 
-function StatusPill({ status }: { status: CampusFeedbackEntry["status"] }) {
-  const className =
-    status === "approved"
-      ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
-      : status === "rejected"
-        ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
-        : "border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]";
-
-  return (
-    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${className}`}>
-      {status}
-    </span>
-  );
-}
-
-function GovernanceBanner({ governance }: { governance: CampusFeedbackGovernanceResponse | null }) {
+function GovernanceBanner() {
   return (
     <div className="rounded-xl border border-[color-mix(in_srgb,var(--comp-accent)_22%,var(--border))] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--comp-text-secondary)]">
       <div className="font-semibold text-[var(--comp-text-primary)]">Campus feedback</div>
       <p className="mt-1 leading-6">
-        Managed through {governance?.campus?.routeNamespace || "/api/campus-feedback"} with
-        moderation. Official course feedback remains in{" "}
-        {governance?.official?.routeNamespace || "/api/feedback/end-semester"} and cannot be edited
-        here.
+        This is for campus facilities. Your official end‑semester course feedback is handled separately and cannot be edited here.
       </p>
     </div>
   );
@@ -287,7 +270,7 @@ export default function CampusFeedbackPage<Category extends string>({
       loadingMessage={`Loading ${title.toLowerCase()}...`}
       onRefresh={loadFeedback}
     >
-      <GovernanceBanner governance={governance} />
+      <GovernanceBanner />
 
       {message ? (
         <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-2 text-sm font-medium text-[var(--success)]">
@@ -311,7 +294,7 @@ export default function CampusFeedbackPage<Category extends string>({
             />
             <button
               type="submit"
-              className="min-h-11 rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary"
               disabled={!newOptionLabel.trim()}
             >
               Add
@@ -324,7 +307,7 @@ export default function CampusFeedbackPage<Category extends string>({
         {options.length === 0 ? (
           <EmptyStateCard message={targetEmptyMessage} />
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {!fixedTarget ? (
               <div>
                 <label
@@ -349,7 +332,7 @@ export default function CampusFeedbackPage<Category extends string>({
               </div>
             ) : null}
 
-            <div className="divide-y divide-[var(--border)] rounded-lg border border-[var(--border)] bg-[var(--background)] px-3">
+            <div className="divide-y divide-[var(--border)] px-3">
               {categories.map((category) => (
                 <StarRow
                   key={category}
@@ -377,7 +360,7 @@ export default function CampusFeedbackPage<Category extends string>({
             <button
               type="submit"
               disabled={submitting}
-              className="min-h-11 rounded-lg bg-[var(--comp-accent)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary w-full"
             >
               {submitting ? "Submitting..." : "Submit Feedback"}
             </button>
@@ -393,17 +376,17 @@ export default function CampusFeedbackPage<Category extends string>({
             {history.map((entry) => (
               <article key={entry.id} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">
                         {entry.targetLabel}
                       </h3>
-                      <StatusPill status={entry.status} />
-                      <span className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]">
+                      <FeedbackStatusPill status={entry.status} />
+                      <span className="rounded-full border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
                         Avg {averageRating(entry.ratings)}
                       </span>
                     </div>
-                    <div className="mt-2 grid gap-1 text-xs text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-1 text-xs text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-3">
                       {Object.entries(entry.ratings).map(([category, value]) => (
                         <div key={category} className="flex items-center gap-1">
                           <span>{category}:</span>
@@ -412,12 +395,12 @@ export default function CampusFeedbackPage<Category extends string>({
                       ))}
                     </div>
                     {entry.comment ? (
-                      <p className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+                      <p className="max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
                         {entry.comment}
                       </p>
                     ) : null}
                     {entry.moderationReason ? (
-                      <p className="mt-2 text-xs font-medium text-[var(--text-secondary)]">
+                      <p className="text-xs font-medium text-[var(--text-secondary)]">
                         Moderation note: {entry.moderationReason}
                       </p>
                     ) : null}

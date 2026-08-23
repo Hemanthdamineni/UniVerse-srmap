@@ -305,14 +305,26 @@ test("rejects method/url mismatch", async () => {
 
 test("blocks disabled actions by policy", async () => {
   const { executor, uiMapStore } = makeStoreAndExecutor();
-  const actionId = uiMapStore.getUiHints("finance/bank-details").sections[0].actions[0].id;
+  const mockHints = uiMapStore.getUiHints("verification/mobile-no-verification");
+
+  // Temporarily force an action to be disabled to test policy enforcement
+  const actionId = mockHints.sections[0].actions[0].id;
+  const originalGetHints = uiMapStore.getUiHints;
+  uiMapStore.getUiHints = (key) => {
+    const hints = originalGetHints.call(uiMapStore, key);
+    if (key === "verification/mobile-no-verification") {
+      hints.sections[0].actions[0].enabled = false;
+      hints.sections[0].actions[0].disabledReason = "Test policy";
+    }
+    return hints;
+  };
 
   await assert.rejects(
     () =>
       executor.execute({
-        pageKey: "finance/bank-details",
+        pageKey: "verification/mobile-no-verification",
         actionId,
-        payload: {},
+        payload: { optmobilenumber: "9999999999" },
         sessionId: "s-1",
       }),
     (error) => error && error.status === 403 && error.code === "FORBIDDEN"

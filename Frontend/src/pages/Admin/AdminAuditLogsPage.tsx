@@ -3,6 +3,7 @@
  * System audit trail with filterable log entries, severity levels, and export.
  */
 
+import { Download } from "lucide-react";
 import { useState } from 'react';
 import { ErpPageShell } from '../../components/erp/ErpPrimitives';
 import { EmptyState } from '../../components/competition/CompetitionEmptyState';
@@ -53,19 +54,20 @@ export default function AdminAuditLogsPage() {
   };
 
   return (
-    <ErpPageShell title="System Audit Logs" source="Internal API" isLoading={false}>
+    <ErpPageShell
+      title="System Audit Logs"
+      source="Internal API"
+      isLoading={false}
+      headerActions={
+        <button className="comp-btn-primary" style={{ fontSize: '0.82rem' }}><Download size={14} aria-hidden="true" /> Export Logs</button>
+      }
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-          <div>
-            <h1 className="comp-heading-lg" style={{ margin: 0 }}>System Audit Logs</h1>
-            <p className="comp-body" style={{ margin: '4px 0 0' }}>
-              Complete activity trail across the platform
-            </p>
-          </div>
-          <button className="comp-btn-primary" style={{ fontSize: '0.82rem' }}>↓ Export Logs</button>
-        </div>
+        {/* Subtitle */}
+        <p className="comp-body" style={{ margin: 0 }}>
+          Complete activity trail across the platform
+        </p>
 
         {/* Filters */}
         <DataToolbar
@@ -85,13 +87,11 @@ export default function AdminAuditLogsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              style={{
-                padding: '5px 12px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 600,
-                border: `1px solid ${filter === f ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                background: filter === f ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                color: filter === f ? '#fff' : 'var(--comp-text-secondary)',
-                cursor: 'pointer', textTransform: 'capitalize',
-              }}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize transition ${
+                filter === f
+                  ? 'border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white'
+                  : 'border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-secondary)]'
+              }`}
             >
               {f}
             </button>

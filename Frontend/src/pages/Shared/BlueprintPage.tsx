@@ -25,7 +25,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
       source={state.source}
       updatedAt={state.updatedAt}
       isLoading={!isUnavailable && state.isLoading}
-      loadingMessage={blueprint.loadingMessage || "Loading..."}
+      loadingMessage={blueprint.loadingMessage || `Loading ${blueprint.heading.toLowerCase()}...`}
     >
       {isUnavailable ? (
         <EmptyStateCard

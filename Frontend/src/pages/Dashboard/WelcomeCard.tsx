@@ -1,33 +1,34 @@
 import { getCurrentProfileName, getCurrentRegNo } from "../../lib/core/identity";
+import { hasSeenOnboarding } from "../../lib/core/onboarding";
 
 function WelcomeCard({ profileData }: { profileData?: Record<string, unknown> | null }) {
   const name = getCurrentProfileName(profileData ?? null);
   const regNo = getCurrentRegNo(profileData ?? null);
 
+  // Returning users keep the familiar greeting; first-timers get a personal
+  // one — the live-sync explanation lives in the first-run guide below.
+  const firstName = name.trim().split(/\s+/)[0] || "";
+  const greeting = hasSeenOnboarding()
+    ? "Welcome back!"
+    : firstName
+      ? `Welcome, ${firstName}!`
+      : "Welcome!";
+
   return (
     <div className="flex items-center justify-between h-full px-1">
       <div className="flex items-center gap-4">
         <div>
-          <h2 className="page-title">Welcome back!</h2>
+          {/* Greeting sits one type step under decision-relevant widget
+              titles so schedule/attendance can compete for attention. Search
+              was removed earlier for Command Palette redundancy; the
+              decorative bell went the same way (no handler, and its
+              always-lit dot implied false notifications). */}
+          <h2 className="section-title font-semibold">{greeting}</h2>
           <p className="body-text mt-1">
             {name}
             {regNo ? ` · Register No. ${regNo}` : ""}
           </p>
         </div>
-      </div>
-      <div className="flex items-center gap-4">
-        {/* Search bar removed to avoid redundancy with Command Palette */}
-        <button className="relative p-2 hover:bg-[color:var(--comp-surface-hover)] rounded-lg transition-colors" style={{ color: 'var(--comp-text-secondary)' }}>
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-12" />
-          </svg>
-          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full" style={{ background: 'var(--error)' }}></span>
-        </button>
       </div>
     </div>
   );

@@ -64,7 +64,7 @@ export function DeadlineCountdown({
         alignItems: 'center',
         gap: 4,
         color,
-        fontSize: '0.8rem',
+        fontSize: 'var(--text-sm)',
         fontWeight: 500,
       }}
     >

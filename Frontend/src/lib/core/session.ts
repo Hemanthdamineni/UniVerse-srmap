@@ -80,6 +80,8 @@ export function storeSessionAuth({ profileData }: { profileData?: unknown }) {
 
   if (profileData && typeof profileData === "object") {
     window.localStorage.setItem(PROFILE_DATA_KEY, JSON.stringify(profileData));
+    profileCache = { data: profileData as PlainRecord, fetchedAt: Date.now() };
+    profileInflight = null;
   } else {
     window.localStorage.removeItem(PROFILE_DATA_KEY);
   }
@@ -92,6 +94,7 @@ export function clearSessionAuth() {
   if (typeof window !== "undefined" && window.sessionStorage) {
     window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
   }
+  clearSessionProfileCache();
 }
 
 export function hasSessionAuth() {
@@ -147,7 +150,20 @@ export function consumeSessionExpiredFlag(): boolean {
   return flagged;
 }
 
-export async function fetchSessionProfile(): Promise<PlainRecord | null> {
+// Sidebar and the active page both request the profile on mount, and
+// blueprint pages re-request it on every navigation. fetchSessionProfile
+// deduplicates concurrent callers and reuses a fresh response so navigating
+// stays instant; logout invalidates via clearSessionAuth.
+const PROFILE_CACHE_TTL_MS = 30_000;
+let profileCache: { data: PlainRecord | null; fetchedAt: number } | null = null;
+let profileInflight: Promise<PlainRecord | null> | null = null;
+
+export function clearSessionProfileCache() {
+  profileCache = null;
+  profileInflight = null;
+}
+
+async function loadSessionProfileUncached(): Promise<PlainRecord | null> {
   if (isStaticPrototype()) {
     let snapshot = { ...STATIC_PROTOTYPE_PROFILE } as PlainRecord;
     try {
@@ -209,6 +225,26 @@ export async function fetchSessionProfile(): Promise<PlainRecord | null> {
   }
 
   return payload as PlainRecord;
+}
+
+export function fetchSessionProfile(): Promise<PlainRecord | null> {
+  if (profileCache && Date.now() - profileCache.fetchedAt < PROFILE_CACHE_TTL_MS) {
+    return Promise.resolve(profileCache.data);
+  }
+  if (profileInflight) {
+    return profileInflight;
+  }
+
+  profileInflight = loadSessionProfileUncached()
+    .then((profile) => {
+      profileCache = { data: profile, fetchedAt: Date.now() };
+      return profile;
+    })
+    .finally(() => {
+      profileInflight = null;
+    });
+
+  return profileInflight;
 }
 
 export async function logoutSession() {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { InternalMarksModel } from "../../../lib/erp/erpTransformers";
 import { AssessmentBreakdownTable } from "./AssessmentBreakdownTable";
+import { TableCardHeader } from "../../../components/erp/ErpPrimitives";
 
 interface InternalMarksBundledSectionProps {
   model: InternalMarksModel;
@@ -23,16 +24,14 @@ export function InternalMarksBundledSection({
 
   return (
     <section className="dashboard-card p-0">
-      <div className="border-b border-[var(--border)] px-5 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold text-[var(--comp-text-primary)]">
-            Internal Mark Details
-          </h2>
-          <span className="rounded-full bg-[var(--comp-surface-hover)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)]">
+      <TableCardHeader
+        title="Internal Mark Details"
+        right={
+          <span className="rounded-full bg-[var(--comp-surface-hover)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-secondary)] tabular-nums">
             {model.averagePercentage.toFixed(2)}% average
           </span>
-        </div>
-      </div>
+        }
+      />
 
       {model.subjects.length === 0 ? (
         <div className="px-5 py-12 text-center text-sm italic text-[var(--comp-text-muted)]">
@@ -98,9 +97,9 @@ export function InternalMarksBundledSection({
                         </p>
                         <div className="mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
                           <div
-                            className="h-full rounded-full transition-all duration-300"
+                            className="h-full w-full origin-left rounded-full transition-transform duration-300"
                             style={{
-                              width: `${Math.min(pct, 100)}%`,
+                              transform: `scaleX(${Math.min(pct, 100) / 100})`,
                               background: pctColor,
                             }}
                           />

@@ -10,7 +10,7 @@ function Logo() {
             <img
                 src={srmLogo}
                 alt="Logo of UniVerse — SRMAP Edition"
-                className="w-[120px] h-[60px] m-[2px]"
+                className="h-10 w-auto max-w-[45vw] object-contain sm:h-[52px]"
             />
         </Link>
     );
@@ -24,8 +24,8 @@ function HeaderButton(props: { label: string; to: string; primary?: boolean }) {
             to={to}
             className={
                 primary
-                    ? "rounded-lg border border-white px-3 py-1.5 text-sm font-medium text-white no-underline transition hover:bg-white hover:text-[var(--comp-text-primary)]"
-                    : "text-sm font-medium text-white/90 no-underline transition hover:text-white"
+                    ? "rounded-lg border border-white px-2.5 py-1.5 text-[13px] font-medium text-white no-underline transition hover:bg-white hover:text-[var(--comp-text-primary)] sm:px-3 sm:text-sm"
+                    : "hidden text-[13px] font-medium text-white/90 no-underline transition hover:text-white min-[420px]:inline-block sm:text-sm"
             }
         >
             {label}
@@ -48,14 +48,14 @@ function Header() {
 
     return (
         <header
-            className="flex items-center justify-between rounded-b-lg border-b border-[var(--comp-accent)]/30 pr-4"
+            className="flex items-center justify-between gap-2 rounded-b-lg border-b border-[var(--comp-accent)]/30 px-4"
             style={{ backgroundColor: "var(--header-bg)", color: "var(--header-fg)" }}
         >
-            <div className="flex items-center">
+            <div className="flex min-w-0 items-center">
                 <Logo />
             </div>
-            <div className="flex items-center gap-4">
-                <div className="flex min-w-[220px] items-center justify-end gap-4">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+                <div className="flex items-center justify-end gap-2 sm:min-w-[220px] sm:gap-4">
                     {buttons.map((button) => (
                         <HeaderButton key={button.label} {...button} />
                     ))}

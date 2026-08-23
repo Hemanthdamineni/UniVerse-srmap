@@ -35,41 +35,41 @@ export default function LoginIdentityPanel() {
     >
       <div ref={cursorRippleRef} className="login-cursor-ripple" />
 
-      <div className="login-identity-content" style={{ padding: "48px 40px", justifyContent: "space-between" }}>
+      <div className="login-identity-content" style={{ padding: "var(--space-xl) var(--space-lg)", justifyContent: "space-between" }}>
         <div>
           <div className="login-identity-enter login-id-d0">
-            <img src={srmLogo} alt="SRM AP University" style={{ height: "40px", width: "auto", objectFit: "contain", display: "block", filter: "brightness(0) invert(1)", marginBottom: "40px" }} />
+            <img src={srmLogo} alt="SRM AP University" style={{ height: "40px", width: "auto", objectFit: "contain", display: "block", filter: "brightness(0) invert(1)", marginBottom: "var(--space-lg)" }} />
           </div>
           <div className="login-identity-enter login-id-d1">
-            <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "#ffffff", lineHeight: 1.25, margin: 0, letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "var(--comp-accent-fg)", lineHeight: 1.25, margin: 0, letterSpacing: "-0.02em" }}>
               SRM AP<br />University ERP
             </h1>
           </div>
           <div className="login-identity-enter login-id-d2">
-            <p style={{ marginTop: "12px", fontSize: "0.875rem", color: "rgba(255,255,255,0.58)", lineHeight: 1.6, maxWidth: "260px" }}>
+            <p style={{ marginTop: "12px", fontSize: "var(--text-sm)", color: "color-mix(in srgb, var(--comp-accent-fg) 58%, transparent)", lineHeight: 1.6, maxWidth: "260px" }}>
               Your academic records, attendance, and campus services in one place.
             </p>
           </div>
         </div>
 
-        <div style={{ marginTop: "48px" }}>
+        <div style={{ marginTop: "var(--space-xl)" }}>
           {HIGHLIGHTS.map((item, i) => (
             <div
               key={item.label}
               className={`login-identity-enter login-id-d${i + 2}`}
-              style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 0", borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.09)" }}
+              style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "16px 0", borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--comp-accent-fg) 9%, transparent)" }}
             >
-              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#34AEBE", flexShrink: 0, marginTop: "5px", boxShadow: "0 0 8px rgba(52,174,190,0.55)" }} />
+              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--comp-accent)", flexShrink: 0, marginTop: "5px", boxShadow: "0 0 8px color-mix(in srgb, var(--comp-accent) 55%, transparent)" }} />
               <div>
-                <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "rgba(255,255,255,0.88)", lineHeight: 1.3 }}>{item.label}</p>
-                <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.42)", lineHeight: 1.5 }}>{item.sub}</p>
+                <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: 600, color: "color-mix(in srgb, var(--comp-accent-fg) 88%, transparent)", lineHeight: 1.3 }}>{item.label}</p>
+                <p style={{ margin: "3px 0 0", fontSize: "var(--text-xs)", color: "color-mix(in srgb, var(--comp-accent-fg) 42%, transparent)", lineHeight: 1.5 }}>{item.sub}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="login-identity-enter login-id-d4" style={{ marginTop: "36px" }}>
-          <span style={{ display: "inline-block", padding: "5px 12px", background: "rgba(52,174,190,0.18)", border: "1px solid rgba(52,174,190,0.32)", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600, color: "#34AEBE", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div className="login-identity-enter login-id-d4" style={{ marginTop: "var(--space-lg)" }}>
+          <span style={{ display: "inline-block", padding: "5px 12px", background: "color-mix(in srgb, var(--comp-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--comp-accent) 32%, transparent)", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600, color: "var(--comp-accent)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
             Student Portal
           </span>
         </div>

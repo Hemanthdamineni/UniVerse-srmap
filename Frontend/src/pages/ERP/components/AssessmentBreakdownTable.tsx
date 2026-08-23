@@ -34,13 +34,13 @@ export function AssessmentBreakdownTable({
         <tbody className="divide-y divide-[var(--comp-border)]">
           {assessments.map((assessment, index) => (
             <tr key={`${subject.code}-${assessment.name}-${index}`}>
-              <td className="px-3 py-2.5 text-[var(--comp-text-primary)]">
+              <td className="px-3 py-2 text-[var(--comp-text-primary)]">
                 {assessment.name}
               </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--comp-text-secondary)]">
+              <td className="px-3 py-2 text-right tabular-nums text-[var(--comp-text-secondary)]">
                 {assessment.conducted || "-"}
               </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--comp-text-secondary)]">
+              <td className="px-3 py-2 text-right tabular-nums text-[var(--comp-text-secondary)]">
                 {assessment.converted || "-"}
               </td>
             </tr>

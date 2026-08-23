@@ -5,9 +5,10 @@
  * Replaces the stub with the admin_analytics_panel design.
  */
 
+import { Download } from "lucide-react";
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import { ErpPageShell, SectionCard, KpiGrid } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { listEvents, type EventSummary } from '../../lib/campus/campusApi';
 
@@ -30,30 +31,6 @@ interface AuditAction {
 
 /* ---------- Sub-components ---------- */
 
-function KpiCard({ icon, label, value, trend, trendColor }: {
-  icon: string; label: string; value: string | number;
-  trend?: string; trendColor?: string;
-}) {
-  return (
-    <div style={{
-      background: 'var(--comp-surface)', border: '1px solid var(--comp-border)',
-      borderRadius: 12, padding: 'var(--space-lg)',
-      display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="comp-label" style={{ fontSize: '0.72rem' }}>{label}</span>
-        <span style={{ fontSize: '1.1rem' }} aria-hidden="true">{icon}</span>
-      </div>
-      <span style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: 'var(--comp-text-primary)' }}>{value}</span>
-      {trend && (
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: trendColor ?? 'var(--status-open-text)' }}>
-          {trend}
-        </span>
-      )}
-    </div>
-  );
-}
-
 function EngagementChart() {
   // Simple bar chart visualization
   const months = ['SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB'];
@@ -65,7 +42,7 @@ function EngagementChart() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 className="comp-heading-md" style={{ margin: 0 }}>Engagement Trends</h3>
-        <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: '0.78rem' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: 'var(--text-sm)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--comp-accent)' }} /> Events
           </span>
@@ -82,16 +59,16 @@ function EngagementChart() {
                 width: 14, borderRadius: '4px 4px 0 0',
                 background: 'var(--comp-accent)',
                 height: `${(eventsData[i] / maxVal) * 100}%`,
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                transition: 'opacity var(--transition-base), transform var(--transition-base)',
               }} />
               <div style={{
                 width: 14, borderRadius: '4px 4px 0 0',
                 background: 'var(--comp-accent-light)',
                 height: `${(attendanceData[i] / maxVal) * 100}%`,
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                transition: 'opacity var(--transition-base), transform var(--transition-base)',
               }} />
             </div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--comp-text-muted)' }}>{m}</span>
+            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--comp-text-muted)' }}>{m}</span>
           </div>
         ))}
       </div>
@@ -102,8 +79,8 @@ function EngagementChart() {
 function DistributionChart() {
   const segments = [
     { label: 'Academic', pct: 70, color: 'var(--comp-accent)' },
-    { label: 'Social', pct: 20, color: '#94a3b8' },
-    { label: 'Others', pct: 10, color: '#e2e8f0' },
+    { label: 'Social', pct: 20, color: 'var(--accent-blue)' },
+    { label: 'Others', pct: 10, color: 'var(--comp-border-strong)' },
   ];
 
   return (
@@ -121,18 +98,18 @@ function DistributionChart() {
             background: 'var(--comp-surface)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: '0.65rem', color: 'var(--comp-text-muted)' }}>Total</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>1.2k</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)' }}>Total</span>
+            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 800 }}>1.2k</span>
           </div>
         </div>
       </div>
       {/* Legend */}
       {segments.map((s) => (
         <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.82rem' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-sm)' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} /> {s.label}
           </span>
-          <span style={{ fontWeight: 700, fontSize: '0.82rem' }}>{s.pct}%</span>
+          <span style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>{s.pct}%</span>
         </div>
       ))}
     </div>
@@ -177,32 +154,36 @@ export default function AdminEventsManagementPage() {
   ];
 
   return (
-    <ErpPageShell title="University Analytics" source="Internal API" isLoading={loading} loadingMessage="Loading analytics dashboard...">
+    <ErpPageShell
+      title="University Analytics"
+      source="Internal API"
+      isLoading={loading}
+      loadingMessage="Loading analytics dashboard..."
+      headerActions={
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <button className="comp-btn-ghost" style={{ fontSize: 'var(--text-sm)' }}>📅 Last 30 Days</button>
+          <button className="comp-btn-primary" style={{ fontSize: 'var(--text-sm)' }}><Download size={14} aria-hidden="true" /> Export Reports</button>
+        </div>
+      }
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-          <div>
-            <h1 className="comp-heading-lg" style={{ margin: 0 }}>University Analytics</h1>
-            <p className="comp-body" style={{ margin: '4px 0 0' }}>
-              Real-time performance metrics for the Academic Year 2024-25
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-            <button className="comp-btn-ghost" style={{ fontSize: '0.82rem' }}>📅 Last 30 Days</button>
-            <button className="comp-btn-primary" style={{ fontSize: '0.82rem' }}>↓ Export Reports</button>
-          </div>
-        </div>
+        {/* Subtitle */}
+        <p className="comp-body" style={{ margin: 0 }}>
+          Real-time performance metrics for the Academic Year 2024-25
+        </p>
 
         {error && <ErrorMessage message={error} onRetry={loadData} />}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 gap-[var(--space-md)] md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard icon="👥" label="Total Attendance" value={totalAttendance.toLocaleString() || '24,592'} trend="↗ +12%" trendColor="var(--status-open-text)" />
-          <KpiCard icon="📋" label="Events Hosted" value={events.length || 1284} trend="↗ +4%" trendColor="var(--status-open-text)" />
-          <KpiCard icon="❤️" label="Avg. Satisfaction" value={`${avgSatisfaction}/5`} trend="↘ -2%" trendColor="var(--status-live-text)" />
-          <KpiCard icon="💰" label="Revenue Generated" value="$42,900" trend="↗ +18%" trendColor="var(--status-open-text)" />
-        </div>
+        <KpiGrid
+          items={[
+            { label: 'Total Attendance', value: totalAttendance.toLocaleString() || '24,592', trend: 1, trendLabel: '+12%' },
+            { label: 'Events Hosted', value: String(events.length || 1284), trend: 1, trendLabel: '+4%' },
+            { label: 'Avg. Satisfaction', value: `${avgSatisfaction}/5`, trend: -1, trendLabel: '-2%' },
+            { label: 'Revenue Generated', value: '$42,900', trend: 1, trendLabel: '+18%' },
+          ]}
+        />
 
         {/* Charts row */}
         <div className="grid grid-cols-1 gap-[var(--space-lg)] xl:grid-cols-[1fr_320px]">
@@ -220,49 +201,53 @@ export default function AdminEventsManagementPage() {
           <SectionCard>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
               <h3 className="comp-heading-md" style={{ margin: 0 }}>Top Performing Departments</h3>
-              <Link to="/admin/department-performance" className="comp-btn-ghost" style={{ fontSize: '0.78rem', padding: '4px 10px', textDecoration: 'none' }}>
+              <Link to="/admin/department-performance" className="comp-btn-ghost" style={{ fontSize: 'var(--text-sm)', padding: '4px 10px', textDecoration: 'none' }}>
                 View All
               </Link>
             </div>
-            {/* Table header */}
-            <div className="overflow-x-auto" style={{
-              display: 'grid', gridTemplateColumns: '40px 2fr 60px 80px',
-              padding: 'var(--space-xs) 0', borderBottom: '1px solid var(--comp-border)',
-              fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em',
-              color: 'var(--comp-text-muted)', textTransform: 'uppercase',
-            }}>
-              <span>RANK</span>
-              <span>DEPARTMENT / CLUB</span>
-              <span>EVENTS</span>
-              <span>SCORE</span>
-            </div>
-            {departments.map((d) => (
-              <div key={d.rank} className="overflow-x-auto" style={{
-                display: 'grid', gridTemplateColumns: '40px 2fr 60px 80px',
-                padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--comp-border)',
-                alignItems: 'center', fontSize: '0.85rem',
-              }}>
-                <span style={{ fontWeight: 700, color: 'var(--comp-text-muted)' }}>#{d.rank}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                  <span style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    background: 'var(--comp-accent)', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.65rem', fontWeight: 700,
-                  }}>
-                    {d.code}
-                  </span>
-                  <span style={{ fontWeight: 500, color: 'var(--comp-text-primary)' }}>{d.name}</span>
-                </div>
-                <span>{d.events}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--comp-border)', overflow: 'hidden' }}>
-                    <div style={{ width: `${(d.score / 10) * 100}%`, height: '100%', borderRadius: 2, background: 'var(--comp-accent)' }} />
-                  </div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{d.score}</span>
-                </div>
+            <div className="erp-table-shell">
+              <div className="max-h-[420px] overflow-auto">
+                <table className="erp-table text-left">
+                  <thead className="erp-table-head">
+                    <tr>
+                      <th className="erp-table-head-cell label-text">Rank</th>
+                      <th className="erp-table-head-cell label-text">Department / Club</th>
+                      <th className="erp-table-head-cell label-text">Events</th>
+                      <th className="erp-table-head-cell label-text">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="erp-table-body">
+                    {departments.map((d) => (
+                      <tr key={d.rank} className="erp-table-row">
+                        <td className="erp-table-cell font-bold text-[var(--comp-text-muted)]">#{d.rank}</td>
+                        <td className="erp-table-cell">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                            <span style={{
+                              width: 28, height: 28, borderRadius: 'var(--border-radius-sm)',
+                              background: 'var(--comp-accent)', color: 'var(--comp-accent-fg)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 'var(--text-xs)', fontWeight: 700, flexShrink: 0,
+                            }}>
+                              {d.code}
+                            </span>
+                            <span style={{ fontWeight: 500, color: 'var(--comp-text-primary)' }}>{d.name}</span>
+                          </div>
+                        </td>
+                        <td className="erp-table-cell">{d.events}</td>
+                        <td className="erp-table-cell">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 80 }}>
+                            <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--comp-border)', overflow: 'hidden' }}>
+                              <div style={{ width: `${(d.score / 10) * 100}%`, height: '100%', borderRadius: 2, background: 'var(--comp-accent)' }} />
+                            </div>
+                            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{d.score}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            </div>
           </SectionCard>
 
           {/* Audit trail */}
@@ -278,27 +263,27 @@ export default function AdminEventsManagementPage() {
                     width: 36, height: 36, borderRadius: '50%',
                     background: 'var(--comp-accent-light)', color: 'var(--comp-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.78rem', fontWeight: 700, flexShrink: 0,
+                    fontSize: 'var(--text-sm)', fontWeight: 700, flexShrink: 0,
                   }}>
                     {a.actor.charAt(0)}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 500, color: 'var(--comp-text-primary)' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--comp-text-primary)' }}>
                       {a.actor}
                     </p>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--comp-text-muted)' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--comp-text-muted)' }}>
                       {a.action}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <span style={{
-                      fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                      fontSize: 'var(--text-xs)', fontWeight: 700, padding: '2px 6px', borderRadius: 'var(--border-radius-sm)',
                       background: a.role === 'SYSTEM' ? 'var(--comp-border)' : 'var(--comp-accent-light)',
                       color: a.role === 'SYSTEM' ? 'var(--comp-text-muted)' : 'var(--comp-accent)',
                     }}>
                       {a.role}
                     </span>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--comp-text-muted)' }}>
+                    <p style={{ margin: '2px 0 0', fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)' }}>
                       {new Date(a.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -307,7 +292,7 @@ export default function AdminEventsManagementPage() {
             </div>
             <Link to="/admin/audit-logs" className="comp-btn-ghost" style={{
               width: '100%', textAlign: 'center', marginTop: 'var(--space-sm)',
-              fontSize: '0.82rem', textDecoration: 'none', display: 'block',
+              fontSize: 'var(--text-sm)', textDecoration: 'none', display: 'block',
             }}>
               Audit Trail Logs →
             </Link>

@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   createLearningMaterialItem,
-  createResourceRecommendation,
   deleteLearningMaterialItem,
   executeLearningMaterialBulkAction,
   getLearningMaterialHistory,
@@ -15,19 +15,14 @@ import {
   uploadResourceFile,
 } from "../../lib/lms/index";
 import { AdminResourceQueue, RecommendationQueue } from "./learningMaterials/adminSections";
-import {
-  EMPTY_MATERIAL_FORM,
-  EMPTY_RECOMMENDATION_FORM,
-  inferUploadedResourceKind,
-} from "./learningMaterials/constants";
-import { MaterialForm, RecommendationForm } from "./learningMaterials/forms";
+import { EMPTY_MATERIAL_FORM, inferUploadedResourceKind } from "./learningMaterials/constants";
+import { MaterialForm } from "./learningMaterials/forms";
 import { ResourceFilters, ResourceLibrary, ResourcePreview, WorkflowMap } from "./learningMaterials/sections";
 import { useLearningMaterialsData } from "./learningMaterials/useLearningMaterialsData";
 import type {
   AdminLearningResourceItem,
   BannerState,
   MaterialFormState,
-  RecommendationFormState,
 } from "./learningMaterials/types";
 
 type Props = {
@@ -44,11 +39,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<BannerState | null>(null);
   const [uploadingResource, setUploadingResource] = useState(false);
-  const [uploadingRecommendation, setUploadingRecommendation] = useState(false);
   const [form, setForm] = useState<MaterialFormState>(() => ({ ...EMPTY_MATERIAL_FORM }));
-  const [recommendationForm, setRecommendationForm] = useState<RecommendationFormState>(() => ({
-    ...EMPTY_RECOMMENDATION_FORM,
-  }));
   const data = useLearningMaterialsData({
     adminMode,
     adminUnlocked: admin.unlocked,
@@ -113,35 +104,6 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
       await refreshCurrentSelection();
     } catch (submitError) {
       setBanner({ tone: "warning", text: errorMessage(submitError, "Failed to save resource.") });
-    }
-  }
-
-  async function handleRecommendationSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!recommendationForm.url.trim()) {
-      setBanner({ tone: "warning", text: "Provide a URL or upload a file first." });
-      return;
-    }
-    if (!selectedYear || !selectedCourse || !selectedSubject) return;
-    setBanner(null);
-
-    try {
-      await createResourceRecommendation({
-        title: recommendationForm.title.trim(),
-        description: recommendationForm.description.trim(),
-        url: recommendationForm.url.trim(),
-        kind: recommendationForm.kind,
-        year: selectedYear,
-        courseCode: selectedCourse.courseCode,
-        courseName: selectedCourse.courseName,
-        subjectCode: selectedSubject.subjectCode,
-        subjectName: selectedSubject.subjectName,
-        resourceGroup: recommendationForm.resourceGroup,
-      });
-      setRecommendationForm({ ...EMPTY_RECOMMENDATION_FORM });
-      setBanner({ tone: "success", text: "Recommendation submitted. Admin will review and decide." });
-    } catch (submitError) {
-      setBanner({ tone: "warning", text: errorMessage(submitError, "Failed to submit recommendation.") });
     }
   }
 
@@ -336,23 +298,15 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
 
       {adminMode && admin.unlocked && workflow ? <WorkflowMap workflow={workflow} /> : null}
 
-      <SectionCard title="Recommend a Resource">
-        <RecommendationForm
-          form={recommendationForm}
-          uploading={uploadingRecommendation}
-          onChange={(updates) => setRecommendationForm((prev) => ({ ...prev, ...updates }))}
-          onSubmit={handleRecommendationSubmit}
-          onFileUpload={(file) =>
-            void uploadIntoForm(file, setUploadingRecommendation, (uploaded) =>
-              setRecommendationForm((prev) => ({
-                ...prev,
-                url: uploaded.url,
-                kind: inferUploadedResourceKind(uploaded),
-              }))
-            )
-          }
-        />
-      </SectionCard>
+      {!adminMode ? (
+        <div className="rounded-lg border border-[color-mix(in_srgb,var(--comp-accent)_22%,var(--border))] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+          Looking to share your own notes, PYQs, or links? Use{" "}
+          <Link to="/resources/add" className="font-medium text-[var(--info)] underline underline-offset-2">
+            Contribute Resource
+          </Link>{" "}
+          — submissions go through peer review and appear in the community catalog.
+        </div>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <ResourceFilters

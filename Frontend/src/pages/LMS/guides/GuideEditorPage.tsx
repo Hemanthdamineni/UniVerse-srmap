@@ -149,11 +149,11 @@ export function GuideEditorPage() {
           </div>
         ))}
         <div className="flex gap-3">
-          <button className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" onClick={() => setSections([...sections, { title: `Section ${sections.length + 1}`, content: "" }])}>
+          <button className="lms-btn lms-btn-ghost" onClick={() => setSections([...sections, { title: `Section ${sections.length + 1}`, content: "" }])}>
             Add section
           </button>
           <button
-            className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
+            className="lms-btn lms-btn-primary"
             onClick={async () => {
               const payload = { title, description, subjectCode, subjectName, semester, unit, sections, published: true };
               const guide = editId ? await updateGuide(editId, payload) : await createGuide(payload);

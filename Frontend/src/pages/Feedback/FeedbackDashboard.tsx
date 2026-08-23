@@ -158,12 +158,12 @@ export default function FeedbackDashboard() {
                         <td className="py-3">{item.targetLabel}</td>
                         <td className="py-3 max-w-xs truncate" title={item.comment}>{item.comment || "—"}</td>
                         <td className="py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          <span className={`erp-status-pill ${
                             item.status === "approved"
-                              ? "bg-green-100 text-green-700"
+                              ? "erp-status-pill-success"
                               : item.status === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
+                              ? "erp-status-pill-error"
+                              : "erp-status-pill-warning"
                           }`}>
                             {item.status}
                           </span>

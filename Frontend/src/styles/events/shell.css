@@ -20,7 +20,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--space-md);
   margin-bottom: 8px;
   color: var(--page-contrast-fg, var(--text-primary));
 }
@@ -75,8 +75,8 @@
 .competition-access-panel {
   display: grid;
   justify-items: center;
-  gap: 12px;
-  padding: 42px 28px;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-lg);
   text-align: center;
 }
 
@@ -103,29 +103,44 @@
   container-type: inline-size;
 }
 
-.competition-grid.two {
-  grid-template-columns: minmax(0, 1fr) 340px;
+/* Single column until desktop widths. This was previously a @container rule
+   targeting .competition-grid itself, which can never match (an element
+   cannot query its own container), so grids rendered single-column at every
+   width. Media query also aligns with the max-lg ordering utilities used by
+   event-detail/create layouts. */
+.competition-grid.two,
+.competition-grid.three {
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.competition-grid.three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 64rem) {
+  .competition-grid.two {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .competition-grid.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .competition-form-control {
   width: 100%;
+  /* datetime/date inputs carry a large intrinsic min-width; allow them to
+     shrink inside fluid grid columns. */
+  min-width: 0;
   min-height: 46px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface) 84%, var(--background) 16%);
   color: var(--text-primary);
-  padding: 0 14px;
+  padding: 0 var(--space-md);
   font: inherit;
   box-sizing: border-box;
 }
 
 textarea.competition-form-control {
   min-height: 136px;
-  padding-top: 14px;
+  padding-top: var(--space-md);
   resize: vertical;
 }
 

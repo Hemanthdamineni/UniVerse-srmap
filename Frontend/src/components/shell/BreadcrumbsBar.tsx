@@ -12,7 +12,7 @@ export default function BreadcrumbsBar({ items }: Props) {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="border-b border-[var(--border)] bg-[var(--surface)]/60 px-4 py-2.5 md:px-6">
+    <nav aria-label="Breadcrumb" className="border-b border-[var(--border)] bg-[var(--surface)]/60 px-4 py-2 md:px-6">
       <ol className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-1 text-sm text-[var(--text-secondary)]">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

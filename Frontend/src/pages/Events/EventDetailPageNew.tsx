@@ -3,9 +3,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, CalendarDays, MapPin, Users } from "lucide-react";
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { GlobalLoadingBoundary, useEvent } from "../../contexts/EventContext";
+import { Markdown } from "../../components/markdown";
+import { StatusBadge } from "../../components/ui/Badges";
 import { registerForEvent, cancelEventRegistration, type CompetitionRound } from "../../lib/campus/campusApi";
 
 type DetailTab = "overview" | "rounds" | "timeline" | "rules";
+
+/** Parse a rules string like "1.Foo 2. Bar 3. Baz" into individual items. */
+function parseNumberedRules(text: string): string[] {
+  const items = text
+    .split(/(?<=\S)\s+(?=\d+[.)]\s)/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : [text];
+}
 
 function formatDate(date?: string) {
   if (!date) return "TBA";
@@ -119,7 +130,7 @@ export default function EventDetailPageNew() {
   function roundAction(round: CompetitionRound) {
     const state = userState?.roundStates.find((item) => item.roundId === round.roundId);
     if (state?.canSubmit) {
-      return <Link className="comp-btn-primary" to={`/events/${loadedEvent.id}/submit/${round.roundId}`}>Submit</Link>;
+      return <Link className="comp-btn-primary" to={`/events/${loadedEvent.id}/submit/${round.roundId}`}>Submit entry</Link>;
     }
     if (round.resultsPublished || state?.canViewResults) {
       return <Link className="comp-btn-ghost" to={`/events/${loadedEvent.id}/my-results/${round.roundId}`}>Results</Link>;
@@ -127,7 +138,7 @@ export default function EventDetailPageNew() {
     if (userState?.canViewAllSubmissions) {
       return <Link className="comp-btn-ghost" to={`/events/${loadedEvent.id}/manage/rounds/${round.roundId}/submissions`}>Review</Link>;
     }
-    return <span className="competition-pill">Locked</span>;
+    return <StatusBadge status="Locked" preset="neutral" label="Locked" />;
   }
 
   return (
@@ -138,7 +149,9 @@ export default function EventDetailPageNew() {
           {event.category ? <span className="competition-pill">{event.category}</span> : null}
         </div>
         <h1>{event.title || "Untitled Event"}</h1>
-        <p>{event.description || "Event details will be updated by the organizer."}</p>
+        <div className="event-detail-hero-copy">
+          <Markdown>{event.description || "Event details will be updated by the organizer."}</Markdown>
+        </div>
         <div className="event-detail-meta">
           <span><CalendarDays size={18} /> {formatDate(event.startAt || event.startDate)} - {formatDate(event.endAt || event.endDate)}</span>
           <span><MapPin size={18} /> {eventVenue(event)}</span>
@@ -153,7 +166,9 @@ export default function EventDetailPageNew() {
           <section id="overview" ref={(el) => { sectionRefs.current.overview = el; }} className="event-detail-section">
             <CompetitionCard className="event-detail-panel">
               <h2>Event Overview</h2>
-              <p>{event.description || "Join the competition, collaborate with peers, and follow every round from registration through results."}</p>
+              <div className="event-detail-body">
+                <Markdown>{event.description || "Join the competition, collaborate with peers, and follow every round from registration through results."}</Markdown>
+              </div>
               <div className="event-detail-facts">
                 <span><Building2 size={17} /> {event.department || "University"}</span>
                 <span><MapPin size={17} /> {eventVenue(event)}</span>
@@ -173,7 +188,9 @@ export default function EventDetailPageNew() {
                 <CompetitionCard key={round.roundId} className="event-round-card">
                   <span className="competition-pill">Round {index + 1}</span>
                   <h2>{round.title}</h2>
-                  <p>{round.instructions || "Submit work before the deadline and track results after evaluation."}</p>
+                  <div className="event-detail-body">
+                    <Markdown>{round.instructions || "Submit work before the deadline and track results after evaluation."}</Markdown>
+                  </div>
                   <div className="event-detail-facts">
                     <span>Deadline: {formatDateTime(round.submissionDeadline)}</span>
                     <span>{round.resultsPublished ? "Results published" : "Evaluation pending"}</span>
@@ -193,11 +210,29 @@ export default function EventDetailPageNew() {
             <CompetitionCard className="event-detail-panel">
               <h2>Timeline</h2>
               <ol className="event-timeline">
-                <li><span /> Registration opens <strong>{formatDate(event.startAt || event.startDate)}</strong></li>
+                <li>
+                  <span className="event-timeline-dot" />
+                  <div className="event-timeline-content">
+                    <span className="event-timeline-label">Registration opens</span>
+                    <strong className="event-timeline-date">{formatDate(event.startAt || event.startDate)}</strong>
+                  </div>
+                </li>
                 {rounds.map((round) => (
-                  <li key={round.roundId}><span /> {round.title} closes <strong>{formatDateTime(round.submissionDeadline)}</strong></li>
+                  <li key={round.roundId}>
+                    <span className="event-timeline-dot" />
+                    <div className="event-timeline-content">
+                      <span className="event-timeline-label">{round.title} closes</span>
+                      <strong className="event-timeline-date">{formatDateTime(round.submissionDeadline)}</strong>
+                    </div>
+                  </li>
                 ))}
-                <li><span /> Results and certificates <strong>After evaluation</strong></li>
+                <li>
+                  <span className="event-timeline-dot" />
+                  <div className="event-timeline-content">
+                    <span className="event-timeline-label">Results and certificates</span>
+                    <strong className="event-timeline-date">After evaluation</strong>
+                  </div>
+                </li>
               </ol>
             </CompetitionCard>
           </section>
@@ -205,12 +240,27 @@ export default function EventDetailPageNew() {
           <section id="rules" ref={(el) => { sectionRefs.current.rules = el; }} className="event-detail-section">
             <CompetitionCard className="event-detail-panel">
               <h2>Rules & Guidelines</h2>
-              <p>{event.rules || event.eligibility || "Participants must follow organizer instructions, submit original work, and respect all university competition policies."}</p>
-              {event.prizes ? <p><strong>Prizes:</strong> {event.prizes}</p> : null}
+              <ol className="event-rules-list">
+                {parseNumberedRules(
+                  event.rules || event.eligibility || "Participants must follow organizer instructions, submit original work, and respect all university competition policies."
+                ).map((rule, i) => (
+                  <li key={i}>
+                    <Markdown>{rule.replace(/^\d+[.)]\s*/, "")}</Markdown>
+                  </li>
+                ))}
+              </ol>
+              {event.prizes ? (
+                <div className="event-detail-body mt-3 text-sm">
+                  <strong>Prizes:</strong>
+                  <Markdown>{event.prizes}</Markdown>
+                </div>
+              ) : null}
             </CompetitionCard>
           </section>
         </div>
 
+        {/* Below lg the sidebar dissolves (contents) so the register/action card
+            leads the page while the nav card stays after the main content. */}
         <div className="event-detail-sidebar">
           <CompetitionCard className="event-detail-nav">
             <h2>Navigation</h2>

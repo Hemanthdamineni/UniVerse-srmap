@@ -418,7 +418,7 @@ const engagementMethods = {
       existing.comments = String(comments || existing.comments);
       existing.answers = ensureArray(answers || existing.answers);
       existing.updatedAt = nowIso();
-      this._persistAll();
+      this._persistAll("feedback");
       return existing;
     }
 
@@ -434,7 +434,7 @@ const engagementMethods = {
     };
 
     this.feedback.push(item);
-    this._persistAll();
+    this._persistAll("feedback");
     return item;
   },
 
@@ -458,7 +458,7 @@ const engagementMethods = {
     };
 
     this.gallery.push(photo);
-    this._persistAll();
+    this._persistAll("gallery");
     this._syncEventToContent(event);
     return photo;
   },
@@ -739,7 +739,7 @@ const eventCrudMethods = {
     this.events.push(...created);
     this._reindex();
 
-    this._persistAll();
+    this._persistAll("events");
     for (const event of created) {
       this._syncEventToContent(event);
     }
@@ -795,7 +795,7 @@ const eventCrudMethods = {
       eventId,
     });
 
-    this._persistAll();
+    this._persistAll("events", "notifications");
     this._syncEventToContent(updated);
     return this._eventSummary(updated, user);
   },
@@ -889,6 +889,8 @@ const eventCrudMethods = {
       }
     }
 
+    // Sub-actions persist their own collections; this full pass is a safety
+    // net for the bulk path (rare, admin-only).
     this._persistAll();
     return results;
   },
@@ -921,7 +923,7 @@ const eventCrudMethods = {
     this.gallery = this.gallery.filter((item) => item.eventId !== eventId);
     this.checkIns = this.checkIns.filter((item) => item.eventId !== eventId);
     this._reindex();
-    this._persistAll();
+    this._persistAll("events", "registrations", "feedback", "gallery", "checkIns");
     this._removeEventsFromContent(removedEventIds);
   },
 
@@ -992,7 +994,7 @@ const notificationMethods = {
       }
     }
 
-    this._persistAll();
+    this._persistAll("notifications");
     return reminders;
   },
 
@@ -1018,7 +1020,7 @@ const notificationMethods = {
       })
     );
 
-    this._persistAll();
+    this._persistAll("notifications");
     return created;
   },
 
@@ -1039,7 +1041,7 @@ const notificationMethods = {
     }
 
     notification.readAt = nowIso();
-    this._persistAll();
+    this._persistAll("notifications");
     return notification;
   },
 
@@ -1087,7 +1089,7 @@ const notificationMethods = {
 
   pushCareerNotification(userId, payload) {
     const row = this._pushNotification(userId, payload);
-    this._persistAll();
+    this._persistAll("notifications");
     return row;
   }
 };
@@ -1172,7 +1174,7 @@ const registrationMethods = {
       eventId,
     });
 
-    this._persistAll();
+    this._persistAll("registrations", "notifications");
     return registration;
   },
 
@@ -1207,7 +1209,7 @@ const registrationMethods = {
     registration.cancellationReason = String(reason || "Cancelled by attendee");
 
     this._reindex();
-    this._persistAll();
+    this._persistAll("registrations");
     return registration;
   },
 
@@ -1267,7 +1269,7 @@ const registrationMethods = {
       checkedInAt: registration.checkedInAt,
     });
 
-    this._persistAll();
+    this._persistAll("registrations", "checkIns");
     return registration;
   },
 
@@ -1431,16 +1433,21 @@ const storageMethods = {
     this._reindex();
   },
 
-  _persistAll() {
+  // Collections are small enough to hold in memory but big enough that
+  // rewriting all six on every registration/check-in/feedback action spikes
+  // latency linearly with history. Mutations pass the collections they
+  // touched; only those are serialized and written.
+  _persistAll(...names) {
+    const ALL_COLLECTIONS = ["events", "registrations", "notifications", "feedback", "gallery", "checkIns"];
+    const targets = names.length ? ALL_COLLECTIONS.filter((name) => names.includes(name)) : ALL_COLLECTIONS;
+    if (!targets.length) return;
+
     if (this.db) {
       this.db.exec("BEGIN IMMEDIATE");
       try {
-        this._writeSqliteState("events", this.events);
-        this._writeSqliteState("registrations", this.registrations);
-        this._writeSqliteState("notifications", this.notifications);
-        this._writeSqliteState("feedback", this.feedback);
-        this._writeSqliteState("gallery", this.gallery);
-        this._writeSqliteState("checkIns", this.checkIns);
+        for (const name of targets) {
+          this._writeSqliteState(name, this[name]);
+        }
         this.db.exec("COMMIT");
       } catch (err) {
         this.db.exec("ROLLBACK");
@@ -1449,12 +1456,9 @@ const storageMethods = {
       return;
     }
 
-    fs.writeFileSync(this.eventsFile, JSON.stringify(this.events, null, 2));
-    fs.writeFileSync(this.registrationsFile, JSON.stringify(this.registrations, null, 2));
-    fs.writeFileSync(this.notificationsFile, JSON.stringify(this.notifications, null, 2));
-    fs.writeFileSync(this.feedbackFile, JSON.stringify(this.feedback, null, 2));
-    fs.writeFileSync(this.galleryFile, JSON.stringify(this.gallery, null, 2));
-    fs.writeFileSync(this.checkInsFile, JSON.stringify(this.checkIns, null, 2));
+    for (const name of targets) {
+      fs.writeFileSync(this[`${name}File`], JSON.stringify(this[name], null, 2));
+    }
   },
 
   _reindex() {

@@ -9,7 +9,7 @@ import { AdminAccessPrompt } from "../components/admin/AdminPanels";
 import { AdminModeProvider } from "../contexts/AdminModeContext";
 import { isStaticPrototype } from "../lib/core/prototype";
 
-const PUBLIC_ROUTES = new Set(["/", "/login", "/forgot-password"]);
+const PUBLIC_ROUTES = new Set(["/login", "/forgot-password"]);
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -17,9 +17,9 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
 
   if (isPublicRoute) {
     return (
-      <div style={{ display: "flex", height: "100vh", flexDirection: "column", backgroundColor: "var(--background)" }}>
+      <div className="flex h-screen flex-col bg-[var(--background)]">
         <Header />
-        <main role="main" style={{ flex: 1, flexGrow: 1, alignItems: "center", justifyContent: "center", backgroundColor: "var(--background)" }}>
+        <main role="main" className="flex flex-1 items-center justify-center bg-[var(--background)]">
           {children}
         </main>
         <Footer />

@@ -164,6 +164,19 @@ const payloadBuilderMethods = {
       };
     }
 
+    // Bank details form submission
+    if (endpoint.includes("studentbankdetailsresource.jsp")) {
+      return {
+        txtbenname: cleanText(mergedPayload.txtbenname || mergedPayload.beneficiaryName || ""),
+        txtaccno: cleanText(mergedPayload.txtaccno || mergedPayload.accountNumber || ""),
+        txtbankname: cleanText(mergedPayload.txtbankname || mergedPayload.bankName || ""),
+        txtbranchname: cleanText(mergedPayload.txtbranchname || mergedPayload.branchName || ""),
+        txtifsccode: cleanText(mergedPayload.txtifsccode || mergedPayload.ifscCode || ""),
+        ddlacnownerrelation: cleanText(mergedPayload.ddlacnownerrelation || mergedPayload.accountOwnerRelation || ""),
+        txtacnownercontact: cleanText(mergedPayload.txtacnownercontact || mergedPayload.accountOwnerContact || ""),
+      };
+    }
+
     return mergedPayload;
   },
 
@@ -261,7 +274,7 @@ const actionResolutionMethods = {
 // --- transportResults.js ---
 
 const transportResultMethods = {
-  async executeHttp(api, method, url, payload) {
+  async executeHttp(api, method, url, payload, options = {}) {
     const normalizedMethod = cleanText(method).toUpperCase() || "POST";
     const normalizedUrl = normalizeExpectedUrl(url);
     if (!normalizedUrl) {
@@ -271,6 +284,19 @@ const transportResultMethods = {
     let response;
     if (normalizedMethod === "GET") {
       response = await api.get(normalizedUrl, { params: payload });
+    } else if (options.multipart && payload._fileBuffer) {
+      // Multipart form upload (e.g., bank details with cancelled cheque)
+      const { _fileBuffer, _fileName, _fileMimeType, ...formFields } = payload;
+      const multipartPayload = {};
+      for (const [key, value] of Object.entries(formFields)) {
+        multipartPayload[key] = String(value || "");
+      }
+      multipartPayload.fileUpload = {
+        buffer: Buffer.from(_fileBuffer, "base64"),
+        name: _fileName || "cancelled_cheque.jpg",
+        mimeType: _fileMimeType || "image/jpeg",
+      };
+      response = await api.post(normalizedUrl, { multipart: multipartPayload });
     } else {
       response = await api.post(normalizedUrl, { form: payload });
     }
@@ -330,7 +356,9 @@ const executionMethods = {
     const url = normalizeExpectedUrl(execution.url || "");
     const mutationPayload = this.buildMutationPayload(action, payload);
 
-    const call = await this.executeHttp(api, method, url, mutationPayload);
+    // Detect file upload actions (bank details with cancelled cheque)
+    const isMultipart = url.includes("studentbankdetailsresource.jsp") && payload._fileBuffer;
+    const call = await this.executeHttp(api, method, url, mutationPayload, { multipart: isMultipart });
     return this.buildResult({
       action,
       pageKey,

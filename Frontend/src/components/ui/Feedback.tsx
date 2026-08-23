@@ -1,8 +1,9 @@
 
 // ── EmptyState ─────────────────────────────────────────────────────
 
-import React, { useEffect, useState, useRef } from 'react';
+import * as React from "react";
 import { cn } from '../../lib/core/utils';
+import { Button } from '../button';
 import { FileQuestion, AlertCircle, RefreshCw, CheckCircle, Info, X } from 'lucide-react';
 
 export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -14,16 +15,16 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function EmptyState({ title, description, icon, action, className, ...props }: EmptyStateProps) {
   return (
-    <div 
-      className={cn('flex flex-col items-center justify-center p-8 text-center border-[0.5px] border-dashed border-[color:var(--comp-border-strong)] rounded-[var(--border-radius-lg,12px)] bg-[color:var(--comp-surface)]', className)}
+    <div
+      className={cn('flex flex-col items-center justify-center gap-2 p-6 text-center border-[0.5px] border-dashed border-[color:var(--comp-border-strong)] rounded-[var(--border-radius-lg,12px)] bg-[color:var(--comp-surface)]', className)}
       {...props}
     >
-      <div className="mb-4 text-[color:var(--comp-text-muted)] opacity-80">
+      <div className="text-[color:var(--comp-text-muted)] opacity-80">
         {icon || <FileQuestion size={48} strokeWidth={1.5} />}
       </div>
-      <h3 className="card-title mb-1">{title}</h3>
-      {description && <p className="body-text text-sm max-w-sm mb-4">{description}</p>}
-      {action && <div>{action}</div>}
+      <h3 className="card-title">{title}</h3>
+      {description && <p className="body-text text-sm max-w-sm">{description}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
@@ -42,7 +43,8 @@ export interface InlineErrorProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function InlineError({ message, title, description, action, onRetry, className, ...props }: InlineErrorProps) {
   return (
-    <div 
+    <div
+      role="alert"
       className={cn(
         'flex items-start gap-3 rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] p-4 text-[var(--error)]',
         className
@@ -52,7 +54,7 @@ export function InlineError({ message, title, description, action, onRetry, clas
       <AlertCircle size={20} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
         {title ? <p className="mb-1 text-sm font-semibold text-[var(--text-primary)]">{title}</p> : null}
-        <p className="text-sm font-medium">{message}</p>
+        <p className="break-words text-sm font-medium">{message}</p>
         {description ? <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{description}</p> : null}
         {(onRetry || action) ? (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -81,28 +83,38 @@ export function InlineError({ message, title, description, action, onRetry, clas
 
 export interface ToastProps {
   id: string;
-  type?: "success" | "info";
+  type?: "success" | "error" | "info";
   message: string;
   onDismiss: (id: string) => void;
 }
 
 export function Toast({ id, type = "info", message, onDismiss }: ToastProps) {
   const isSuccess = type === "success";
-  const Icon = isSuccess ? CheckCircle : Info;
+  const isError = type === "error";
+  const Icon = isSuccess ? CheckCircle : isError ? AlertCircle : Info;
 
   return (
-    <div className={cn(
-      "pointer-events-auto flex w-full max-w-md bg-[var(--comp-surface)] shadow-lg rounded-lg border border-[var(--comp-border)] py-3 px-4",
-      "transition-all duration-300 ease-in-out transform"
-    )}>
+    <div
+      role={isSuccess ? "status" : "alert"}
+      className={cn(
+        "pointer-events-auto flex w-full max-w-md bg-[var(--comp-surface)] shadow-lg rounded-lg border py-3 px-4",
+        isSuccess
+          ? "border-[color-mix(in_srgb,var(--success)_45%,transparent)]"
+          : isError
+            ? "border-[color-mix(in_srgb,var(--error)_45%,transparent)]"
+            : "border-[var(--comp-border)]",
+        "transition-all [transition-duration:var(--duration-normal)] [transition-timing-function:var(--ease-spring)]"
+      )}
+    >
       <div className="flex w-full items-start gap-3">
-        <Icon className={cn("w-5 h-5 shrink-0 mt-0.5", isSuccess ? "text-[var(--success)]" : "text-[var(--info)]")} />
+        <Icon className={cn("w-5 h-5 shrink-0 mt-0.5", isSuccess ? "text-[var(--success)]" : isError ? "text-[var(--error)]" : "text-[var(--info)]")} />
         <div className="flex-1 text-sm font-medium text-[var(--comp-text-primary)]">
           {message}
         </div>
         <button
           onClick={() => onDismiss(id)}
-          className="shrink-0 text-[var(--comp-text-muted)] hover:text-[var(--comp-text-primary)] transition"
+          aria-label="Dismiss notification"
+          className="shrink-0 rounded p-1 -m-1 text-[var(--comp-text-muted)] hover:text-[var(--comp-text-primary)] transition"
         >
           <X className="w-5 h-5" />
         </button>
@@ -112,10 +124,12 @@ export function Toast({ id, type = "info", message, onDismiss }: ToastProps) {
 }
 
 // Simple export for rendering toast containers externally
-export function ToastContainer({ toasts, onDismiss }: { toasts: ToastProps[], onDismiss: (id: string) => void }) {
+export type ToastInput = Omit<ToastProps, "onDismiss">;
+
+export function ToastContainer({ toasts, onDismiss }: { toasts: ToastInput[], onDismiss: (id: string) => void }) {
   if (toasts.length === 0) return null;
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-2 pointer-events-none">
       {toasts.map(toast => (
         <Toast key={toast.id} {...toast} onDismiss={onDismiss} />
       ))}
@@ -123,11 +137,24 @@ export function ToastContainer({ toasts, onDismiss }: { toasts: ToastProps[], on
   );
 }
 
+export function useToasts(durationMs = 4000) {
+  const [toasts, setToasts] = React.useState<ToastInput[]>([]);
+
+  const dismissToast = React.useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const showToast = React.useCallback((message: string, type: ToastInput["type"] = "info") => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts(prev => [...prev, { id, type, message }]);
+    window.setTimeout(() => dismissToast(id), durationMs);
+  }, [dismissToast, durationMs]);
+
+  return { toasts, showToast, dismissToast };
+}
+
 
 // ── AsyncState ─────────────────────────────────────────────────────
-
-import { SkeletonCard } from "./Skeletons";
-import { Button } from "../button";
 
 type LoadingProps = {
   variant?: "card" | "block";
@@ -148,19 +175,19 @@ export function LoadingState({ variant = "card", rows = 3, className = "" }: Loa
 
   return (
     <div className={className}>
-      <SkeletonCard />
+      <SkeletonCardComponent />
     </div>
   );
 }
 
-type ErrorProps = {
-  message: string;
-  onRetry?: () => void;
-  className?: string;
-};
-
-export function ErrorState({ message, onRetry, className = "" }: ErrorProps) {
-  return <InlineError title="Could not load this section" message={message} onRetry={onRetry} className={className} />;
+function SkeletonCardComponent() {
+  return (
+    <div className="animate-pulse space-y-3">
+      <div className="h-4 w-3/4 rounded bg-[color-mix(in_srgb,var(--comp-text-primary)_10%,transparent)]" />
+      <div className="h-4 w-1/2 rounded bg-[color-mix(in_srgb,var(--comp-text-primary)_10%,transparent)]" />
+      <div className="h-4 w-5/6 rounded bg-[color-mix(in_srgb,var(--comp-text-primary)_10%,transparent)]" />
+    </div>
+  );
 }
 
 type EmptyProps = {
@@ -190,73 +217,20 @@ export function EmptyView({
   return <EmptyState title={title} description={description} icon={icon} action={action} className={className} />;
 }
 
-export function RetryAction({ onRetry }: { onRetry: () => void }) {
+
+// ── StatusPill ─────────────────────────────────────────────────────
+
+export function FeedbackStatusPill({ status }: { status: string }) {
+  const className =
+    status === "approved"
+      ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+      : status === "rejected"
+        ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[var(--error)]"
+        : "border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]";
+
   return (
-    <Button type="button" variant="outline" onClick={onRetry}>
-      <RefreshCw className="mr-2 h-4 w-4" />
-      Retry
-    </Button>
+    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${className}`}>
+      {status}
+    </span>
   );
 }
-
-
-// ── AnimatedCounter ─────────────────────────────────────────────────────
-
-
-import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
-
-interface AnimatedCounterProps {
-  value: number;
-  duration?: number;
-  formatFn?: (val: number) => string;
-  className?: string;
-}
-
-export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
-  value,
-  duration = 1000,
-  formatFn = (val) => val.toString(),
-  className = '',
-}) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  const isInitialMount = useRef(true);
-  const { ref, isVisible } = useIntersectionObserver({ threshold: 0, once: true });
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    // If user prefers reduced motion, just set it instantly
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion || isInitialMount.current) {
-      setDisplayValue(value);
-      isInitialMount.current = false;
-      return;
-    }
-
-    let startTimestamp: number | null = null;
-    const startValue = displayValue;
-    const endValue = value;
-    const valueDiff = endValue - startValue;
-
-    const step = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      
-      // easeOutExpo
-      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      
-      setDisplayValue(Math.round(startValue + valueDiff * easeProgress));
-
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        setDisplayValue(endValue);
-      }
-    };
-
-    window.requestAnimationFrame(step);
-  }, [value, duration, isVisible]);
-
-  return <span ref={ref} className={`tabular-nums ${className}`}>{formatFn(displayValue)}</span>;
-};

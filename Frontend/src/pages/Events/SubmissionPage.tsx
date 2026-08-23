@@ -6,6 +6,7 @@
  * Integrates the new FileUploadZone + SubmissionStatusBanner + EvaluationCriteriaTable components.
  */
 
+import { Check } from "lucide-react";
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { SectionCard } from '../../components/erp/ErpPrimitives';
@@ -152,7 +153,7 @@ export default function SubmissionPage() {
       subtitle={round?.title || 'Upload project files and links for this round.'}
       variant="focus"
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         {/* Back link */}
         <Link
@@ -177,7 +178,7 @@ export default function SubmissionPage() {
         {/* Success */}
         {successBanner && (
           <div role="status" className="rounded-xl border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-sm font-semibold text-[var(--status-open-text)]">
-            ✓ {successBanner}
+            <Check size={14} aria-hidden="true" /> {successBanner}
           </div>
         )}
 
@@ -245,7 +246,7 @@ export default function SubmissionPage() {
                     type="button"
                     onClick={() => setType(t)}
                     aria-pressed={type === t}
-                    className={`rounded-xl border px-4 py-1.5 text-xs font-semibold capitalize ${
+                    className={`rounded-lg border px-3 py-1 text-xs font-semibold capitalize ${
                       type === t
                         ? 'border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white'
                         : 'border-[var(--border)] bg-[var(--dash-subcard-bg)] text-[var(--text-secondary)]'
@@ -310,7 +311,7 @@ export default function SubmissionPage() {
                 className="comp-btn-primary"
                 aria-label={submission ? 'Resubmit work' : 'Submit work'}
               >
-                {busy ? 'Submitting...' : submission ? 'Resubmit' : '✓ Submit Work'}
+                {busy ? 'Submitting...' : submission ? 'Resubmit' : <><Check size={14} aria-hidden="true" /> Submit Work</>}
               </button>
             </form>
           </SectionCard>

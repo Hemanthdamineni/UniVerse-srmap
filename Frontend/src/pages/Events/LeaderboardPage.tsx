@@ -57,30 +57,25 @@ export default function LeaderboardPage() {
       subtitle="Ranked results for the selected competition round."
       variant="wide"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+      <div className="flex flex-col gap-6">
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-          <div>
-            <Link
-              to={`/events/${encodeURIComponent(eventId)}`}
-              style={{ fontSize: '0.8rem', color: 'var(--comp-text-secondary)', textDecoration: 'none' }}
-            >
-              ← Back to Event
-            </Link>
-            <h1 className="comp-heading-xl" style={{ margin: '4px 0 0' }}>Leaderboard</h1>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link
+            to={`/events/${encodeURIComponent(eventId)}`}
+            className="text-sm no-underline text-[var(--comp-text-secondary)]"
+          >
+            ← Back to Event
+          </Link>
 
           {/* Anonymize toggle */}
-          <label
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.875rem', color: 'var(--comp-text-secondary)' }}
-          >
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--comp-text-secondary)]">
             <input
               type="checkbox"
               checked={anonymize}
               onChange={(e) => setAnonymize(e.target.checked)}
               aria-label="Anonymize participant names"
-              style={{ cursor: 'pointer' }}
+              className="cursor-pointer"
             />
             Anonymize names
           </label>
@@ -96,42 +91,29 @@ export default function LeaderboardPage() {
           <>
             {/* Podium for top 3 */}
             {rows.length >= 3 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+              <div className="mb-4 flex items-end justify-center gap-4">
                 {[rows[1], rows[0], rows[2]].map((row, podiumIdx) => {
-                  const heights = ['90px', '120px', '70px'];
+                  const podiumHeights = ['h-[90px]', 'h-[120px]', 'h-[70px]'];
                   const isMe = row.submittedBy === userId || row.submittedBy === (profile?.registerNumber as string | undefined);
                   return (
                     <div
                       key={row.id}
                       aria-label={`${MEDAL[row.rank]} ${displayName(row)}: ${row.totalScore ?? '—'}`}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 8,
-                        flex: 1,
-                        maxWidth: 160,
-                      }}
+                      className="flex max-w-[160px] flex-1 flex-col items-center gap-2"
                     >
-                      <span style={{ fontSize: '1.5rem' }}>{MEDAL[row.rank]}</span>
-                      <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--comp-text-primary)', textAlign: 'center' }}>
+                      <span className="text-xl" aria-hidden="true">{MEDAL[row.rank]}</span>
+                      <p className="m-0 text-center text-sm font-bold text-[var(--comp-text-primary)]">
                         {displayName(row)}
-                        {isMe && <span style={{ color: 'var(--comp-accent)' }}> (You)</span>}
+                        {isMe && <span className="text-[var(--comp-accent)]"> (You)</span>}
                       </p>
                       <div
-                        style={{
-                          width: '100%',
-                          height: heights[podiumIdx],
-                          background: isMe ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                          border: `2px solid ${isMe ? 'var(--comp-accent)' : 'var(--comp-border)'}`,
-                          borderRadius: '8px 8px 0 0',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          justifyContent: 'center',
-                          paddingTop: 8,
-                        }}
+                        className={`flex w-full items-start justify-center rounded-t-lg border-2 pt-2 ${podiumHeights[podiumIdx]} ${
+                          isMe
+                            ? 'border-[var(--comp-accent)] bg-[var(--comp-accent)]'
+                            : 'border-[var(--comp-border)] bg-[var(--comp-surface)]'
+                        }`}
                       >
-                        <span className="leaderboard-score" style={{ color: isMe ? 'var(--background)' : 'var(--comp-accent)' }}>
+                        <span className={`leaderboard-score ${isMe ? 'text-[var(--background)]' : 'text-[var(--comp-accent)]'}`}>
                           {row.totalScore ?? '—'}
                         </span>
                       </div>
@@ -142,10 +124,10 @@ export default function LeaderboardPage() {
             )}
 
             {/* Full rankings table */}
-            <div style={{ border: '1px solid var(--comp-border)', borderRadius: 12, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto rounded-xl border border-[var(--comp-border)]">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr style={{ background: 'var(--comp-accent)' }}>
+                  <tr className="bg-[var(--comp-accent)]">
                     {['Rank', 'Name', 'Score', 'Decision'].map((h) => (
                       <th key={h} className="leaderboard-header-cell">
                         {h}
@@ -159,32 +141,35 @@ export default function LeaderboardPage() {
                     return (
                       <tr
                         key={row.id}
-                        style={{
-                          background: isMe ? 'var(--comp-accent-light)' : i % 2 === 0 ? 'var(--comp-surface)' : 'var(--comp-surface-hover)',
-                          borderTop: '1px solid var(--comp-border)',
-                        }}
+                        className={`border-t border-[var(--comp-border)] ${
+                          isMe
+                            ? 'bg-[var(--comp-accent-light)]'
+                            : i % 2 === 0
+                              ? 'bg-[var(--comp-surface)]'
+                              : 'bg-[var(--comp-surface-hover)]'
+                        }`}
                       >
-                        <td style={{ padding: '10px 16px', fontSize: '0.875rem', fontWeight: 700, color: 'var(--comp-accent)' }}>
+                        <td className="px-4 py-2 text-sm font-bold text-[var(--comp-accent)]">
                           {MEDAL[row.rank] ?? `#${row.rank}`}
                         </td>
-                        <td style={{ padding: '10px 16px', fontSize: '0.875rem', color: 'var(--comp-text-primary)', fontWeight: isMe ? 700 : 400 }}>
+                        <td className={`px-4 py-2 text-sm text-[var(--comp-text-primary)] ${isMe ? 'font-bold' : 'font-normal'}`}>
                           {displayName(row)}
-                          {isMe && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: 'var(--comp-accent)', fontWeight: 700 }}>(You)</span>}
+                          {isMe && <span className="ml-1 text-xs font-bold text-[var(--comp-accent)]">(You)</span>}
                         </td>
-                        <td style={{ padding: '10px 16px', fontSize: '0.875rem', color: 'var(--comp-text-primary)', fontWeight: 600 }}>
+                        <td className="px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
                           {row.totalScore ?? '—'}
                         </td>
-                        <td style={{ padding: '10px 16px' }}>
+                        <td className="px-4 py-2">
                           {row.shortlisted ? (
-                            <span style={{ background: 'var(--status-open-bg)', color: 'var(--status-open-text)', borderRadius: 20, padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>
+                            <span className="rounded-full bg-[var(--status-open-bg)] px-2 py-1 text-xs font-semibold text-[var(--status-open-text)]">
                               Shortlisted
                             </span>
                           ) : row.decision ? (
-                            <span style={{ fontSize: '0.78rem', color: 'var(--comp-text-muted)' }}>
+                            <span className="text-sm text-[var(--comp-text-muted)]">
                               {String(row.decision)}
                             </span>
                           ) : (
-                            <span style={{ color: 'var(--comp-text-muted)', fontSize: '0.78rem' }}>—</span>
+                            <span className="text-sm text-[var(--comp-text-muted)]">—</span>
                           )}
                         </td>
                       </tr>
@@ -194,7 +179,7 @@ export default function LeaderboardPage() {
               </table>
             </div>
 
-            <p className="comp-label" style={{ textAlign: 'right' }}>
+            <p className="comp-label text-right">
               {rows.length} entr{rows.length !== 1 ? 'ies' : 'y'}
             </p>
           </>

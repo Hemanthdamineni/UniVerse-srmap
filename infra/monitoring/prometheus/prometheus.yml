@@ -10,7 +10,7 @@ scrape_configs:
     metrics_path: /api/metrics
     static_configs:
       - targets:
-          - app-backend:5000
+          - backend:5000
 
   - job_name: node-exporter
     static_configs:

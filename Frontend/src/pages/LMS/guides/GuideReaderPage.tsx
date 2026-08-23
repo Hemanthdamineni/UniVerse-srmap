@@ -97,29 +97,37 @@ import type {
   ResourceFilterState,
   ResourceFormState
 } from "../_shared/LmsPageShared";
+import { ConfirmDialog } from "../../../components/dialog";
 
 export function GuideReaderPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { profile } = useSession();
   const { data, setData, loading, error } = useAsyncPage(() => getGuide(id), [id]);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const registerNo = getProfileRegisterNo(profile);
   const canManageGuide = Boolean(
     data && (String(data.authorId || "").toUpperCase() === registerNo || isProfileAdmin(profile))
   );
+
+  async function handleDeleteConfirmed() {
+    setConfirmingDelete(false);
+    await deleteGuide(id);
+    navigate("/resources/me/contributions");
+  }
   return (
     <LmsFrame title={data?.title || "Guide"} loading={loading} error={error}>
       <div className="flex flex-wrap gap-3">
-        <Link to={`/resources/guides/new?clone=${id}`} className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+        <Link to={`/resources/guides/new?clone=${id}`} className="lms-btn lms-btn-ghost">
           Clone into editor
         </Link>
         {canManageGuide ? (
-          <Link to={`/resources/guides/new?edit=${id}`} className="rounded-full border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+          <Link to={`/resources/guides/new?edit=${id}`} className="lms-btn lms-btn-ghost">
             Edit
           </Link>
         ) : null}
         <button
-          className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
+          className="lms-btn lms-btn-primary"
           onClick={async () => {
             await toggleGuideUpvote(id);
             const next = await getGuide(id);
@@ -128,17 +136,13 @@ export function GuideReaderPage() {
         >
           Upvote
         </button>
-        <a className="rounded-full border border-[color-mix(in_srgb,var(--info)_20%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" href={`/api/lms/guides/${id}/export`} target="_blank" rel="noreferrer">
+        <a className="lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--info)_20%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]" href={`/api/lms/guides/${id}/export`} target="_blank" rel="noreferrer">
           Export PDF
         </a>
         {canManageGuide ? (
           <button
-            className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
-            onClick={async () => {
-              if (!window.confirm("Delete this guide?")) return;
-              await deleteGuide(id);
-              navigate("/resources/me/contributions");
-            }}
+            className="lms-btn lms-btn-danger"
+            onClick={() => setConfirmingDelete(true)}
           >
             Delete
           </button>
@@ -154,6 +158,16 @@ export function GuideReaderPage() {
           }}
         />
       ))}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this guide?"
+        description={`"${data?.title ?? "This guide"}" will be permanently removed for everyone. This cannot be undone.`}
+        confirmLabel="Delete guide"
+        danger
+        onConfirm={() => void handleDeleteConfirmed()}
+      />
     </LmsFrame>
   );
 }

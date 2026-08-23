@@ -117,7 +117,7 @@ export function QuizModePage() {
     <LmsFrame title={data?.title || "Quiz"} loading={loading} error={error}>
       <div className="space-y-3">
         {submittedMessage ? (
-          <p className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-medium" style={{ color: "var(--success)" }}>
+          <p className="rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] px-4 py-2 text-sm font-medium text-[var(--success)]">
             {submittedMessage}
           </p>
         ) : null}

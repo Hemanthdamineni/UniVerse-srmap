@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-07-22T19:36:54.744Z",
+  "summary": {
+    "resources": 348,
+    "resourcesByType": [
+      {
+        "type": "note",
+        "c": 136
+      },
+      {
+        "type": "quiz",
+        "c": 71
+      },
+      {
+        "type": "flashcard",
+        "c": 54
+      },
+      {
+        "type": "pyq",
+        "c": 47
+      },
+      {
+        "type": "link",
+        "c": 40
+      }
+    ],
+    "resourcesBySubject": [
+      {
+        "subjectCode": "CSE308",
+        "c": 46
+      },
+      {
+        "subjectCode": "CSE306",
+        "c": 46
+      },
+      {
+        "subjectCode": "CSE312",
+        "c": 44
+      },
+      {
+        "subjectCode": "CSE302",
+        "c": 44
+      },
+      {
+        "subjectCode": "CSE310",
+        "c": 43
+      },
+      {
+        "subjectCode": "CSE316",
+        "c": 42
+      },
+      {
+        "subjectCode": "CSE304",
+        "c": 42
+      },
+      {
+        "subjectCode": "CSE314",
+        "c": 41
+      }
+    ],
+    "guides": 41,
+    "guideSections": 311,
+    "roadmaps": 6,
+    "roadmapNodes": 55,
+    "questions": 637,
+    "topics": 231,
+    "resourcesGeneratedThisRun": 0,
+    "guidesGeneratedThisRun": 0,
+    "roadmapsGeneratedThisRun": 0,
+    "questionsGeneratedThisRun": 91
+  },
+  "stats": {
+    "resourcesCreated": 0,
+    "guidesCreated": 0,
+    "guideSectionsCreated": 0,
+    "roadmapsCreated": 0,
+    "roadmapNodesCreated": 0,
+    "roadmapEdgesCreated": 0,
+    "questionsCreated": 91,
+    "topicsCreated": 0,
+    "topicLinks": 1853,
+    "errors": [],
+    "warnings": [],
+    "phases": [
+      {
+        "name": "Generating Resources",
+        "startedAt": "2026-07-22T19:36:54.489Z"
+      },
+      {
+        "name": "Generating Topics & Resource Links",
+        "startedAt": "2026-07-22T19:36:54.522Z"
+      },
+      {
+        "name": "Generating Guides",
+        "startedAt": "2026-07-22T19:36:54.562Z"
+      },
+      {
+        "name": "Generating Skill Roadmaps",
+        "startedAt": "2026-07-22T19:36:54.564Z"
+      },
+      {
+        "name": "Generating Question Bank",
+        "startedAt": "2026-07-22T19:36:54.564Z"
+      },
+      {
+        "name": "Content Verification",
+        "startedAt": "2026-07-22T19:36:54.739Z"
+      },
+      {
+        "name": "Content Critique & Gap Analysis",
+        "startedAt": "2026-07-22T19:36:54.742Z"
+      },
+      {
+        "name": "Generating Audit Report",
+        "startedAt": "2026-07-22T19:36:54.744Z"
+      }
+    ],
+    "issues": []
+  },
+  "errors": [],
+  "warnings": []
+}

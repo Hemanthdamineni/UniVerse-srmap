@@ -21,7 +21,10 @@ export default defineConfig({
       output: {
         manualChunks: {
           "vendor-react": ["react", "react-dom", "react-router-dom"],
-          vendor: ["axios", "clsx", "tailwind-merge"],
+          // axios is only used by the login screens; leaving it out of the
+          // eager vendor chunk keeps it in their lazy route chunks instead of
+          // shipping ~14 KB gz to every page.
+          vendor: ["clsx", "tailwind-merge"],
           charts: ["recharts"],
         },
       },

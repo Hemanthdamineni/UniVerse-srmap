@@ -1,5 +1,5 @@
 // FilterBar: search + desktop filter row; mobile uses Dialog (sheet-style) for filters per design spec.
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/dialog";
@@ -24,6 +24,25 @@ export function FilterBar({
   actions,
 }: FilterBarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [localQuery, setLocalQuery] = useState(searchValue);
+  const debounceRef = useRef<number | null>(null);
+
+  // Keep the echoed query in sync when the owner resets it externally.
+  useEffect(() => {
+    setLocalQuery(searchValue);
+  }, [searchValue]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleSearchChange = (val: string) => {
+    setLocalQuery(val);
+    if (debounceRef.current !== null) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => onSearchChange(val), 300);
+  };
 
   return (
     <div
@@ -37,9 +56,10 @@ export function FilterBar({
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--comp-text-muted)]" />
           <input
             type="search"
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
             className="min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-transparent py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-[var(--comp-accent)] md:min-h-9"
           />
         </div>

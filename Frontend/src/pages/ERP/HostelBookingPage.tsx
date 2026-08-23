@@ -119,13 +119,15 @@ export default function HostelBookingPage({ blueprint }: Props) {
               >
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-[var(--comp-text-primary)]">{hostel.blockName}</h3>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    hostel.status === "available"
-                      ? "bg-green-100 text-green-700"
-                      : hostel.status === "maintenance"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}>
+                  <span
+                    className={`erp-status-pill ${
+                      hostel.status === "available"
+                        ? "erp-status-pill-success"
+                        : hostel.status === "maintenance"
+                        ? "erp-status-pill-warning"
+                        : "erp-status-pill-info"
+                    }`}
+                  >
                     {hostel.status}
                   </span>
                 </div>
@@ -146,7 +148,7 @@ export default function HostelBookingPage({ blueprint }: Props) {
                     <span className="text-[var(--comp-text-secondary)]">Rent</span>
                     <span className="font-semibold text-[var(--comp-text-primary)]">{hostel.rent}</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {hostel.facilities.map((facility) => (
                       <span key={facility} className="px-2 py-0.5 rounded text-xs bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]">
                         {facility}
@@ -156,10 +158,10 @@ export default function HostelBookingPage({ blueprint }: Props) {
                 </div>
                 {isAdmin && (
                   <div className="mt-3 pt-3 border-t border-[var(--comp-border)] flex gap-2">
-                    <button className="text-xs px-3 py-1.5 rounded-lg border border-[var(--comp-border)] hover:bg-[var(--comp-surface-hover)]">
+                    <button className="text-xs px-3 py-2 rounded-lg border border-[var(--comp-border)] hover:bg-[var(--comp-surface-hover)]">
                       Edit Details
                     </button>
-                    <button className="text-xs px-3 py-1.5 rounded-lg border border-[var(--comp-border)] hover:bg-[var(--comp-surface-hover)]">
+                    <button className="text-xs px-3 py-2 rounded-lg border border-[var(--comp-border)] hover:bg-[var(--comp-surface-hover)]">
                       Toggle Status
                     </button>
                   </div>
@@ -177,32 +179,35 @@ export default function HostelBookingPage({ blueprint }: Props) {
             description="Any maintenance requests you submit will appear here."
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--comp-border)]">
-                  <th className="text-left pb-2 font-medium text-[var(--comp-text-muted)]">Room</th>
-                  <th className="text-left pb-2 font-medium text-[var(--comp-text-muted)]">Category</th>
-                  <th className="text-left pb-2 font-medium text-[var(--comp-text-muted)]">Issue</th>
-                  <th className="text-left pb-2 font-medium text-[var(--comp-text-muted)]">Status</th>
-                  <th className="text-left pb-2 font-medium text-[var(--comp-text-muted)]">Reported On</th>
+          <div className="erp-table-shell">
+            <table className="erp-table">
+              <thead className="erp-table-head">
+                <tr>
+                  <th className="erp-table-head-cell label-text">Room</th>
+                  <th className="erp-table-head-cell label-text">Category</th>
+                  <th className="erp-table-head-cell label-text">Issue</th>
+                  <th className="erp-table-head-cell label-text">Status</th>
+                  <th className="erp-table-head-cell label-text">Reported On</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="erp-table-body">
                 {maintenance.map((req) => (
-                  <tr key={req.id} className="border-b border-[var(--comp-border)]">
-                    <td className="py-2.5 font-medium">{req.roomNo}</td>
-                    <td className="py-2.5">{req.category}</td>
-                    <td className="py-2.5">{req.description}</td>
-                    <td className="py-2.5">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        req.status === "Resolved" ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                      }`}>
+                  <tr key={req.id} className="erp-table-row">
+                    <td className="erp-table-cell erp-table-cell-strong tabular-nums">{req.roomNo}</td>
+                    <td className="erp-table-cell">{req.category}</td>
+                    <td className="erp-table-cell">{req.description}</td>
+                    <td className="erp-table-cell">
+                      <span
+                        className={`erp-status-pill ${
+                          req.status === "Resolved"
+                            ? "erp-status-pill-success"
+                            : "erp-status-pill-warning"
+                        }`}
+                      >
                         {req.status}
                       </span>
                     </td>
-                    <td className="py-2.5 text-[var(--comp-text-muted)]">{req.reportedOn}</td>
+                    <td className="erp-table-cell tabular-nums">{req.reportedOn}</td>
                   </tr>
                 ))}
               </tbody>

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  ConfirmDialog,
 } from "../dialog";
 
 // ---------------------------------------------------------------------------
@@ -300,5 +301,115 @@ describe("Dialog", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(dialog.className).toContain("my-custom-class");
+  });
+});
+
+describe("ConfirmDialog", () => {
+  it("renders nothing when closed", () => {
+    render(
+      <ConfirmDialog
+        open={false}
+        onOpenChange={() => {}}
+        title="Delete project?"
+        confirmLabel="Delete"
+        onConfirm={() => {}}
+      />,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows title, description, and labeled action buttons when open", () => {
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="Delete project?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep it"
+        onConfirm={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Delete project?")).toBeInTheDocument();
+    expect(screen.getByText("This cannot be undone.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Keep it" })).toBeInTheDocument();
+  });
+
+  it("defaults the cancel label to Cancel", () => {
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="Leave team?"
+        confirmLabel="Leave"
+        onConfirm={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("calls onConfirm when the confirm button is clicked", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="Remove member?"
+        confirmLabel="Remove"
+        onConfirm={onConfirm}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onOpenChange(false) when the cancel button is clicked", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={onOpenChange}
+        title="Leave team?"
+        confirmLabel="Leave"
+        onConfirm={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("disables actions and shows the busy label while busy", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="Delete team?"
+        confirmLabel="Delete team"
+        busy
+        busyLabel="Deleting..."
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const confirmButton = screen.getByRole("button", { name: "Deleting..." });
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+
+    await user.click(confirmButton);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });

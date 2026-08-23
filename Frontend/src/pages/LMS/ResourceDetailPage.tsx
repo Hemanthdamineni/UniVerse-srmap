@@ -89,7 +89,8 @@ import {
    LmsFrame,
    renderResourceBody
  } from "./_shared/LmsPageShared";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
+import { ConfirmDialog } from "../../components/dialog";
 import type {
   LmsGuide,
   LmsRequest,
@@ -106,6 +107,7 @@ export function ResourceDetailPage() {
   const resourceState = useAsyncPage(() => getLmsResource(id), [id]);
   const [comment, setComment] = useState("");
   const [actionError, setActionError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -118,6 +120,18 @@ export function ResourceDetailPage() {
   const canManageResource = Boolean(
     resource && (String(resource.uploadedBy || "").toUpperCase() === registerNo || isProfileAdmin(profile))
   );
+
+  async function handleDeleteConfirmed() {
+    if (!resource) return;
+    setConfirmingDelete(false);
+    setActionError("");
+    try {
+      await deleteLmsResource(resource.id);
+      navigate("/resources/me/contributions");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Couldn't delete this resource. Please try again.");
+    }
+  }
 
   return (
     <LmsFrame title={resource?.title || "Resource"} loading={resourceState.loading} error={resourceState.error}>
@@ -134,16 +148,14 @@ export function ResourceDetailPage() {
                 {resource.updatedAt ? <span>Updated {new Date(resource.updatedAt).toLocaleDateString()}</span> : null}
               </div>
               {resource.publisher ? (
-                <div className="grid gap-3 rounded-lg border border-[var(--comp-border)] bg-[color-mix(in_srgb,var(--comp-accent)_4%,transparent)] p-3 md:grid-cols-[1fr_auto]">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Publisher</p>
-                    <Link
-                      to={`/resources/contributors/${encodeURIComponent(resource.publisher.userId)}`}
-                      className="text-sm font-semibold text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
-                    >
-                      {resource.publisher.displayName}
-                    </Link>
-                  </div>
+                <div className="space-y-1 border-t border-[var(--comp-border)] pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Publisher</p>
+                  <Link
+                    to={`/resources/contributors/${encodeURIComponent(resource.publisher.userId)}`}
+                    className="text-sm font-semibold text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
+                  >
+                    {resource.publisher.displayName}
+                  </Link>
                 </div>
               ) : null}
               {resource.moderation ? (
@@ -155,42 +167,33 @@ export function ResourceDetailPage() {
               ) : null}
               {actionError ? <InlineError message={actionError} /> : null}
               <div className="flex flex-wrap gap-2">
-                <button className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white" onClick={() => void toggleResourceUpvote(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
+                <button className="lms-btn lms-btn-primary" onClick={() => void toggleResourceUpvote(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   {resource.userUpvoted ? "Remove upvote" : "Upvote"}
                 </button>
-                <button className="rounded-full border border-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" onClick={() => void toggleResourceBookmark(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
+                <button className="lms-btn lms-btn-ghost" onClick={() => void toggleResourceBookmark(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   {resource.userBookmarked ? "Saved" : "Save"}
                 </button>
-                <button className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--warning)]" onClick={() => void markLmsResourceOutdated(resource.id, "Marked by learner").then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
+                <button className="lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] text-[var(--warning)]" onClick={() => void markLmsResourceOutdated(resource.id, "Marked by learner").then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   Mark outdated
                 </button>
-                <button className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]" onClick={() => {
+                <button className="lms-btn lms-btn-danger" onClick={() => {
                   const reason = window.prompt("Brief reason for reporting this resource");
                   if (!reason?.trim()) return;
                   void flagLmsResource(resource.id, reason.trim()).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData));
                 }}>
                   Flag
                 </button>
-                <button className="rounded-full border border-[color-mix(in_srgb,var(--info)_25%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)]" onClick={() => void rateLmsResource(resource.id, { rating: 5, dimensionTags: ["Exam useful"] }).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
+                <button className="lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--info)_25%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]" onClick={() => void rateLmsResource(resource.id, { rating: 5, dimensionTags: ["Exam useful"] }).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   Quick rate 5
                 </button>
                 {canManageResource ? (
                   <>
-                    <Link className="rounded-full border border-[var(--comp-border)] px-4 py-2 text-sm font-semibold text-[var(--comp-text-primary)] no-underline" to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}>
+                    <Link className="lms-btn lms-btn-ghost no-underline" to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}>
                       Edit
                     </Link>
                     <button
-                      className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
-                      onClick={async () => {
-                        if (!window.confirm("Delete this resource?")) return;
-                        setActionError("");
-                        try {
-                          await deleteLmsResource(resource.id);
-                          navigate("/resources/me/contributions");
-                        } catch (err) {
-                          setActionError(err instanceof Error ? err.message : "Unable to delete this resource.");
-                        }
-                      }}
+                      className="lms-btn lms-btn-danger"
+                      onClick={() => setConfirmingDelete(true)}
                     >
                       Delete
                     </button>
@@ -218,16 +221,18 @@ export function ResourceDetailPage() {
 
           <SectionCard title="Comments">
             <div className="space-y-3">
-              {(resource.comments || []).map((entry) => (
-                <div key={entry.id} className="rounded-2xl bg-[var(--comp-surface)] px-4 py-3">
-                  <Markdown className="text-sm">{entry.content}</Markdown>
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">{entry.userId}</p>
-                </div>
-              ))}
+              <div className="divide-y divide-[var(--comp-border)]">
+                {(resource.comments || []).map((entry) => (
+                  <div key={entry.id} className="py-3">
+                    <Markdown className="text-sm">{entry.content}</Markdown>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">{entry.userId}</p>
+                  </div>
+                ))}
+              </div>
               <div className="flex gap-3">
                 <input className="flex-1 lms-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment" aria-label="Add a comment" />
                 <button
-                  className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white"
+                  className="lms-btn lms-btn-primary"
                   onClick={async () => {
                     const next = await postLmsComment(resource.id, comment);
                     setComment("");
@@ -243,6 +248,16 @@ export function ResourceDetailPage() {
           <RecommendationSection title="Related Resources" items={resource.related || []} />
         </>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this resource?"
+        description="Students will no longer find it in search, filters, or collections. This cannot be undone."
+        confirmLabel="Delete resource"
+        danger
+        onConfirm={() => void handleDeleteConfirmed()}
+      />
     </LmsFrame>
   );
 }

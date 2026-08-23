@@ -80,7 +80,7 @@ export default function AppKeyboardShortcuts() {
         type="button"
         variant="outline"
         onClick={() => setHelpOpen(true)}
-        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-white"
+        className="pointer-events-auto h-9 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text-primary)] shadow-[0_8px_22px_rgba(10,38,42,0.18)] transition hover:bg-[var(--comp-surface-hover)]"
         aria-label="Keyboard shortcuts help"
       >
         <KeyboardIcon className="size-4" />

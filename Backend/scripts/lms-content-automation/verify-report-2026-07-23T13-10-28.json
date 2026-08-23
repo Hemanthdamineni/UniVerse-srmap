@@ -1,0 +1,246 @@
+{
+  "timestamp": "2026-07-23T13:10:28.968Z",
+  "summary": {
+    "passed": 39,
+    "failed": 0,
+    "warnings": 0,
+    "total": 39
+  },
+  "checks": [
+    {
+      "name": "Table: lms_resources",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_guides",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_guide_sections",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_roadmaps",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_roadmap_nodes",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_roadmap_edges",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_question_bank",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_topics",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Table: lms_resource_topics",
+      "category": "schema",
+      "ok": true,
+      "detail": "Found"
+    },
+    {
+      "name": "Total active resources",
+      "category": "resources",
+      "ok": true,
+      "detail": "398 resources found"
+    },
+    {
+      "name": "Resource type validity",
+      "category": "resources",
+      "ok": true,
+      "detail": "All types valid"
+    },
+    {
+      "name": "Required fields populated",
+      "category": "resources",
+      "ok": true,
+      "detail": "All resources have required fields"
+    },
+    {
+      "name": "CSE302: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "64 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE302: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE304: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "45 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE304: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE306: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "50 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE306: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE308: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "50 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE308: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE310: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "48 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE310: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE312: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "48 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE312: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE314: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "46 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE314: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "CSE316: resource count",
+      "category": "coverage",
+      "ok": true,
+      "detail": "47 resources (min expected: 10)"
+    },
+    {
+      "name": "CSE316: type diversity",
+      "category": "coverage",
+      "ok": true,
+      "detail": "5/5 resource types"
+    },
+    {
+      "name": "Total guides",
+      "category": "guides",
+      "ok": true,
+      "detail": "41 guides"
+    },
+    {
+      "name": "Guides have sections",
+      "category": "guides",
+      "ok": true,
+      "detail": "All guides have sections"
+    },
+    {
+      "name": "Published guides",
+      "category": "guides",
+      "ok": true,
+      "detail": "41 published"
+    },
+    {
+      "name": "Total roadmaps",
+      "category": "roadmaps",
+      "ok": true,
+      "detail": "6 roadmaps"
+    },
+    {
+      "name": "Roadmaps have nodes",
+      "category": "roadmaps",
+      "ok": true,
+      "detail": "All roadmaps have nodes"
+    },
+    {
+      "name": "Total question bank items",
+      "category": "questions",
+      "ok": true,
+      "detail": "637 questions"
+    },
+    {
+      "name": "Difficulty diversity",
+      "category": "questions",
+      "ok": true,
+      "detail": "3 difficulty levels: easy(238), medium(203), hard(196)"
+    },
+    {
+      "name": "Question options validity",
+      "category": "questions",
+      "ok": true,
+      "detail": "All options valid"
+    },
+    {
+      "name": "Total topics",
+      "category": "topics",
+      "ok": true,
+      "detail": "375 topics"
+    },
+    {
+      "name": "Resource-topic links",
+      "category": "topics",
+      "ok": true,
+      "detail": "2164 links"
+    },
+    {
+      "name": "Resources with actual content",
+      "category": "quality",
+      "ok": true,
+      "detail": "398/398 have content"
+    }
+  ],
+  "overallOk": true
+}

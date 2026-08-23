@@ -114,24 +114,15 @@ export function SubjectOverviewPage() {
       {hasActivity ? (
       <>
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="dashboard-card p-4">
-          <p className="text-sm text-[var(--text-secondary)]">Studying now</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String(data?.studyingCount || 0)}</p>
-        </div>
-        <div className="dashboard-card p-4">
-          <p className="text-sm text-[var(--text-secondary)]">Units covered</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String(topByUnit.length)}</p>
-        </div>
-        <div className="dashboard-card p-4">
-          <p className="text-sm text-[var(--text-secondary)]">Open requests</p>
-          <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String((data?.openRequests as unknown[] | undefined)?.length || 0)}</p>
-        </div>
+        <StatCard label="Studying now" value={String(data?.studyingCount || 0)} />
+        <StatCard label="Units covered" value={String(topByUnit.length)} />
+        <StatCard label="Open requests" value={String((data?.openRequests as unknown[] | undefined)?.length || 0)} />
       </div>
 
       <SectionCard title="Top Resources by Unit">
-        <div className="space-y-3">
+        <div className="divide-y divide-[var(--comp-border)]">
           {topByUnit.map((entry) => (
-            <Link key={String(entry.unitNormalized)} to={`/resources/${String((entry.topResource as Record<string, unknown>)?.id || "")}`} className="dashboard-card block p-4">
+            <Link key={String(entry.unitNormalized)} to={`/resources/${String((entry.topResource as Record<string, unknown>)?.id || "")}`} className="block space-y-1 py-3">
               <p className="text-sm font-semibold text-[var(--comp-text-primary)]">{String(entry.unit || entry.unitNormalized)}</p>
               <p className="text-sm text-[var(--text-secondary)]">{String((entry.topResource as Record<string, unknown>)?.title || "")}</p>
             </Link>
@@ -145,8 +136,7 @@ export function SubjectOverviewPage() {
           mastery: Number(entry.mastery || 0),
         }))}
       />
-      ) : (
-        </>
+      </>
       ) : (
         <EmptyView
           title={`No community activity for ${code} yet`}

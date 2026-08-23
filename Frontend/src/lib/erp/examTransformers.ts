@@ -4,6 +4,9 @@ import type {
   CurrentResultModel,
   InternalMarkSubject,
   InternalMarksModel,
+  ExamMarkDetailsSubject,
+  ExamMarkDetailsModel,
+  ExamMarkDetailsSummary,
 } from "./types";
 
 function requireExtracted(
@@ -156,4 +159,45 @@ function buildInternalMarks(extracted: Record<string, unknown>): InternalMarksMo
     : 0;
 
   return { subjects, averagePercentage };
+}
+
+// ---------------------------------------------------------------------------
+// EXAM MARK DETAILS (Historical Results)
+// Backend extractor: extractExamMarkDetails → type "exam-mark-details"
+// Shape: { type, title, records: [{semesterNo, monthYear, subjectCode, subjectName, credit, grade, gradePoints, result, attempt}], semesterSummaries: [{label, value}] }
+// ---------------------------------------------------------------------------
+
+export function transformExamMarkDetails(rawData: unknown): ExamMarkDetailsModel | null {
+  const extracted = requireExtractedPage(
+    rawData,
+    "examination/exam-mark-details",
+    "exam-mark-details",
+  );
+
+  const title = String(extracted.title ?? "EXAM MARK DETAILS");
+
+  const rawRecords = Array.isArray(extracted.records) ? extracted.records : [];
+  const records: ExamMarkDetailsSubject[] = rawRecords
+    .map((r) => ({
+      semesterNo: String(r.semesterNo ?? ""),
+      monthYear: String(r.monthYear ?? ""),
+      subjectCode: String(r.subjectCode ?? ""),
+      subjectName: String(r.subjectName ?? ""),
+      credit: String(r.credit ?? ""),
+      grade: String(r.grade ?? ""),
+      gradePoints: String(r.gradePoints ?? ""),
+      result: String(r.result ?? ""),
+      attempt: String(r.attempt ?? ""),
+    }))
+    .filter((s) => s.subjectCode);
+
+  const summaries = Array.isArray(extracted.semesterSummaries)
+    ? (extracted.semesterSummaries as Record<string, unknown>[])
+    : [];
+  const semesterSummaries: ExamMarkDetailsSummary[] = summaries.map((s) => ({
+    label: String(s.label ?? ""),
+    value: String(s.value ?? ""),
+  }));
+
+  return { title, records, semesterSummaries };
 }

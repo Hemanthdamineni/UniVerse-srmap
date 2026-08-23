@@ -148,7 +148,7 @@ export function LmsHomePage() {
 
       <SectionCard title="Recommended Roadmaps">
         {roadmapRecommendations.data?.length ? (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {roadmapRecommendations.data.map((roadmap) => (
               <Link
                 key={roadmap.id}
@@ -156,9 +156,9 @@ export function LmsHomePage() {
                 className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4 no-underline transition hover:bg-[var(--comp-surface-hover)]"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="space-y-1">
                     <p className="text-sm font-semibold text-[var(--comp-text-primary)]">{roadmap.title}</p>
-                    <p className="mt-1 text-xs text-[var(--comp-text-muted)]">
+                    <p className="text-xs text-[var(--comp-text-muted)]">
                       {roadmap.skill} · {roadmap.estimatedHours || "Flexible"}h
                     </p>
                   </div>

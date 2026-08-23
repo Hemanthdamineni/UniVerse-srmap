@@ -1,3 +1,19 @@
+name: university-erp
+
+x-healthcheck: &healthcheck
+  interval: 15s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
+x-deploy-resources: &deploy-resources
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+      reservations:
+        memory: 128M
+
 services:
   backend:
     build:
@@ -5,11 +21,11 @@ services:
       dockerfile: Dockerfile
     container_name: universe-srmap-backend
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379
       - SESSION_STORE_DRIVER=auto
       - ERP_CACHE_DRIVER=auto
       - FEATURE_ERP_V2_API=1
@@ -21,21 +37,32 @@ services:
       - EVENTS_DATA_DIR=/app/data/events
       - DUMP_SNAPSHOT_DIR=/app/data/erp-dump/2026-02-24T15-58-26-664Z
       - DUMP_SUMMARY_FILE=/app/data/erp-dump/2026-02-24T15-58-26-664Z/summary.json
+      - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-}
+      - ADMIN_CONTENT_PASSWORD=${ADMIN_CONTENT_PASSWORD:-}
     volumes:
       - ./Backend/data:/app/data
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/api/health"]
+    <<: *deploy-resources
 
   redis:
     image: redis:7-alpine
     container_name: universe-srmap-redis
     ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"]
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+    <<: *deploy-resources
 
 volumes:
   redis_data:

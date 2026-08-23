@@ -13,6 +13,7 @@ import {
   useAsyncPage,
   LmsFrame
 } from "./_shared/LmsPageShared";
+import { ConfirmDialog } from "../../components/dialog";
 import type { LmsCollection, LmsResource } from "./_shared/LmsPageShared";
 
 export function CollectionsPage() {
@@ -49,9 +50,9 @@ export function CollectionsPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="divide-y divide-[var(--comp-border)]">
         {collections.map((collection) => (
-          <div key={collection.id} className="dashboard-card space-y-3 p-4">
+          <div key={collection.id} className="space-y-3 py-3">
             <Link
               to={`/resources/me/collections?collectionId=${collection.id}`}
               className="block no-underline"
@@ -102,7 +103,7 @@ function CollectionForm({ onSubmit }: { onSubmit: () => Promise<void> }) {
         <input className="lms-input" placeholder="Collection name" aria-label="Collection name" value={name} onChange={(event) => setName(event.target.value)} />
         <input className="lms-input" placeholder="Description (optional)" aria-label="Collection description" value={description} onChange={(event) => setDescription(event.target.value)} />
         <button
-          className="rounded-full bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="lms-btn lms-btn-primary"
           disabled={busy}
           onClick={async () => {
             if (!name.trim()) {
@@ -150,6 +151,21 @@ function CollectionManager({
   const [name, setName] = useState(collection.name);
   const [description, setDescription] = useState(collection.description || "");
   const [isPublic, setIsPublic] = useState(Number(collection.isPublic) === 1);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  async function handleDeleteConfirmed() {
+    setConfirmingDelete(false);
+    setDeleteBusy(true);
+    try {
+      await deleteLmsCollection(collection.id);
+      await onChanged();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Couldn't delete this collection. Please try again.");
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
 
   const loadItems = async () => {
     setLoadingDetail(true);
@@ -163,7 +179,7 @@ function CollectionManager({
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-[var(--comp-border)] p-3">
+    <div className="space-y-3">
       {/* Edit metadata */}
       <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
         <input className="lms-input py-1.5 text-xs" aria-label="Rename collection" value={name} onChange={(event) => setName(event.target.value)} />
@@ -173,7 +189,7 @@ function CollectionManager({
           Public
         </label>
         <button
-          className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white"
+          className="lms-btn lms-btn-primary"
           onClick={async () => {
             if (!name.trim()) {
               onError("Collection name is required.");
@@ -199,7 +215,7 @@ function CollectionManager({
       <div className="space-y-1.5">
         {!detail && !loadingDetail ? (
           <button
-            className="rounded-full border border-[var(--comp-border)] px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)]"
+            className="lms-btn lms-btn-ghost"
             onClick={() => void loadItems()}
           >
             Show items
@@ -236,19 +252,22 @@ function CollectionManager({
 
       {/* Delete */}
       <button
-        className="rounded-full border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)]"
-        onClick={async () => {
-          if (!window.confirm(`Delete collection "${collection.name}"? Its items are kept but ungrouped.`)) return;
-          try {
-            await deleteLmsCollection(collection.id);
-            await onChanged();
-          } catch (err) {
-            onError(err instanceof Error ? err.message : "Unable to delete this collection.");
-          }
-        }}
+        className="lms-btn lms-btn-danger"
+        onClick={() => setConfirmingDelete(true)}
       >
         Delete collection
       </button>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this collection?"
+        description={`"${collection.name}" will be removed. Its items are kept but become ungrouped.`}
+        confirmLabel="Delete collection"
+        danger
+        busy={deleteBusy}
+        onConfirm={() => void handleDeleteConfirmed()}
+      />
     </div>
   );
 }

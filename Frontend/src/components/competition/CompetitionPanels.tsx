@@ -60,7 +60,7 @@ export function JudgeNotes({ submissionId, initialNotes = '', onSave }: JudgeNot
           border: 'none',
           cursor: 'pointer',
           color: 'var(--comp-text-primary)',
-          fontSize: '0.85rem',
+          fontSize: 'var(--text-sm)',
           fontWeight: 600,
         }}
         aria-expanded={expanded}
@@ -75,7 +75,7 @@ export function JudgeNotes({ submissionId, initialNotes = '', onSave }: JudgeNot
             }} />
           )}
         </span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--comp-text-muted)' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)' }}>
           {saved ? '✓ Saved' : expanded ? '▼' : '▶'}
         </span>
       </button>
@@ -94,7 +94,7 @@ export function JudgeNotes({ submissionId, initialNotes = '', onSave }: JudgeNot
               borderRadius: 6,
               background: 'var(--comp-surface)',
               color: 'var(--comp-text-primary)',
-              fontSize: '0.85rem',
+              fontSize: 'var(--text-sm)',
               resize: 'vertical',
               outline: 'none',
               boxSizing: 'border-box',
@@ -102,7 +102,7 @@ export function JudgeNotes({ submissionId, initialNotes = '', onSave }: JudgeNot
             }}
             aria-label="Private notes for this submission"
           />
-          <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--comp-text-muted)' }}>
+          <p style={{ margin: '4px 0 0', fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)' }}>
             {notes.length} characters · Auto-saves after 1 second
           </p>
         </div>
@@ -135,7 +135,7 @@ export function ReviewHistory({ events }: ReviewHistoryProps) {
   if (events.length === 0) {
     return (
       <div style={{ padding: 'var(--space-md)', textAlign: 'center' }}>
-        <p className="comp-body" style={{ margin: 0, fontSize: '0.82rem' }}>
+        <p className="comp-body" style={{ margin: 0, fontSize: 'var(--text-sm)' }}>
           No review history yet.
         </p>
       </div>
@@ -190,17 +190,17 @@ export function ReviewHistory({ events }: ReviewHistoryProps) {
 
           <div style={{ flex: 1, marginLeft: 'var(--space-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 4 }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--comp-text-primary)' }}>
+              <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--comp-text-primary)' }}>
                 {event.actor}
               </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--comp-text-muted)' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)' }}>
                 {new Date(event.timestamp).toLocaleString('en-IN', {
                   month: 'short', day: 'numeric',
                   hour: '2-digit', minute: '2-digit',
                 })}
               </span>
             </div>
-            <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--comp-text-secondary)' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--text-sm)', color: 'var(--comp-text-secondary)' }}>
               {event.action}
               {event.score !== undefined && (
                 <span style={{ fontWeight: 600, color: 'var(--comp-accent)', marginLeft: 4 }}>
@@ -209,7 +209,7 @@ export function ReviewHistory({ events }: ReviewHistoryProps) {
               )}
             </p>
             {event.details && (
-              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--comp-text-muted)', fontStyle: 'italic' }}>
+              <p style={{ margin: '2px 0 0', fontSize: 'var(--text-xs)', color: 'var(--comp-text-muted)', fontStyle: 'italic' }}>
                 "{event.details}"
               </p>
             )}
@@ -273,7 +273,7 @@ export function AuditHistoryPanel({ events }: AuditHistoryPanelProps) {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: '0.8rem',
+            fontSize: 'var(--text-sm)',
             color: 'var(--comp-text-secondary)',
           }}
         >

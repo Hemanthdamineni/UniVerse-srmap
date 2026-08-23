@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import ApplicationTrackerPage from "./ApplicationTrackerPage";
@@ -47,7 +47,6 @@ describe("ApplicationTrackerPage", () => {
         },
       ],
     });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("loads applications and renders them in the correct kanban columns", async () => {
@@ -68,7 +67,7 @@ describe("ApplicationTrackerPage", () => {
     expect(screen.getByText("2")).toBeTruthy(); // total active count
   });
 
-  it("deletes application when confirmed", async () => {
+  it("deletes application after confirming in the removal dialog", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -79,6 +78,35 @@ describe("ApplicationTrackerPage", () => {
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();
     await user.click(trash!);
+
+    const dialog = await waitFor(() => {
+      const el = document.querySelector('[data-slot="dialog-content"]');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    await user.click(within(dialog).getByRole("button", { name: "Remove" }));
     await waitFor(() => expect(deleteApplication).toHaveBeenCalledWith("app1"));
+  });
+
+  it("keeps the application when the removal dialog is dismissed", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ApplicationTrackerPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
+    const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
+    expect(trash).toBeTruthy();
+    await user.click(trash!);
+
+    const dialog = await waitFor(() => {
+      const el = document.querySelector('[data-slot="dialog-content"]');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    await user.click(within(dialog).getByRole("button", { name: "Keep it" }));
+    expect(deleteApplication).not.toHaveBeenCalled();
+    expect(screen.getByText("Role")).toBeTruthy();
   });
 });

@@ -123,24 +123,15 @@ export function ProgressPage() {
         <>
           <SectionCard title="Summary">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="dashboard-card p-4">
-                <p className="text-sm text-[var(--text-secondary)]">Started</p>
-                <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String(progress.data?.started || 0)}</p>
-              </div>
-              <div className="dashboard-card p-4">
-                <p className="text-sm text-[var(--text-secondary)]">Completed</p>
-                <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String(progress.data?.completed || 0)}</p>
-              </div>
-              <div className="dashboard-card p-4">
-                <p className="text-sm text-[var(--text-secondary)]">Completion rate</p>
-                <p className="mt-2 text-3xl font-semibold text-[var(--comp-text-primary)]">{String(progress.data?.completionRate || 0)}%</p>
-              </div>
+              <StatCard label="Started" value={String(progress.data?.started || 0)} />
+              <StatCard label="Completed" value={String(progress.data?.completed || 0)} />
+              <StatCard label="Completion rate" value={`${String(progress.data?.completionRate || 0)}%`} />
             </div>
           </SectionCard>
 
           {subjects.length > 0 ? (
             <SectionCard title="By subject">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="divide-y divide-[var(--comp-border)]">
                 {subjects.map((subject) => {
                   const code = String(subject.subjectCode || "");
                   const name = String(subject.subjectName || "");
@@ -153,7 +144,7 @@ export function ProgressPage() {
                     <Link
                       key={code}
                       to={`/resources/subject/${encodeURIComponent(code)}`}
-                      className="dashboard-card space-y-2 p-4 no-underline transition hover:bg-[var(--comp-surface-hover)]"
+                      className="block space-y-2 py-3 no-underline transition hover:bg-[var(--comp-surface-hover)]"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="truncate text-sm font-medium text-[var(--comp-text-primary)]">{[code, name].filter(Boolean).join(" · ")}</span>

@@ -37,7 +37,7 @@ export function EvaluationCriteriaTable({
   const cellStyle: React.CSSProperties = {
     padding: '8px 12px',
     borderBottom: '1px solid var(--comp-border)',
-    fontSize: '0.875rem',
+    fontSize: 'var(--text-sm)',
     color: 'var(--comp-text-secondary)',
     textAlign: 'left' as const,
   };
@@ -47,7 +47,7 @@ export function EvaluationCriteriaTable({
     fontWeight: 600,
     color: 'var(--comp-text-primary)',
     background: 'var(--comp-accent-light)',
-    fontSize: '0.75rem',
+    fontSize: 'var(--text-xs)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.04em',
   };
@@ -57,7 +57,7 @@ export function EvaluationCriteriaTable({
       style={{
         border: '1px solid var(--comp-border)',
         borderRadius: 8,
-        overflow: 'hidden',
+        overflowX: 'auto',
       }}
       aria-label="Evaluation criteria"
     >
@@ -100,7 +100,7 @@ export function EvaluationCriteriaTable({
                         padding: '4px 8px',
                         border: `1px solid ${hasError ? 'var(--deadline-urgent)' : 'var(--comp-border)'}`,
                         borderRadius: 6,
-                        fontSize: '0.875rem',
+                        fontSize: 'var(--text-sm)',
                         textAlign: 'right' as const,
                         background: 'var(--comp-surface)',
                         color: 'var(--comp-text-primary)',
@@ -108,7 +108,7 @@ export function EvaluationCriteriaTable({
                       }}
                     />
                     {hasError && (
-                      <span id={errorId} style={{ color: 'var(--deadline-urgent)', fontSize: '0.7rem', display: 'block' }}>
+                      <span id={errorId} style={{ color: 'var(--deadline-urgent)', fontSize: 'var(--text-xs)', display: 'block' }}>
                         0–{c.maxScore}
                       </span>
                     )}

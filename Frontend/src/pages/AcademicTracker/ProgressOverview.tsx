@@ -95,7 +95,7 @@ export default function ProgressOverview() {
                       <p className="text-xs text-[var(--text-secondary)]">SGPA</p>
                     </div>
                     <span
-                      className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+                      className={`rounded-full border px-3 py-0.5 text-xs font-bold ${
                         semester.status === "Completed"
                           ? "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
                           : "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)] text-[var(--info)]"

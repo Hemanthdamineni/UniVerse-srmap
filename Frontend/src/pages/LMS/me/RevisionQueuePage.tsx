@@ -138,8 +138,8 @@ export function RevisionQueuePage() {
                 <p className="text-sm text-[var(--text-secondary)]">Due {formatDueDate(String(entry.dueDate || ""))}</p>
               </div>
               <div className="flex gap-2">
-                <button className="rounded-full bg-[color-mix(in_srgb,var(--error)_15%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--error)]" onClick={async () => setData(await submitRevisionReview(String(entry.resourceId), 40))}>Again</button>
-                <button className="rounded-full bg-[var(--comp-accent)] px-3 py-1.5 text-xs font-semibold text-white" onClick={async () => setData(await submitRevisionReview(String(entry.resourceId), 85))}>Reviewed</button>
+                <button className="lms-btn lms-btn-danger" onClick={async () => setData(await submitRevisionReview(String(entry.resourceId), 40))}>Again</button>
+                <button className="lms-btn lms-btn-primary" onClick={async () => setData(await submitRevisionReview(String(entry.resourceId), 85))}>Reviewed</button>
               </div>
             </div>
           ))}

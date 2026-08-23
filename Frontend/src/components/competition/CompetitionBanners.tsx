@@ -1,4 +1,6 @@
 
+import { AlertTriangle, Check, Circle, Clock, Hourglass, Lock, Minus, Trophy, type LucideIcon } from "lucide-react";
+
 // ── DeadlinePassedBanner ─────────────────────────────────────────────────────
 
 /**
@@ -42,18 +44,18 @@ export function DeadlinePassedBanner({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '0.9rem',
+            fontSize: 'var(--text-base)',
             flexShrink: 0,
           }}
           aria-hidden="true"
         >
-          ⏰
+          <Clock size={16} />
         </span>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem', color: 'var(--status-live-text)' }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--text-base)', color: 'var(--status-live-text)' }}>
             Submission Deadline Passed
           </p>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--comp-text-muted)', marginTop: 2 }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--comp-text-muted)', marginTop: 2 }}>
             {roundTitle
               ? `The submission window for "${roundTitle}" has closed.`
               : 'The submission window for this round has closed.'}
@@ -66,7 +68,7 @@ export function DeadlinePassedBanner({
         <button
           onClick={onRequestExtension}
           className="comp-btn-ghost"
-          style={{ alignSelf: 'flex-start', fontSize: '0.8rem' }}
+          style={{ alignSelf: 'flex-start', fontSize: 'var(--text-sm)' }}
         >
           Request Extension
         </button>
@@ -119,18 +121,18 @@ export function RegistrationClosedBanner({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '0.9rem',
+            fontSize: 'var(--text-base)',
             flexShrink: 0,
           }}
           aria-hidden="true"
         >
-          🔒
+          <Lock size={16} />
         </span>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem', color: 'var(--status-closed-text)' }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--text-base)', color: 'var(--status-closed-text)' }}>
             Registration Closed
           </p>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--comp-text-muted)', marginTop: 2 }}>
+          <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--comp-text-muted)', marginTop: 2 }}>
             {eventTitle
               ? `Registration for ${eventTitle} is no longer available.`
               : 'Registration for this event is no longer available.'}
@@ -143,7 +145,7 @@ export function RegistrationClosedBanner({
         <button
           onClick={onJoinWaitlist}
           className="comp-btn-ghost"
-          style={{ alignSelf: 'flex-start', fontSize: '0.8rem' }}
+          style={{ alignSelf: 'flex-start', fontSize: 'var(--text-sm)' }}
         >
           Join Waitlist →
         </button>
@@ -177,7 +179,7 @@ interface BannerConfig {
   bg: string;
   border: string;
   text: string;
-  icon: string;
+  icon: LucideIcon;
   getMessage: (props: SubmissionStatusBannerProps) => string;
 }
 
@@ -186,14 +188,14 @@ const BANNER_CONFIG: Record<SubmissionStatusBannerProps['state'], BannerConfig> 
     bg: 'var(--status-pending-bg)',
     border: 'var(--status-pending-border)',
     text: 'var(--status-pending-text)',
-    icon: '⚠️',
+    icon: AlertTriangle,
     getMessage: (p) => `You haven't submitted for ${p.roundTitle} yet.`,
   },
   submitted: {
     bg: 'var(--status-open-bg)',
     border: 'var(--status-open-border)',
     text: 'var(--status-open-text)',
-    icon: '✓',
+    icon: Check,
     getMessage: (p) => {
       const date = p.submittedAt
         ? new Date(p.submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -206,35 +208,35 @@ const BANNER_CONFIG: Record<SubmissionStatusBannerProps['state'], BannerConfig> 
     bg: 'var(--status-closed-bg)',
     border: 'var(--status-closed-border)',
     text: 'var(--status-closed-text)',
-    icon: '🔒',
+    icon: Lock,
     getMessage: () => 'Submission window closed. Awaiting evaluation.',
   },
   'evaluated-pending': {
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    text: '#1d4ed8',
-    icon: '⏳',
+    bg: 'color-mix(in srgb, var(--info) 10%, var(--background))',
+    border: 'color-mix(in srgb, var(--info) 30%, transparent)',
+    text: 'var(--info)',
+    icon: Hourglass,
     getMessage: () => 'Evaluated. Results will be published by the organizer.',
   },
   shortlisted: {
     bg: 'var(--status-selected-bg)',
     border: 'var(--status-open-border)',
     text: 'var(--status-selected-text)',
-    icon: '🏆',
+    icon: Trophy,
     getMessage: () => "Congratulations! You've been shortlisted.",
   },
   'not-selected': {
     bg: 'var(--status-closed-bg)',
     border: 'var(--status-closed-border)',
     text: 'var(--status-closed-text)',
-    icon: '—',
+    icon: Minus,
     getMessage: () => 'You were not selected for the next round.',
   },
   'not-evaluated': {
     bg: 'var(--status-closed-bg)',
     border: 'var(--status-closed-border)',
     text: 'var(--status-closed-text)',
-    icon: '○',
+    icon: Circle,
     getMessage: () => 'Your submission was not evaluated.',
   },
 };
@@ -255,11 +257,11 @@ export function SubmissionStatusBanner(props: SubmissionStatusBannerProps) {
         alignItems: 'center',
         gap: 'var(--space-sm)',
         color: config.text,
-        fontSize: '0.875rem',
+        fontSize: 'var(--text-sm)',
         fontWeight: 500,
       }}
     >
-      <span aria-hidden="true">{config.icon}</span>
+      <config.icon size={16} aria-hidden="true" />
       <span>{config.getMessage(props)}</span>
     </div>
   );

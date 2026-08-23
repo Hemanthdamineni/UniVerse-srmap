@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import LoadingSpinner from "../../components/LoadingSpinner";
 import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erp/index";
 import { extractApiErrorMessage } from "../../lib/core/auth";
 import { handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/core/session";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { readExtracted } from "../../lib/erp/shared";
+
+// Strips erp-table-shell chrome so the shared DataTable reads as one flush
+// surface inside `dashboard-card overflow-hidden p-0` sections.
+const FLUSH_TABLE_SHELL =
+  "[&_.erp-table-shell]:rounded-none [&_.erp-table-shell]:border-0 [&_.erp-table-shell]:shadow-none";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -45,6 +49,37 @@ function humanizeText(value: unknown): string {
     return s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
   }
   return s;
+}
+
+// Grade tiers follow the SRM 10-point scale: ≥8 celebrates, 6–7 stays calm,
+// ≤5 warns, and fail/absent grades alarm. Letter fallback covers rows whose
+// grade point cell is blank.
+type GradeTier = "success" | "warning" | "error" | null;
+
+function gradeTier(grade: string, gradePoint: string): GradeTier {
+  const g = grade.trim().toUpperCase();
+  const pt = Number.parseFloat(gradePoint);
+  if (/^(F|U|AB)$/.test(g)) return "error";
+  if (!Number.isNaN(pt)) {
+    if (pt <= 0) return "error";
+    if (pt >= 8) return "success";
+    if (pt >= 6) return null;
+    return "warning";
+  }
+  if (/^O$|^A\+?$|^[PS]$/.test(g)) return "success";
+  if (/^[BC]\+?$/.test(g)) return null;
+  if (/^[DE]$/.test(g)) return "warning";
+  return null;
+}
+
+const GRADE_TIER_PILL: Record<Exclude<GradeTier, null>, string> = {
+  success: "erp-status-pill-success",
+  warning: "erp-status-pill-warning",
+  error: "erp-status-pill-error",
+} as const;
+
+function gradePillClass(tier: GradeTier): string {
+  return tier ? GRADE_TIER_PILL[tier] : "erp-status-pill-info";
 }
 
 function requireExtracted(
@@ -125,7 +160,7 @@ function parseInternalMarks(rawData: unknown): InternalMarkRecord[] {
       semester: clean(r.semester ?? ""),
       code: clean(r.subjectCode),
       description: humanizeText(r.subjectName),
-      subjectType: "",
+      subjectType: clean((r.extras as Record<string, unknown>)?.subjectType ?? ""),
       markObtained: clean(r.marksObtained),
       maxMark: clean(r.totalMarks),
     }))
@@ -266,44 +301,41 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
           <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
         )}
 
-        <section className="dashboard-card p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Earlier Internal Mark Details</h2>
-              <p className="mt-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
-                Pick a semester to load the detailed internal assessment breakdown.
-              </p>
-            </div>
+        <section className="dashboard-card overflow-hidden p-0">
+          <TableCardHeader
+            title="Earlier Internal Mark Details"
+            right={
+              <div className="flex flex-wrap gap-2">
+                {availableSemesters.map((semester) => {
+                  const selected = semester === selectedSemester;
+                  return (
+                    <button
+                      key={semester}
+                      type="button"
+                      onClick={() => setSelectedSemester(semester)}
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                      style={{
+                        background: selected ? 'var(--comp-accent)' : 'var(--comp-surface)',
+                        color: selected ? 'var(--comp-accent-fg)' : 'var(--comp-text-primary)',
+                        border: selected ? 'none' : '1px solid var(--comp-border)',
+                      }}
+                    >
+                      Semester {semester}
+                    </button>
+                  );
+                })}
+              </div>
+            }
+          />
+          <p className="px-5 pt-3 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
+            Pick a semester to load the detailed internal assessment breakdown.
+          </p>
 
-            <div className="flex flex-wrap gap-2">
-              {availableSemesters.map((semester) => {
-                const selected = semester === selectedSemester;
-                return (
-                  <button
-                    key={semester}
-                    type="button"
-                    onClick={() => setSelectedSemester(semester)}
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-                    style={{
-                      background: selected ? 'var(--comp-accent)' : 'var(--comp-surface)',
-                      color: selected ? '#fff' : 'var(--comp-text-primary)',
-                      border: selected ? 'none' : '1px solid var(--comp-border)',
-                    }}
-                  >
-                    Semester {semester}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {internalLoading ? (
-            <LoadingSpinner message={`Loading semester ${selectedSemester} internal marks...`} />
-          ) : internalError ? (
-            <InlineError message={internalError} />
-          ) : (
+          <div className={`mt-3 px-3 pb-4 md:p-0 ${FLUSH_TABLE_SHELL}`}>
             <DataTable
               data={internalMarks}
+              isLoading={internalLoading}
+              error={internalError}
               stickyHeader
               ariaLabel="Earlier internal marks"
               emptyTitle={`No internal mark details were found for semester ${selectedSemester}.`}
@@ -313,60 +345,78 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
                 { header: "Code", accessor: (row) => <span className="font-semibold">{row.code}</span> },
                 { header: "Description", accessor: (row) => row.description },
                 { header: "Subject Type", accessor: (row) => row.subjectType },
-                { header: "Mark Obtained", accessor: (row) => row.markObtained, className: "text-right" },
+                {
+                  header: "Mark Obtained",
+                  accessor: (row) => {
+                    const got = Number.parseFloat(row.markObtained);
+                    const max = Number.parseFloat(row.maxMark);
+                    const weak = !Number.isNaN(got) && !Number.isNaN(max) && max > 0 && got / max < 0.6;
+                    return (
+                      <span
+                        className="font-medium tabular-nums"
+                        style={weak ? { color: "var(--warning)", fontWeight: 700 } : undefined}
+                      >
+                        {row.markObtained}
+                      </span>
+                    );
+                  },
+                  className: "text-right",
+                },
                 { header: "Max Mark", accessor: (row) => row.maxMark, className: "text-right" },
               ] as Column<InternalMarkRecord>[]}
             />
-          )}
+          </div>
         </section>
 
-        <section className="dashboard-card p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Exam Mark Details</h2>
-              <p className="mt-1 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
-                Published result history across your completed semesters.
-              </p>
-            </div>
-            <div className="rounded-xl border border-[var(--border)] px-4 py-3 text-sm" style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', color: 'var(--comp-text-secondary)' }}>
-              <span className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{historicalMarks.length}</span> historical records
-            </div>
-          </div>
-
-          <DataTable
-            data={historicalMarks}
-            stickyHeader
-            ariaLabel="Historical exam marks"
-            emptyTitle="No historical exam marks were found."
-            keyExtractor={(row) => `${row.semester}-${row.monthYear}-${row.subjectCode}-${row.attempt}`}
-            columns={[
-              { header: "Semester", accessor: (row) => <span className="font-semibold">{row.semester}</span> },
-              { header: "Month & Year", accessor: (row) => row.monthYear },
-              { header: "Subject Code", accessor: (row) => <span className="font-semibold">{row.subjectCode}</span> },
-              { header: "Subject Description", accessor: (row) => row.subjectDescription },
-              { header: "Credit", accessor: (row) => row.credit, className: "text-right" },
-              {
-                header: "Grade",
-                accessor: (row) => (
-                  <span className="inline-flex min-w-[2rem] items-center justify-center rounded bg-[var(--comp-surface-hover)] px-2 py-1 font-bold text-[var(--comp-text-primary)]">
-                    {row.grade}
-                  </span>
-                ),
-                className: "text-center",
-              },
-              { header: "Grade Point", accessor: (row) => row.gradePoint, className: "text-right" },
-              {
-                header: "Result",
-                accessor: (row) => (
-                  <span className={`erp-status-pill ${row.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
-                    {row.result}
-                  </span>
-                ),
-                className: "text-center",
-              },
-              { header: "Attempt", accessor: (row) => row.attempt, className: "text-right" },
-            ] as Column<HistoricalExamMark>[]}
+        <section className="dashboard-card overflow-hidden p-0">
+          <TableCardHeader
+            title="Exam Mark Details"
+            right={
+              <div className="whitespace-nowrap rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs" style={{ background: 'color-mix(in srgb, var(--comp-surface) 50%, transparent)', color: 'var(--comp-text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>{historicalMarks.length}</span> historical records
+              </div>
+            }
           />
+          <p className="px-5 pt-3 text-sm" style={{ color: 'var(--comp-text-secondary)' }}>
+            Published result history across your completed semesters.
+          </p>
+
+          <div className={`mt-3 px-3 pb-4 md:p-0 ${FLUSH_TABLE_SHELL}`}>
+            <DataTable
+              data={historicalMarks}
+              stickyHeader
+              ariaLabel="Historical exam marks"
+              emptyTitle="No historical exam marks were found."
+              keyExtractor={(row) => `${row.semester}-${row.monthYear}-${row.subjectCode}-${row.attempt}`}
+              columns={[
+                { header: "Semester", accessor: (row) => <span className="font-semibold">{row.semester}</span> },
+                { header: "Month & Year", accessor: (row) => row.monthYear },
+                { header: "Subject Code", accessor: (row) => <span className="font-semibold">{row.subjectCode}</span> },
+                { header: "Subject Description", accessor: (row) => row.subjectDescription },
+                { header: "Credit", accessor: (row) => row.credit, className: "text-right" },
+                {
+                  header: "Grade",
+                  accessor: (row) => (
+                    <span className={`erp-status-pill ${gradePillClass(gradeTier(row.grade, row.gradePoint))}`}>
+                      {row.grade}
+                    </span>
+                  ),
+                  className: "text-center",
+                },
+                { header: "Grade Point", accessor: (row) => row.gradePoint, className: "text-right" },
+                {
+                  header: "Result",
+                  accessor: (row) => (
+                    <span className={`erp-status-pill ${row.result.toLowerCase() === "pass" ? "erp-status-pill-success" : "erp-status-pill-error"}`}>
+                      {row.result}
+                    </span>
+                  ),
+                  className: "text-center",
+                },
+                { header: "Attempt", accessor: (row) => row.attempt, className: "text-right" },
+              ] as Column<HistoricalExamMark>[]}
+            />
+          </div>
         </section>
       </div>
     </ErpPageShell>

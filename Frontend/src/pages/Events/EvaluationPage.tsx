@@ -3,6 +3,7 @@
  * prev/next navigation from the sorted submission list.
  */
 
+import { Check } from "lucide-react";
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { SectionCard } from '../../components/erp/ErpPrimitives';
@@ -140,7 +141,7 @@ export default function EvaluationPage() {
       subtitle="Score the current submission, add notes, and record the final verdict."
       variant="wide"
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         {/* Header navigation */}
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -178,7 +179,7 @@ export default function EvaluationPage() {
         {/* Status messages */}
         {successMsg && (
           <div role="status" className="rounded-xl border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-sm font-semibold text-[var(--status-open-text)]">
-            ✓ {successMsg}
+            <Check size={14} aria-hidden="true" /> {successMsg}
           </div>
         )}
         {error && <ErrorMessage message={error} preservedInput onRetry={() => void saveEvaluation()} />}
@@ -213,7 +214,7 @@ export default function EvaluationPage() {
                   </a>
                 )}
                 {Boolean(current.flagged) && (
-                  <div className="rounded-lg border border-[var(--status-live-border)] bg-[var(--status-live-bg)] px-2.5 py-1.5 text-xs font-semibold text-[var(--status-live-text)]">
+                  <div className="rounded-lg border border-[var(--status-live-border)] bg-[var(--status-live-bg)] px-2 py-1 text-xs font-semibold text-[var(--status-live-text)]">
                     🚩 Flagged: {String(current.flagReason ?? 'No reason provided')}
                   </div>
                 )}
@@ -286,7 +287,7 @@ export default function EvaluationPage() {
                   className="comp-btn-primary"
                   aria-label="Save evaluation"
                 >
-                  {busy ? 'Saving...' : '✓ Save Evaluation'}
+                  {busy ? 'Saving...' : <><Check size={14} aria-hidden="true" /> Save Evaluation</>}
                 </button>
               </div>
             </SectionCard>

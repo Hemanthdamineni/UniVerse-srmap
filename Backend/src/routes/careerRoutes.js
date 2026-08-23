@@ -2,10 +2,14 @@ const express = require("express");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { resolveSessionId } = require("../utils/cookies");
+const { createCareerCache } = require("../services/career/careerServices");
 
-function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null }) {
+function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, redisClient = null }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
+  // Redis-backed read-through cache for global career reads; degrades to a
+  // no-op pass-through when Redis is unavailable.
+  const careerCache = createCareerCache(redisClient);
   router.use(userContext);
 
   function ensureAuthenticated(req, res, next) {
@@ -166,7 +170,13 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     recentRuns: careerStore.getScraperRuns(10),
   })));
 
-  router.get("/career/stats", wrap(() => careerStore.getCareerStats()));
+  router.get("/career/stats", wrapAsync(async () => {
+    const cached = await careerCache.getJson("stats");
+    if (cached) return cached;
+    const stats = await careerStore.getCareerStats();
+    await careerCache.setJson("stats", stats);
+    return stats;
+  }));
 
   router.get("/career/opportunities", wrap((req) => ({
     items: careerStore
@@ -188,9 +198,11 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
       .map(decorateOpportunity),
   })));
 
-  router.post("/career/opportunities", wrap((req) =>
-    decorateOpportunity(careerStore.createOpportunity(req.body || {}, req.userContext))
-  ));
+  router.post("/career/opportunities", wrap((req) => {
+    const opportunity = decorateOpportunity(careerStore.createOpportunity(req.body || {}, req.userContext));
+    void careerCache.invalidateCommon();
+    return opportunity;
+  }));
 
   router.get("/career/opportunities/:id/fit", wrap((req) =>
     careerStore.getOpportunityFit(req.userContext, req.params.id, {
@@ -208,13 +220,17 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     return decorateOpportunity(opportunity);
   }));
 
-  router.put("/career/opportunities/:id", wrap((req) =>
-    careerStore.updateOpportunity(req.params.id, req.body || {}, req.userContext)
-  ));
+  router.put("/career/opportunities/:id", wrap((req) => {
+    const updated = careerStore.updateOpportunity(req.params.id, req.body || {}, req.userContext);
+    void careerCache.invalidateCommon();
+    return updated;
+  }));
 
-  router.delete("/career/opportunities/:id", wrap((req) =>
-    careerStore.deleteOpportunity(req.params.id, req.userContext)
-  ));
+  router.delete("/career/opportunities/:id", wrap((req) => {
+    const removed = careerStore.deleteOpportunity(req.params.id, req.userContext);
+    void careerCache.invalidateCommon();
+    return removed;
+  }));
 
   router.post("/career/opportunities/:id/save", wrap((req) =>
     careerStore.saveOpportunity(req.params.id, req.userContext)
@@ -354,12 +370,14 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
       req.userContext,
       req.body?.reason || "Approved by admin"
     );
+    void careerCache.invalidateCommon();
     return { approved: true, submission: decorateSubmission(submission) };
   }));
 
   router.patch("/career/submit/:submissionId", wrap((req) => {
     ensureCareerAdmin(req);
     const submission = careerStore.reviewSubmission(req.params.submissionId, req.body || {}, req.userContext);
+    void careerCache.invalidateCommon();
     return decorateSubmission(submission);
   }));
 

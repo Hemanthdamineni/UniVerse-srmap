@@ -15,11 +15,29 @@ function ensureUiMapLoaded(uiMapStore) {
   }
 }
 
-function createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor }) {
+function createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor, dataSink }) {
   const router = express.Router();
 
   function parseModeOverride(req) {
     return String(req.query.mode || req.body?.mode || "").trim().toLowerCase();
+  }
+
+  // Fire-and-forget side-channel: lets auxiliary stores (attendance snapshots,
+  // vacant-room occupancy) learn from successful live fetches without ever
+  // affecting the ERP response path.
+  function notifyDataSink(pageKey, sessionId, payload) {
+    if (!dataSink?.onLivePageFetched || !payload || payload.source !== "live") return;
+    try {
+      Promise.resolve(
+        dataSink.onLivePageFetched({
+          pageKey: String(pageKey),
+          sessionId: String(sessionId || ""),
+          payload: payload.data,
+        })
+      ).catch(() => {});
+    } catch {
+      // sink notification must never break the response
+    }
   }
 
   async function handlePage(res, req, pageKey) {
@@ -32,6 +50,8 @@ function createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor }
         sessionId,
         modeOverride,
       });
+
+      notifyDataSink(pageKey, sessionId, data);
 
       return sendApiSuccess(res, req, data, {
         source: data?.source,
@@ -65,6 +85,12 @@ function createErpV2Routes({ erpAggregationService, uiMapStore, actionExecutor }
         sessionId,
         modeOverride,
       });
+
+      if (data && typeof data === "object") {
+        for (const [pageKey, pageData] of Object.entries(data)) {
+          notifyDataSink(pageKey, sessionId, pageData);
+        }
+      }
 
       return sendApiSuccess(res, req, { success: true, data });
     } catch (error) {

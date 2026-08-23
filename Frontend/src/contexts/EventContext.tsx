@@ -16,6 +16,7 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { getEvent, getCompetitionConfig, type EventDetail, type CompetitionConfig, type CompetitionRound } from '../lib/campus/campusApi';
 import { eventCache } from '../lib/events/eventCache';
 import { getEventPhase } from '../lib/events/eventPhase';
@@ -83,6 +84,29 @@ export function EventProvider({
   const userId = getCurrentRegNo();
   const platformAdmin = isPlatformAdmin(userId);
 
+  // Polling refetches on a fixed cadence; without this gate each tick hands
+  // consumers fresh object identities and re-renders the whole event tree
+  // even when nothing changed.
+  const lastSnapshotRef = useRef<{ key: string; event: string; config: string; role: string } | null>(null);
+
+  const applyFetched = useCallback(
+    (nextEvent: EventDetail, nextConfig: CompetitionConfig | null, nextRole: MyRoleResponse | null) => {
+      const next = {
+        key: eventId,
+        event: JSON.stringify(nextEvent),
+        config: JSON.stringify(nextConfig),
+        role: JSON.stringify(nextRole),
+      };
+      const prev = lastSnapshotRef.current;
+      const isNewEvent = prev?.key !== next.key;
+      if (isNewEvent || prev?.event !== next.event) setEvent(nextEvent);
+      if (isNewEvent || prev?.config !== next.config) setConfig(nextConfig);
+      if (isNewEvent || prev?.role !== next.role) setRoleData(nextRole);
+      lastSnapshotRef.current = next;
+    },
+    [eventId]
+  );
+
   const fetchData = useCallback(
     async (skipCache = false) => {
       const cacheKey = `event:${eventId}`;
@@ -111,6 +135,12 @@ export function EventProvider({
           setEvent(cachedEvent);
           setConfig(cachedConfig ?? null);
           setRoleData(resolvedCachedRole);
+          lastSnapshotRef.current = {
+            key: eventId,
+            event: JSON.stringify(cachedEvent),
+            config: JSON.stringify(cachedConfig ?? null),
+            role: JSON.stringify(resolvedCachedRole),
+          };
           setLoading(false);
           return;
         }
@@ -139,9 +169,7 @@ export function EventProvider({
         eventCache.set(cacheKey, eventData, 60_000);
         eventCache.set(configKey, configData, 120_000);
         if (resolvedRoleData) eventCache.set(roleKey, resolvedRoleData, 60_000);
-        setEvent(eventData);
-        setConfig(configData as CompetitionConfig | null);
-        setRoleData(resolvedRoleData);
+        applyFetched(eventData, configData as CompetitionConfig | null, resolvedRoleData);
         setError(null);
       } catch {
         setError('Failed to load event. Please try again.');
@@ -149,7 +177,7 @@ export function EventProvider({
         setLoading(false);
       }
     },
-    [eventId, platformAdmin, userId]
+    [applyFetched, eventId, platformAdmin, userId]
   );
 
   // Initial fetch
@@ -302,7 +330,7 @@ export function FailureRecoveryBanner({
         textAlign: 'center',
       }}
     >
-      <span style={{ fontSize: '2.5rem' }} role="img" aria-label="Warning">⚠️</span>
+      <AlertTriangle size={40} strokeWidth={1.5} style={{ color: 'var(--warning)' }} aria-hidden="true" />
       <p className="comp-heading-lg">Failed to load event</p>
       <p className="comp-body">{message ?? 'Something went wrong. Please try again.'}</p>
       <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>

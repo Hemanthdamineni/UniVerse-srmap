@@ -834,6 +834,15 @@ class ErpLiveService {
       return this.fetchCgpaSummary(sessionId);
     }
 
+    // Parameterized key routed here so aggregation caching/single-flight apply;
+    // see scrapeRoutes' earlier-internal-marks semester endpoint.
+    const semesterMarksMatch = /^examination\/earlier-internal-marks\/semester\/(\d+)$/.exec(
+      String(pageKey || "")
+    );
+    if (semesterMarksMatch) {
+      return this.fetchEarlierInternalMarksSemester(sessionId, Number(semesterMarksMatch[1]));
+    }
+
     const targets = this.scrapeTargets[pageKey];
     if (!targets) {
       const error = new Error(`Unknown pageKey: ${pageKey}`);

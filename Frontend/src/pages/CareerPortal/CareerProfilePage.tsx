@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Select } from "../../components/select";
 import { User, Briefcase, MapPin, DollarSign, Award, Linkedin, Github, Globe, FileText, Upload, CheckCircle2, Plus, X, Sparkles, ArrowRight, Trophy, RefreshCw, ShieldCheck, Copy, ExternalLink, Eye, Download } from "lucide-react";
 import { SkeletonBlock, SkeletonCard } from "../../components/ui/Skeletons";
+import { PageContainer } from "../../components/layout/PageLayouts";
 import { useSession } from '../../hooks/useSession';
 import { track } from "../../lib/core/analytics";
 import { downloadPublicCareerProfileMarkdown } from "../../lib/career/publicProfileExport";
@@ -293,15 +294,15 @@ const CareerProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4 p-4 sm:p-8">
+      <PageContainer surface="flat" className="max-w-4xl space-y-6">
         <SkeletonCard className="h-16" />
         <SkeletonCard className="h-96" />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
+    <PageContainer surface="flat" className="max-w-4xl space-y-6">
       <header className="flex justify-between items-end">
         <div>
           <h1 className="page-title">Career Profile</h1>
@@ -749,7 +750,7 @@ const CareerProfilePage: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

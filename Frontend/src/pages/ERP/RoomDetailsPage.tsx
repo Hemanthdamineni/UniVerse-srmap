@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { executePipeline, type RoomDetailsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch } from "../../lib/erp/index";
 import type { PageBlueprint } from "../../config/erpBlueprints";
-import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { ErpPageShell, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
 type Props = {
@@ -69,9 +69,7 @@ export default function RoomDetailsPage({ blueprint }: Props) {
         />
       ) : data && fields.length > 0 ? (
         <section className="dashboard-card overflow-hidden p-0">
-          <div className="border-b px-5 py-4" style={{ borderColor: 'var(--comp-border)' }}>
-            <h3 className="font-semibold" style={{ color: 'var(--comp-text-primary)' }}>Room Assignment</h3>
-          </div>
+          <TableCardHeader title="Room Assignment" />
           <div className="divide-y divide-[var(--comp-border)]">
             {fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="flex items-center gap-4 px-5 py-3.5">

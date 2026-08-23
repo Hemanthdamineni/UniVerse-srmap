@@ -29,6 +29,7 @@ A **middleware platform** that wraps the SRM AP University ERP system. It scrape
 | 12 | [System Audit Report](./12-SYSTEM-AUDIT-REPORT.md) | Audit findings, compliance, access review |
 | 13 | [Database Schemas](./13-DATABASE-SCHEMAS.md) | All SQLite table definitions, indices, and relationships |
 | 14 | [Production Readiness Runbook](./runbooks/admin-content-lifecycle.md) | Deployment, operational procedures, runbooks |
+| 15 | [Production Readiness Checklist](./14-PROD-READINESS-CHECKLIST.md) | Verified go-live checklist: security, backups, alerting, CI, testing gaps |
 
 ---
 

@@ -82,7 +82,7 @@ function OrganizerInfoCard({ message, eventId }: { message: string; eventId: str
         textAlign: 'center',
       }}
     >
-      <span style={{ fontSize: '1.5rem' }} aria-hidden="true">🔒</span>
+      <span style={{ fontSize: 'var(--text-xl)' }} aria-hidden="true">🔒</span>
       <p className="comp-heading-md">{message}</p>
       <Link
         to={`/events/${encodeURIComponent(eventId)}`}

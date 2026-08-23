@@ -1,24 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+/**
+ * Career-readiness content was folded into the Academic Hub; the dedicated
+ * progress-overview route no longer exists. This guards the hub's core
+ * sections that replaced it.
+ */
 test.describe("academic tracker career readiness", () => {
-  test("renders persisted analytics trace and recommendation event trace", async ({ page }) => {
-    await page.goto("/academic-tracker/progress-overview");
+  test("renders the hub overview sections that replaced progress-overview", async ({ page }) => {
+    await page.goto("/academic-tracker/academic-insights");
 
-    await expect(page.getByRole("heading", { name: "Progress Overview" })).toBeVisible();
-    await expect(page.getByText("Career Readiness")).toBeVisible();
-    await expect(page.getByText("Analytics Trace")).toBeVisible();
-    await expect(page.getByText("Node.js").first()).toBeVisible();
-    await expect(page.getByText(/Snapshot saved/i)).toBeVisible();
-
-    await page.evaluate(() => {
-      window.history.pushState({}, "", "/academic-tracker/academic-insights");
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    });
-
-    await expect(page.getByRole("heading", { name: "Academic Insights" })).toBeVisible();
-    await expect(page.getByText("Career-Aware Action Plan")).toBeVisible();
-    await expect(page.getByText("Frontend Engineering Intern").first()).toBeVisible();
-    await expect(page.getByText("Recommendation Trace")).toBeVisible();
-    await expect(page.getByText("career_readiness")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Academic Hub" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Quick Actions" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Key Highlights" })).toBeVisible();
+    await expect(page.getByText("Current: Sem 3")).toBeVisible();
   });
 });

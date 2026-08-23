@@ -6,6 +6,7 @@ import {
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import {
   createAlumniProfile,
   deleteAlumniProfile,
@@ -19,6 +20,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
   const admin = useAdminAccess();
   const [alumni, setAlumni] = useState<AlumniProfile[]>([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [batchFilter, setBatchFilter] = useState<string>("All");
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
@@ -38,7 +40,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
     try {
       const data = await listAlumni(
         {
-          ...(search.trim() ? { query: search.trim() } : {}),
+          ...(debouncedSearch.trim() ? { query: debouncedSearch.trim() } : {}),
           ...(batchFilter !== "All" ? { batch: batchFilter } : {}),
         },
         adminMode && admin.unlocked ? admin.adminHeaders : undefined
@@ -54,7 +56,8 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
 
   useEffect(() => {
     void loadAlumni();
-  }, [admin.adminHeaders, admin.unlocked, adminMode, batchFilter, search]);
+    // debouncedSearch (not search) keeps typing from firing a request per keystroke.
+  }, [admin.adminHeaders, admin.unlocked, adminMode, batchFilter, debouncedSearch]);
 
   const batches = useMemo(() => {
     const unique = Array.from(new Set(alumni.map((item) => item.batch).filter(Boolean))).sort().reverse();
@@ -260,7 +263,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   batchFilter === batch
                     ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
-                    : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                    : "border-[var(--border)] bg-[var(--comp-surface)] text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 }`}
               >
                 {batch}

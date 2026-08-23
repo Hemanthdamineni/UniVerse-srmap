@@ -16,6 +16,7 @@ const EXACT_TITLE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/^SAP WITHDRAW$/, "SAP Withdraw"],
   [/^STUDENT BANK DETAILS$/, "Student Bank Details"],
   [/^BANK DETAILS$/, "Bank Details"],
+  [/^SUBJECT WISE FEEDBACK\s*[-–]\s*END SEMESTER$/i, "Course Feedback"],
 ];
 
 const MIXED_TITLE_NOISE = [

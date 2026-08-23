@@ -89,6 +89,7 @@ import {
   LmsFrame,
   renderResourceBody
 } from "../_shared/LmsPageShared";
+import { ConfirmDialog } from "../../../components/dialog";
 import type {
   LmsGuide,
   LmsRequest,
@@ -103,10 +104,18 @@ export function RoadmapViewerPage() {
   const navigate = useNavigate();
   const { profile } = useSession();
   const { data, setData, loading, error } = useAsyncPage(() => getRoadmap(id), [id]);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const registerNo = getProfileRegisterNo(profile);
   const canManageRoadmap = Boolean(
     data && (String(data.authorId || "").toUpperCase() === registerNo || isProfileAdmin(profile))
   );
+
+  async function handleDeleteConfirmed() {
+    setConfirmingDelete(false);
+    await deleteRoadmap(id);
+    navigate("/resources/me/contributions");
+  }
+
   return (
     <LmsFrame title={data?.title || "Roadmap"} loading={loading} error={error}>
       {data ? (
@@ -115,11 +124,7 @@ export function RoadmapViewerPage() {
             <div className="flex justify-end">
               <button
                 className="rounded-full border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] px-4 py-2 text-sm font-semibold text-[var(--error)]"
-                onClick={async () => {
-                  if (!window.confirm("Delete this roadmap?")) return;
-                  await deleteRoadmap(id);
-                  navigate("/resources/me/contributions");
-                }}
+                onClick={() => setConfirmingDelete(true)}
               >
                 Delete roadmap
               </button>
@@ -134,6 +139,16 @@ export function RoadmapViewerPage() {
           />
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this roadmap?"
+        description={`"${data?.title ?? "This roadmap"}" will be permanently removed for everyone. This cannot be undone.`}
+        confirmLabel="Delete roadmap"
+        danger
+        onConfirm={() => void handleDeleteConfirmed()}
+      />
     </LmsFrame>
   );
 }

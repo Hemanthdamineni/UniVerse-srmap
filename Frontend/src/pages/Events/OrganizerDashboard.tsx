@@ -3,6 +3,7 @@
  * and OrganizerGuard from shared components.
  */
 
+import { GraduationCap } from "lucide-react";
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { SectionCard } from '../../components/erp/ErpPrimitives';
@@ -119,7 +120,7 @@ export default function OrganizerDashboard() {
       actions={<Link className="comp-btn-primary" to="/events/create">Create New Event</Link>}
       variant="wide"
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         {/* Back link */}
         <Link to={`/events/${encodeURIComponent(eventId)}`} className="text-xs text-[var(--text-secondary)] no-underline">
@@ -154,7 +155,7 @@ export default function OrganizerDashboard() {
           <div className="space-y-2">
             {(analytics?.rounds ?? []).map((row) => (
               <div key={row.roundId} className="rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
-                <p className="comp-heading-md mb-1.5 mt-0">{row.title}</p>
+                <p className="comp-heading-md mb-1 mt-0">{row.title}</p>
                 <div className="flex flex-wrap gap-4">
                   <span className="comp-body">Submission rate: <strong>{row.submissionRate}%</strong></span>
                   <span className="comp-body">Evaluation: <strong>{row.evaluationCompletion}%</strong></span>
@@ -228,7 +229,7 @@ export default function OrganizerDashboard() {
         </SectionCard>
 
         {/* 2-column layout: Rounds | Tasks & Milestones */}
-        <div className="grid items-start gap-5 xl:grid-cols-[1fr_320px]">
+        <div className="grid items-start gap-4 xl:grid-cols-[1fr_320px]">
 
           {/* Round management */}
           <SectionCard title="Round Management">
@@ -255,7 +256,7 @@ export default function OrganizerDashboard() {
                           width: submissions.length > 0 ? `${Math.round((evaluated / submissions.length) * 100)}%` : '0%',
                           height: '100%', borderRadius: 3,
                           background: evaluated >= submissions.length && submissions.length > 0 ? 'var(--status-open-text)' : 'var(--comp-accent)',
-                          transition: 'transform 0.3s ease',
+                          transition: 'width var(--transition-base)',
                         }} />
                       </div>
                       <span className="text-xs font-semibold text-[var(--text-secondary)]">
@@ -284,7 +285,7 @@ export default function OrganizerDashboard() {
                         }
                         aria-label={`Generate certificates for ${round.title}`}
                       >
-                        🎓 Generate Certificates
+                        <GraduationCap size={14} aria-hidden="true" /> Generate Certificates
                       </button>
                     </div>
                   </div>
@@ -299,13 +300,13 @@ export default function OrganizerDashboard() {
             <div className="space-y-2">
               <Link
                 to={`/events/${encodeURIComponent(eventId)}/manage/roles`}
-                className="comp-btn-ghost justify-start gap-1.5 text-sm no-underline"
+                className="comp-btn-ghost justify-start gap-1 text-sm no-underline"
               >
                 👩‍⚖️ Manage Judges
               </Link>
               <Link
                 to="/events/attendance"
-                className="comp-btn-ghost justify-start gap-1.5 text-sm no-underline"
+                className="comp-btn-ghost justify-start gap-1 text-sm no-underline"
               >
                 📷 Check-In Console
               </Link>
@@ -316,13 +317,13 @@ export default function OrganizerDashboard() {
               <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4">
                 <div className="flex items-center justify-between">
                   <h3 className="comp-heading-md m-0">Round Checklist</h3>
-                  <span className="rounded-full bg-[var(--comp-accent-light)] px-2 py-0.5 text-[11px] font-bold text-[var(--comp-accent)]">
+                  <span className="rounded-full bg-[var(--comp-accent-light)] px-2 py-1 text-[11px] font-bold text-[var(--comp-accent)]">
                     {(config?.rounds ?? []).filter((r) => !r.resultsPublished).length} Pending
                   </span>
                 </div>
                 {(config?.rounds ?? []).map((round) => (
                   <label key={round.roundId} className="flex cursor-default items-start gap-2 py-1">
-                    <input type="checkbox" readOnly checked={Boolean(round.resultsPublished)} className="mt-0.5" />
+                    <input type="checkbox" readOnly checked={Boolean(round.resultsPublished)} />
                     <div>
                       <p className="m-0 text-sm font-medium text-[var(--text-primary)]">{round.title}</p>
                       <span
@@ -361,7 +362,7 @@ export default function OrganizerDashboard() {
                           <span className="text-[11px] font-bold tracking-[0.06em]" style={{ color: isPast ? 'var(--comp-text-muted)' : isNear ? 'var(--status-live-text)' : 'var(--comp-accent)' }}>
                             {isPast ? 'PASSED' : isNear ? 'SOON' : dl.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                           </span>
-                          <p className="m-0.5 text-sm font-semibold text-[var(--text-primary)]">{round.title} deadline</p>
+                          <p className="m-0 text-sm font-semibold text-[var(--text-primary)]">{round.title} deadline</p>
                           <p className="comp-body m-0 text-xs">
                             {dl.toLocaleString('en-IN', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
                           </p>

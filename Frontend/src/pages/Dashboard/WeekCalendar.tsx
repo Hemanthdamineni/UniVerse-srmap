@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface WeekCalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -64,21 +65,23 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
   return (
     <div className="h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => navigateWeek(-1)}
-          className="btn-ghost min-h-0 p-1 rounded-lg"
+          className="btn-ghost flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          aria-label="Previous week"
         >
-          ←
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </button>
-        <h2 className="card-title font-bold">
+        <h2 className="card-title font-semibold">
           {monthNames[midWeek.getMonth()]} {midWeek.getFullYear()}
         </h2>
         <button
           onClick={() => navigateWeek(1)}
-          className="btn-ghost min-h-0 p-1 rounded-lg"
+          className="btn-ghost flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          aria-label="Next week"
         >
-          →
+          <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -87,14 +90,14 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
         {weekDays.map((date, index) => (
           <div key={index} className="flex flex-col items-center space-y-1">
             {/* Day name */}
-            <div className="label-text h-4" style={{ textTransform: 'none', letterSpacing: 'normal' }}>
+            <div className="label-text">
               {dayNames[index]}
             </div>
 
             {/* Date button */}
             <button
               onClick={() => handleDateClick(date)}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${isToday(date)
+              className={`flex h-10 w-full max-w-11 items-center justify-center rounded-lg text-sm font-medium ${isToday(date)
                 ? 'text-white'
                 : isSelected(date) && !isToday(date)
                   ? 'text-white'
@@ -102,7 +105,7 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
                 }`}
               style={{
                 background: isToday(date) ? 'var(--comp-accent)' : isSelected(date) ? 'var(--success)' : undefined,
-                color: isToday(date) || isSelected(date) ? '#fff' : 'var(--comp-text-primary)',
+                color: isToday(date) ? 'var(--on-accent)' : isSelected(date) ? 'var(--on-success)' : 'var(--comp-text-primary)',
                 transition: `all var(--transition-fast)`,
               }}
             >

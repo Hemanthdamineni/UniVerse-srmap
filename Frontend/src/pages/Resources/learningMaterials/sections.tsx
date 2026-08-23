@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
 import type {
   ContentWorkflowSpec,
@@ -37,8 +38,8 @@ type ResourceLibraryProps = {
 export function WorkflowMap({ workflow }: WorkflowMapProps) {
   return (
     <SectionCard title="Admin Workflow Map">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+      <div className="grid gap-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="bg-[var(--comp-surface)] p-4">
           <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Lifecycle states</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {workflow.states.map((state) => (
@@ -51,7 +52,7 @@ export function WorkflowMap({ workflow }: WorkflowMapProps) {
             ))}
           </div>
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+        <div className="bg-[var(--comp-surface)] p-4">
           <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">Bulk safety</h3>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">{workflow.bulkSafety.rollback}</p>
           <p className="mt-2 text-xs text-[var(--text-secondary)]">
@@ -61,7 +62,7 @@ export function WorkflowMap({ workflow }: WorkflowMapProps) {
       </div>
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {workflow.transitions.map((transition) => (
-          <div key={transition.action} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm">
+          <div key={transition.action} className="bg-[var(--comp-surface)] px-3 py-2 text-sm">
             <span className="font-semibold text-[var(--comp-text-primary)]">{transition.label}</span>
             <span className="text-[var(--text-secondary)]">: {transition.from.join(", ")} to {transition.to}</span>
           </div>
@@ -96,7 +97,7 @@ export function ResourceFilters({
             id="resource-year"
             value={selectedYear ?? ""}
             onChange={(event) => onYearChange(Number(event.target.value || 0) || null)}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+            className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
           >
             {(catalog?.years || []).map((year) => (
               <option key={year} value={year}>
@@ -114,7 +115,7 @@ export function ResourceFilters({
             id="resource-course"
             value={selectedCourseCode}
             onChange={(event) => onCourseChange(event.target.value)}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+            className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
           >
             {coursesForYear.map((course) => (
               <option key={course.courseCode} value={course.courseCode}>
@@ -132,7 +133,7 @@ export function ResourceFilters({
             id="resource-subject"
             value={selectedSubjectCode}
             onChange={(event) => onSubjectChange(event.target.value)}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+            className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
           >
             {(subjects?.subjects || []).map((subject) => (
               <option key={subject.subjectCode} value={subject.subjectCode}>
@@ -152,7 +153,7 @@ export function ResourceFilters({
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Search by title, description, or tag"
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
           </div>
         ) : null}
@@ -165,8 +166,8 @@ export function ResourcePreview({ previewUrl }: { previewUrl: string }) {
   return (
     <SectionCard title="Live Preview">
       {previewUrl ? (
-        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
-          <iframe title="Resource Preview" src={previewUrl} className="h-[420px] w-full" />
+        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--comp-surface)]">
+          <iframe title="Resource Preview" src={previewUrl} className="h-[min(60vh,420px)] w-full" />
         </div>
       ) : (
         <p className="text-sm text-[var(--text-secondary)]">
@@ -187,49 +188,45 @@ export function ResourceLibrary({ advanced, libraryLoading, library, onPreviewRe
       ) : (
         <div className="space-y-4">
           {library.groups.map((group) => (
-            <div key={group.group} className="rounded-2xl border border-[var(--border)] bg-white p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{group.label}</h3>
-                  <p className="text-xs text-[var(--text-secondary)]">{group.items.length} item(s)</p>
-                </div>
-              </div>
-              <div className="space-y-3">
+            <section key={group.group} className="rounded-lg border border-[var(--border)] bg-[var(--comp-surface)] p-4">
+              <header className="mb-2 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-[var(--comp-text-primary)]">{group.label}</h3>
+                <p className="text-xs text-[var(--text-secondary)]">{group.items.length} item(s)</p>
+              </header>
+              <div className="divide-y divide-[var(--border)]">
                 {group.items.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-[var(--comp-surface-hover)] p-4">
+                  <article key={item.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h4>
-                        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                          {item.description || "No description provided."}
-                        </p>
-                        {Array.isArray(item.metadata?.tags) && item.metadata.tags.length ? (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {item.metadata.tags.map((tag) => (
-                              <span
-                                key={String(tag)}
-                                className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--comp-text-primary)]"
-                              >
-                                {String(tag)}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
+                      <h4 className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.title}</h4>
                       {item.metadata?.featured ? (
-                        <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2.5 py-0.5 text-xs font-bold text-[var(--warning)]">
+                        <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2 py-1 text-xs font-bold text-[var(--warning)]">
                           Featured
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                      {item.description || "No description provided."}
+                    </p>
+                    {Array.isArray(item.metadata?.tags) && item.metadata.tags.length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {item.metadata.tags.map((tag) => (
+                          <span
+                            key={String(tag)}
+                            className="rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_8%,transparent)] px-2 py-1 text-xs font-semibold text-[var(--comp-text-primary)]"
+                          >
+                            {String(tag)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
                       {item.resources.map((resource) => (
-                        <div key={resource.id} className="flex flex-wrap gap-2">
+                        <Fragment key={resource.id}>
                           <a
                             href={resource.urlOrPath}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)]"
+                            className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)]"
                           >
                             Open {resource.kind.toUpperCase()}
                           </a>
@@ -237,18 +234,18 @@ export function ResourceLibrary({ advanced, libraryLoading, library, onPreviewRe
                             <button
                               type="button"
                               onClick={() => onPreviewResource(resource.urlOrPath)}
-                              className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                              className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                             >
                               Preview
                             </button>
                           ) : null}
-                        </div>
+                        </Fragment>
                       ))}
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}

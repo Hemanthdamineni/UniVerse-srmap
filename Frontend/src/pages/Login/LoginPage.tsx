@@ -20,7 +20,6 @@ import {
   CheckIcon,
   EyeIcon,
   INPUT,
-  LABEL,
   LoadingDots,
   RefreshIcon,
   StatusMessage,
@@ -29,6 +28,10 @@ import LoginIdentityPanel from "./LoginIdentityPanel";
 import "./LoginPage.overdrive.css";
 
 type SubmitPhase = "idle" | "loading" | "success";
+
+// Focus ring shared by the password + captcha field wrappers.
+const FIELD_FOCUS_SHADOW =
+  "0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), var(--shadow-card)";
 
 const CAPTCHA_RETRY_CODES = new Set(["CAPTCHA_EXPIRED", "INVALID_CAPTCHA"]);
 // The official ERP burns the session captcha on EVERY failed attempt
@@ -351,23 +354,23 @@ export default function LoginPage() {
         <LoginIdentityPanel />
 
         {/* ── Form Panel ── */}
-        <div className="login-form-panel">
-          <div className="login-form-enter login-f-d0" style={{ marginBottom: "28px" }}>
-            <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.015em" }}>Sign in</h2>
-            <p style={{ margin: "6px 0 0", fontSize: "0.83rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>Use your ERP registration number and password.</p>
+        <div className="login-form-panel flex flex-col gap-4">
+          <div className="login-form-enter login-f-d0 flex flex-col gap-2">
+            <h2 className="m-0 text-[1.35rem] font-bold leading-tight tracking-[-0.015em] text-[var(--text-primary)]">Sign in</h2>
+            <p className="m-0 text-[0.83rem] leading-normal text-[var(--text-secondary)]">Use your ERP registration number and password.</p>
           </div>
 
-          <form ref={formRef} onSubmit={handleSubmit} noValidate className={formShake ? "login-form-shake" : ""}>
+          <form ref={formRef} onSubmit={handleSubmit} noValidate className={`flex flex-col gap-4${formShake ? " login-form-shake" : ""}`}>
 
             {statusMessage && (
-              <div className="login-form-enter login-f-d1" style={{ marginBottom: "18px" }}>
+              <div className="login-form-enter login-f-d1">
                 <StatusMessage tone={statusTone} message={statusMessage} />
               </div>
             )}
 
             {/* Registration Number */}
-            <div className={`login-form-enter login-f-d2 ${fieldClass("username")}`} style={{ marginBottom: "18px" }}>
-              <label htmlFor="username" style={LABEL}>Registration Number</label>
+            <div className={`login-form-enter login-f-d2 flex flex-col gap-2 ${fieldClass("username")}`}>
+              <label htmlFor="username" className="label-text">Registration Number</label>
               <input
                 id="username" name="username"
                 value={form.username} onChange={handleChange}
@@ -380,13 +383,13 @@ export default function LoginPage() {
                 style={INPUT}
                 className={focusedField === "username" ? "login-input-focused" : ""}
               />
-              <p style={{ margin: "5px 0 0", fontSize: "0.76rem", color: "var(--text-secondary)" }}>Format: AP followed by 11 digits</p>
+              <p className="m-0 text-[0.76rem] text-[var(--text-secondary)]">Format: AP followed by 11 digits</p>
             </div>
 
             {/* Password */}
-            <div className={`login-form-enter login-f-d3 ${fieldClass("password")}`} style={{ marginBottom: "18px" }}>
-              <label htmlFor="password" style={LABEL}>Password</label>
-              <div style={{ display: "flex", alignItems: "center", borderRadius: "10px", border: `1px solid ${focusedField === "password" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", boxShadow: focusedField === "password" ? "0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08)" : "none" }}>
+            <div className={`login-form-enter login-f-d3 flex flex-col gap-2 ${fieldClass("password")}`}>
+              <label htmlFor="password" className="label-text">Password</label>
+              <div style={{ display: "flex", alignItems: "center", borderRadius: "8px", border: `1px solid ${focusedField === "password" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", boxShadow: focusedField === "password" ? FIELD_FOCUS_SHADOW : "none" }}>
                 <input
                   id="password" name="password" type={showPassword ? "text" : "password"}
                   value={form.password} onChange={handleChange}
@@ -395,7 +398,7 @@ export default function LoginPage() {
                   onKeyUp={(e) => setCapsLockOn(e.getModifierState?.("CapsLock") ?? false)}
                   placeholder="Your ERP password"
                   autoComplete="current-password"
-                  style={{ flex: 1, padding: "11px 14px", fontSize: "0.875rem", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
+                  style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                 />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
                   style={{ padding: "0 14px", background: "transparent", border: "none", cursor: "pointer", color: "var(--text-secondary)", display: "flex", alignItems: "center", flexShrink: 0, transition: "color 0.15s ease" }}
@@ -406,36 +409,36 @@ export default function LoginPage() {
                 </button>
               </div>
               {capsLockOn && (
-                <p role="status" style={{ margin: "5px 0 0", fontSize: "0.76rem", fontWeight: 600, color: "var(--warning)" }}>
+                <p role="status" className="m-0 text-[0.76rem] font-semibold text-[var(--warning)]">
                   Caps Lock is on
                 </p>
               )}
             </div>
 
             {/* Captcha */}
-            <div className={`login-form-enter login-f-d4 ${fieldClass("captcha")}`} style={{ marginBottom: "18px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "7px", gap: "10px" }}>
-                <label htmlFor="captcha" style={{ ...LABEL, marginBottom: 0 }}>Captcha</label>
+            <div className={`login-form-enter login-f-d4 flex flex-col gap-2 ${fieldClass("captcha")}`}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+                <label htmlFor="captcha" className="label-text">Captcha</label>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "12px" }}>
                   {!captchaLoading && captchaRemainingMs > 0 && captchaRemainingMs <= 30_000 && (
-                    <span title="Time before this captcha expires" style={{ fontSize: "0.75rem", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: captchaUrgentColor }}>
+                    <span title="Time before this captcha expires" style={{ fontSize: "var(--text-xs)", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: captchaUrgentColor }}>
                       {captchaSecondsLeft}s
                     </span>
                   )}
                   <button type="button" onClick={() => { void fetchCaptcha("Captcha refreshed.", { focusCaptcha: true }); }} disabled={captchaLoading} aria-label="Refresh captcha"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: captchaLoading ? "not-allowed" : "pointer", color: "var(--comp-accent)", fontSize: "0.75rem", fontWeight: 600, padding: "2px 0", fontFamily: "inherit", opacity: captchaLoading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
+                    style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: captchaLoading ? "not-allowed" : "pointer", color: "var(--comp-accent)", fontSize: "var(--text-xs)", fontWeight: 600, padding: "2px 0", fontFamily: "inherit", opacity: captchaLoading ? 0.6 : 1, transition: "opacity 0.15s ease" }}>
                     <RefreshIcon spinning={captchaLoading} />
                     {captchaLoading ? "Refreshing..." : "Refresh"}
                   </button>
                 </span>
               </div>
-              <div style={{ position: "relative", borderRadius: "10px", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", display: "flex", alignItems: "stretch", boxShadow: focusedField === "captcha" ? "0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08)" : "none" }}>
+              <div style={{ position: "relative", borderRadius: "8px", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", display: "flex", alignItems: "stretch", boxShadow: focusedField === "captcha" ? FIELD_FOCUS_SHADOW : "none" }}>
                 <div style={{ flexShrink: 0, background: "#ffffff", borderRight: "1px solid color-mix(in srgb, var(--border) 80%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "72px", minWidth: "80px", maxWidth: "180px", overflow: "hidden" }}>
                   {captchaLoading
-                    ? <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", animation: "login-pulse 1.4s ease-in-out infinite", padding: "0 12px" }}>Loading...</span>
+                    ? <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", animation: "login-pulse 1.4s ease-in-out infinite", padding: "0 12px" }}>Loading...</span>
                     : (captchaDisplaySrc || captchaBase64)
                       ? <img src={captchaDisplaySrc || captchaBase64} alt="Captcha challenge" style={{ display: "block", height: "72px", width: "auto", maxWidth: "180px" }} />
-                      : <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", padding: "0 12px" }}>No captcha</span>
+                      : <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", padding: "0 12px" }}>No captcha</span>
                   }
                 </div>
                 <input
@@ -445,7 +448,7 @@ export default function LoginPage() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="Type the characters above"
                   autoComplete="off"
-                  style={{ flex: 1, padding: "11px 14px", fontSize: "0.875rem", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
+                  style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                 />
                 {!captchaLoading && captchaExpiresAt > 0 && (
                   <div aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, height: "3px", width: `${captchaProgressPct}%`, maxWidth: "100%", background: captchaUrgentColor, transition: "width 0.5s linear, background 0.3s ease" }} />
@@ -454,7 +457,7 @@ export default function LoginPage() {
             </div>
 
             {/* Remember + Forgot */}
-            <div className="login-form-enter login-f-d5" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
+            <div className="login-form-enter login-f-d5 flex flex-wrap items-center justify-between gap-3">
               <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", fontWeight: 500, color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
                 <input
                   type="checkbox"
@@ -473,7 +476,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <div className="login-form-enter login-f-d6">
+            <div className="login-form-enter login-f-d6 flex flex-col gap-3">
               <button
                 type="submit"
                 disabled={!canSubmit}
@@ -486,7 +489,7 @@ export default function LoginPage() {
                     : "Sign in"
                 }
               </button>
-              <p style={{ marginTop: "14px", fontSize: "0.74rem", textAlign: "center", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              <p className="m-0 text-center text-[0.74rem] leading-normal text-[var(--text-secondary)]">
                 Access is limited to enrolled SRM AP University students and staff.
               </p>
             </div>

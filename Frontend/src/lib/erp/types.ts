@@ -71,6 +71,37 @@ export interface CurriculumModel {
   subjects: CurriculumSubject[];
 }
 
+export type CalendarTerm = "odd" | "even" | "summer";
+
+export interface AcademicCalendarEvent {
+  id: number;
+  details: string;
+  /** SRM calendar format: "28.09.2026" or a range "28.09.2026 - 01.10.2026". */
+  date: string;
+  day: string;
+}
+
+export interface AcademicHoliday {
+  id: number;
+  occasion: string;
+  date: string;
+  day: string;
+}
+
+export interface AcademicCalendar {
+  oddSemesterData: AcademicCalendarEvent[];
+  evenSemesterData: AcademicCalendarEvent[];
+  summerTermData: AcademicCalendarEvent[];
+  oddSemesterHolidays: AcademicHoliday[];
+  evenSemesterHolidays: AcademicHoliday[];
+  importantNotes: string[];
+}
+
+export interface FacultyCabin {
+  faculty: string;
+  location: string;
+}
+
 export interface InternalMarkAssessment {
   name: string;
   conducted: string;
@@ -108,6 +139,30 @@ export interface CurrentResultModel {
   subjects: CurrentResultSubject[];
   disclaimer: string;
   internalMarks?: InternalMarksModel;
+}
+
+// Exam Mark Details (historical results across all semesters)
+export interface ExamMarkDetailsSubject {
+  semesterNo: string;
+  monthYear: string;
+  subjectCode: string;
+  subjectName: string;
+  credit: string;
+  grade: string;
+  gradePoints: string;
+  result: string;
+  attempt: string;
+}
+
+export interface ExamMarkDetailsSummary {
+  label: string;
+  value: string;
+}
+
+export interface ExamMarkDetailsModel {
+  title: string;
+  records: ExamMarkDetailsSubject[];
+  semesterSummaries: ExamMarkDetailsSummary[];
 }
 
 export interface FeeDueRecord {
