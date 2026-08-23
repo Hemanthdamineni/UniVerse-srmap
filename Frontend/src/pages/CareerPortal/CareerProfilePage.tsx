@@ -395,7 +395,7 @@ const CareerProfilePage: React.FC = () => {
                   </Button>
                 </label>
               </div>
-              <p className="text-[10px] text-[var(--comp-text-muted)] text-center">PDF or text resume. Max 5MB.</p>
+              <p className="text-xs text-[var(--comp-text-muted)] text-center">PDF or text resume. Max 5MB.</p>
 
               {resumeVersion ? (
                 <div className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface-hover)] p-4 space-y-4">

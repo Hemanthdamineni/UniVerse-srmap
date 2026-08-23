@@ -1494,7 +1494,7 @@ export function MyTeamsPage() {
           <h2>{event.title}</h2>
           <p>Team competition · Up to {maxTeamSize} members · {formatDate(event.startAt || event.startDate)}</p>
         </div>
-        <span className="competition-pill">{event.status || "Active"}</span>
+        <StatusBadge status={event.status || "Active"} dot />
         <div className="activity-event-actions">
           <Link className="comp-btn-ghost" to={`/events/${encodeURIComponent(event.id)}`}>Details</Link>
           {alreadyHasTeam ? (

@@ -4,6 +4,7 @@ import { Award, CalendarClock, FileCheck2, Trophy } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
 import { SkeletonCard } from "../../components/ui/Skeletons";
+import { StatusBadge } from "../../components/ui/Badges";
 import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 
 const tabs = [
@@ -27,7 +28,7 @@ function ActivityEventRow({ event }: { event: EventSummary }) {
         <h2>{event.title}</h2>
         <p>{event.category || "Competition"} · {formatDate(event.startAt || event.startDate)}</p>
       </div>
-      <span className="competition-pill">{event.status || "Active"}</span>
+      <StatusBadge status={event.status || "Active"} dot />
       <div className="activity-event-actions">
         <Link className="comp-btn-ghost" to={`/events/${event.id}`}>View</Link>
         {round ? <Link className="comp-btn-primary" to={`/events/${event.id}/submit/${round.roundId}`}>Submit entry</Link> : null}

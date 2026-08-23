@@ -4,6 +4,7 @@ import { MoreVertical, Plus, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
 import { SkeletonCard } from "../../components/ui/Skeletons";
+import { StatusBadge } from "../../components/ui/Badges";
 import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 import { getCurrentRegNo, isPlatformAdmin } from "../../lib/core/identity";
 
@@ -87,7 +88,7 @@ export default function MyCreatedEventsPage() {
                 <p>{formatRange(event)} · {typeof event.location === "string" ? event.location : event.venue || "Campus venue"}</p>
                 <span><Users size={15} /> {event.registeredCount ?? event.registrationCount ?? 0} Registered</span>
               </div>
-              <span className="competition-pill">{event.status || "Draft"}</span>
+              <StatusBadge status={event.status || "Draft"} dot />
               <Link className="comp-btn-ghost" to={`/events/${event.id}`}>View</Link>
               <Link className="comp-btn-primary" to={`/events/${event.id}/manage`}>Manage</Link>
               <button className="competition-icon-button" aria-label={`More actions for ${event.title}`}>

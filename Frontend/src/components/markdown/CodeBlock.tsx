@@ -96,7 +96,7 @@ function BlockChrome({
   return (
     <div className="not-prose my-3 overflow-hidden rounded-xl border border-[var(--comp-border)] bg-muted/30">
       <div className="flex items-center justify-between gap-2 border-b border-[color-mix(in_srgb,var(--comp-border)_60%,transparent)] bg-muted/20 px-3 py-1">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
         <CopyButton text={code} />
@@ -180,7 +180,7 @@ function CommandCard({ code, lang }: { code: string; lang: string }) {
   return (
     <div className="not-prose my-3 overflow-hidden rounded-xl border border-[var(--comp-border)] bg-muted/40">
       <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {normalizeLangLabel(lang)}
         </span>
         <CopyButton text={code} />

@@ -82,7 +82,7 @@ function FinanceClearanceCard({ notes }: { notes: string[] }) {
             className="flex items-center gap-3 before:h-px before:flex-1 after:h-px after:flex-1"
             style={{ color: "color-mix(in srgb, var(--comp-text-muted) 40%, transparent)" }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">Notes</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.2em]">Notes</span>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {notes.map((note, index) => (
