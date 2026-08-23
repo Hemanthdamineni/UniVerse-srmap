@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   BellIcon,
   BookOpenIcon,
@@ -129,12 +130,16 @@ export default function NavigationCommandPalette() {
     [location.pathname, navigate]
   )
 
+  const queryClient = useQueryClient()
+
   const handleLogout = React.useCallback(() => {
     void logoutSession().finally(() => {
+      // Same rationale as Sidebar logout: no cross-user cache bleed.
+      queryClient.clear()
       setOpen(false)
       navigate("/login")
     })
-  }, [navigate])
+  }, [navigate, queryClient])
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

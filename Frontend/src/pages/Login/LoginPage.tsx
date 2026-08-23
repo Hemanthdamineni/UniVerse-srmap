@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -16,6 +17,7 @@ import {
   storeSessionAuth,
 } from "../../lib/core/session";
 import { isDebugMode } from "../../lib/core/debugModeEnv";
+import { sessionKeys } from "../../lib/core/queryKeys";
 import {
   CheckIcon,
   EyeIcon,
@@ -54,6 +56,7 @@ const REMEMBER_OPTIN_KEY = "erp.login.rememberRegNo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const requestedInitialCaptcha = useRef(false);
   const debugAutoLoginAttempted = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -189,6 +192,7 @@ export default function LoginPage() {
         const r = await axios.post("/api/dev/login", { username: "AP23110010419" });
         if (cancelled) return;
         storeSessionAuth({ profileData: r.data?.profileData });
+        queryClient.removeQueries({ queryKey: sessionKeys.profile });
         navigate(consumeLoginRedirect(), { replace: true });
       } catch {
         if (cancelled) return;
@@ -306,6 +310,7 @@ export default function LoginPage() {
         return;
       }
       storeSessionAuth({ profileData: r.data?.profileData });
+      queryClient.removeQueries({ queryKey: sessionKeys.profile });
       persistRememberedRegNo(form.username.trim().toUpperCase());
       setSubmitPhase("success");
       setStatusTone("success");

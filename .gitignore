@@ -109,3 +109,13 @@ Thumbs.db
 # ===========================
 *.tgz
 *.zip
+
+# ===========================
+# Local tooling & generated artifacts (untracked by convention)
+# ===========================
+.dev_pid
+.helix/
+.qwen/tmp/
+.project-maintenance/
+/tmp/
+Backend/test-uimap.json

@@ -1,6 +1,8 @@
 // Profile UI: PageHeader, SectionCard groups, StatusBadge; executePipeline call unchanged.
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { fetchSessionProfile } from "../../lib/core/session";
+import { sessionKeys } from "../../lib/core/queryKeys";
 import { executePipeline, type StudentProfile } from "../../lib/erp/erpTransformers";
 import { PageHeader } from "../../components/ui/Layouts";
 import { SectionCard } from "../../components/ui/SectionCard";
@@ -10,6 +12,7 @@ import { InlineError } from "../../components/ui/Feedback";
 import { StatusBadge } from "../../components/ui/Badges";
 
 function ProfilePage() {
+  const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +25,11 @@ function ProfilePage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchSessionProfile();
+      // Shared ['session','profile'] cache — dedups with Sidebar/Blueprint.
+      const data = await queryClient.fetchQuery({
+        queryKey: sessionKeys.profile,
+        queryFn: fetchSessionProfile,
+      });
       if (data) setProfileData(data);
       else setError("No profile data available");
     } catch (err: unknown) {
