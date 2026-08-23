@@ -145,7 +145,7 @@ export default function EventDetailPageNew() {
     <CompetitionPageShell variant="wide">
       <section className="event-detail-hero">
         <div>
-          <span className="competition-pill">{event.status || "Active"}</span>
+          <StatusBadge status={event.status || "Active"} dot />
           {event.category ? <span className="competition-pill">{event.category}</span> : null}
         </div>
         <h1>{event.title || "Untitled Event"}</h1>

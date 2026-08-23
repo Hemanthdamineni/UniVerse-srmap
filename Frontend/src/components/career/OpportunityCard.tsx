@@ -74,7 +74,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
             );
           })}
           {skills.length > 3 && (
-            <span className="text-[10px] text-[var(--comp-text-muted)] self-center">
+            <span className="text-xs text-[var(--comp-text-muted)] self-center">
               +{skills.length - 3} more
             </span>
           )}

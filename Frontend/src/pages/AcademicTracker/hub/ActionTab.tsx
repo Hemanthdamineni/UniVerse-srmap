@@ -144,7 +144,7 @@ export function ActionTab({
                     }}>
                       {Math.round(opp.confidence * 100)}% match
                     </span>
-                    <p className="text-[10px]" style={{ color: "var(--comp-text-muted)" }}>
+                    <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>
                       {opp.eligibility?.eligible ? "Eligible" : "Check eligibility"}
                     </p>
                   </div>
