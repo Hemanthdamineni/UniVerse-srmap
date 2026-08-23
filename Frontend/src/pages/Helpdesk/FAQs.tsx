@@ -7,6 +7,7 @@ import {
 } from "../../components/erp/ErpPrimitives";
 import { Markdown } from "../../components/markdown";
 import { ConfirmDialog } from "../../components/dialog";
+import { FormField } from "../../components/forms/FormField";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import {
   createHelpdeskFaq,
@@ -114,21 +115,18 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search by question, answer, or category..."
         aria-label="Search FAQs"
-        className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+        className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
       />
 
       {adminMode && admin.unlocked ? (
         <SectionCard title={editingFaqId ? "Edit FAQ" : "Create FAQ"}>
           <form onSubmit={handleSubmit} className="grid gap-4">
-            <div>
-              <label htmlFor="faq-category" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-                Category
-              </label>
+            <FormField id="faq-category" label="Category">
               <select
                 id="faq-category"
                 value={form.category}
                 onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
               >
                 {FAQ_CATEGORIES.map((item) => (
                   <option key={item} value={item}>
@@ -136,32 +134,26 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label htmlFor="faq-question" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-                Question
-              </label>
+            </FormField>
+            <FormField id="faq-question" label="Question">
               <input
                 id="faq-question"
                 value={form.question}
                 onChange={(event) => setForm((prev) => ({ ...prev, question: event.target.value }))}
                 required
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
-            </div>
-            <div>
-              <label htmlFor="faq-answer" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
-                Answer
-              </label>
+            </FormField>
+            <FormField id="faq-answer" label="Answer">
               <textarea
                 id="faq-answer"
                 value={form.answer}
                 onChange={(event) => setForm((prev) => ({ ...prev, answer: event.target.value }))}
                 rows={4}
                 required
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
+                className="w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 min-h-11 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
-            </div>
+            </FormField>
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
@@ -176,7 +168,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                     setEditingFaqId("");
                     setForm({ question: "", answer: "", category: FAQ_CATEGORIES[0] });
                   }}
-                  className="rounded-lg border border-[var(--border)] min-h-11 px-6 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
+                  className="rounded-lg border border-[var(--comp-border)] min-h-11 px-6 py-2 text-sm font-semibold text-[var(--comp-text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
                   Cancel Edit
                 </button>
@@ -193,7 +185,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
       ) : (
         grouped.map(([category, items]) => (
           <SectionCard key={category} title={category}>
-            <div className="divide-y divide-[var(--border)]">
+            <div className="divide-y divide-[var(--comp-border)]">
               {items.map((item) => {
                 const isOpen = openItems.has(item.id);
                 return (
@@ -211,11 +203,11 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
                       className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[var(--comp-surface-hover)]"
                     >
                       <span className="text-sm font-semibold text-[var(--comp-text-primary)]">{item.question}</span>
-                      <span className="shrink-0 text-lg text-[var(--text-secondary)]">{isOpen ? "-" : "+"}</span>
+                      <span className="shrink-0 text-lg text-[var(--comp-text-secondary)]">{isOpen ? "-" : "+"}</span>
                     </button>
                     {isOpen ? (
                       <div className="px-4 pb-3">
-                        <div className="text-sm leading-6 text-[var(--text-secondary)]">
+                        <div className="text-sm leading-6 text-[var(--comp-text-secondary)]">
                           <Markdown>{item.answer}</Markdown>
                         </div>
                         {adminMode && admin.unlocked ? (
