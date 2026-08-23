@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
+import { Pagination } from "../../components/ui/Pagination";
 import { StatCard } from "../../components/ui/Progress";
 import { useAdminMode } from "../../contexts/AdminModeContext";
 import {
@@ -27,6 +28,7 @@ export default function AdminLmsModerationPage() {
   const admin = useAdminMode();
   const [stateFilter, setStateFilter] = useState("flagged");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [data, setData] = useState<LmsModerationQueueResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,7 +40,7 @@ export default function AdminLmsModerationPage() {
     setError("");
     try {
       const next = await getLmsResourceModerationQueue(
-        { state: stateFilter, query, limit: 25, page: 1 },
+        { state: stateFilter, query, limit: 25, page },
         admin.adminHeaders
       );
       setData(next);
@@ -47,7 +49,7 @@ export default function AdminLmsModerationPage() {
     } finally {
       setLoading(false);
     }
-  }, [admin.adminHeaders, query, stateFilter]);
+  }, [admin.adminHeaders, query, stateFilter, page]);
 
   useEffect(() => {
     void load();
@@ -102,7 +104,10 @@ export default function AdminLmsModerationPage() {
                       ? "bg-[var(--comp-accent)] text-white"
                       : "border border-[var(--comp-border)] text-[var(--comp-text-primary)]"
                   }`}
-                  onClick={() => setStateFilter(filter.id)}
+                  onClick={() => {
+                    setStateFilter(filter.id);
+                    setPage(1);
+                  }}
                 >
                   {filter.label}
                 </button>
@@ -111,7 +116,10 @@ export default function AdminLmsModerationPage() {
             <input
               className="lms-input md:max-w-xs"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
               placeholder="Search title, subject, publisher"
               aria-label="Search moderation queue"
             />
@@ -199,6 +207,19 @@ export default function AdminLmsModerationPage() {
               </div>
             ) : null}
           </div>
+
+          {data?.pagination && (data.pagination.total ?? 0) > data.pagination.limit ? (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={data.pagination.page}
+                totalPages={Math.max(
+                  1,
+                  Math.ceil((data.pagination.total ?? 0) / data.pagination.limit)
+                )}
+                onPageChange={(next) => setPage(next)}
+              />
+            </div>
+          ) : null}
         </SectionCard>
       </div>
     </ErpPageShell>
