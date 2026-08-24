@@ -17,7 +17,7 @@ export default function RecommendationSection({
         </h2>
         {items.length > 0 && (
           <Link
-            to="/resources/browse"
+            to="/learn/discover"
             className="text-xs font-medium text-[var(--comp-text-muted)] no-underline hover:text-[var(--comp-text-primary)]"
           >
             View all

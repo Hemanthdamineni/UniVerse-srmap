@@ -59,7 +59,7 @@ vi.mock("../../../lib/lms/index", () => lmsModule);
 // Fixtures
 // ---------------------------------------------------------------------------
 const testBlueprint: PageBlueprint = {
-  route: "/resources/learning-materials",
+  route: "/learn/materials",
   heading: "Learning Materials",
   fetchKeys: ["catalog", "library", "subjects"],
   domain: "lms",
@@ -680,7 +680,7 @@ describe("Contribute Resource pointer", () => {
     renderPage();
     expect(screen.queryByText("Recommend a Resource")).not.toBeInTheDocument();
     const link = screen.getByRole("link", { name: /Contribute Resource/i });
-    expect(link).toHaveAttribute("href", "/resources/add");
+    expect(link).toHaveAttribute("href", "/learn/contribute/new");
   });
 
   it("does not show the contribute pointer in admin mode", () => {
@@ -1055,7 +1055,7 @@ describe("Non-admin mode (student view)", () => {
     mockUseLearningMaterialsData.mockReturnValue(dataMockValue());
     renderPage({ adminMode: false });
 
-    expect(screen.getByRole("link", { name: /Contribute Resource/i })).toHaveAttribute("href", "/resources/add");
+    expect(screen.getByRole("link", { name: /Contribute Resource/i })).toHaveAttribute("href", "/learn/contribute/new");
   });
 
   it("does not render admin-only sections in non-admin mode", () => {

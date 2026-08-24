@@ -114,7 +114,7 @@ export function ExamFeedbackPage() {
           description="After you study exam-proven resources, they appear here so you can tell others whether they actually helped on the exam."
           icon={<MessageSquareHeart size={48} strokeWidth={1.5} />}
           actionLabel="Browse Resources"
-          onAction={() => navigate("/resources/browse")}
+          onAction={() => navigate("/learn/discover")}
           className="py-12"
         />
       ) : (

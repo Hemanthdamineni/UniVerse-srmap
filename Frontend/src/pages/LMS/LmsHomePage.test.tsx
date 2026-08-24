@@ -50,6 +50,7 @@ vi.mock("../../lib/lms/index", () => ({
   listLmsRequests: vi.fn(),
   getWeeklyLeaderboard: vi.fn(),
   getLmsStreak: vi.fn(),
+  getLmsProgressOverview: vi.fn(),
 }));
 
 vi.mock("../../lib/core/analytics", () => ({
@@ -248,6 +249,14 @@ describe("LmsHomePage", () => {
     });
     lmsApi.getWeeklyLeaderboard.mockClear().mockResolvedValue([]);
     lmsApi.getLmsStreak.mockClear().mockResolvedValue(mockStreak);
+    lmsApi.getLmsProgressOverview.mockClear().mockResolvedValue({
+      completedCredits: 96,
+      requiredCredits: 160,
+      currentCgpa: "8.20",
+      progressPercent: 60,
+      attendancePct: "80.0",
+      subjectsAtRisk: 1,
+    });
     track.mockClear();
   });
 
@@ -299,7 +308,7 @@ describe("LmsHomePage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Back to LMS home/i })
-    ).toHaveAttribute("href", "/resources");
+    ).toHaveAttribute("href", "/learn");
   });
 
   // -----------------------------------------------------------------------
@@ -343,7 +352,7 @@ describe("LmsHomePage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Continue where you left off/ })
-    ).toHaveAttribute("href", "/resources/res-continue");
+    ).toHaveAttribute("href", "/learn/r/res-continue");
 
     // -- Exam prep --
     expect(screen.getByRole("heading", { name: "Exam prep" })).toBeInTheDocument();
@@ -358,12 +367,12 @@ describe("LmsHomePage", () => {
 
     // Roadmap card links
     const roadmapLink1 = screen.getByRole("link", { name: /Full Stack Developer/ });
-    expect(roadmapLink1).toHaveAttribute("href", "/resources/roadmaps/roadmap-1");
+    expect(roadmapLink1).toHaveAttribute("href", "/learn/roadmaps/roadmap-1");
 
     const roadmapLink2 = screen.getByRole("link", {
       name: /Data Science Foundations/,
     });
-    expect(roadmapLink2).toHaveAttribute("href", "/resources/roadmaps/roadmap-2");
+    expect(roadmapLink2).toHaveAttribute("href", "/learn/roadmaps/roadmap-2");
 
     // Confidence badges
     expect(screen.getByText("85%")).toBeInTheDocument();
@@ -521,14 +530,14 @@ describe("LmsHomePage", () => {
 
     expect(
       screen.getByRole("link", { name: /Database indexing guide/ })
-    ).toHaveAttribute("href", "/resources/res-1");
+    ).toHaveAttribute("href", "/learn/r/res-1");
   });
 
   // -----------------------------------------------------------------------
   // Roadmap navigation
   // -----------------------------------------------------------------------
 
-  it("renders roadmap cards as links pointing to /resources/roadmaps/:id", async () => {
+  it("renders roadmap cards as links pointing to /learn/roadmaps/:id", async () => {
     lmsApi.getRoadmapRecommendations.mockResolvedValue([mockRoadmap, mockRoadmap2]);
 
     renderPage();
@@ -541,11 +550,11 @@ describe("LmsHomePage", () => {
 
     expect(
       screen.getByRole("link", { name: /Full Stack Developer/ })
-    ).toHaveAttribute("href", "/resources/roadmaps/roadmap-1");
+    ).toHaveAttribute("href", "/learn/roadmaps/roadmap-1");
 
     expect(
       screen.getByRole("link", { name: /Data Science Foundations/ })
-    ).toHaveAttribute("href", "/resources/roadmaps/roadmap-2");
+    ).toHaveAttribute("href", "/learn/roadmaps/roadmap-2");
   });
 
   // -----------------------------------------------------------------------

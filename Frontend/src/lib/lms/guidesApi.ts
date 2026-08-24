@@ -35,7 +35,38 @@ import type {
 import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
 import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
 
+const STATIC_GUIDE = {
+  id: "guide-normalization",
+  authorId: STATIC_LMS_PUBLISHER.userId,
+  title: "Normalization study guide",
+  description: "Step-by-step normalization practice for database exams.",
+  subjectCode: "CSE301",
+  subjectName: "Database Systems",
+  semester: "6",
+  unit: "Normalization",
+  tags: ["dbms", "normalization"],
+  published: 1,
+  sections: [
+    {
+      id: "gsec-1",
+      guideId: "guide-normalization",
+      title: "Introduction",
+      content: "Start from functional dependencies, then work up to 3NF with worked examples.",
+      position: 1,
+    },
+  ],
+  readSections: [],
+  upvotes: 4,
+  viewCount: 21,
+  qualityScore: 3.5,
+  createdAt: "2026-05-02T10:00:00.000Z",
+  updatedAt: "2026-05-02T10:00:00.000Z",
+} as unknown as LmsGuide;
+
 export async function listGuides(params: Record<string, unknown> = {}) {
+  if (isStaticPrototype()) {
+    return [STATIC_GUIDE];
+  }
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
@@ -51,6 +82,9 @@ export async function createGuide(payload: Record<string, unknown>) {
 }
 
 export async function getGuide(id: string) {
+  if (isStaticPrototype()) {
+    return { ...STATIC_GUIDE, id };
+  }
   return requestData<LmsGuide>(`/api/lms/guides/${encodeURIComponent(id)}`);
 }
 

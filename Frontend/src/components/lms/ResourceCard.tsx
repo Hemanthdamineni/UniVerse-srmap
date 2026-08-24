@@ -69,7 +69,7 @@ export default function ResourceCard({
       {/* Title + subject */}
       <div className="space-y-0.5">
         <Link
-          to={`/resources/${resource.id}`}
+          to={`/learn/r/${resource.id}`}
           className="text-sm font-semibold leading-snug text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
         >
           {resource.title}
@@ -91,7 +91,7 @@ export default function ResourceCard({
         <p className="text-xs text-[var(--comp-text-muted)]">
           by{" "}
           <Link
-            to={`/resources/contributors/${encodeURIComponent(resource.publisher.userId)}`}
+            to={`/learn/contributors/${encodeURIComponent(resource.publisher.userId)}`}
             className="font-medium text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
           >
             {resource.publisher.displayName}

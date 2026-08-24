@@ -157,7 +157,7 @@ export function GuideEditorPage() {
             onClick={async () => {
               const payload = { title, description, subjectCode, subjectName, semester, unit, sections, published: true };
               const guide = editId ? await updateGuide(editId, payload) : await createGuide(payload);
-              navigate(`/resources/guides/${guide.id}`);
+              navigate(`/learn/guides/${guide.id}`);
             }}
           >
             {editId ? "Update guide" : "Publish guide"}

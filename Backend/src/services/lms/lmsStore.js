@@ -2428,7 +2428,176 @@ const resourceSearchMethods = {
       params,
     };
   },
+
+  sanitizeFtsQuery(raw) {
+    const words = toSafeString(raw).match(/[A-Za-z0-9_]+/g) || [];
+    return words
+      .slice(0, 8)
+      .map((word) => `"${word}"*`)
+      .join(" ");
+  },
+
+  parseUnifiedSearchGroups(raw) {
+    const requested = toSafeString(raw)
+      .split(",")
+      .map((part) => part.trim().toLowerCase())
+      .filter((part) => UNIFIED_SEARCH_GROUPS.has(part));
+    return requested.length ? requested : UNIFIED_SEARCH_GROUP_NAMES;
+  },
+
+  buildFtsResourcePredicate(matchQuery, filters) {
+    const where = ["lms_search MATCH ?", "r.isDeleted = 0", "r.moderationState < 2"];
+    const params = [matchQuery];
+    if (filters.subjectCode) {
+      where.push("r.subjectCode = ?");
+      params.push(toSafeString(filters.subjectCode).toUpperCase());
+    }
+    if (filters.type) {
+      where.push("r.type = ?");
+      params.push(toSafeString(filters.type).toLowerCase());
+    }
+    if (filters.difficulty) {
+      where.push("r.difficulty = ?");
+      params.push(toSafeString(filters.difficulty).toLowerCase());
+    }
+    return {
+      sql: `FROM lms_search JOIN lms_resources r ON r.rowid = lms_search.rowid WHERE ${where.join(" AND ")}`,
+      params,
+    };
+  },
+
+  runFtsResourceSearch(matchQuery, filters, userId, limit, offset) {
+    const { sql: predicateSql, params } = this.buildFtsResourcePredicate(matchQuery, filters);
+    const sortMap = {
+      quality: "r.qualityScore DESC, r.uploadedAt DESC",
+      recent: "r.uploadedAt DESC",
+      popular: "r.upvotes DESC, r.viewCount DESC",
+    };
+    const requestedSort = toSafeString(filters.sort);
+    // Relevance ordering is only meaningful when an FTS MATCH clause exists.
+    const orderBy =
+      !requestedSort || requestedSort === "relevant" ? "rank" : sortMap[requestedSort] || "r.qualityScore DESC, r.uploadedAt DESC";
+    const rows = this.db
+      .prepare(`SELECT r.* ${predicateSql} ORDER BY ${orderBy} LIMIT ? OFFSET ?`)
+      .all(...params, limit, offset);
+    const total = Number(this.db.prepare(`SELECT COUNT(*) AS total ${predicateSql}`).get(...params)?.total || 0);
+    return {
+      items: this.attachResourcesUserState(rows.map((row) => this.mapResource(row)), userId),
+      total,
+    };
+  },
+
+  unifiedSearchResources(rawQuery, filters, { userId, limit, offset }) {
+    const shared = {
+      subjectCode: filters.subjectCode,
+      type: filters.type,
+      difficulty: filters.difficulty,
+    };
+    const matchQuery = this.sanitizeFtsQuery(rawQuery);
+    if (matchQuery) {
+      try {
+        return this.runFtsResourceSearch(matchQuery, shared, userId, limit, offset);
+      } catch (error) {
+        if (!this.isSearchIndexError(error)) throw error;
+        this.rebuildSearchIndex();
+      }
+    }
+    const fallback = this.getResources(
+      { ...shared, query: rawQuery, sort: filters.sort || "quality", limit, page: Math.floor(offset / limit) + 1 },
+      { userId }
+    );
+    return { items: fallback.items, total: fallback.pagination.total };
+  },
+
+  unifiedSearchGuides(rawQuery, filters, { userId, limit, offset }) {
+    const all = this.listGuides(
+      {
+        query: rawQuery || undefined,
+        subjectCode: filters.subjectCode,
+        includeDrafts: false,
+      },
+      { userId }
+    );
+    return { items: all.slice(offset, offset + limit), total: all.length };
+  },
+
+  unifiedSearchRoadmaps(rawQuery, filters, { userId, limit, offset }) {
+    const needle = rawQuery.toLowerCase();
+    const all = this.listRoadmaps({ userId }).filter((roadmap) => {
+      if (!needle) return true;
+      return `${roadmap.title || ""} ${roadmap.description || ""} ${roadmap.skill || ""}`.toLowerCase().includes(needle);
+    });
+    return { items: all.slice(offset, offset + limit), total: all.length };
+  },
+
+  unifiedSearchQuestions(rawQuery, filters, { limit, offset }) {
+    const where = [];
+    const params = [];
+    if (filters.subjectCode) {
+      where.push("subjectCode = ?");
+      params.push(toSafeString(filters.subjectCode).toUpperCase());
+    }
+    if (filters.difficulty) {
+      where.push("difficulty = ?");
+      params.push(toSafeString(filters.difficulty).toLowerCase());
+    }
+    if (rawQuery) {
+      where.push("(lower(question) LIKE ? OR lower(COALESCE(explanation, '')) LIKE ?)");
+      const pattern = `%${rawQuery.toLowerCase()}%`;
+      params.push(pattern, pattern);
+    }
+    const predicateSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const rows = this.db
+      .prepare(`SELECT * FROM lms_question_bank ${predicateSql} ORDER BY upvotes DESC, createdAt DESC LIMIT ? OFFSET ?`)
+      .all(...params, limit, offset);
+    const total = Number(this.db.prepare(`SELECT COUNT(*) AS total FROM lms_question_bank ${predicateSql}`).get(...params)?.total || 0);
+    return { items: rows.map((row) => ({ ...row, options: parseJson(row.options, []) })), total };
+  },
+
+  unifiedSearch(filters = {}, { userId = "" } = {}) {
+    const rawQuery = toSafeString(filters.query).trim().slice(0, 120);
+    const groups = this.parseUnifiedSearchGroups(filters.types);
+    const singleGroup = groups.length === 1 ? groups[0] : null;
+    const limit = clamp(toInteger(filters.limit, 8), 1, 50);
+    const page = Math.max(1, toInteger(filters.page, 1));
+    const offsetFor = (group) => (singleGroup === group ? (page - 1) * limit : 0);
+
+    const result = { query: rawQuery, groups: {} };
+    if (groups.includes("resources")) {
+      result.groups.resources = this.unifiedSearchResources(rawQuery, filters, {
+        userId,
+        limit,
+        offset: offsetFor("resources"),
+      });
+    }
+    if (groups.includes("guides")) {
+      result.groups.guides = this.unifiedSearchGuides(rawQuery, filters, {
+        userId,
+        limit,
+        offset: offsetFor("guides"),
+      });
+    }
+    if (groups.includes("roadmaps")) {
+      result.groups.roadmaps = this.unifiedSearchRoadmaps(rawQuery, filters, {
+        userId,
+        limit,
+        offset: offsetFor("roadmaps"),
+      });
+    }
+    if (groups.includes("questions")) {
+      result.groups.questions = this.unifiedSearchQuestions(rawQuery, filters, {
+        limit,
+        offset: offsetFor("questions"),
+      });
+    }
+    return result;
+  },
 };
+
+// --- unifiedSearch.js ---
+
+const UNIFIED_SEARCH_GROUP_NAMES = ["resources", "guides", "roadmaps", "questions"];
+const UNIFIED_SEARCH_GROUPS = new Set(UNIFIED_SEARCH_GROUP_NAMES);
 
 // --- roadmaps.js ---
 

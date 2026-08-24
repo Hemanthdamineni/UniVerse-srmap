@@ -29,7 +29,7 @@ export default function ResourceGrid({
           description={emptyDescription}
           icon={<BookOpen size={48} strokeWidth={1.5} />}
           actionLabel={emptyActionLabel || "Browse Resources"}
-          onAction={() => (emptyActionTo ? navigate(emptyActionTo) : navigate("/resources/browse"))}
+          onAction={() => (emptyActionTo ? navigate(emptyActionTo) : navigate("/learn/discover"))}
           className="py-12"
         />
         {emptyActionDescription ? (

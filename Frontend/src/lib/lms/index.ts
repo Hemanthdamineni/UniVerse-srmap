@@ -3,6 +3,7 @@ export * from "./tracker";
 export * from "./resources";
 export * from "./learningMaterialsApi";
 export * from "./resourceDiscoveryApi";
+export * from "./searchApi";
 export * from "./communityApi";
 export * from "./quizApi";
 export * from "./guidesApi";

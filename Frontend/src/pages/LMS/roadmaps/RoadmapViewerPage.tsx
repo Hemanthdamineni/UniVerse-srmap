@@ -113,7 +113,7 @@ export function RoadmapViewerPage() {
   async function handleDeleteConfirmed() {
     setConfirmingDelete(false);
     await deleteRoadmap(id);
-    navigate("/resources/me/contributions");
+    navigate("/learn/contribute?tab=contributions");
   }
 
   return (

@@ -63,6 +63,9 @@ import {
   getRoadmapRecommendations,
   getSubjectOverview,
   getWeeklyLeaderboard,
+  getLmsProgressOverview,
+  getMyActivity,
+  searchLmsContent,
   listGuides,
   listLmsCollections,
   listLmsRequests,
@@ -234,7 +237,7 @@ export function LmsFrame({
           message={error}
           description="Your ERP session may have expired, or the LMS service may be temporarily unavailable."
           action={
-            <Link to="/resources" className="lms-btn lms-btn-ghost no-underline">
+            <Link to="/learn" className="lms-btn lms-btn-ghost no-underline">
               Back to LMS home
             </Link>
           }
@@ -397,6 +400,9 @@ export {
   getRoadmapRecommendations,
   getSubjectOverview,
   getWeeklyLeaderboard,
+  getLmsProgressOverview,
+  getMyActivity,
+  searchLmsContent,
   listGuides,
   listLmsCollections,
   listLmsRequests,

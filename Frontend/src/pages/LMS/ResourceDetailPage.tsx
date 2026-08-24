@@ -103,6 +103,7 @@ import type {
 export function ResourceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useSession();
   const resourceState = useAsyncPage(() => getLmsResource(id), [id]);
   const [comment, setComment] = useState("");
@@ -120,6 +121,19 @@ export function ResourceDetailPage() {
   const canManageResource = Boolean(
     resource && (String(resource.uploadedBy || "").toUpperCase() === registerNo || isProfileAdmin(profile))
   );
+  const isPracticeType = resource?.type === "quiz" || resource?.type === "flashcard";
+  const practiceMode = isPracticeType && searchParams.get("mode") === "practice";
+
+  const togglePracticeMode = (on: boolean) =>
+    setSearchParams(
+      (prev) => {
+        const next = Object.fromEntries(prev);
+        if (on) next.mode = "practice";
+        else delete next.mode;
+        return next;
+      },
+      { replace: true }
+    );
 
   async function handleDeleteConfirmed() {
     if (!resource) return;
@@ -127,7 +141,7 @@ export function ResourceDetailPage() {
     setActionError("");
     try {
       await deleteLmsResource(resource.id);
-      navigate("/resources/me/contributions");
+      navigate("/learn/contribute?tab=contributions");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Couldn't delete this resource. Please try again.");
     }
@@ -135,7 +149,14 @@ export function ResourceDetailPage() {
 
   return (
     <LmsFrame title={resource?.title || "Resource"} loading={resourceState.loading} error={resourceState.error}>
-      {resource ? (
+      {resource && practiceMode ? (
+        <div className="space-y-4">
+          <button className="lms-btn lms-btn-ghost" onClick={() => togglePracticeMode(false)}>
+            Exit practice mode
+          </button>
+          {renderResourceBody(resource)}
+        </div>
+      ) : resource ? (
         <>
           <SectionCard title="Overview">
             <div className="space-y-3">
@@ -151,7 +172,7 @@ export function ResourceDetailPage() {
                 <div className="space-y-1 border-t border-[var(--comp-border)] pt-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Publisher</p>
                   <Link
-                    to={`/resources/contributors/${encodeURIComponent(resource.publisher.userId)}`}
+                    to={`/learn/contributors/${encodeURIComponent(resource.publisher.userId)}`}
                     className="text-sm font-semibold text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
                   >
                     {resource.publisher.displayName}
@@ -167,6 +188,11 @@ export function ResourceDetailPage() {
               ) : null}
               {actionError ? <InlineError message={actionError} /> : null}
               <div className="flex flex-wrap gap-2">
+                {isPracticeType ? (
+                  <button className="lms-btn lms-btn-primary" onClick={() => togglePracticeMode(true)}>
+                    Practice mode
+                  </button>
+                ) : null}
                 <button className="lms-btn lms-btn-primary" onClick={() => void toggleResourceUpvote(resource.id).then(() => resourceState.setData && getLmsResource(id).then(resourceState.setData))}>
                   {resource.userUpvoted ? "Remove upvote" : "Upvote"}
                 </button>
@@ -188,7 +214,7 @@ export function ResourceDetailPage() {
                 </button>
                 {canManageResource ? (
                   <>
-                    <Link className="lms-btn lms-btn-ghost no-underline" to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}>
+                    <Link className="lms-btn lms-btn-ghost no-underline" to={`/learn/contribute/new?edit=${encodeURIComponent(resource.id)}`}>
                       Edit
                     </Link>
                     <button

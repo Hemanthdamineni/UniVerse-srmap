@@ -73,7 +73,7 @@ test.describe("responsive shell — no horizontal leaks", () => {
     "/dashboard",
     "/academic/timetable",
     "/events",
-    "/resources",
+    "/learn",
     "/career/opportunities",
   ]) {
     test(`fits a 320px viewport without horizontal scroll: ${route}`, async ({ page }) => {

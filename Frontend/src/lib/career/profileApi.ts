@@ -218,7 +218,7 @@ const STATIC_RECOMMENDATIONS: PlatformRecommendationResponse = {
       reasons: ["Matches your learning context", "Ranked by LMS quality and engagement"],
       risks: [],
       missing: [],
-      href: "/resources/res-static",
+      href: "/learn/r/res-static",
       shownAt: "2030-01-01T00:00:00.000Z",
     },
     {

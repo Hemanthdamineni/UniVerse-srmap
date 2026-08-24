@@ -113,16 +113,16 @@ export function GuideReaderPage() {
   async function handleDeleteConfirmed() {
     setConfirmingDelete(false);
     await deleteGuide(id);
-    navigate("/resources/me/contributions");
+    navigate("/learn/contribute?tab=contributions");
   }
   return (
     <LmsFrame title={data?.title || "Guide"} loading={loading} error={error}>
       <div className="flex flex-wrap gap-3">
-        <Link to={`/resources/guides/new?clone=${id}`} className="lms-btn lms-btn-ghost">
+        <Link to={`/learn/guides/new?clone=${id}`} className="lms-btn lms-btn-ghost">
           Clone into editor
         </Link>
         {canManageGuide ? (
-          <Link to={`/resources/guides/new?edit=${id}`} className="lms-btn lms-btn-ghost">
+          <Link to={`/learn/guides/new?edit=${id}`} className="lms-btn lms-btn-ghost">
             Edit
           </Link>
         ) : null}

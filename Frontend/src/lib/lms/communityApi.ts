@@ -85,6 +85,7 @@ export async function rateLmsResource(id: string, payload: { rating: number; rev
 }
 
 export async function recordLmsResourceView(id: string, payload: { timeSpentMs?: number; metadata?: Record<string, unknown> } = {}) {
+  if (isStaticPrototype()) return { recorded: true };
   return requestData(`/api/lms/resources/${encodeURIComponent(id)}/view`, {
     method: "POST",
     body: JSON.stringify(payload),

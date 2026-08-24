@@ -110,12 +110,12 @@ export function RoadmapsListPage() {
           title="No roadmaps published yet"
           description="Roadmaps are guided skill paths built by the community. Be the first to chart one."
           actionLabel="Build a roadmap"
-          onAction={() => navigate("/resources/roadmaps/new")}
+          onAction={() => navigate("/learn/roadmaps/new")}
         />
       ) : (
       <div className="grid gap-4 lg:grid-cols-2">
         {roadmaps.map((roadmap: LmsRoadmap) => (
-          <Link key={roadmap.id} to={`/resources/roadmaps/${roadmap.id}`} className="dashboard-card block space-y-1 p-5">
+          <Link key={roadmap.id} to={`/learn/roadmaps/${roadmap.id}`} className="dashboard-card block space-y-1 p-5">
             <p className="text-sm text-[var(--text-secondary)]">{roadmap.skill}</p>
             <h2 className="text-lg font-semibold text-[var(--comp-text-primary)]">{roadmap.title}</h2>
             <p className="text-sm text-[var(--text-secondary)]">{roadmap.description}</p>

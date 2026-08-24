@@ -126,7 +126,7 @@ export function RevisionQueuePage() {
           description="Resources you study are scheduled here using spaced repetition. Mark resources as studied to build your revision schedule."
           icon={<CalendarClock size={48} strokeWidth={1.5} />}
           actionLabel="Browse Resources"
-          onAction={() => navigate("/resources/browse")}
+          onAction={() => navigate("/learn/discover")}
           className="py-12"
         />
       ) : (

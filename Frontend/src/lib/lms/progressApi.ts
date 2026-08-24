@@ -224,6 +224,24 @@ export async function getMyBookmarks() {
 }
 
 export async function getMyActivity() {
+  if (isStaticPrototype()) {
+    return [
+      {
+        id: "act-1",
+        action: "resource_viewed",
+        resourceTitle: "Database indexing guide",
+        resourceId: "lms-res-indexing",
+        createdAt: "2026-08-21T09:12:00.000Z",
+      },
+      {
+        id: "act-2",
+        action: "quiz_attempted",
+        resourceTitle: "Normalization checkpoint quiz",
+        resourceId: "lms-res-normalization",
+        createdAt: "2026-08-20T18:40:00.000Z",
+      },
+    ] as Array<Record<string, unknown>>;
+  }
   return requestData<Array<Record<string, unknown>>>("/api/lms/me/activity");
 }
 

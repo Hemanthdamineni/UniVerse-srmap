@@ -262,8 +262,8 @@ describe("TimetablePage", () => {
     // Study links
     const studyLinks = screen.getAllByRole("link", { name: /study/i });
     expect(studyLinks).toHaveLength(2);
-    expect(studyLinks[0]).toHaveAttribute("href", "/resources/subject/CS201");
-    expect(studyLinks[1]).toHaveAttribute("href", "/resources/subject/MA201");
+    expect(studyLinks[0]).toHaveAttribute("href", "/learn/subjects/CS201");
+    expect(studyLinks[1]).toHaveAttribute("href", "/learn/subjects/MA201");
   });
 
   it("shows em dash for missing room number in subject legend", async () => {

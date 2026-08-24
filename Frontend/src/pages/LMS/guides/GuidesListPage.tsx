@@ -65,7 +65,7 @@ export function GuidesListPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {guides.map((guide) => (
-          <Link key={guide.id} to={`/resources/guides/${guide.id}`} className="dashboard-card block p-5 no-underline">
+          <Link key={guide.id} to={`/learn/guides/${guide.id}`} className="dashboard-card block p-5 no-underline">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-[var(--text-secondary)]">{guide.subjectCode}</p>
               {Number(guide.published) === 0 ? (

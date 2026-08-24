@@ -109,7 +109,7 @@ describe("QuickLinks", () => {
   it("navigates to /resources when Resources is clicked", () => {
     renderQuickLinks();
     fireEvent.click(screen.getByText("Resources"));
-    expect(mockNavigate).toHaveBeenCalledWith("/resources");
+    expect(mockNavigate).toHaveBeenCalledWith("/learn");
   });
 
   it("navigates to /events when Events is clicked", () => {

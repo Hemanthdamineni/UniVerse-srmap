@@ -8,7 +8,7 @@ const LINK_TONES: Record<string, string> = {
   "/academic/attendance-details": "var(--accent-green)",
   "/exams/current-semester-results": "var(--accent-yellow)",
   "/finance/fee-dues": "var(--accent-orange)",
-  "/resources": "var(--accent-blue)",
+  "/learn": "var(--accent-blue)",
   "/events": "var(--accent-orange)",
   "/career": "var(--accent-green)",
 };
@@ -54,7 +54,7 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
       name: "Resources",
       description: "Study material",
       icon: BookOpen,
-      path: "/resources",
+      path: "/learn",
     },
     {
       name: "Events",
@@ -75,7 +75,7 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
   };
 
   return (
-    <div className="@container flex h-full min-h-0 flex-col overflow-y-auto p-4">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto p-4">
       <div className="mb-3 shrink-0">
         <h2 className="card-title font-semibold">Student Tasks</h2>
         <p className="mt-1 text-xs text-[var(--comp-text-secondary)]">Start the things students check most.</p>
@@ -85,7 +85,7 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
           {feedbackPendingCount} course feedback item{feedbackPendingCount === 1 ? "" : "s"} need attention.
         </div>
       ) : null}
-      <div className="grid flex-1 grid-cols-1 auto-rows-fr gap-2 @sm:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 auto-rows-fr gap-2 sm:grid-cols-2">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (

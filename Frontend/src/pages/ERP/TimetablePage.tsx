@@ -174,7 +174,7 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
                         <td className="erp-table-cell">{sub.room || "—"}</td>
                         <td className="erp-table-cell">
                           <Link
-                            to={`/resources/subject/${encodeURIComponent(sub.code)}`}
+                            to={`/learn/subjects/${encodeURIComponent(sub.code)}`}
                             className="comp-btn-ghost min-h-0 rounded-full px-3 py-1 text-xs font-semibold"
                           >
                             Study

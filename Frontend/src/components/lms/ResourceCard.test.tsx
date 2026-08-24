@@ -59,7 +59,7 @@ describe("ResourceCard", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("AP23110010234")).toHaveAttribute("href", "/resources/contributors/AP23110010234");
+    expect(screen.getByText("AP23110010234")).toHaveAttribute("href", "/learn/contributors/AP23110010234");
     expect(screen.getByText("Matches your subject focus")).toBeInTheDocument();
     expect(screen.getByText("High community engagement")).toBeInTheDocument();
     expect(screen.queryByText(/Trust/i)).not.toBeInTheDocument();

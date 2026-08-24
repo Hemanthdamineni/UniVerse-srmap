@@ -1,6 +1,5 @@
 export { default as LmsHomePage } from "./LmsHomePage";
-export { default as BrowsePage } from "./BrowsePage";
-export { default as ExplorePage } from "./ExplorePage";
+export { default as DiscoverPage } from "./shells/DiscoverPage";
 export { default as AddResourcePage } from "./AddResourcePage";
 export { default as ResourceDetailPage } from "./ResourceDetailPage";
 export { default as ContributorProfilePage } from "./me/ContributorProfilePage";
@@ -13,8 +12,6 @@ export { default as GuideEditorPage } from "./guides/GuideEditorPage";
 export { default as RoadmapsListPage } from "./roadmaps/RoadmapsListPage";
 export { default as RoadmapViewerPage } from "./roadmaps/RoadmapViewerPage";
 export { default as RoadmapBuilderPage } from "./roadmaps/RoadmapBuilderPage";
-export { default as QuizModePage } from "./quiz/QuizModePage";
-export { default as FlashcardModePage } from "./quiz/FlashcardModePage";
 export { default as QuestionBankPage } from "./QuestionBankPage";
 export { default as MyContributionsPage } from "./me/MyContributionsPage";
 export { default as SavedResourcesPage } from "./me/SavedResourcesPage";

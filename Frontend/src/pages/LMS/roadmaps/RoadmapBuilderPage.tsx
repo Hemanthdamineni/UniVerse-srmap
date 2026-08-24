@@ -115,7 +115,7 @@ export function RoadmapBuilderPage() {
           onClick={async () => {
             const roadmap = await createRoadmap({ title, skill, description, published: true });
             await addRoadmapNode(roadmap.id, { title: "Start here", description: "Introduction", nodeType: "concept" });
-            navigate(`/resources/roadmaps/${roadmap.id}`);
+            navigate(`/learn/roadmaps/${roadmap.id}`);
           }}
         >
           Create roadmap
