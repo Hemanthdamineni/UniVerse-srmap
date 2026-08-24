@@ -3,7 +3,7 @@ import { useRef, type ReactNode } from "react";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { sanitizeErpDisplayText } from "../../lib/erp/displayText";
 import { PageContainer } from "../layout/PageLayouts";
-import { SkeletonBlock } from "../ui/Skeletons";
+import { PageSkeleton, type PageSkeletonVariant } from "../ui/Skeletons";
 import { EmptyState } from "../ui/Feedback";
 
 export function sanitizeVisibleText(value: unknown, fallback = "") {
@@ -53,6 +53,7 @@ interface ErpPageShellProps {
   updatedAt?: string;
   isLoading?: boolean;
   loadingMessage?: string;
+  loadingVariant?: PageSkeletonVariant;
   onRefresh?: () => void;
   headerActions?: ReactNode;
   surface?: "card" | "flat";
@@ -92,6 +93,7 @@ export function ErpPageShell({
   updatedAt,
   isLoading = false,
   loadingMessage = "Loading...",
+  loadingVariant = "table",
   onRefresh,
   headerActions,
   // Flat by default: SectionCard children already carry dashboard-card
@@ -110,7 +112,7 @@ export function ErpPageShell({
   );
 
   return (
-    <PageContainer className="relative" surface={surface}>
+    <PageContainer surface={surface}>
       <div ref={shellRef} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -120,29 +122,13 @@ export function ErpPageShell({
           </div>
           <div className="flex flex-wrap items-center gap-3">{headerActionsSlot}</div>
         </div>
-        <div className="space-y-4">{children}</div>
+        {isLoading ? (
+          <PageSkeleton variant={loadingVariant} message={loadingMessage} />
+        ) : (
+          <div className="space-y-4">{children}</div>
+        )}
       </div>
-
-      {isLoading ? <PageLoadingOverlay message={loadingMessage} /> : null}
     </PageContainer>
-  );
-}
-
-function PageLoadingOverlay({ message }: { message: string }) {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 backdrop-blur-sm px-6"
-      style={{ background: "color-mix(in srgb, var(--comp-accent) 6%, transparent)" }}
-    >
-      <SkeletonBlock width={200} height={12} className="max-w-full rounded-full" />
-      <SkeletonBlock width={140} height={12} className="max-w-full rounded-full" />
-      <SkeletonBlock width={80} height={40} className="rounded-lg" />
-      <p data-page-contrast="true" className="page-contrast-fg body-text text-center font-medium">
-        {message}
-      </p>
-    </div>
   );
 }
 

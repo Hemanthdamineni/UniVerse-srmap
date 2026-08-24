@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
+import { SkeletonCard } from "../../components/ui";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import {
   getVacantRooms,
@@ -57,8 +58,6 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
     <ErpPageShell
       title={blueprint.heading}
       source="Internal API"
-      isLoading={loading}
-      loadingMessage={blueprint.loadingMessage}
       onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
     >
       <div className="flex flex-col gap-4">
@@ -108,7 +107,9 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
           <InlineError message={error} onRetry={() => setRefreshTrigger((prev) => prev + 1)} />
         )}
 
-        {result ? (
+        {loading && !result ? (
+          <SkeletonCard />
+        ) : result ? (
           result.vacant.length === 0 ? (
             <EmptyState
               title="No vacancy data yet"

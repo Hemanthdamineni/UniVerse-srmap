@@ -123,6 +123,7 @@ export default function AcademicHubPage() {
       source="Internal API"
       isLoading={loading}
       loadingMessage="Loading academic data..."
+      loadingVariant="stats"
     >
       {error && <InlineError message={error} onRetry={() => window.location.reload()} />}
 

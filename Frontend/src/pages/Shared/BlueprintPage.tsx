@@ -8,8 +8,15 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
+import type { PageSkeletonVariant } from "../../components/ui";
 import { useBlueprintPageData } from "./useBlueprintPageData";
 import DashboardQuickLinks from "./components/DashboardQuickLinks";
+
+const DOCUMENT_RENDERERS = new Set(["profile", "document", "announcements"]);
+
+function loadingVariantFor(blueprint: PageBlueprint): PageSkeletonVariant {
+  return DOCUMENT_RENDERERS.has(blueprint.renderer) ? "document" : "table";
+}
 
 export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint }) {
   const navigate = useNavigate();
@@ -26,6 +33,7 @@ export default function BlueprintPage({ blueprint }: { blueprint: PageBlueprint 
       updatedAt={state.updatedAt}
       isLoading={!isUnavailable && state.isLoading}
       loadingMessage={blueprint.loadingMessage || `Loading ${blueprint.heading.toLowerCase()}...`}
+      loadingVariant={loadingVariantFor(blueprint)}
     >
       {isUnavailable ? (
         <EmptyStateCard
