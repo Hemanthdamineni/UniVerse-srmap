@@ -177,20 +177,6 @@ function registerLearningAdminRoutes(
     )
   );
 
-  router.get("/lms/me/export/:guideId", async (req, res, next) => {
-    try {
-      const guide = await lmsStore.getGuide(req.params.guideId, req.userContext.userId, {
-        isAdmin: req.userContext.hasAdminAccess,
-      });
-      const pdf = await renderGuidePdf(guide);
-      res.setHeader("content-type", "application/pdf");
-      res.setHeader("content-disposition", `attachment; filename="${guide.title.replace(/[^a-z0-9]+/gi, "-")}.pdf"`);
-      return res.send(pdf);
-    } catch (error) {
-      return next(error);
-    }
-  });
-
   router.get("/lms/admin/flags", ensureAdmin, (req, res, next) =>
     createHandle(req, res, next, async () => featureFlagService.listFlags())
   );

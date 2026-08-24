@@ -11,14 +11,13 @@ import RecommendationSection from "../../../components/lms/RecommendationSection
 import ResourceGrid from "../../../components/lms/ResourceGrid";
 import { SegmentedControl } from "../../../components/ui";
 
-type Facet = "all" | "resources" | "pyq" | "guides" | "roadmaps" | "questions";
+type Facet = "all" | "resources" | "pyq" | "guides" | "questions";
 
 const FACET_OPTIONS = [
   { label: "All", value: "all" as const },
   { label: "Resources", value: "resources" as const },
   { label: "PYQs", value: "pyq" as const },
   { label: "Guides", value: "guides" as const },
-  { label: "Roadmaps", value: "roadmaps" as const },
   { label: "Questions", value: "questions" as const },
 ] as const;
 
