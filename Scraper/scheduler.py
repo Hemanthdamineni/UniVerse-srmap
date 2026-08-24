@@ -10,6 +10,9 @@ Runs each scraper source with:
 
 import asyncio
 import logging
+import os
+import random
+import signal
 import time
 import traceback
 from datetime import datetime
@@ -23,6 +26,19 @@ from scrapers.jobspy_scraper import run_jobspy
 from scrapers.devfolio_scraper import run_devfolio
 from scrapers.unstop_scraper import run_unstop
 from scrapers.internshala_scraper import run_internshala
+from scrapers.devpost_scraper import run_devpost
+from scrapers.ats_scraper import run_ats
+from scrapers.remote_scraper import run_remoteok, run_remotive
+
+# Set by the SIGTERM/SIGINT handler; checked between sources and in the
+# scheduler loop so a supervisor stop never starts new work.
+_stop_requested = False
+
+
+def _request_stop(signum, frame) -> None:
+    global _stop_requested
+    _stop_requested = True
+    logger.info(f"Received signal {signum}; will stop after current step")
 
 
 import logging.handlers
@@ -117,7 +133,10 @@ def run_with_circuit_breaker(source: str, fn: Callable, db: CareerDB) -> None:
             try:
                 last_dt = datetime.fromisoformat(last_attempt)
                 hours_since = (datetime.now() - last_dt).total_seconds() / 3600
-                if hours_since < config.CIRCUIT_BREAKER_COOLDOWN_HOURS:
+                # Jitter ±20% so multiple sources failing together don't all
+                # retry in lockstep after the same cooldown.
+                cooldown_hours = config.CIRCUIT_BREAKER_COOLDOWN_HOURS * random.uniform(0.8, 1.2)
+                if hours_since < cooldown_hours:
                     logger.warning(
                         f"[{source}] Circuit breaker OPEN. "
                         f"Blocked {hours_since:.1f}h ago. Skipping for now."
@@ -180,9 +199,20 @@ def job() -> None:
             ("devfolio", run_devfolio),
             ("unstop", run_unstop),
             ("internshala", run_internshala),
+            ("devpost", run_devpost),
+            ("ats", run_ats),
+            ("remoteok", run_remoteok),
+            ("remotive", run_remotive),
         ]
+        enabled = [(n, f) for n, f in sources if config.SOURCE_ENABLED.get(n, True)]
+        disabled = [n for n, _ in sources if not config.SOURCE_ENABLED.get(n, True)]
+        if disabled:
+            logger.info(f"Sources disabled via SCRAPER_ENABLE_*: {', '.join(disabled)}")
 
-        for source_name, scraper_fn in sources:
+        for source_name, scraper_fn in enabled:
+            if _stop_requested:
+                logger.info("Stop requested — skipping remaining sources")
+                break
             try:
                 run_with_circuit_breaker(source_name, scraper_fn, db)
             except Exception as e:
@@ -208,15 +238,36 @@ def job() -> None:
 
 # ── Scheduler Loop ────────────────────────────────────────────────────────────
 
+def _consume_run_now_flag() -> bool:
+    """True when the backend supervisor requested an immediate run."""
+    try:
+        if os.path.exists(config.RUN_NOW_FLAG_PATH):
+            os.remove(config.RUN_NOW_FLAG_PATH)
+            return True
+    except OSError:
+        pass
+    return False
+
+
 def start_scheduler() -> None:
-    """Start the scheduler loop. Runs job once immediately, then on interval."""
+    global _stop_requested
+    parent_pid = os.getppid()
+
+    signal.signal(signal.SIGTERM, _request_stop)
+    signal.signal(signal.SIGINT, _request_stop)
+
     logger.info("=" * 60)
     logger.info("SCRAPER SERVICE STARTING")
+    logger.info(f"  Parent pid: {parent_pid}")
     logger.info(f"  Run interval: every {config.RUN_INTERVAL_HOURS} hours")
+    logger.info(f"  Sources enabled: {', '.join(n for n, on in config.SOURCE_ENABLED.items() if on)}")
     logger.info(f"  Max retries per source: {config.MAX_RETRIES}")
     logger.info(f"  Circuit breaker threshold: {config.CIRCUIT_BREAKER_THRESHOLD} consecutive fails")
     logger.info(f"  DB: {config.DB_PATH}")
     logger.info("=" * 60)
+
+    # Consume any stale trigger from a previous session
+    _consume_run_now_flag()
 
     # Run immediately on startup
     job()
@@ -225,10 +276,33 @@ def start_scheduler() -> None:
     schedule.every(config.RUN_INTERVAL_HOURS).hours.do(job)
     logger.info(f"Next run scheduled in {config.RUN_INTERVAL_HOURS} hours")
 
-    while True:
+    while not _stop_requested:
         try:
+            if os.getppid() != parent_pid:
+                # Original parent (backend server or shell) died and this
+                # process was re-parented — shut down instead of orphaning.
+                logger.info("Parent process exited; scraper shutting down")
+                break
+
             schedule.run_pending()
-            time.sleep(60)
+
+            # Sleep in short slices so SIGTERM, parent death, and run-now
+            # triggers all land within ~1s instead of after a full sleep.
+            run_now = False
+            for _ in range(60):
+                if _stop_requested or os.getppid() != parent_pid:
+                    break
+                if _consume_run_now_flag():
+                    run_now = True
+                    break
+                time.sleep(1)
+
+            if _stop_requested or os.getppid() != parent_pid:
+                continue
+
+            if run_now:
+                logger.info("Run-now trigger received — starting immediate pipeline run")
+                job()
         except KeyboardInterrupt:
             logger.info("Scheduler stopped by user (KeyboardInterrupt)")
             break
@@ -236,6 +310,8 @@ def start_scheduler() -> None:
             logger.critical(f"Scheduler loop crashed unexpectedly: {e}", exc_info=True)
             logger.info("Recovering scheduler loop in 30 seconds...")
             time.sleep(30)
+
+    logger.info("SCRAPER SERVICE STOPPED")
 
 
 if __name__ == "__main__":

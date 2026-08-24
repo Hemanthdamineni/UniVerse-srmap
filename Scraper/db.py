@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 from config import DB_PATH
+from deduplicator import compute_dupe_key
 
 logger = logging.getLogger("CareerDB")
 
@@ -68,6 +69,39 @@ class CareerDB:
                 self._create_opportunities_table()
             else:
                 raise
+        # Ensure scraper-owned columns exist even when the Node backend created
+        # the table before this column shipped (guarded idempotent ALTERs).
+        for column in ("stipendMin REAL", "stipendMax REAL", "dupeKey TEXT"):
+            try:
+                self.conn.execute(f"ALTER TABLE career_opportunities ADD COLUMN {column}")
+            except sqlite3.OperationalError:
+                pass
+        try:
+            self.conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_career_dupe_key ON career_opportunities(dupeKey)"
+            )
+        except sqlite3.Error:
+            pass
+        self._backfill_dupe_keys()
+
+    def _backfill_dupe_keys(self) -> None:
+        """Populate dupeKey for rows written before near-dup merging existed."""
+        try:
+            rows = self.conn.execute(
+                "SELECT id, title, company, organizer FROM career_opportunities WHERE dupeKey IS NULL"
+            ).fetchall()
+        except sqlite3.Error:
+            return
+        if not rows:
+            return
+        for row in rows:
+            key = compute_dupe_key(
+                {"title": row["title"], "company": row["company"], "organizer": row["organizer"]}
+            )
+            if key:
+                self.conn.execute("UPDATE career_opportunities SET dupeKey = ? WHERE id = ?", (key, row["id"]))
+        self.conn.commit()
+        logger.info(f"Backfilled dupeKey on {len(rows)} existing opportunities")
 
     def _create_opportunities_table(self) -> None:
         """Fallback: create the opportunities table if the Node backend
@@ -91,6 +125,8 @@ class CareerDB:
                 eligibleYears    TEXT DEFAULT '[]',
                 minCGPA         REAL,
                 stipend         TEXT,
+                stipendMin      REAL,
+                stipendMax      REAL,
                 prize           TEXT,
                 isFree          INTEGER DEFAULT 1,
                 postedAt        TEXT,
@@ -101,6 +137,7 @@ class CareerDB:
                 sourceUrl       TEXT NOT NULL UNIQUE,
                 sources         TEXT DEFAULT '[]',
                 fingerprint     TEXT,
+                dupeKey         TEXT,
                 applyUrl        TEXT,
                 viewCount       INTEGER DEFAULT 0,
                 bookmarkCount   INTEGER DEFAULT 0,
@@ -127,6 +164,11 @@ class CareerDB:
             self.conn.execute("ALTER TABLE career_opportunities ADD COLUMN status TEXT DEFAULT 'active'")
         except sqlite3.OperationalError:
             pass
+        for column in ("stipendMin REAL", "stipendMax REAL"):
+            try:
+                self.conn.execute(f"ALTER TABLE career_opportunities ADD COLUMN {column}")
+            except sqlite3.OperationalError:
+                pass
         try:
             self.conn.execute("ALTER TABLE career_opportunities ADD COLUMN expiredAt TEXT")
         except sqlite3.OperationalError:
@@ -165,16 +207,40 @@ class CareerDB:
                         logger.debug(f"Duplicate found by fingerprint, added source: {opp['source']}")
                     return "skipped"
 
+            # Near-duplicate merge: the same normalized role at the same
+            # employer arriving via another source/URL folds into the live
+            # row instead of creating a second listing. Type is guarded here
+            # (an internship and a job with equal titles stay distinct).
+            if opp.get("dupeKey"):
+                candidate = self.conn.execute(
+                    "SELECT id, sources, type FROM career_opportunities WHERE dupeKey = ? AND isActive = 1 LIMIT 1",
+                    (opp["dupeKey"],)
+                ).fetchone()
+                if candidate and candidate["type"] == opp.get("type"):
+                    sources = json.loads(candidate["sources"] or "[]")
+                    if opp["source"] not in sources:
+                        sources.append(opp["source"])
+                        self.conn.execute(
+                            "UPDATE career_opportunities SET sources = ?, updatedAt = ? WHERE id = ?",
+                            (json.dumps(sources), opp["scrapedAt"], candidate["id"])
+                        )
+                        self.conn.commit()
+                        logger.debug(f"Near-duplicate merged into {candidate['id']}: {opp['title']}")
+                    return "skipped"
+
             sql = """
                 INSERT INTO career_opportunities (
                     id, type, title, company, organizer, description, shortDescription,
                     requirements, skills, tags, location, mode, isPanIndia,
-                    eligibleBranches, eligibleYears, minCGPA, stipend, prize,
+                    eligibleBranches, eligibleYears, minCGPA, stipend, stipendMin, stipendMax, prize,
                     isFree, postedAt, deadline, startDate, duration,
                     source, sourceUrl, sources, fingerprint, applyUrl, scrapedAt, updatedAt,
+                    dupeKey,
                     isActive, isVerified, isFeatured, relevanceScore
                 ) VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?,
+                    1, 0, 0, ?
                 ) ON CONFLICT(sourceUrl) DO UPDATE SET
                     title = excluded.title,
                     description = excluded.description,
@@ -184,6 +250,8 @@ class CareerDB:
                     location = excluded.location,
                     mode = excluded.mode,
                     stipend = excluded.stipend,
+                    stipendMin = excluded.stipendMin,
+                    stipendMax = excluded.stipendMax,
                     prize = excluded.prize,
                     deadline = excluded.deadline,
                     updatedAt = excluded.updatedAt,
@@ -196,12 +264,13 @@ class CareerDB:
                 json.dumps(opp.get("skills", [])), json.dumps(opp.get("tags", [])),
                 opp.get("location"), opp.get("mode"), 1 if opp.get("isPanIndia") else 0,
                 json.dumps(opp.get("eligibleBranches", [])), json.dumps(opp.get("eligibleYears", [])),
-                opp.get("minCGPA"), opp.get("stipend"), opp.get("prize"),
+                opp.get("minCGPA"), opp.get("stipend"), opp.get("stipendMin"), opp.get("stipendMax"), opp.get("prize"),
                 1 if opp.get("isFree", True) else 0,
                 opp.get("postedAt"), opp.get("deadline"), opp.get("startDate"), opp.get("duration"),
                 opp["source"], opp["sourceUrl"], json.dumps(opp.get("sources", [opp["source"]])),
                 opp.get("fingerprint"), opp.get("applyUrl"),
                 opp["scrapedAt"], opp.get("updatedAt") or opp["scrapedAt"],
+                opp.get("dupeKey"),
                 opp.get("relevanceScore", 0),
             )
 

@@ -5,6 +5,70 @@ from config import TECH_SKILLS
 
 logger = logging.getLogger("Intelligence")
 
+# Monthly-INR sanity window for parsed stipends; values outside are treated
+# as garbage rather than stored numerically.
+_STIPEND_MIN_VALID = 1000
+_STIPEND_MAX_VALID = 1000000
+
+
+def _to_amount(fragment: str) -> float | None:
+    """'₹25,000' / '20k' / '1.5 lakh' → numeric monthly-INR amount."""
+    frag = fragment.replace(",", "").strip()
+    match = re.match(r"^(\d+(?:\.\d+)?)\s*(k|lakh|lac|l)?$", frag, re.IGNORECASE)
+    if not match:
+        return None
+    value = float(match.group(1))
+    unit = (match.group(2) or "").lower()
+    if unit == "k":
+        value *= 1000
+    elif unit in ("lakh", "lac", "l"):
+        value *= 100000
+    return value
+
+
+def parse_stipend(text: object) -> tuple[float | None, float | None]:
+    """Parse an Indian stipend string into monthly INR (min, max).
+
+    Handles '₹20K-40K/month', 'Rs. 15,000', '₹1.5 Lakh lump sum'.
+    Non-INR currencies ('$', '€') and non-numeric phrases ('Unpaid',
+    'Performance based') return (None, None).
+    """
+    if not text:
+        return (None, None)
+    raw = str(text)
+    if not re.search(r"[₹]|rs\.?\s|inr|\d", raw, re.IGNORECASE):
+        return (None, None)
+    if re.search(r"\$|€|£", raw):
+        return (None, None)
+
+    normalized = raw.replace("–", "-").replace("—", "-").lower()
+    range_match = re.search(
+        r"(\d[\d,.]*\s*(?:k|lakh|lac|l)?)\s*(?:-|to)\s*(\d[\d,.]*\s*(?:k|lakh|lac|l)?)",
+        normalized,
+    )
+    low = high = None
+    if range_match:
+        low = _to_amount(range_match.group(1))
+        high = _to_amount(range_match.group(2))
+    else:
+        numbers = re.findall(r"\d[\d,.]*\s*(?:k|lakh|lac|l)?", normalized)
+        if numbers:
+            low = high = _to_amount(numbers[0])
+
+    def _valid(value: float | None) -> float | None:
+        if value is None:
+            return None
+        return value if _STIPEND_MIN_VALID <= value <= _STIPEND_MAX_VALID else None
+
+    low, high = _valid(low), _valid(high)
+    if low is None and high is None:
+        return (None, None)
+    if low is None:
+        low = high
+    if high is None:
+        high = low
+    return (low, high)
+
 
 def extract_skills(text: str) -> list[str]:
     """Extract known tech skills from text using word-boundary matching."""

@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import os
 import json
+from html import unescape
 from typing import Optional
 
 import aiohttp
@@ -9,6 +11,8 @@ from playwright.async_api import async_playwright, Page, Browser, TimeoutError a
 import config
 from normalizer import normalize_opportunity
 from db import CareerDB
+from scrapers.browser import launch_stealth_browser
+from scrapers.net import pool, throttled_get
 
 logger = logging.getLogger("Scraper.Unstop")
 
@@ -31,10 +35,11 @@ logger = logging.getLogger("Scraper.Unstop")
 
 # API endpoints discovered from XHR inspection
 _SEARCH_API = "https://unstop.com/api/public/opportunity/search-result"
-_OPPORTUNITY_TYPES = ["competitions", "hackathons", "workshops"]
+_OPPORTUNITY_TYPES = ["competitions", "hackathons", "workshops", "internships", "jobs"]
 
-# Max pages to fetch per opportunity type (18 items/page = up to 54*3=162 items)
-MAX_PAGES = 5
+# Max pages to fetch per opportunity type (18 items/page; 5 types × 8 pages
+# ≈ up to 720 raw items per run)
+MAX_PAGES: int = int(os.environ.get("SCRAPER_UNSTOP_MAX_PAGES", "8"))
 PER_PAGE = 18
 
 # Only intercept from these endpoints in Strategy 2
@@ -54,7 +59,7 @@ _CARD_SELECTORS = [
 
 # ── Strategy 1: Direct API pagination ────────────────────────────────────────
 
-async def _fetch_all_via_api() -> list[dict]:
+async def _fetch_all_via_api(proxy: Optional[str] = None) -> list[dict]:
     """Directly paginate Unstop's search API without a browser.
 
     Returns all raw opportunity dicts from all pages and types.
@@ -84,7 +89,11 @@ async def _fetch_all_via_api() -> list[dict]:
                         "oppstatus": "open",
                     }
                     try:
-                        async with session.get(_SEARCH_API, params=params) as resp:
+                        resp = await throttled_get(session, _SEARCH_API, params=params, proxy=proxy)
+                        if resp is None:
+                            logger.warning(f"Request error fetching {opp_type} page {page_num}")
+                            break
+                        async with resp:
                             if resp.status != 200:
                                 logger.debug(f"API returned {resp.status} for {opp_type} page {page_num}")
                                 break
@@ -209,6 +218,23 @@ async def _scrape_dom(page: Page) -> list[dict]:
 
 # ── Item normalizer ───────────────────────────────────────────────────────────
 
+def _strip_html(text: str) -> str:
+    """Cheap HTML→text for API description blobs (no external deps)."""
+    if not text:
+        return ""
+    text = text.replace("<br>", "\n").replace("</p>", "\n").replace("</li>", "\n")
+    out = []
+    skip = True
+    for ch in text:
+        if ch == "<":
+            skip = True
+        elif ch == ">":
+            skip = False
+        elif not skip:
+            out.append(ch)
+    return unescape("".join(out)).strip()
+
+
 def _parse_api_item(item: dict) -> Optional[dict]:
     """Convert a raw API item dict into a normalizer-ready dict.
 
@@ -230,12 +256,16 @@ def _parse_api_item(item: dict) -> Optional[dict]:
 
     # Build URL — seo_url from Unstop is already fully-qualified
     raw_type = (item.get("type") or item.get("opportunity_type") or "competition").lower()
-    if "hackathon" in raw_type:
+    subtype = (item.get("subtype") or "").lower()
+    combined = f"{raw_type} {subtype}"
+    if "hackathon" in combined:
         norm_type, url_prefix = "hackathon", "hackathons"
-    elif "workshop" in raw_type:
+    elif "workshop" in combined:
         norm_type, url_prefix = "workshop", "workshops"
-    elif "internship" in raw_type:
+    elif "internship" in combined:
         norm_type, url_prefix = "internship", "internships"
+    elif "job" in raw_type or subtype == "jobs":
+        norm_type, url_prefix = "job", "jobs"
     else:
         norm_type, url_prefix = "competition", "competitions"
 
@@ -257,15 +287,29 @@ def _parse_api_item(item: dict) -> Optional[dict]:
         deadline = regn.get("end_regn_dt") or regn.get("end_date")
     deadline = deadline or item.get("end_date")
 
+    description = _strip_html(
+        item.get("short_desc") or item.get("description") or item.get("details") or ""
+    ) or f"{norm_type.capitalize()} on Unstop"
+
+    stipend = (
+        item.get("stipend_amount")
+        or item.get("stipend")
+        or (f"₹{item['stipend_min']}-{item['stipend_max']}" if item.get("stipend_min") and item.get("stipend_max") else None)
+    )
+
+    region = (item.get("region") or "").lower()
+    mode = "online" if ("online" in region or norm_type in ("hackathon", "competition")) else "offline"
+
     return {
         "type": norm_type,
         "title": title,
         "organizer": organizer,
         "url": url,
-        "description": item.get("description") or item.get("short_desc") or f"{norm_type.capitalize()} on Unstop",
-        "is_online": True,
+        "description": description,
+        "is_online": mode == "online",
         "deadline": str(deadline) if deadline else None,
         "prize": item.get("prizes_worth"),
+        "stipend": str(stipend) if stipend else None,
     }
 
 
@@ -292,10 +336,13 @@ async def run_unstop(db: CareerDB) -> dict:
     logger.info("Starting Unstop scraper...")
     counts = {"new": 0, "updated": 0, "skipped": 0, "errors": 0}
     raw_items: list[dict] = []
+    proxy = pool.next()
+    if proxy:
+        logger.info("Using proxy from SCRAPER_PROXIES pool")
 
     # ── Strategy 1: Direct API (no browser needed) ────────────────────────────
     logger.info("Trying direct API pagination (Strategy 1)...")
-    api_items = await _fetch_all_via_api()
+    api_items = await _fetch_all_via_api(proxy=proxy)
     if api_items:
         raw_items = _items_to_raw(api_items)
         logger.info(f"Strategy 1 succeeded: {len(api_items)} raw → {len(raw_items)} valid items")
@@ -306,11 +353,7 @@ async def run_unstop(db: CareerDB) -> dict:
         browser: Optional[Browser] = None
         async with async_playwright() as p:
             try:
-                browser = await p.chromium.launch(headless=config.PLAYWRIGHT_HEADLESS)
-                context = await browser.new_context(
-                    user_agent=config.PLAYWRIGHT_USER_AGENT,
-                    viewport={"width": 1280, "height": 800},
-                )
+                browser, context = await launch_stealth_browser(p, proxy=proxy)
                 page = await context.new_page()
                 page.set_default_timeout(config.PAGE_NAVIGATION_TIMEOUT_MS)
 
@@ -347,6 +390,7 @@ async def run_unstop(db: CareerDB) -> dict:
                 raise
             finally:
                 if browser:
+                    await context.close()
                     await browser.close()
 
     if not raw_items:
@@ -373,6 +417,7 @@ async def run_unstop(db: CareerDB) -> dict:
                 "mode": "online" if raw.get("is_online") else "offline",
                 "deadline": raw.get("deadline"),
                 "prize": raw.get("prize"),
+                "stipend": raw.get("stipend"),
             }, "unstop")
 
             if opp is None:

@@ -148,7 +148,7 @@ University-ERP/
     e2e/                # Playwright end-to-end tests
   docs/                 # Detailed documentation (architecture, API ref, guides, etc.)
   infra/                # Infrastructure configs
-  Scraper/              # Legacy scraper utilities
+  Scraper/              # Career scraper pipeline (auto-spawned by the backend; see below)
   StaticHost/           # Output dir for static prototype builds
   docker-compose.yml    # Backend + Redis service definition
 ```

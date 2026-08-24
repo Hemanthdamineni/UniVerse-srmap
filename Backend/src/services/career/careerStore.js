@@ -348,6 +348,10 @@ const catalogMethods = {
       case "popular":
         sql += " ORDER BY o.applyCount DESC, o.viewCount DESC";
         break;
+      case "stipend":
+        sql +=
+          " ORDER BY CASE WHEN o.stipendMax IS NULL THEN 1 ELSE 0 END, o.stipendMax DESC, o.relevanceScore DESC";
+        break;
       case "relevance":
       default:
         sql += " ORDER BY o.relevanceScore DESC, CASE WHEN o.postedAt IS NULL THEN 1 ELSE 0 END, o.postedAt DESC";
@@ -592,6 +596,55 @@ const healthMethods = {
 
   getScraperRuns(limit = 10) {
     return this.db.prepare("SELECT * FROM career_scraper_runs ORDER BY startedAt DESC LIMIT ?").all(limit);
+  },
+
+  /** Admin scraper-status view: latest run + breaker state + DB counts per source. */
+  getScraperStatus() {
+    const health = this.db.prepare("SELECT * FROM career_source_health").all();
+    const runs = this.db
+      .prepare("SELECT * FROM career_scraper_runs ORDER BY startedAt DESC LIMIT 200")
+      .all();
+    const counts = this.db
+      .prepare(
+        `SELECT source,
+                COUNT(*) AS total,
+                SUM(CASE WHEN isActive = 1 THEN 1 ELSE 0 END) AS active
+         FROM career_opportunities GROUP BY source`
+      )
+      .all();
+
+    const latestRunBySource = new Map();
+    for (const run of runs) {
+      if (!latestRunBySource.has(run.source)) latestRunBySource.set(run.source, run);
+    }
+    const countBySource = new Map(counts.map((c) => [c.source, c]));
+    const healthBySource = new Map(health.map((h) => [h.source, h]));
+
+    const sources = [
+      ...new Set([
+        ...latestRunBySource.keys(),
+        ...healthBySource.keys(),
+        ...countBySource.keys(),
+      ]),
+    ]
+      .sort()
+      .map((source) => {
+        const healthRow = healthBySource.get(source);
+        const countsRow = countBySource.get(source);
+        return {
+          source,
+          lastRun: latestRunBySource.get(source) || null,
+          consecutiveFails: healthRow ? healthRow.consecutiveFails : 0,
+          isBlocked: Boolean(healthRow && healthRow.isBlocked),
+          lastSuccess: (healthRow && healthRow.lastSuccess) || null,
+          lastAttempt: (healthRow && healthRow.lastAttempt) || null,
+          notes: (healthRow && healthRow.notes) || "",
+          totalOpportunities: countsRow ? countsRow.total : 0,
+          activeOpportunities: countsRow ? countsRow.active : 0,
+        };
+      });
+
+    return { sources, generatedAt: nowIso() };
   }
 };
 
@@ -1680,6 +1733,19 @@ const schemaMethods = {
     } catch {}
   },
 
+  _migrateCareerStipendRange() {
+    // Written by the Python scraper (parse_stipend) as monthly-INR numerics
+    // so the career feed can sort/filter by pay.
+    for (const statement of [
+      "ALTER TABLE career_opportunities ADD COLUMN stipendMin REAL",
+      "ALTER TABLE career_opportunities ADD COLUMN stipendMax REAL",
+    ]) {
+      try {
+        this.db.exec(statement);
+      } catch {}
+    }
+  },
+
   _migrateCareerSubmissionGovernance() {
     for (const statement of [
       "ALTER TABLE career_submissions ADD COLUMN reviewedBy TEXT",
@@ -1696,6 +1762,7 @@ const schemaMethods = {
   _ensureSchema() {
     this._migrateFtsToRowidModel();
     this._migrateCareerOpportunitiesLifecycle();
+    this._migrateCareerStipendRange();
     this._migrateSkillGapsGapLevel();
     this._migrateCareerSubmissionGovernance();
     this.db.exec(`
@@ -1717,6 +1784,8 @@ const schemaMethods = {
         eligibleYears    TEXT DEFAULT '[]',
         minCGPA         REAL,
         stipend         TEXT,
+        stipendMin      REAL,
+        stipendMax      REAL,
         prize           TEXT,
         isFree          INTEGER DEFAULT 1,
         postedAt        TEXT,

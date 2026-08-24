@@ -48,6 +48,8 @@ function createApp({
   helpdeskStore,
   campusFeedbackStore,
   careerStore,
+  scraperSupervisorStatus,
+  scraperTriggerOnce,
   competitionStore,
   persistentTeamStore,
   unifiedProfileStore,
@@ -198,6 +200,8 @@ function createApp({
         lmsTrackerService,
         eventsStore,
         redisClient,
+        scraperSupervisorStatus,
+        scraperTriggerOnce,
       })
     );
   }

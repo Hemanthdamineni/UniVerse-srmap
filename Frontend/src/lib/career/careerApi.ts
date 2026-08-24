@@ -628,6 +628,64 @@ export async function listPendingSubmissions(headers?: HeadersInit) {
   return requestData<{ items: CareerSubmission[]; pagination?: { page: number; limit: number; total: number } }>("/api/career/submit/pending", { headers });
 }
 
+export type ScraperSourceStatus = {
+  source: string;
+  lastRun: {
+    id: string;
+    source: string;
+    startedAt: string;
+    completedAt?: string | null;
+    status: string;
+    newCount?: number;
+    updatedCount?: number;
+    expiredCount?: number;
+    errorMessage?: string | null;
+    durationMs?: number | null;
+  } | null;
+  consecutiveFails: number;
+  isBlocked: boolean;
+  lastSuccess?: string | null;
+  lastAttempt?: string | null;
+  notes?: string;
+  totalOpportunities: number;
+  activeOpportunities: number;
+};
+
+export type ScraperStatus = {
+  sources: ScraperSourceStatus[];
+  generatedAt: string;
+  supervisor: { state: string; pid: number | null; failures: number } | null;
+};
+
+export async function getScraperStatus(headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    return {
+      sources: [],
+      generatedAt: new Date().toISOString(),
+      supervisor: null,
+    } satisfies ScraperStatus;
+  }
+  return requestData<ScraperStatus>("/api/career/scraper-status", { headers });
+}
+
+export type ScraperTriggerResult = {
+  accepted: boolean;
+  mode: "daemon" | "oneshot";
+  pid?: number;
+  detail?: string;
+  reason?: string;
+};
+
+export async function triggerScraper(headers?: HeadersInit) {
+  if (isStaticPrototype()) {
+    return { accepted: false, mode: "daemon" as const, reason: "Static prototype" } satisfies ScraperTriggerResult;
+  }
+  return requestData<{ trigger: ScraperTriggerResult }>("/api/career/scraper-trigger", {
+    method: "POST",
+    headers,
+  }).then((data) => data.trigger);
+}
+
 export async function approveSubmission(id: string) {
   return requestData<{ approved: boolean; submission?: CareerSubmission }>(`/api/career/submit/${encodeURIComponent(id)}/approve`, {
     method: "POST",

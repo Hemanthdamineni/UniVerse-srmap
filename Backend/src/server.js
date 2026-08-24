@@ -59,6 +59,9 @@ const { createPersistentTeamStore } = require("./services/events/persistentTeamS
 const { HelpdeskStore } = require("./services/campus/helpdeskStore");
 const { CampusFeedbackStore } = require("./services/campus/campusFeedbackStore");
 const { CareerStore } = require("./services/career/careerStore");
+const {
+  createCareerScraperSupervisor,
+} = require("./services/career/careerScraperSupervisor");
 const { LmsTrackerService } = require("./services/lms/lmsTrackerService");
 const { LmsTrackerStore } = require("./services/lms/lmsTrackerStore");
 const { LmsStore } = require("./services/lms/lmsStore");
@@ -182,6 +185,7 @@ async function startServer() {
   const careerStore = new CareerStore({
     dbPath: CAREER_DB_PATH,
   });
+  const careerScraperSupervisor = createCareerScraperSupervisor();
   const lmsModerationService = new LmsModerationService();
   const lmsRevisionScheduler = new LmsRevisionScheduler();
   const lmsStore = new LmsStore({
@@ -258,6 +262,8 @@ async function startServer() {
     helpdeskStore,
     campusFeedbackStore,
     careerStore,
+    scraperSupervisorStatus: () => careerScraperSupervisor.getStatus(),
+    scraperTriggerOnce: () => careerScraperSupervisor.triggerOnce(),
     competitionStore,
     persistentTeamStore,
     unifiedProfileStore,
@@ -362,6 +368,10 @@ async function startServer() {
           : "disabled"
       }`,
     });
+    const scraperStatus = careerScraperSupervisor.start();
+    log({
+      msg: `Career scraper: ${scraperStatus.state}${scraperStatus.pid ? ` (pid ${scraperStatus.pid})` : ""}`,
+    });
   });
 
   server.on("error", (error) => {
@@ -380,6 +390,7 @@ async function startServer() {
     server.close(() => {
     log({ level: "info", msg: "HTTP server closed" });
     clearInterval(reminderTicker);
+    careerScraperSupervisor.stop();
     lmsInteractionQueue.stop();
     // Release the in-memory cache sweep timer (no-op if cache is Redis-backed).
     if (typeof erpCacheStore?.close === "function") {
