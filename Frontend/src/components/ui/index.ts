@@ -36,4 +36,5 @@ export { ProgressBar, StarRating, StatCard } from "./Progress";
 export type { StatCardProps } from "./Progress";
 export { SectionCard } from "./SectionCard";
 export type { SectionCardProps } from "./SectionCard";
-export { SkeletonBlock, SkeletonCard, SkeletonTable } from "./Skeletons";
+export { SkeletonBlock, SkeletonCard, SkeletonTable, PageSkeleton } from "./Skeletons";
+export type { PageSkeletonVariant } from "./Skeletons";

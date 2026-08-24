@@ -8,6 +8,7 @@ import {
 } from "../../components/erp/ErpPrimitives";
 import { Markdown } from "../../components/markdown";
 import { FormField } from "../../components/forms/FormField";
+import { SkeletonCard } from "../../components/ui";
 import { createHelpdeskTicket, listHelpdeskTickets } from "../../lib/campus/campusApi";
 import { helpdeskKeys } from "../../lib/helpdesk/queryKeys";
 import { useApiMutation } from "../../lib/core/useApiMutation";
@@ -77,7 +78,7 @@ export default function RaiseTicket() {
   }
 
   return (
-    <ErpPageShell title="Raise a Ticket" source="Internal API" isLoading={recentTicketsQuery.isFetching} loadingMessage="Loading helpdesk...">
+    <ErpPageShell title="Raise a Ticket" source="Internal API">
       {banner ? <StatusBanner message={{ id: "helpdesk-banner", tone: banner.tone, text: banner.text }} /> : null}
 
       <SectionCard title="New Ticket">
@@ -143,7 +144,9 @@ export default function RaiseTicket() {
       </SectionCard>
 
       <SectionCard title="Recent Tickets">
-        {tickets.length === 0 ? (
+        {recentTicketsQuery.isPending ? (
+          <SkeletonCard />
+        ) : tickets.length === 0 ? (
           <EmptyStateCard message="No tickets submitted yet. Use the form above to raise your first support request." />
         ) : (
           <div className="space-y-2">

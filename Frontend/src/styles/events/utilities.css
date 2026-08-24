@@ -107,6 +107,12 @@
   background-size: 200% 100%;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+  }
+}
+
 /* Button utilities */
 .comp-btn-primary {
   display: inline-flex;
