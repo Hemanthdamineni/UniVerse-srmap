@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ErpPageShell, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import { getLmsAcademicInsights } from "../../lib/lms/index";
 
@@ -37,30 +37,16 @@ function GpaTrendBar({ semester, sgpa }: { semester: string; sgpa: number }) {
 }
 
 export default function AcademicInsights() {
-  const [insights, setInsights] = useState<Awaited<ReturnType<typeof getLmsAcademicInsights>> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  // Shares the AcademicHubPage cache entry for the same getter.
+  const insightsQuery = useQuery({
+    queryKey: ["lms", "academic-insights"],
+    queryFn: () => getLmsAcademicInsights(),
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    let active = true;
-    getLmsAcademicInsights()
-      .then((response) => {
-        if (!active) return;
-        setInsights(response);
-      })
-      .catch((loadError) => {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load academic insights.");
-      })
-      .finally(() => {
-        if (!active) return;
-        setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const insights = insightsQuery.data ?? null;
+  const loading = insightsQuery.isPending;
+  const error = insightsQuery.error instanceof Error ? insightsQuery.error.message : "";
 
   return (
     <ErpPageShell

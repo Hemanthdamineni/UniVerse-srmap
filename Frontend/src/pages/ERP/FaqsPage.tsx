@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { executePipeline, type FaqsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
@@ -11,50 +13,55 @@ type Props = {
 };
 
 export default function FaqsPage({ blueprint }: Props) {
-  const [data, setData] = useState<FaqsModel | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  const [data, setData] = useState<FaqsModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load FAQs.");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        // Merge data from all fetch keys (hostel + transport FAQs)
-        const merged: Record<string, unknown> = {};
-        for (const key of blueprint.fetchKeys) {
-          const rawData = (batch[key] as any)?.data;
-          if (rawData && typeof rawData === "object") {
-            Object.assign(merged, rawData);
-          }
+    try {
+      // Merge data from all fetch keys (hostel + transport FAQs)
+      const merged: Record<string, unknown> = {};
+      for (const key of blueprint.fetchKeys) {
+        const rawData = (batch[key] as any)?.data;
+        if (rawData && typeof rawData === "object") {
+          Object.assign(merged, rawData);
         }
-
-        if (Object.keys(merged).length === 0) {
-          throw new Error("No FAQ content available.");
-        }
-
-        const pipelineResult = executePipeline("faqs", merged);
-        if (!pipelineResult.isValid || !pipelineResult.data) {
-          setData({ title: blueprint.heading, content: "", sections: [] });
-          return;
-        }
-
-        setData(pipelineResult.data as FaqsModel);
-      } catch (err: any) {
-        if (active) setError(err.message || "Failed to load FAQs.");
-      } finally {
-        if (active) setLoading(false);
       }
-    }
 
-    load();
-    return () => { active = false; };
-  }, [blueprint, refreshTrigger]);
+      if (Object.keys(merged).length === 0) {
+        throw new Error("No FAQ content available.");
+      }
+
+      const pipelineResult = executePipeline("faqs", merged);
+      if (!pipelineResult.isValid || !pipelineResult.data) {
+        setData({ title: blueprint.heading, content: "", sections: [] });
+        setError(null);
+        return;
+      }
+
+      setError(null);
+      setData(pipelineResult.data as FaqsModel);
+    } catch (err: any) {
+      setError(err.message || "Failed to load FAQs.");
+    }
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   return (
     <ErpPageShell

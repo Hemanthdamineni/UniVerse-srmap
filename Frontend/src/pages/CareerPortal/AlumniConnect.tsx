@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -7,6 +8,7 @@ import {
 } from "../../components/erp/ErpPrimitives";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { careerKeys } from "../../lib/career/queryKeys";
 import {
   createAlumniProfile,
   deleteAlumniProfile,
@@ -18,7 +20,7 @@ import {
 
 export default function AlumniConnect({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();
-  const [alumni, setAlumni] = useState<AlumniProfile[]>([]);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [batchFilter, setBatchFilter] = useState<string>("All");
@@ -36,40 +38,32 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
     openToConnect: true,
   });
 
-  async function loadAlumni() {
-    try {
-      const data = await listAlumni(
-        {
-          ...(debouncedSearch.trim() ? { query: debouncedSearch.trim() } : {}),
-          ...(batchFilter !== "All" ? { batch: batchFilter } : {}),
-        },
-        adminMode && admin.unlocked ? admin.adminHeaders : undefined
-      );
-      setAlumni(data.items);
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Failed to load alumni directory.",
-      });
-    }
-  }
+  const isAdminView = adminMode && admin.unlocked;
+  const adminHeaders = isAdminView ? admin.adminHeaders : undefined;
+  // debouncedSearch (not search) keeps typing from firing a request per keystroke.
+  const alumniFilters: Record<string, string> = {
+    ...(debouncedSearch.trim() ? { query: debouncedSearch.trim() } : {}),
+    ...(batchFilter !== "All" ? { batch: batchFilter } : {}),
+    view: isAdminView ? "admin" : "student",
+  };
 
-  useEffect(() => {
-    void loadAlumni();
-    // debouncedSearch (not search) keeps typing from firing a request per keystroke.
-  }, [admin.adminHeaders, admin.unlocked, adminMode, batchFilter, debouncedSearch]);
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive view flag + filters; the raw headers object deliberately stays out of the key */
+  const alumniQuery = useQuery({
+    queryKey: careerKeys.alumni(alumniFilters),
+    queryFn: () => listAlumni(alumniFilters, adminHeaders),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
 
-  const batches = useMemo(() => {
-    const unique = Array.from(new Set(alumni.map((item) => item.batch).filter(Boolean))).sort().reverse();
-    return ["All", ...unique];
-  }, [alumni]);
+  const alumni = alumniQuery.data?.items ?? [];
 
   async function runAction(action: () => Promise<unknown>, successText: string) {
     setBanner(null);
     try {
       await action();
       setBanner({ tone: "success", text: successText });
-      await loadAlumni();
+      await queryClient.invalidateQueries({ queryKey: careerKeys.alumni() });
     } catch (error) {
       setBanner({
         tone: "warning",
@@ -77,6 +71,11 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
       });
     }
   }
+
+  const batches = useMemo(() => {
+    const unique = Array.from(new Set(alumni.map((item) => item.batch).filter(Boolean))).sort().reverse();
+    return ["All", ...unique];
+  }, [alumni]);
 
   return (
     <ErpPageShell title="Alumni Connect" source="Internal API">

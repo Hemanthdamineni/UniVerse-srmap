@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import { render, screen, waitFor } from "@testing-library/react";
 import AdminCompanionAnalyticsPage from "./AdminCompanionAnalyticsPage";
 
@@ -62,7 +64,11 @@ describe("AdminCompanionAnalyticsPage", () => {
   });
 
   it("renders companion analytics report metrics and conversion evidence", async () => {
-    render(<AdminCompanionAnalyticsPage />);
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <AdminCompanionAnalyticsPage />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => expect(getCompanionAnalyticsReport).toHaveBeenCalledWith({ days: 30, limit: 12 }));
     expect((await screen.findAllByRole("heading", { name: "Companion Analytics" })).length).toBeGreaterThan(0);

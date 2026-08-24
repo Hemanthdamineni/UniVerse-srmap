@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -9,6 +10,9 @@ import { Markdown } from "../../components/markdown";
 import { ConfirmDialog } from "../../components/dialog";
 import { FormField } from "../../components/forms/FormField";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
+import { helpdeskKeys } from "../../lib/helpdesk/queryKeys";
+import { useApiMutation } from "../../lib/core/useApiMutation";
+import { toErrorMessage } from "../../lib/core/toErrorMessage";
 import {
   createHelpdeskFaq,
   deleteHelpdeskFaq,
@@ -21,7 +25,6 @@ const FAQ_CATEGORIES = ["General", "Academic", "Finance", "Hostel & Transport", 
 
 export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();
-  const [faqs, setFaqs] = useState<CampusFaq[]>([]);
   const [search, setSearch] = useState("");
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
   const [editingFaqId, setEditingFaqId] = useState("");
@@ -30,47 +33,57 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
     answer: "",
     category: FAQ_CATEGORIES[0] as string,
   });
-  const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  const adminHeaders = adminMode && admin.unlocked ? admin.adminHeaders : undefined;
+  const isAdminView = Boolean(adminHeaders);
+  const listFilters = search.trim() ? { query: search.trim() } : undefined;
+
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive view flag + search text below; the raw adminHeaders object deliberately stays out of the key (unstable identity would fork/refetch entries) */
+  const faqsQuery = useQuery({
+    // View flag scopes admin/student entries; search text rides in the key.
+    queryKey: helpdeskKeys.faqs({ ...(listFilters ?? {}), view: isAdminView ? "admin" : "student" }),
+    queryFn: () => listHelpdeskFaqs(listFilters, adminHeaders),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
+
+  const faqs = faqsQuery.data?.items ?? [];
+
+  const deleteFaq = useApiMutation({
+    mutationFn: (faqId: string) => deleteHelpdeskFaq(faqId, adminHeaders),
+    successText: "FAQ deleted successfully.",
+    errorFallback: "Couldn't delete the FAQ. Please try again.",
+    invalidateKeys: [helpdeskKeys.faqs()],
+  });
+
+  const saveFaq = useApiMutation({
+    mutationFn: (input: { id: string | null; form: typeof form }) =>
+      input.id
+        ? updateHelpdeskFaq(input.id, input.form, adminHeaders)
+        : createHelpdeskFaq(input.form, adminHeaders),
+    successText: (data, vars) => (vars.id ? "FAQ updated successfully." : "FAQ created successfully."),
+    errorFallback: "Couldn't save the FAQ. Please try again.",
+    invalidateKeys: [helpdeskKeys.faqs()],
+    onSuccess: () => {
+      setForm({ question: "", answer: "", category: FAQ_CATEGORIES[0] });
+      setEditingFaqId("");
+    },
+  });
+
+  const banner =
+    saveFaq.banner ??
+    deleteFaq.banner ??
+    (faqsQuery.error
+      ? { tone: "warning" as const, text: toErrorMessage(faqsQuery.error, "Failed to load FAQs.") }
+      : null);
 
   async function handleDeleteConfirmed() {
     if (!pendingDeleteId) return;
-    setBanner(null);
-    setDeleteBusy(true);
-    try {
-      await deleteHelpdeskFaq(pendingDeleteId, admin.adminHeaders);
-      setBanner({ tone: "success", text: "FAQ deleted successfully." });
-      await loadFaqs();
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Couldn't delete the FAQ. Please try again.",
-      });
-    } finally {
-      setDeleteBusy(false);
-      setPendingDeleteId(null);
-    }
+    await deleteFaq.mutate(pendingDeleteId);
+    setPendingDeleteId(null);
   }
-
-  async function loadFaqs() {
-    try {
-      const data = await listHelpdeskFaqs(
-        search.trim() ? { query: search.trim() } : undefined,
-        adminMode && admin.unlocked ? admin.adminHeaders : undefined
-      );
-      setFaqs(data.items);
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Failed to load FAQs.",
-      });
-    }
-  }
-
-  useEffect(() => {
-    void loadFaqs();
-  }, [admin.adminHeaders, admin.unlocked, adminMode, search]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, CampusFaq[]>();
@@ -84,24 +97,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setBanner(null);
-    try {
-      if (editingFaqId) {
-        await updateHelpdeskFaq(editingFaqId, form, admin.adminHeaders);
-        setBanner({ tone: "success", text: "FAQ updated successfully." });
-      } else {
-        await createHelpdeskFaq(form, admin.adminHeaders);
-        setBanner({ tone: "success", text: "FAQ created successfully." });
-      }
-      setForm({ question: "", answer: "", category: FAQ_CATEGORIES[0] });
-      setEditingFaqId("");
-      await loadFaqs();
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Couldn't save the FAQ. Please try again.",
-      });
-    }
+    await saveFaq.mutate({ id: editingFaqId || null, form });
   }
 
   return (
@@ -252,7 +248,7 @@ export default function FAQs({ adminMode = false }: { adminMode?: boolean }) {
         description={`"${faqs.find((faq) => faq.id === pendingDeleteId)?.question ?? "This FAQ"}" will be removed from the helpdesk immediately. This cannot be undone.`}
         confirmLabel="Delete FAQ"
         danger
-        busy={deleteBusy}
+        busy={deleteFaq.isPending}
         onConfirm={() => void handleDeleteConfirmed()}
       />
     </ErpPageShell>

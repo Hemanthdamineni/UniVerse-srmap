@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import ProgressOverview from "./ProgressOverview";
 
 const getLmsProgressOverview = vi.fn();
@@ -74,7 +76,11 @@ describe("ProgressOverview", () => {
   });
 
   it("renders persisted analytics trace and career readiness signals", async () => {
-    render(<ProgressOverview />);
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <ProgressOverview />
+      </QueryClientProvider>
+    );
 
     expect(await screen.findByText("Career Readiness")).toBeInTheDocument();
     expect(screen.getByText("Node.js · 4")).toBeInTheDocument();

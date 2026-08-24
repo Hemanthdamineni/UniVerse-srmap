@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError } from "../../components/ui/Feedback";
 import { Pagination } from "../../components/ui/Pagination";
 import { StatCard } from "../../components/ui/Progress";
 import { useAdminMode } from "../../contexts/AdminModeContext";
+import { adminKeys } from "../../lib/admin/queryKeys";
+import { adminQueueOptions } from "../../lib/core/queryOptions";
 import {
   getLmsResourceModerationQueue,
   moderateLmsResource,
@@ -26,34 +29,38 @@ function latestFlag(resource: LmsResource) {
 
 export default function AdminLmsModerationPage() {
   const admin = useAdminMode();
+  const queryClient = useQueryClient();
   const [stateFilter, setStateFilter] = useState("flagged");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<LmsModerationQueueResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const next = await getLmsResourceModerationQueue(
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive filters below; the raw headers object deliberately stays out of the key */
+  const queueQuery = useQuery({
+    queryKey: adminKeys.lmsModerationQueue({ state: stateFilter, query, page }),
+    queryFn: () =>
+      getLmsResourceModerationQueue(
         { state: stateFilter, query, limit: 25, page },
         admin.adminHeaders
-      );
-      setData(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load LMS moderation queue.");
-    } finally {
-      setLoading(false);
-    }
-  }, [admin.adminHeaders, query, stateFilter, page]);
+      ),
+    staleTime: adminQueueOptions.staleTime,
+    placeholderData: keepPreviousData,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!queueQuery.error) return;
+    setError(queueQuery.error instanceof Error ? queueQuery.error.message : "Unable to load LMS moderation queue.");
+  }, [queueQuery.error]);
+
+  const data = queueQuery.data ?? null;
+  const loading = queueQuery.isPending;
+
+  async function load() {
+    await queryClient.invalidateQueries({ queryKey: adminKeys.lmsModerationQueue() });
+  }
 
   const summary = useMemo(() => data?.counts || { total: 0, flagged: 0, hidden: 0, removed: 0, visible: 0 }, [data]);
 

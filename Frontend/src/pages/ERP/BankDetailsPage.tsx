@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { executePipeline, type BankDetailsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch, executeErpAction } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { FileUploadZone } from "../../components/ui/FileUploadZone";
@@ -26,7 +28,6 @@ function fileToBase64(file: File): Promise<string> {
 
 export default function BankDetailsPage({ blueprint }: Props) {
   const [data, setData] = useState<BankDetailsModel | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -36,38 +37,42 @@ export default function BankDetailsPage({ blueprint }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load bank details.");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const mainKey = blueprint.fetchKeys[0];
-        const rawData = (batch[mainKey] as any)?.data;
+    try {
+      const mainKey = blueprint.fetchKeys[0];
+      const rawData = (batch[mainKey] as any)?.data;
 
-        if (!rawData) {
-          throw new Error("No data found for bank details.");
-        }
-
-        const pipelineResult = executePipeline("bank-details", rawData);
-        if (!pipelineResult.isValid || !pipelineResult.data) {
-          throw new Error("Unable to parse bank details.");
-        }
-
-        setData(pipelineResult.data as BankDetailsModel);
-      } catch (err: any) {
-        if (active) setError(err.message || "Failed to load bank details.");
-      } finally {
-        if (active) setLoading(false);
+      if (!rawData) {
+        throw new Error("No data found for bank details.");
       }
-    }
 
-    load();
-    return () => { active = false; };
-  }, [blueprint, refreshTrigger]);
+      const pipelineResult = executePipeline("bank-details", rawData);
+      if (!pipelineResult.isValid || !pipelineResult.data) {
+        throw new Error("Unable to parse bank details.");
+      }
+
+      setError(null);
+      setData(pipelineResult.data as BankDetailsModel);
+    } catch (err: any) {
+      setError(err.message || "Failed to load bank details.");
+    }
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   // Initialize form values when data loads
   useEffect(() => {

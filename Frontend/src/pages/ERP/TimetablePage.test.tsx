@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import type { TimetableModel } from "../../lib/erp/erpTransformers";
 import TimetablePage from "./TimetablePage";
+import { createTestQueryClient } from "../../test/testUtils";
 
 // ── Module mocks ──────────────────────────────────────────────────────
 
@@ -38,9 +40,11 @@ function renderPage(blueprint?: Partial<PageBlueprint>) {
     loadingMessage: "Loading timetable...",
   };
   return render(
-    <MemoryRouter>
-      <TimetablePage blueprint={{ ...defaultBlueprint, ...blueprint }} />
-    </MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter>
+        <TimetablePage blueprint={{ ...defaultBlueprint, ...blueprint }} />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

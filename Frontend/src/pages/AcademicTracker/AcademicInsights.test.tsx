@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import AcademicInsights from "./AcademicInsights";
 
 const getLmsAcademicInsights = vi.fn();
@@ -86,7 +88,11 @@ describe("AcademicInsights", () => {
   });
 
   it("renders explainable career recommendations and recommendation event trace", async () => {
-    render(<AcademicInsights />);
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <AcademicInsights />
+      </QueryClientProvider>
+    );
 
     expect(await screen.findByText("Career-Aware Action Plan")).toBeInTheDocument();
     expect(screen.getAllByText("Frontend Engineering Intern").length).toBeGreaterThan(0);

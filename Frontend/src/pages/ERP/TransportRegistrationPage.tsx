@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch, type ErpPageResponse } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { ErpPageShell, SectionCard } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import RegistrationErpPage from "./RegistrationErpPage";
@@ -34,7 +36,6 @@ type Props = {
 };
 
 export default function TransportRegistrationPage({ blueprint }: Props) {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
@@ -42,35 +43,36 @@ export default function TransportRegistrationPage({ blueprint }: Props) {
 
   useEffect(() => {
     setIsAdmin(localStorage.getItem("adminMode") === "true");
+  }, []);
 
-    let active = true;
-    async function load() {
+  // The batch call gates loading/error only; route data is local-first.
+  const batchQuery = useQuery({
+    queryKey: erpKeys.batch(blueprint.fetchKeys),
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load transport info");
+  }, [batchQuery.error]);
+
+  const loading = batchQuery.isPending;
+
+  useEffect(() => {
+    // Mock DB implementation for Route admin
+    const customRoutes = localStorage.getItem("transport_routes_db");
+    if (customRoutes) {
       try {
-        setLoading(true);
-        setError(null);
-        await getErpBatch(blueprint.fetchKeys);
-
-        // Mock DB implementation for Route admin
-        const customRoutes = localStorage.getItem("transport_routes_db");
-        if (customRoutes) {
-          try {
-            setRoutes(JSON.parse(customRoutes));
-          } catch {
-            setRoutes(MOCK_ROUTES);
-          }
-        } else {
-          setRoutes(MOCK_ROUTES);
-          localStorage.setItem("transport_routes_db", JSON.stringify(MOCK_ROUTES));
-        }
-      } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load transport info");
-      } finally {
-        if (active) setLoading(false);
+        setRoutes(JSON.parse(customRoutes));
+      } catch {
+        setRoutes(MOCK_ROUTES);
       }
+    } else {
+      setRoutes(MOCK_ROUTES);
+      localStorage.setItem("transport_routes_db", JSON.stringify(MOCK_ROUTES));
     }
-    load();
-    return () => { active = false; };
-  }, [blueprint.fetchKeys]);
+  }, []);
 
   const handleUpdateStatus = (id: string) => {
     const nextRoutes = routes.map((r) => r.routeId === id ? { ...r, status: r.status === "active" ? "maintenance" : "active" } : r);

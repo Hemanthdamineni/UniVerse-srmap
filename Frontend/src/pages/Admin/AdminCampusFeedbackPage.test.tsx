@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import AdminCampusFeedbackPage from "./AdminCampusFeedbackPage";
 
 const getAdminCampusFeedback = vi.fn();
@@ -66,7 +68,11 @@ describe("AdminCampusFeedbackPage", () => {
 
   it("requires a reason and sends admin moderation decisions to campus feedback only", async () => {
     const user = userEvent.setup();
-    render(<AdminCampusFeedbackPage />);
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <AdminCampusFeedbackPage />
+      </QueryClientProvider>
+    );
 
     expect(await screen.findByText("Route 1")).toBeInTheDocument();
     await user.type(screen.getByPlaceholderText("Moderation reason"), "Constructive and policy compliant");

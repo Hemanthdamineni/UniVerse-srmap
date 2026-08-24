@@ -4,8 +4,10 @@
  * Used for registration, settings, and other pages that don't have a custom typed component.
  * Renders title + text + tables[] directly from the adaptToLegacyPayload shape.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { extractSections, sanitizeText } from "../../lib/erp/sanitize";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
@@ -51,54 +53,60 @@ function SimpleTable({ rows }: { rows: TableRow[] }) {
 }
 
 export default function DocumentErpPage({ blueprint }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [responsesByKey, setResponsesByKey] = useState<Record<string, ErpPageResponse>>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const pageKeys = blueprint.fetchKeys;
   const pageTitle = blueprint.heading;
 
-  const loadPage = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(pageKeys), refreshTrigger],
+    queryFn: async () => {
       if (pageKeys.length === 0) {
         throw new ApiError("No ERP fetch keys configured for this page.", 500, "NO_FETCH_KEYS", false);
       }
+      return getErpBatch(pageKeys);
+    },
+    staleTime: 60_000,
+  });
 
-      const batch = await getErpBatch(pageKeys);
-      const successful: Record<string, ErpPageResponse> = {};
-      const failures: string[] = [];
-
-      for (const key of pageKeys) {
-        const result = batch[key];
-        if (!result || (result as any).success === false) {
-          failures.push(sanitizeText((result as any)?.error) || `Failed to load ${key}`);
-        } else {
-          successful[key] = result as ErpPageResponse;
-        }
+  const [error, setError] = useState<string | null>(null);
+  const responsesByKey: Record<string, ErpPageResponse> = useMemo(() => {
+    const batch = batchQuery.data;
+    if (!batch) return {};
+    const successful: Record<string, ErpPageResponse> = {};
+    for (const key of pageKeys) {
+      const result = batch[key];
+      if (!result || (result as any).success === false) {
+        continue;
       }
-
-      if (Object.keys(successful).length === 0) {
-        throw new ApiError(failures[0] || "Failed to load ERP page", 500, "INTERNAL_ERROR", false);
-      }
-
-      setResponsesByKey(successful);
-    } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Failed to load page";
-      setError(message);
-      setResponsesByKey({});
-    } finally {
-      setLoading(false);
+      successful[key] = result as ErpPageResponse;
     }
-  }, [pageKeys]);
+    return successful;
+  }, [batchQuery.data, pageKeys]);
 
   useEffect(() => {
-    loadPage();
-  }, [loadPage, refreshTrigger]);
+    if (batchQuery.error) {
+      setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load page");
+      return;
+    }
+    if (!batchQuery.data) return;
+
+    const failures: string[] = [];
+    for (const key of pageKeys) {
+      const result = batchQuery.data[key];
+      if (!result || (result as any).success === false) {
+        failures.push(sanitizeText((result as any)?.error) || `Failed to load ${key}`);
+      }
+    }
+
+    if (Object.keys(responsesByKey).length === 0) {
+      setError(failures[0] || "Failed to load ERP page");
+    } else {
+      setError(null);
+    }
+  }, [batchQuery.error, batchQuery.data, pageKeys, responsesByKey]);
+
+  const loading = batchQuery.isPending;
 
   const handleRefresh = useCallback(() => {
     setRefreshTrigger((prev) => prev + 1);

@@ -1,6 +1,6 @@
 // Dashboard grid unchanged; widgets use SectionCard/SkeletonCard/InlineError from shared UI.
-import { useEffect, useRef, useState, lazy, Suspense } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useRef, useState, lazy, Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BasicInfo from "./BasicInfo";
 import Schedule from "./Schedule";
 const Attendance = lazy(() => import("./Attendance"));
@@ -14,8 +14,9 @@ import WelcomeCard from "./WelcomeCard";
 import FirstRunGuide from "./FirstRunGuide";
 import CampusHubWidget from "./CampusHubWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
-import { fetchSessionProfile, hasSessionAuth } from "../../lib/core/session";
+import { fetchSessionProfile, hasSessionAuth, readStoredProfileData } from "../../lib/core/session";
 import { sessionKeys } from "../../lib/core/queryKeys";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { hasSeenOnboarding } from "../../lib/core/onboarding";
 import { getErpBatch } from "../../lib/erp/index";
 import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
@@ -25,80 +26,62 @@ import { SkeletonCard } from "../../components/ui/Skeletons";
 import { DashboardLayout } from "../../components/layout/PageLayouts";
 
 function Dashboard() {
-  const [data, setData] = useState<any>(null);
-  const [profileData, setProfileData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [feedbackPendingCount, setFeedbackPendingCount] = useState(0);
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(() => !hasSeenOnboarding());
   const dashboardRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
+  // Phase 5: three independent queries. Each widget class renders as soon as
+  // its own inputs are ready instead of gating on the slowest of three loads.
+  const hasAuth = hasSessionAuth();
+  const DASHBOARD_BATCH_KEYS = ["academic/time-table", "academic/attendance-details"] as const;
+
+  const erpBatchQuery = useQuery({
+    queryKey: erpKeys.batch(DASHBOARD_BATCH_KEYS),
+    queryFn: () => getErpBatch([...DASHBOARD_BATCH_KEYS]),
+    enabled: hasAuth,
+    staleTime: 60_000,
+  });
+
+  const profileQuery = useQuery({
+    queryKey: sessionKeys.profile,
+    queryFn: fetchSessionProfile,
+    initialData: () => readStoredProfileData() ?? undefined,
+    staleTime: 30_000,
+    enabled: hasAuth,
+    retry: false,
+  });
+
+  const feedbackQuery = useQuery({
+    queryKey: ["feedback", "end-semester-status"],
+    queryFn: getEndSemesterFeedbackStatus,
+    enabled: hasAuth,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  // Full batch passed to widgets so they can readExtractedPage(rawData, "<pageKey>").
+  const data = erpBatchQuery.data ?? null;
+  // Disabled queries stay pending forever, so gate on auth explicitly to
+  // match the pre-migration behavior of clearing loaders on the no-session path.
+  const loading = hasAuth && erpBatchQuery.isPending;
+  const error: string | null = !hasAuth
+    ? "Your session has expired. Please log in to continue."
+    : erpBatchQuery.error instanceof Error
+      ? erpBatchQuery.error.message
+      : erpBatchQuery.error
+        ? "Failed to load dashboard data."
+        : null;
+
+  const profileData = profileQuery.data ?? null;
+  const profileLoading = hasAuth && profileQuery.isPending;
+  const profileError: string | null = profileQuery.error
+    ? profileQuery.error.message || "No profile data available"
+    : null;
+
+  const feedbackPendingCount = feedbackQuery.data?.totalPending || 0;
+
   usePageContrast(dashboardRef, [loading, profileLoading, error, profileError, selectedDate]);
-
-  useEffect(() => {
-    let active = true;
-
-    if (!hasSessionAuth()) {
-      setError("Your session has expired. Please log in to continue.");
-      setLoading(false);
-      setProfileLoading(false);
-      return;
-    }
-
-    // Fetch each widget's data as separate page keys so that the
-    // transformers receive a correctly shaped batch object keyed by
-    // page key (with _extracted embedded by the backend extractor).
-    setLoading(true);
-    getErpBatch([
-      "academic/time-table",
-      "academic/attendance-details",
-    ])
-      .then((batch) => {
-        if (!active) return;
-        // Pass the full batch to setData so widgets can call
-        // readExtractedPage(rawData, "<pageKey>") correctly.
-        setData(batch);
-        setLoading(false);
-      })
-      .catch((err: Error) => {
-        if (!active) return;
-        setError(err.message);
-        setLoading(false);
-      });
-
-    setProfileLoading(true);
-    // Shared ['session','profile'] cache — dedups with Sidebar/Blueprint.
-    queryClient
-      .fetchQuery({ queryKey: sessionKeys.profile, queryFn: fetchSessionProfile })
-      .then((profile) => {
-        if (!active) return;
-        setProfileData(profile);
-        setProfileLoading(false);
-      })
-      .catch((err: Error) => {
-        if (!active) return;
-        setProfileError(err.message || 'No profile data available');
-        setProfileLoading(false);
-      });
-
-    getEndSemesterFeedbackStatus()
-      .then((status) => {
-        if (!active) return;
-        setFeedbackPendingCount(status.totalPending || 0);
-      })
-      .catch(() => {
-        if (!active) return;
-        setFeedbackPendingCount(0);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   if (loading || profileLoading) {
     return (

@@ -6,7 +6,9 @@
  */
 
 import { Download } from "lucide-react";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminQueueOptions } from '../../lib/core/queryOptions';
 import { Link } from 'react-router-dom';
 import { ErpPageShell, SectionCard, KpiGrid } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
@@ -119,24 +121,21 @@ function DistributionChart() {
 /* ---------- Main Page ---------- */
 
 export default function AdminEventsManagementPage() {
-  const [events, setEvents] = useState<EventSummary[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listEvents();
-      setEvents(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const eventsQuery = useQuery({
+    queryKey: ["admin", "events-management"],
+    queryFn: () => listEvents(),
+    staleTime: adminQueueOptions.staleTime,
+  });
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    if (!eventsQuery.error) return;
+    setError(eventsQuery.error instanceof Error ? eventsQuery.error.message : "Failed to load analytics.");
+  }, [eventsQuery.error]);
+
+  const events = eventsQuery.data ?? [];
+  const loading = eventsQuery.isPending;
 
   const totalAttendance = events.reduce((s, e) => s + (e.registeredCount ?? 0), 0);
   const avgSatisfaction = 4.8;
@@ -173,7 +172,7 @@ export default function AdminEventsManagementPage() {
           Real-time performance metrics for the Academic Year 2024-25
         </p>
 
-        {error && <ErrorMessage message={error} onRetry={loadData} />}
+        {error && <ErrorMessage message={error} onRetry={() => void eventsQuery.refetch()} />}
 
         {/* KPI Cards */}
         <KpiGrid

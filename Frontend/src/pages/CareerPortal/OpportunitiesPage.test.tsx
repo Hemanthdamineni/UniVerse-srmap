@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import OpportunitiesPage from "./OpportunitiesPage";
+import { createTestQueryClient } from "../../test/testUtils";
 
 vi.mock("../../lib/career/careerApi", () => ({
+  bookmarkOpportunity: vi.fn(async (id: string) => ({ id, bookmarked: true })),
   listOpportunities: vi.fn(() =>
     Promise.resolve({
       items: [
@@ -42,10 +45,13 @@ describe("OpportunitiesPage", () => {
 
   it("loads items after debounce window", async () => {
     const { listOpportunities } = await import("../../lib/career/careerApi");
+    const queryClient = createTestQueryClient();
     render(
-      <MemoryRouter initialEntries={["/career/opportunities"]}>
-        <OpportunitiesPage />
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/career/opportunities"]}>
+          <OpportunitiesPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
     await waitFor(
       () => {
@@ -59,10 +65,13 @@ describe("OpportunitiesPage", () => {
   it("applies type filter via job chip", async () => {
     const user = userEvent.setup();
     const { listOpportunities } = await import("../../lib/career/careerApi");
+    const queryClient = createTestQueryClient();
     render(
-      <MemoryRouter initialEntries={["/career/opportunities"]}>
-        <OpportunitiesPage />
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/career/opportunities"]}>
+          <OpportunitiesPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
     await waitFor(() => expect(screen.getByText("Listed")).toBeInTheDocument());
     vi.mocked(listOpportunities).mockClear();
@@ -78,10 +87,13 @@ describe("OpportunitiesPage", () => {
   it("changes sort option", async () => {
     const user = userEvent.setup();
     const { listOpportunities } = await import("../../lib/career/careerApi");
+    const queryClient = createTestQueryClient();
     render(
-      <MemoryRouter initialEntries={["/career/opportunities"]}>
-        <OpportunitiesPage />
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/career/opportunities"]}>
+          <OpportunitiesPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
     await waitFor(() => expect(screen.getByText("Listed")).toBeInTheDocument());
     vi.mocked(listOpportunities).mockClear();

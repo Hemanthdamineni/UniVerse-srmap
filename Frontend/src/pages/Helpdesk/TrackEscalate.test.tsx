@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import TrackEscalate from "./TrackEscalate";
+import { createTestQueryClient } from "../../test/testUtils";
 
 const adminHeaders = { "x-admin-password": "test-admin" };
 const listHelpdeskTickets = vi.fn();
@@ -96,7 +98,12 @@ describe("TrackEscalate", () => {
   // the 5s default so full-suite parallel runs don't time this out.
   it("supports admin triage, required resolution summary, internal notes, and bulk action", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
-    render(<TrackEscalate adminMode />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TrackEscalate adminMode />
+      </QueryClientProvider>
+    );
 
     expect(await screen.findByText("ERP login blocked")).toBeInTheDocument();
     expect(screen.getByText("Asha Rao: 1 active, 1 breached")).toBeInTheDocument();

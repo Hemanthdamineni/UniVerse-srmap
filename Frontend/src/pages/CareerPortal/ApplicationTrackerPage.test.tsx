@@ -2,7 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import ApplicationTrackerPage from "./ApplicationTrackerPage";
+import { createTestQueryClient } from "../../test/testUtils";
+
+function renderTracker() {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <ApplicationTrackerPage />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
 
 const listApplications = vi.fn();
 const updateApplication = vi.fn(() => Promise.resolve({ updated: true }));
@@ -50,11 +63,7 @@ describe("ApplicationTrackerPage", () => {
   });
 
   it("loads applications and renders them in the correct kanban columns", async () => {
-    render(
-      <MemoryRouter>
-        <ApplicationTrackerPage />
-      </MemoryRouter>
-    );
+    renderTracker();
     await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
     expect(screen.getByText("Internship Role")).toBeTruthy();
 
@@ -69,11 +78,7 @@ describe("ApplicationTrackerPage", () => {
 
   it("deletes application after confirming in the removal dialog", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <ApplicationTrackerPage />
-      </MemoryRouter>
-    );
+    renderTracker();
     await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();
@@ -90,11 +95,7 @@ describe("ApplicationTrackerPage", () => {
 
   it("keeps the application when the removal dialog is dismissed", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <ApplicationTrackerPage />
-      </MemoryRouter>
-    );
+    renderTracker();
     await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();

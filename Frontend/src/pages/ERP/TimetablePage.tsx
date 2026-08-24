@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 // ErpPageShell section-card layout; timetable structure unchanged.
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { TimetableModel } from "../../lib/erp/erpTransformers";
 import { getFacultyCabins, buildCabinLookup } from "../../lib/erp/facultyApi";
@@ -16,53 +18,53 @@ interface TimetablePageProps {
 
 export default function TimetablePage({ blueprint }: TimetablePageProps) {
   const [model, setModel] = useState<TimetableModel | null>(null);
-  const [cabins, setCabins] = useState<FacultyCabin[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Phase 5: batch fetch on React Query (fresh window = backend fresh TTL).
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  // Cabins are supplementary: a failure here never blocks the timetable.
+  const cabinsQuery = useQuery({
+    queryKey: ["faculty-cabins"],
+    queryFn: () => getFacultyCabins(),
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+  const cabins = cabinsQuery.data ?? [];
+
   useEffect(() => {
-    let active = true;
-    setLoading(true);
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load timetable.");
+  }, [batchQuery.error]);
+
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
+
     setEmptyMessage(null);
+    const result = batch["academic/time-table"];
+    if (!result || (result as any).success === false) {
+      setEmptyMessage("Your class timetable has not been published yet. Check back later or contact your department.");
+      return;
+    }
 
-    // Cabins are supplementary: a failure here never blocks the timetable.
-    getFacultyCabins()
-      .then((data) => {
-        if (active) setCabins(data);
-      })
-      .catch(() => {
-        if (active) setCabins([]);
-      });
+    const rawData = (result as any).data;
+    const pipelineResult = executePipeline(blueprint, rawData);
+    if (pipelineResult?.isValid && pipelineResult.data) {
+      setModel(pipelineResult.data as TimetableModel);
+      setError(null);
+    } else {
+      setError("Invalid timetable data format.");
+    }
+  }, [batchQuery.data, blueprint]);
 
-    getErpBatch(blueprint.fetchKeys)
-      .then((batch) => {
-        if (!active) return;
-        const result = batch["academic/time-table"];
-        if (!result || (result as any).success === false) {
-          setEmptyMessage("Your class timetable has not been published yet. Check back later or contact your department.");
-          setLoading(false);
-          return;
-        }
-
-        const rawData = (result as any).data;
-        const pipelineResult = executePipeline(blueprint, rawData);
-        if (pipelineResult?.isValid && pipelineResult.data) {
-          setModel(pipelineResult.data as TimetableModel);
-        } else {
-          setError("Invalid timetable data format.");
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(err.message || "Failed to load timetable.");
-        setLoading(false);
-      });
-
-    return () => { active = false; };
-  }, [blueprint.fetchKeys, refreshTrigger]);
+  const loading = batchQuery.isPending;
 
   const { timeSlots, days, subjects } = model ?? { timeSlots: [], days: [], subjects: [] };
 

@@ -1,5 +1,6 @@
 // ResultsCurrentPage - Main orchestrator component (refactored)
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   executePipeline,
@@ -9,6 +10,7 @@ import {
   type InternalMarksModel,
 } from "../../lib/erp/erpTransformers";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 
 import { ErpPageShell, SectionCard, TableCardHeader } from "../../components/erp/ErpPrimitives";
@@ -84,68 +86,69 @@ export default function ResultsCurrentPage({ blueprint }: Props) {
     semesterNumber: null as number | null,
   });
   const [internalMarks, setInternalMarks] = useState<InternalMarksModel | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load results");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const resultPayload = (batch["examination/current-semester-results"] as any)?.data;
-        if (!resultPayload) {
-          throw new Error("No data found for the current semester results.");
-        }
-
-        const resultModel = executePipeline("results-current", batch);
-        if (!resultModel.isValid || !resultModel.data) {
-          throw new Error("Validation failed for results data.");
-        }
-
-        const courseRegistrationPayload = (batch["academic/course-registration"] as any)?.data;
-        const courseRegistrationModel = courseRegistrationPayload
-          ? executePipeline("course-registration", courseRegistrationPayload)
-          : { isValid: false, data: null };
-        const nextCurrentCourse =
-          courseRegistrationModel.isValid && courseRegistrationModel.data
-            ? (courseRegistrationModel.data as CourseRegistrationModel)
-            : null;
-
-        const curriculumPayload = (batch["academic/student-wise-subjects"] as any)?.data;
-        const curriculumModel = curriculumPayload
-          ? executePipeline("curriculum", curriculumPayload)
-          : { isValid: false, data: null };
-        const nextCurriculum =
-          curriculumModel.isValid && curriculumModel.data
-            ? (curriculumModel.data as CurriculumModel)
-            : null;
-
-        const nextCgpaSummary = extractCgpaSummary(
-          (batch["academic/cgpa-summary"] as any)?.data
-        );
-
-        setData(resultModel.data as CurrentResultModel);
-        setCurrentCourse(nextCurrentCourse);
-        setCurriculum(nextCurriculum);
-        setCgpaSummary(nextCgpaSummary);
-        setInternalMarks((resultModel.data as CurrentResultModel).internalMarks || null);
-      } catch (loadError: any) {
-        if (active) setError(loadError.message || "Failed to load results");
-      } finally {
-        if (active) setLoading(false);
+    try {
+      const resultPayload = (batch["examination/current-semester-results"] as any)?.data;
+      if (!resultPayload) {
+        throw new Error("No data found for the current semester results.");
       }
-    }
 
-    load();
-    return () => {
-      active = false;
-    };
-  }, [blueprint, refreshTrigger]);
+      const resultModel = executePipeline("results-current", batch);
+      if (!resultModel.isValid || !resultModel.data) {
+        throw new Error("Validation failed for results data.");
+      }
+
+      const courseRegistrationPayload = (batch["academic/course-registration"] as any)?.data;
+      const courseRegistrationModel = courseRegistrationPayload
+        ? executePipeline("course-registration", courseRegistrationPayload)
+        : { isValid: false, data: null };
+      const nextCurrentCourse =
+        courseRegistrationModel.isValid && courseRegistrationModel.data
+          ? (courseRegistrationModel.data as CourseRegistrationModel)
+          : null;
+
+      const curriculumPayload = (batch["academic/student-wise-subjects"] as any)?.data;
+      const curriculumModel = curriculumPayload
+        ? executePipeline("curriculum", curriculumPayload)
+        : { isValid: false, data: null };
+      const nextCurriculum =
+        curriculumModel.isValid && curriculumModel.data
+          ? (curriculumModel.data as CurriculumModel)
+          : null;
+
+      const nextCgpaSummary = extractCgpaSummary(
+        (batch["academic/cgpa-summary"] as any)?.data
+      );
+
+      setError(null);
+      setData(resultModel.data as CurrentResultModel);
+      setCurrentCourse(nextCurrentCourse);
+      setCurriculum(nextCurriculum);
+      setCgpaSummary(nextCgpaSummary);
+      setInternalMarks((resultModel.data as CurrentResultModel).internalMarks || null);
+    } catch (loadError: any) {
+      setError(loadError.message || "Failed to load results");
+    }
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   const internalMarksByCode = useMemo(() => {
     const entries = data?.internalMarks?.subjects || [];

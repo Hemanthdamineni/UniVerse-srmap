@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listApplications, updateApplication, deleteApplication, type CareerApplication } from "../../lib/career/careerApi";
+import { careerKeys } from "../../lib/career/queryKeys";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/ui/Layouts";
 import { SkeletonCard } from "../../components/ui/Skeletons";
@@ -20,30 +22,68 @@ const COLUMNS: { id: CareerApplication["status"]; label: string }[] = [
 ];
 
 const ApplicationTrackerPage: React.FC = () => {
-  const [applications, setApplications] = useState<CareerApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [draggedAppId, setDraggedAppId] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    void fetchApps();
-  }, []);
+  const appsQuery = useQuery({
+    queryKey: careerKeys.applications,
+    queryFn: () => listApplications(),
+    staleTime: 30_000,
+  });
 
-  const fetchApps = async () => {
-    setLoading(true);
-    try {
-      const data = await listApplications();
-      setApplications(data.items);
-      setLoadError("");
-    } catch (err) {
-      console.error("Failed to fetch applications", err);
-      setLoadError("Couldn't load your applications. Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const applications = appsQuery.data?.items ?? [];
+  const loading = appsQuery.isPending;
+  const loadError = appsQuery.error
+    ? "Couldn't load your applications. Check your connection and try again."
+    : "";
+
+  // Canonical optimistic pattern (docs/react-query-migration-plan.md §5):
+  // cancel → patch → roll back on error.
+  const moveApplication = useMutation({
+    mutationFn: (input: { id: string; newStatus: CareerApplication["status"]; previousStatus: CareerApplication["status"] }) =>
+      updateApplication(input.id, input.newStatus),
+    onMutate: async ({ id, newStatus }) => {
+      await queryClient.cancelQueries({ queryKey: careerKeys.applications });
+      queryClient.setQueryData(careerKeys.applications, (old: { items: CareerApplication[] } | undefined) => ({
+        ...(old ?? { items: [] }),
+        items: (old?.items ?? []).map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
+      }));
+    },
+    onError: (err, { id, previousStatus, newStatus }, _ctx) => {
+      console.error("Failed to update status", err);
+      queryClient.setQueryData(careerKeys.applications, (old: { items: CareerApplication[] } | undefined) => ({
+        ...(old ?? { items: [] }),
+        items: (old?.items ?? []).map((a) => (a.id === id ? { ...a, status: previousStatus } : a)),
+      }));
+      const title = appsQuery.data?.items.find((a) => a.id === id)?.opportunityTitle ?? "the application";
+      setActionError(`Couldn't move "${title}" to ${COLUMNS.find(c => c.id === newStatus)?.label ?? "that column"}. Please try again.`);
+    },
+    onSuccess: () => setActionError(""),
+  });
+
+  const deleteApplicationMutation = useMutation({
+    mutationFn: (id: string) => deleteApplication(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: careerKeys.applications });
+      const previous = queryClient.getQueryData(careerKeys.applications);
+      queryClient.setQueryData(careerKeys.applications, (old: { items: CareerApplication[] } | undefined) => ({
+        ...(old ?? { items: [] }),
+        items: (old?.items ?? []).filter((a) => a.id !== id),
+      }));
+      return { previous };
+    },
+    onError: (err, id, context) => {
+      console.error("Failed to delete application", err);
+      if (context?.previous) {
+        queryClient.setQueryData(careerKeys.applications, context.previous);
+      }
+      const title = appsQuery.data?.items.find((a) => a.id === id)?.opportunityTitle ?? "the application";
+      setActionError(`Couldn't remove "${title}" from your tracker. Please try again.`);
+    },
+    onSuccess: () => setActionError(""),
+  });
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedAppId(id);
@@ -72,24 +112,13 @@ const ApplicationTrackerPage: React.FC = () => {
   const handleDrop = async (e: React.DragEvent, newStatus: CareerApplication["status"]) => {
     e.preventDefault();
     const appId = e.dataTransfer.getData("applicationId");
-    
+
     if (!appId) return;
 
     const appToMove = applications.find(a => a.id === appId);
     if (!appToMove || appToMove.status === newStatus) return;
 
-    // Optimistic UI Update
-    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
-
-    try {
-      await updateApplication(appId, newStatus);
-      setActionError("");
-    } catch (err) {
-      console.error("Failed to update status", err);
-      // Revert on failure
-      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: appToMove.status } : a));
-      setActionError(`Couldn't move "${appToMove.opportunityTitle}" to ${COLUMNS.find(c => c.id === newStatus)?.label ?? "that column"}. Please try again.`);
-    }
+    await moveApplication.mutateAsync({ id: appId, newStatus, previousStatus: appToMove.status });
   };
 
   const handleDelete = (id: string) => {
@@ -99,21 +128,8 @@ const ApplicationTrackerPage: React.FC = () => {
   const confirmDelete = async () => {
     const app = applications.find(a => a.id === pendingDeleteId);
     if (!app) return;
-    const { id, opportunityTitle } = app;
     setPendingDeleteId(null);
-
-    // Optimistic delete
-    const previousApps = [...applications];
-    setApplications(prev => prev.filter(a => a.id !== id));
-
-    try {
-      await deleteApplication(id);
-      setActionError("");
-    } catch (err) {
-      console.error("Failed to delete application", err);
-      setApplications(previousApps);
-      setActionError(`Couldn't remove "${opportunityTitle}" from your tracker. Please try again.`);
-    }
+    await deleteApplicationMutation.mutateAsync(app.id);
   };
 
   const pendingDeleteApp = useMemo(
@@ -187,7 +203,7 @@ const ApplicationTrackerPage: React.FC = () => {
         <InlineError
           title="Couldn't load your tracker"
           message={loadError}
-          onRetry={() => void fetchApps()}
+          onRetry={() => void appsQuery.refetch()}
         />
       ) : applications.length === 0 ? (
         <EmptyState

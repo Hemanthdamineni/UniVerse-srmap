@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import TransportRoutesPage from "./TransportRoutesPage";
 import { getErpBatch } from "../../lib/erp/index";
 
@@ -43,7 +45,8 @@ describe("TransportRoutesPage", () => {
 
   it("renders page title and transport routes table", async () => {
     render(
-      <MemoryRouter>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter>
         <TransportRoutesPage blueprint={{
           route: "/transport-hostel/routes",
           heading: "Transport Routes",
@@ -52,6 +55,7 @@ describe("TransportRoutesPage", () => {
           domain: "campus",
         }} />
       </MemoryRouter>
+      </QueryClientProvider>
     );
 
     await waitFor(() => {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { SectionCard } from "../../components/erp/ErpPrimitives";
 import { Button } from "../../components/button";
 import RegistrationErpPage from "./RegistrationErpPage";
@@ -25,7 +27,6 @@ const DEFAULT_BUDDIES: BuddyInfo[] = [
 ];
 
 export default function HostelRegistrationPage({ blueprint }: Props) {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Buddy Finder State
@@ -65,23 +66,19 @@ export default function HostelRegistrationPage({ blueprint }: Props) {
     }
   }, []);
 
+  // The batch call gates loading/error only; buddy data is local-first.
+  const batchQuery = useQuery({
+    queryKey: erpKeys.batch(blueprint.fetchKeys),
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
-      } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load hostel info");
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-    load();
-    return () => { active = false; };
-  }, [blueprint.fetchKeys]);
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load hostel info");
+  }, [batchQuery.error]);
+
+  const loading = batchQuery.isPending;
 
   const handleAddDetails = (e: React.FormEvent) => {
     e.preventDefault();

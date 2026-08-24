@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { executePipeline, type SapScholarshipsModel } from "../../lib/erp/erpTransformers";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
@@ -11,50 +13,55 @@ type Props = {
 
 
 export default function SapScholarshipsPage({ blueprint }: Props) {
-  const [data, setData] = useState<SapScholarshipsModel | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  const [data, setData] = useState<SapScholarshipsModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load SAP & scholarships.");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        // Merge data from all fetch keys
-        const merged: Record<string, unknown> = {};
-        for (const key of blueprint.fetchKeys) {
-          const rawData = (batch[key] as any)?.data;
-          if (rawData && typeof rawData === "object") {
-            Object.assign(merged, rawData);
-          }
+    try {
+      // Merge data from all fetch keys
+      const merged: Record<string, unknown> = {};
+      for (const key of blueprint.fetchKeys) {
+        const rawData = (batch[key] as any)?.data;
+        if (rawData && typeof rawData === "object") {
+          Object.assign(merged, rawData);
         }
-
-        if (Object.keys(merged).length === 0) {
-          throw new Error("No data found for SAP & scholarships.");
-        }
-
-        const pipelineResult = executePipeline("sap-scholarships", merged);
-        if (!pipelineResult.isValid || !pipelineResult.data) {
-          setData({ title: blueprint.heading, tables: [], message: "No SAP or scholarship information available." });
-          return;
-        }
-
-        setData(pipelineResult.data as SapScholarshipsModel);
-      } catch (err: any) {
-        if (active) setError(err.message || "Failed to load SAP & scholarships.");
-      } finally {
-        if (active) setLoading(false);
       }
-    }
 
-    load();
-    return () => { active = false; };
-  }, [blueprint, refreshTrigger]);
+      if (Object.keys(merged).length === 0) {
+        throw new Error("No data found for SAP & scholarships.");
+      }
+
+      const pipelineResult = executePipeline("sap-scholarships", merged);
+      if (!pipelineResult.isValid || !pipelineResult.data) {
+        setData({ title: blueprint.heading, tables: [], message: "No SAP or scholarship information available." });
+        setError(null);
+        return;
+      }
+
+      setError(null);
+      setData(pipelineResult.data as SapScholarshipsModel);
+    } catch (err: any) {
+      setError(err.message || "Failed to load SAP & scholarships.");
+    }
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   return (
     <ErpPageShell

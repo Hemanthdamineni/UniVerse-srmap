@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch, type ErpBatchPageResult } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { readExtracted } from "../../lib/erp/shared";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
@@ -139,46 +141,35 @@ function getColumns(isAdmin: boolean): Column<TransportRoute>[] {
 }
 
 export default function TransportRoutesPage({ blueprint }: Props) {
-  const [data, setData] = useState<TransportRoute[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check admin mode
-    const adminMode = localStorage.getItem("adminMode") === "true";
-    setIsAdmin(adminMode);
+    setIsAdmin(localStorage.getItem("adminMode") === "true");
+  }, []);
 
-    let active = true;
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        const batch = await getErpBatch(blueprint.fetchKeys);
+  const batchQuery = useQuery({
+    queryKey: erpKeys.batch(blueprint.fetchKeys),
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
 
-        if (!active) return;
+  useEffect(() => {
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load transport routes.");
+  }, [batchQuery.error]);
 
-        let allRoutes: TransportRoute[] = [];
-        for (const key of blueprint.fetchKeys) {
-          const routes = parseTransportData(batch[key]);
-          allRoutes = [...allRoutes, ...routes];
-        }
-
-        if (active) {
-          setData(allRoutes);
-        }
-      } catch (err) {
-        if (active) {
-          setError(err instanceof Error ? err.message : "Failed to load transport routes.");
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
+  const data = useMemo(() => {
+    const batch = batchQuery.data;
+    if (!batch) return [] as TransportRoute[];
+    let allRoutes: TransportRoute[] = [];
+    for (const key of blueprint.fetchKeys) {
+      allRoutes = [...allRoutes, ...parseTransportData(batch[key])];
     }
+    return allRoutes;
+  }, [batchQuery.data, blueprint]);
 
-    load();
-    return () => { active = false; };
-  }, [blueprint.fetchKeys]);
+  const loading = batchQuery.isPending;
 
   const columns = getColumns(isAdmin);
 

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { ErpPageShell, SectionCard, KpiGrid, StatusBanner } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { getEndSemesterFeedbackStatus, type FeedbackStatusResponse } from "../../lib/campus/studentToolsApi";
@@ -7,55 +8,38 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, AlertCircle, FileText, Bus, Shield, ClipboardList } from "lucide-react";
 
 export default function FeedbackDashboard() {
-  const [erpStatus, setErpStatus] = useState<FeedbackStatusResponse | null>(null);
-  const [campusItems, setCampusItems] = useState<CampusFeedbackEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(null);
+  const erpStatusQuery = useQuery({
+    queryKey: ["feedback", "end-semester-status", refreshTrigger],
+    queryFn: () => getEndSemesterFeedbackStatus(),
+    staleTime: 60_000,
+  });
 
-    Promise.allSettled([
-      getEndSemesterFeedbackStatus(),
-      getMyCampusFeedback("events").catch(() => ({ items: [] })),
-      getMyCampusFeedback("hostel_mess").catch(() => ({ items: [] })),
-      getMyCampusFeedback("transport").catch(() => ({ items: [] })),
-    ])
-      .then((results) => {
-        if (!active) return;
-        const [erpRes, eventsRes, hostelRes, transportRes] = results;
+  // Each category is supplementary: a failure yields an empty list, never a
+  // dashboard error (matches the old per-promise .catch contract).
+  const [eventsQuery, hostelMessQuery, transportQuery] = useQueries({
+    queries: (["events", "hostel_mess", "transport"] as const).map((category) => ({
+      queryKey: ["feedback", "campus", category, refreshTrigger],
+      queryFn: () => getMyCampusFeedback(category).catch(() => ({ items: [] as CampusFeedbackEntry[] })),
+      staleTime: 60_000,
+    })),
+  });
 
-        if (erpRes.status === "fulfilled") {
-          setErpStatus(erpRes.value);
-        }
+  const erpStatus = erpStatusQuery.data ?? null;
+  // Plain per-render derivation: RQ result objects aren't dep-array stable.
+  const campusItems: CampusFeedbackEntry[] = [];
+  for (const q of [eventsQuery, hostelMessQuery, transportQuery]) {
+    if (q.data?.items) campusItems.push(...q.data.items);
+  }
+  campusItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-        const items: CampusFeedbackEntry[] = [];
-        if (eventsRes.status === "fulfilled" && eventsRes.value) {
-          items.push(...eventsRes.value.items);
-        }
-        if (hostelRes.status === "fulfilled" && hostelRes.value) {
-          items.push(...hostelRes.value.items);
-        }
-        if (transportRes.status === "fulfilled" && transportRes.value) {
-          items.push(...transportRes.value.items);
-        }
-
-        items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setCampusItems(items);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err instanceof Error ? err.message : "Failed to load feedback dashboard");
-          setLoading(false);
-        }
-      });
-
-    return () => { active = false; };
-  }, [refreshTrigger]);
+  const error = erpStatusQuery.isError ? "Failed to load feedback dashboard" : null;
+  const loading =
+    erpStatusQuery.isPending ||
+    eventsQuery.isPending ||
+    hostelMessQuery.isPending ||
+    transportQuery.isPending;
 
   const kpis = useMemo(() => {
     const totalPendingErp = erpStatus?.totalPending ?? 0;

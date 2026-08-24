@@ -1,23 +1,19 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import HostelBookingPage from "./HostelBookingPage";
 import { getErpBatch } from "../../lib/erp/index";
+import { createTestQueryClient } from "../../test/testUtils";
 
 vi.mock("../../lib/erp/index", () => ({
   getErpBatch: vi.fn(),
   executeErpAction: vi.fn(),
 }));
 
-describe("HostelBookingPage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("renders mock hostel info when ERP data is missing", async () => {
-    (getErpBatch as any).mockResolvedValue({});
-
-    render(
+function renderPage() {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
       <MemoryRouter>
         <HostelBookingPage blueprint={{
           route: "/transport-hostel/hostel-booking",
@@ -27,7 +23,19 @@ describe("HostelBookingPage", () => {
           domain: "campus",
         }} />
       </MemoryRouter>
-    );
+    </QueryClientProvider>
+  );
+}
+
+describe("HostelBookingPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders mock hostel info when ERP data is missing", async () => {
+    (getErpBatch as any).mockResolvedValue({});
+
+    renderPage();
 
     // Verify mock fallback
     await waitFor(() => {
@@ -68,17 +76,7 @@ describe("HostelBookingPage", () => {
       }
     });
 
-    render(
-      <MemoryRouter>
-        <HostelBookingPage blueprint={{
-          route: "/transport-hostel/hostel-booking",
-          heading: "Hostel Booking",
-          fetchKeys: ["hostel/hostel-booking-for-full-year"],
-          renderer: "generic" as any,
-          domain: "campus",
-        }} />
-      </MemoryRouter>
-    );
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText("Super Block")).toBeInTheDocument();

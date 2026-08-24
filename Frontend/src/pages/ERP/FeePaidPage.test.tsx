@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import FeePaidPage from "./FeePaidPage";
+import { createTestQueryClient } from "../../test/testUtils";
 
 const getErpBatch = vi.fn();
 const executeErpAction = vi.fn();
@@ -76,7 +78,7 @@ describe("FeePaidPage", () => {
       },
     });
 
-    render(<FeePaidPage blueprint={blueprint} />);
+    render(<QueryClientProvider client={createTestQueryClient()}><FeePaidPage blueprint={blueprint} /></QueryClientProvider>);
 
     // With no _extracted, the pipeline fails. The page should show no receipt rows.
     // We wait for loading to finish by checking for the page heading.
@@ -87,11 +89,14 @@ describe("FeePaidPage", () => {
 
     // The pipeline error should surface — either as a warning or as an error state
     const pageText = document.body.textContent ?? "";
-    expect(
-      pageText.includes("MISSING_EXTRACTED_PAYLOAD") ||
-        pageText.includes("No payment receipts found") ||
-        pageText.includes("Partial finance data warning")
-    ).toBe(true);
+    await waitFor(() => {
+      const text = document.body.textContent ?? "";
+      expect(
+        text.includes("MISSING_EXTRACTED_PAYLOAD") ||
+          text.includes("No payment receipts found") ||
+          text.includes("Partial finance data warning")
+      ).toBe(true);
+    });
   });
 
   it("renders fee-paid rows from _extracted payload and allows printing", async () => {
@@ -137,7 +142,7 @@ describe("FeePaidPage", () => {
       },
     });
 
-    render(<FeePaidPage blueprint={blueprint} />);
+    render(<QueryClientProvider client={createTestQueryClient()}><FeePaidPage blueprint={blueprint} /></QueryClientProvider>);
 
     // The receipt number 7788 should appear in the table
     expect(await screen.findByText("7788")).toBeInTheDocument();

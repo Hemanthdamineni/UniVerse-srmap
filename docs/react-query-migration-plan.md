@@ -1,6 +1,19 @@
 # React Query Migration Plan
 
-**Status:** Implementation in progress — **Phase 0 ✅ and Phase 1 ✅ shipped & validated 2026-08-23** (tsc/lint/build clean; 95 files / 1161 tests green; devtools confirmed absent from prod bundle). Phases 2–6 not started.
+**Status: ✅ MIGRATION COMPLETE (Phases 0–6), finished 2026-08-24.** Final validation: tsc/lint clean; 95 files / 1160 vitest tests green; production build clean with zero traces of retired modules. Playwright e2e 18/18 (prototype mode) as of Phase 3.
+
+## Phase 6 closeout notes (2026-08-24)
+
+- **`eventCache` deleted.** `competitionsApi` functions now fetch on every call; freshness/dedup is owned by React Query above (context adapter keys mirror the old TTL table). `eventsApi.test.ts` cache-behavior tests rewritten as network-behavior tests (per-call mocks — `mockFetch` uses `mockResolvedValueOnce`, so every API call needs its own mock line).
+- **Kept deliberately (do not "clean up" later without reading this):**
+  - Per-wrapper `handleSessionAuthFailure()` guards stay: events-workflow imperative mutation calls don't flow through `useMutation` yet, so the centralized QueryCache/MutationCache guard alone wouldn't cover them. Revisit only when those handlers convert.
+  - Custom `hooks/useOptimistic`: still consumed by SubmissionPage/EvaluationPage. Retire when those two pages convert.
+  - `CampusFeedbackPage` student loader unconverted by design (legacy-migration side effects inside the fetch flow = initialization routine, not server state).
+- **Known follow-ups (non-blocking):** events-workflow imperative mutations could adopt `useMutation`; `useSubmissions` fan-out already on `useQueries`.
+**P4 pattern note:** admin-scoped lists key on a primitive `view: admin|student` flag merged into the filters object (never the headers object — unstable identity); `@tanstack/query/exhaustive-deps` needs a rationale'd block-disable where queryFn closes over headers. Optimistic screens use canonical cancel→patch→rollback `onMutate`; always wrap direct fn refs in mutationFn (`(id) => api(id)`) so RQ's context second-arg doesn't leak into API mocks/calls.
+**P5 gotchas:** `enabled:false` queries stay `isPending` forever — gate loading flags on the enable condition (no-session test asserts loaders clear); settle-waits must target content (`findByText`), not `isFetching()===0` (can read 0 before first fetch tick); converted pages' vi.mock factories need every newly imported symbol (e.g. `readStoredProfileData`).
+**Phase 2 note:** `useAsyncPage` keys are per-hook-instance by default (`["lms","async", instanceId, …deps]`) because deps alone collide across distinct loaders sharing an empty deps array; pass `cacheKeyPart` to opt into cross-page shared entries (planned for the LMS-insight getters when AcademicHubPage converts in Phase 5).
+**Phase 3 note:** `eventCache` deliberately still lives inside `competitionsApi` internals (~40 sites + dedicated test suite) — retiring it belongs to Phase 4's mutation conversion. `EventContext.refetch()` maps to scoped invalidation of detail/config/role/submissions, so workflow pages' post-mutation refetches already flow through React Query without touching their call sites.
 **Scope:** `Frontend/src` server-state fetching and mutations.
 **Baseline verified 2026-08-22:** `@tanstack/react-query@^5.85.0` installed; `QueryClientProvider` already wraps the app (`AppProviders.tsx` → `lib/core/queryClient.ts`: `staleTime` 30s, `gcTime` 5m, `retry: 1`, mutation retry 0, `refetchOnWindowFocus: false`); **zero** `useQuery`/`useMutation` usages exist.
 

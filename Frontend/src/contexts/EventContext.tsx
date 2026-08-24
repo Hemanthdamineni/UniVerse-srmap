@@ -4,24 +4,26 @@
  * Wraps all /events/:eventId/* routes. Child pages use useEvent() to access
  * event, config, and userState — no repeated API calls per page.
  *
- * Smart polling intervals:
- *   LIVE phase       → 10s  (submissions open)
- *   EVALUATION phase → 15s  (organizer actively evaluating)
- *   Other phases     → 30s
- *
- * Polling only fires when !document.hidden. Always cleans up on unmount.
+ * Data layer: React Query (docs/react-query-migration-plan.md §3.6).
+ *   - detail/config/role are cached under lib/events/queryKeys eventKeys
+ *     with staleTimes mirroring the old eventCache TTLs (60s/120s/60s).
+ *   - Polling via refetchInterval: LIVE 10s / EVALUATION 15s / other 30s,
+ *     paused automatically while the tab is hidden.
+ *   - Structural sharing keeps object identities stable across ticks, which
+ *     is what the former manual snapshot-diff gate achieved.
  *
  * Identity: uses readStoredProfileData() to get current user's reg no.
- * Role: calls getMyRole(eventId) and merges result into userState.
+ * Role: calls getMyRole(eventId); platform admins get a synthetic owner role.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
 import { getEvent, getCompetitionConfig, type EventDetail, type CompetitionConfig, type CompetitionRound } from '../lib/campus/campusApi';
-import { eventCache } from '../lib/events/eventCache';
 import { getEventPhase } from '../lib/events/eventPhase';
 import { getEventUserState, type EventUserState } from '../lib/events/eventUserState';
 import { getMyRole, getMySubmission, type MyRoleResponse, type Submission } from '../lib/events/competitionsApi';
+import { eventKeys } from '../lib/events/queryKeys';
 import { getCurrentRegNo, isPlatformAdmin } from '../lib/core/identity';
 
 // ─── Context value type ───────────────────────────────────────────────────────
@@ -44,29 +46,37 @@ const EventContext = createContext<EventContextValue | null>(null);
 
 /**
  * Fetches participant's own submissions for all rounds, memoized by eventId.
- * Returns a record keyed by roundId.
+ * Returns a record keyed by roundId. Rounds appear in the record once their
+ * query resolves; per-round failures surface as null entries.
  */
 function useSubmissions(
   eventId: string,
   config: CompetitionConfig | null
 ): Record<string, Submission | null> {
-  const [submissions, setSubmissions] = useState<Record<string, Submission | null>>({});
+  const rounds = useMemo(() => config?.rounds ?? [], [config]);
 
-  useEffect(() => {
-    if (!config) return;
-    Promise.all(
-      config.rounds.map((r: CompetitionRound) =>
-        getMySubmission(eventId, r.roundId)
-          .then((sub) => [r.roundId, sub] as const)
-          .catch(() => [r.roundId, null] as const)
-      )
-    ).then((pairs) => setSubmissions(Object.fromEntries(pairs)));
-  }, [eventId, config]);
+  const queries = useQueries({
+    queries: rounds.map((r: CompetitionRound) => ({
+      queryKey: [...eventKeys.submissions(eventId), r.roundId] as const,
+      queryFn: () => getMySubmission(eventId, r.roundId),
+      staleTime: 30_000,
+      retry: false,
+    })),
+  });
 
-  return submissions;
+  return useMemo(() => {
+    const result: Record<string, Submission | null> = {};
+    rounds.forEach((round: CompetitionRound, index: number) => {
+      const query = queries[index];
+      if (query?.isSuccess) result[round.roundId] = query.data ?? null;
+    });
+    return result;
+  }, [rounds, queries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join('|')]);
 }
 
 // ─── EventProvider ────────────────────────────────────────────────────────────
+
+const FETCH_ERROR_MESSAGE = 'Failed to load event. Please try again.';
 
 export function EventProvider({
   eventId,
@@ -75,140 +85,96 @@ export function EventProvider({
   eventId: string;
   children: React.ReactNode;
 }) {
-  const [event, setEvent] = useState<EventDetail | null>(null);
-  const [config, setConfig] = useState<CompetitionConfig | null>(null);
-  const [roleData, setRoleData] = useState<MyRoleResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const userId = getCurrentRegNo();
   const platformAdmin = isPlatformAdmin(userId);
 
-  // Polling refetches on a fixed cadence; without this gate each tick hands
-  // consumers fresh object identities and re-renders the whole event tree
-  // even when nothing changed.
-  const lastSnapshotRef = useRef<{ key: string; event: string; config: string; role: string } | null>(null);
-
-  const applyFetched = useCallback(
-    (nextEvent: EventDetail, nextConfig: CompetitionConfig | null, nextRole: MyRoleResponse | null) => {
-      const next = {
-        key: eventId,
-        event: JSON.stringify(nextEvent),
-        config: JSON.stringify(nextConfig),
-        role: JSON.stringify(nextRole),
-      };
-      const prev = lastSnapshotRef.current;
-      const isNewEvent = prev?.key !== next.key;
-      if (isNewEvent || prev?.event !== next.event) setEvent(nextEvent);
-      if (isNewEvent || prev?.config !== next.config) setConfig(nextConfig);
-      if (isNewEvent || prev?.role !== next.role) setRoleData(nextRole);
-      lastSnapshotRef.current = next;
-    },
-    [eventId]
+  // Platform admins act as owners without consulting the role endpoint's verdict.
+  const adminRoleOverride = useMemo<MyRoleResponse | null>(
+    () =>
+      platformAdmin
+        ? {
+            regNo: userId,
+            role: 'owner',
+            permissions: {
+              canEdit: true,
+              canEvaluate: true,
+              canShortlist: true,
+              canManageRoles: true,
+              canViewAllSubmissions: true,
+            },
+          }
+        : null,
+    [platformAdmin, userId]
   );
 
-  const fetchData = useCallback(
-    async (skipCache = false) => {
-      const cacheKey = `event:${eventId}`;
-      const configKey = `config:${eventId}`;
-      const roleKey = `role:${eventId}`;
+  // Latest known phase drives the shared polling cadence for all three
+  // queries below. Declared first: React Query invokes refetchInterval while
+  // constructing each observer, so the ref must already exist.
+  const latestEventRef = useRef<EventDetail | null>(null);
 
-      if (!skipCache) {
-        const cachedEvent = eventCache.get<EventDetail>(cacheKey);
-        const cachedConfig = eventCache.get<CompetitionConfig | null>(configKey);
-        const cachedRole = eventCache.get<MyRoleResponse | null>(roleKey);
-        if (cachedEvent) {
-          const resolvedCachedRole =
-            platformAdmin
-              ? {
-                  regNo: userId,
-                  role: 'owner',
-                  permissions: {
-                    canEdit: true,
-                    canEvaluate: true,
-                    canShortlist: true,
-                    canManageRoles: true,
-                    canViewAllSubmissions: true,
-                  },
-                } satisfies MyRoleResponse
-              : cachedRole ?? null;
-          setEvent(cachedEvent);
-          setConfig(cachedConfig ?? null);
-          setRoleData(resolvedCachedRole);
-          lastSnapshotRef.current = {
-            key: eventId,
-            event: JSON.stringify(cachedEvent),
-            config: JSON.stringify(cachedConfig ?? null),
-            role: JSON.stringify(resolvedCachedRole),
-          };
-          setLoading(false);
-          return;
-        }
-      }
+  function pollInterval(): number {
+    const phase = latestEventRef.current ? getEventPhase(latestEventRef.current) : null;
+    if (phase === 'LIVE') return 10_000;
+    if (phase === 'EVALUATION') return 15_000;
+    return 30_000;
+  }
 
+  const eventQuery = useQuery({
+    queryKey: eventKeys.detail(eventId),
+    queryFn: () => getEvent(eventId),
+    staleTime: 60_000,
+    refetchInterval: pollInterval,
+    placeholderData: keepPreviousData,
+  });
+
+  const configQuery = useQuery({
+    queryKey: eventKeys.config(eventId),
+    queryFn: () => getCompetitionConfig(eventId).catch(() => null),
+    staleTime: 120_000,
+    refetchInterval: pollInterval,
+  });
+
+  const roleQuery = useQuery({
+    queryKey: eventKeys.role(eventId),
+    queryFn: async () => {
       try {
-        const [eventData, configData, myRoleData] = await Promise.all([
-          getEvent(eventId),
-          getCompetitionConfig(eventId).catch(() => null),
-          getMyRole(eventId).catch(() => null),
-        ]);
-        const resolvedRoleData =
-          platformAdmin
-            ? {
-                regNo: userId,
-                role: 'owner',
-                permissions: {
-                  canEdit: true,
-                  canEvaluate: true,
-                  canShortlist: true,
-                  canManageRoles: true,
-                  canViewAllSubmissions: true,
-                },
-              } satisfies MyRoleResponse
-            : myRoleData;
-        eventCache.set(cacheKey, eventData, 60_000);
-        eventCache.set(configKey, configData, 120_000);
-        if (resolvedRoleData) eventCache.set(roleKey, resolvedRoleData, 60_000);
-        applyFetched(eventData, configData as CompetitionConfig | null, resolvedRoleData);
-        setError(null);
+        return await getMyRole(eventId);
       } catch {
-        setError('Failed to load event. Please try again.');
-      } finally {
-        setLoading(false);
+        return null;
       }
     },
-    [applyFetched, eventId, platformAdmin, userId]
+    staleTime: 60_000,
+    refetchInterval: pollInterval,
+  });
+
+  // Keep the polling cadence synced to the latest event phase.
+  useEffect(() => {
+    latestEventRef.current = eventQuery.data ?? null;
+  }, [eventQuery.data]);
+
+  const loading = eventQuery.isPending || configQuery.isPending || roleQuery.isPending;
+  const error = eventQuery.error ? FETCH_ERROR_MESSAGE : null;
+
+  // Contract preserved from the pre-migration loader: a failed event fetch
+  // yields an all-null snapshot, never a partial mix.
+  const eventFailed = eventQuery.isError;
+  const eventData = eventFailed ? null : eventQuery.data ?? null;
+  const configData = eventFailed ? null : configQuery.data ?? null;
+  const roleData = eventFailed ? null : adminRoleOverride ?? roleQuery.data ?? null;
+
+  const submissions = useSubmissions(eventId, configData);
+
+  const refetch = useCallback(
+    (_skipCache?: boolean) => {
+      void queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
+      void queryClient.invalidateQueries({ queryKey: eventKeys.config(eventId) });
+      void queryClient.invalidateQueries({ queryKey: eventKeys.role(eventId) });
+      void queryClient.invalidateQueries({ queryKey: eventKeys.submissions(eventId) });
+    },
+    [queryClient, eventId]
   );
-
-  // Initial fetch
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  // Smart polling — interval adapts to event phase
-  const eventRef = useRef(event);
-  useEffect(() => { eventRef.current = event; }, [event]);
-
-  useEffect(() => {
-    const getInterval = () => {
-      const phase = eventRef.current ? getEventPhase(eventRef.current) : null;
-      if (phase === 'LIVE') return 10_000;
-      if (phase === 'EVALUATION') return 15_000;
-      return 30_000;
-    };
-
-    let timeout: ReturnType<typeof setTimeout>;
-    const schedule = () => {
-      timeout = setTimeout(() => {
-        if (!document.hidden) void fetchData();
-        schedule(); // reschedule after each tick (interval can change between ticks)
-      }, getInterval());
-    };
-    schedule();
-    return () => clearTimeout(timeout);
-  }, [fetchData]);
-
-  const submissions = useSubmissions(eventId, config);
 
   // Build permissions from myRole response
   const permissions = roleData?.permissions
@@ -219,15 +185,15 @@ export function EventProvider({
         canManageRoles: roleData.permissions.canManageRoles,
         canViewAllSubmissions: roleData.permissions.canViewAllSubmissions,
       }
-    : (event as Record<string, unknown>)?.permissions as
+    : (eventData as Record<string, unknown>)?.permissions as
         | { canEdit: boolean; canEvaluate: boolean; canShortlist: boolean }
         | undefined;
 
   const userState =
-    event && userId
+    eventData && userId
       ? getEventUserState(
-          event,
-          config,
+          eventData,
+          configData,
           userId,
           submissions,
           permissions,
@@ -235,21 +201,20 @@ export function EventProvider({
         )
       : null;
 
-  return (
-    <EventContext.Provider
-      value={{
-        event,
-        config,
-        userState,
-        myRole: roleData,
-        loading,
-        error,
-        refetch: (skipCache = true) => void fetchData(skipCache),
-      }}
-    >
-      {children}
-    </EventContext.Provider>
+  const value = useMemo<EventContextValue>(
+    () => ({
+      event: eventData,
+      config: configData,
+      userState,
+      myRole: roleData,
+      loading,
+      error,
+      refetch,
+    }),
+    [eventData, configData, userState, roleData, loading, error, refetch]
   );
+
+  return <EventContext.Provider value={value}>{children}</EventContext.Provider>;
 }
 
 // ─── useEvent hook ────────────────────────────────────────────────────────────
