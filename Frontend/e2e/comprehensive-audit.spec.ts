@@ -70,6 +70,7 @@ test.describe("comprehensive-site-audit", () => {
       "/learn/me",
       "/learn/contribute",
       "/learn/contribute/new",
+      "/learn/requests",
       "/learn/guides",
       "/learn/guides/new",
       "/learn/roadmaps",

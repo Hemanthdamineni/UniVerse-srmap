@@ -198,7 +198,7 @@ export default function DiscoverPage() {
               <SectionCard title="No matches">
                 <p className="body-text text-sm">
                   Nothing matched “{debouncedQuery || facet}”. Try fewer words, a different type, or{" "}
-                  <Link to="/learn/contribute?tab=requests" className="font-medium text-[var(--info)] underline underline-offset-2">
+                  <Link to="/learn/requests" className="font-medium text-[var(--info)] underline underline-offset-2">
                     request it on the board
                   </Link>
                   .

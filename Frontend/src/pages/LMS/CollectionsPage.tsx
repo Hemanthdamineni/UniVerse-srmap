@@ -50,9 +50,11 @@ export function CollectionsPage() {
         />
       ) : null}
 
-      <div className="divide-y divide-[var(--comp-border)]">
-        {collections.map((collection) => (
-          <div key={collection.id} className="space-y-3 py-3">
+      {collections.length > 0 ? (
+        <SectionCard title={`Your collections (${collections.length})`}>
+          <div className="divide-y divide-[var(--comp-border)]">
+            {collections.map((collection) => (
+              <div key={collection.id} className="space-y-3 py-3">
             <Link
               to={`/learn/me?tab=collections&collectionId=${collection.id}`}
               className="block no-underline"
@@ -85,7 +87,9 @@ export function CollectionsPage() {
             ) : null}
           </div>
         ))}
-      </div>
+          </div>
+        </SectionCard>
+      ) : null}
     </LmsFrame>
   );
 }

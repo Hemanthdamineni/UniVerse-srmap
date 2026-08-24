@@ -2,14 +2,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { SegmentedControl } from "../../../components/ui";
 import AddResourcePage from "../AddResourcePage";
 import MyContributionsPage from "../me/MyContributionsPage";
-import RequestBoardPage from "../RequestBoardPage";
 
-type ContributeTab = "create" | "contributions" | "requests";
+type ContributeTab = "create" | "contributions";
 
 const TAB_OPTIONS = [
   { label: "Create", value: "create" as const },
   { label: "My Contributions", value: "contributions" as const },
-  { label: "Request Board", value: "requests" as const },
 ] as const;
 
 const TAB_VALUES = new Set<string>(TAB_OPTIONS.map((option) => option.value));
@@ -54,7 +52,6 @@ export default function ContributePage() {
         </div>
       ) : null}
       {tab === "contributions" ? <MyContributionsPage /> : null}
-      {tab === "requests" ? <RequestBoardPage /> : null}
     </div>
   );
 }
