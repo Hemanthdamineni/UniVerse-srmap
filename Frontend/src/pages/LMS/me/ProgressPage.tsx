@@ -116,7 +116,7 @@ export function ProgressPage() {
           description="Open any note, PYQ, quiz, or flashcard deck and mark it as you go — your started, completed, and per-subject progress will show up here."
           icon={<TrendingUp size={48} strokeWidth={1.5} />}
           actionLabel="Browse Resources"
-          onAction={() => navigate("/resources/browse")}
+          onAction={() => navigate("/learn/discover")}
           className="py-12"
         />
       ) : (
@@ -143,7 +143,7 @@ export function ProgressPage() {
                   return (
                     <Link
                       key={code}
-                      to={`/resources/subject/${encodeURIComponent(code)}`}
+                      to={`/learn/subjects/${encodeURIComponent(code)}`}
                       className="block space-y-2 py-3 no-underline transition hover:bg-[var(--comp-surface-hover)]"
                     >
                       <div className="flex items-center justify-between gap-3">

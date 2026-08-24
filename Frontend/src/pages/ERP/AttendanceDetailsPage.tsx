@@ -142,7 +142,7 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                         </td>
                         <td className="erp-table-cell">
                           <Link
-                            to={`/resources/browse?subjectCode=${encodeURIComponent(rec.subjectCode)}`}
+                            to={`/learn/discover?subjectCode=${encodeURIComponent(rec.subjectCode)}`}
                             className="comp-btn-ghost min-h-0 rounded-full px-3 py-1 text-xs font-semibold"
                           >
                             Resources

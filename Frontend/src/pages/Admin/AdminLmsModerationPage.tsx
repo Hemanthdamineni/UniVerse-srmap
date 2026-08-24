@@ -141,7 +141,7 @@ export default function AdminLmsModerationPage() {
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
-                          to={`/resources/${resource.id}`}
+                          to={`/learn/r/${resource.id}`}
                           className="text-base font-semibold text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
                         >
                           {resource.title}

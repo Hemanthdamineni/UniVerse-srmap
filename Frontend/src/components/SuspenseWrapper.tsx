@@ -9,7 +9,7 @@ function PageLoader() {
     pathname.startsWith("/exams") ? "exam records" :
     pathname.startsWith("/finance") ? "fee records" :
     pathname.startsWith("/events") ? "events workspace" :
-    pathname.startsWith("/resources") ? "learning resources" :
+    pathname.startsWith("/learn") ? "learning resources" :
     pathname.startsWith("/career") ? "career workspace" :
     pathname.startsWith("/helpdesk") ? "helpdesk" :
     "student workspace";

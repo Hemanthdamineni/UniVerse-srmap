@@ -16,9 +16,9 @@ function externalSummary(route: string, heading: string, fetchKeys: string[], lo
 }
 
 export const WORKSPACE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
-  "/resources/learning-materials":  internal("/resources/learning-materials",  "Learning Materials",  ["resources/learning-materials"],  "Loading learning materials...",  { domain: "lms" }),
-  "/resources/advanced-access": {
-    route: "/resources/advanced-access",
+  "/learn/materials":  internal("/learn/materials",  "Learning Materials",  ["resources/learning-materials"],  "Loading learning materials...",  { domain: "lms" }),
+  "/learn/advanced-access": {
+    route: "/learn/advanced-access",
     heading: "Advanced Access",
     fetchKeys: [],
     domain: "lms",

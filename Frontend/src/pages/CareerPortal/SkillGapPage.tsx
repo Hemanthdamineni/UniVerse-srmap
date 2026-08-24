@@ -71,7 +71,7 @@ const SkillGapPage: React.FC = () => {
                       View jobs
                     </Link>
                     <Link
-                      to="/resources/learning-materials"
+                      to="/learn/materials"
                       className="btn-primary rounded-lg px-3 py-2 text-xs no-underline"
                     >
                       <BookOpen className="mr-1 inline h-3 w-3" />

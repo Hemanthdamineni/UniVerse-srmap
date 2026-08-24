@@ -284,7 +284,7 @@ export function AddResourcePage() {
 
       if (editId) {
         const updated = await updateLmsResource(editId, payload);
-        navigate(`/resources/${updated.id}`);
+        navigate(`/learn/r/${updated.id}`);
         return;
       }
 
@@ -300,7 +300,7 @@ export function AddResourcePage() {
       }
 
       const created = await createLmsResource(payload);
-      navigate(`/resources/${created.id}`);
+      navigate(`/learn/r/${created.id}`);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Unable to save this resource.");
     } finally {

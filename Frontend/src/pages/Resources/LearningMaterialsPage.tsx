@@ -301,7 +301,7 @@ export default function LearningMaterialsPage({ blueprint, advanced = false, adm
       {!adminMode ? (
         <div className="rounded-lg border border-[color-mix(in_srgb,var(--comp-accent)_22%,var(--border))] bg-[var(--comp-surface)] px-3 py-2 text-sm text-[var(--text-secondary)]">
           Looking to share your own notes, PYQs, or links? Use{" "}
-          <Link to="/resources/add" className="font-medium text-[var(--info)] underline underline-offset-2">
+          <Link to="/learn/contribute/new" className="font-medium text-[var(--info)] underline underline-offset-2">
             Contribute Resource
           </Link>{" "}
           — submissions go through peer review and appear in the community catalog.

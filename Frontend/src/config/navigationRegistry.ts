@@ -26,12 +26,12 @@ export type BreadcrumbItem = {
 
 export const ADMIN_NAV_SECTION: NavSection = {
   section: "ADMINISTRATION",
-  icon: "/assets/icons/Settings.png",
+  icon: "ShieldCheck",
   items: [
     {
       type: "group",
       label: "Admin",
-      icon: "/assets/icons/Settings.png",
+      icon: "ShieldCheck",
       domain: "admin",
       children: [
         { type: "link", label: "Events Management", route: "/admin/events-management", domain: "admin", access: "B" },
@@ -61,23 +61,20 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
   { route: "/events/my-activity", label: "My Activity", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-teams", label: "My Teams", group: "Competition Platform", domain: "campus" },
   { route: "/events/my-created", label: "My Created Events", group: "Competition Platform", domain: "campus" },
-  { route: "/resources", label: "Learning home", group: "Learning Management", domain: "lms", keywords: "lms home hub" },
-  { route: "/resources/browse", label: "Browse catalog", group: "Learning Management", domain: "lms" },
-  { route: "/resources/explore", label: "Explore", group: "Learning Management", domain: "lms" },
-  { route: "/resources/add", label: "Contribute resource", group: "Learning Management", domain: "lms" },
-  { route: "/resources/contributors/:userId", label: "Publisher profile", group: "Learning Management", domain: "lms" },
-  { route: "/resources/guides", label: "Guides", group: "Learning Management", domain: "lms" },
-  { route: "/resources/guides/new", label: "New guide", group: "Learning Management", domain: "lms" },
-  { route: "/resources/roadmaps", label: "Roadmaps", group: "Learning Management", domain: "lms" },
-  { route: "/resources/roadmaps/new", label: "New roadmap", group: "Learning Management", domain: "lms" },
-  { route: "/resources/question-bank", label: "Question bank", group: "Learning Management", domain: "lms" },
-  { route: "/resources/requests", label: "Request board", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/bookmarks", label: "My bookmarks", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/collections", label: "My collections", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/progress", label: "My progress", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/revision", label: "Revision queue", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/contributions", label: "My contributions", group: "Learning Management", domain: "lms" },
-  { route: "/resources/me/exam-feedback", label: "Exam feedback", group: "Learning Management", domain: "lms" },
+  { route: "/learn", label: "Learning home", group: "Learning", domain: "lms", keywords: "lms home hub momentum continue learning" },
+  { route: "/learn/discover", label: "Learn", group: "Learning", domain: "lms", keywords: "browse search discover resources guides roadmaps pyq explore" },
+  { route: "/learn/materials", label: "Official materials", group: "Learning", domain: "lms", keywords: "learning materials official year course subject" },
+  { route: "/learn/practice", label: "Practice", group: "Learning", domain: "lms", keywords: "revision question bank quiz exam prep practice" },
+  { route: "/learn/me", label: "My Learning", group: "Learning", domain: "lms", keywords: "bookmarks collections progress mastery saved" },
+  { route: "/learn/contribute", label: "Contribute", group: "Learning", domain: "lms", keywords: "contribute add resource contributions request board" },
+  { route: "/learn/contribute/new", label: "New resource", group: "Learning", domain: "lms" },
+  { route: "/learn/subjects/:code", label: "Subject hub", group: "Learning", domain: "lms" },
+  { route: "/learn/r/:id", label: "Resource detail", group: "Learning", domain: "lms" },
+  { route: "/learn/guides/:id", label: "Guide reader", group: "Learning", domain: "lms" },
+  { route: "/learn/guides/new", label: "New guide", group: "Learning", domain: "lms" },
+  { route: "/learn/roadmaps/:id", label: "Roadmap viewer", group: "Learning", domain: "lms" },
+  { route: "/learn/roadmaps/new", label: "New roadmap", group: "Learning", domain: "lms" },
+  { route: "/learn/contributors/:userId", label: "Publisher profile", group: "Learning", domain: "lms" },
   { route: "/profile", label: "Profile", group: "Account", domain: "erp", keywords: "student profile account" },
   { route: "/admin/events-management/:eventId", label: "Event Detail", group: "Administration", domain: "admin", keywords: "admin event detail" },
   { route: "/admin/companion-analytics", label: "Companion Analytics", group: "Administration", domain: "admin", keywords: "analytics adoption recommendations conversion retention" },
@@ -85,7 +82,7 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
 
 const DOMAIN_TRAILS: { prefix: string; label: string; href: string; domain: Domain }[] = [
   { prefix: "/events", label: "Competition platform", href: "/events", domain: "campus" },
-  { prefix: "/resources", label: "Learning management", href: "/resources", domain: "lms" },
+  { prefix: "/learn", label: "Learning", href: "/learn", domain: "lms" },
   { prefix: "/academic-tracker", label: "Learning management", href: "/academic-tracker/progress-overview", domain: "lms" },
   { prefix: "/career", label: "Career services", href: "/career", domain: "career" },
   { prefix: "/admin", label: "Administration", href: "/admin/events-management", domain: "admin" },
@@ -114,7 +111,7 @@ export function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
   if (item.type === "link") {
     return {
       label: item.label,
-      icon: item.icon ?? "/assets/icons/Dashboard.png",
+      icon: item.icon ?? "LayoutDashboard",
       domain: item.domain,
       route: item.route,
       type: item.access,
@@ -123,7 +120,7 @@ export function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
 
   return {
     label: item.label,
-    icon: item.icon ?? "/assets/icons/Dashboard.png",
+    icon: item.icon ?? "LayoutDashboard",
     domain: item.domain ?? "mixed",
     submenu: item.children.map((child) => ({
       label: child.label,

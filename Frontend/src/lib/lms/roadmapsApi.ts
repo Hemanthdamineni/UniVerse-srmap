@@ -36,6 +36,29 @@ import { STATIC_ADMIN_LEARNING_ITEM, STATIC_CONTENT_WORKFLOW } from "./content";
 import { STATIC_LMS_PUBLISHER, STATIC_LMS_RESOURCES } from "./resources";
 
 export async function listRoadmaps(params: Record<string, unknown> = {}) {
+  if (isStaticPrototype()) {
+    return [
+      {
+        id: "roadmap-static-career",
+        title: "Frontend Internship Readiness",
+        description: "A focused path from React fundamentals to portfolio-ready project work.",
+        skill: "React",
+        authorId: "static",
+        difficulty: "intermediate",
+        estimatedHours: 12,
+        viewCount: 0,
+        upvotes: 0,
+        qualityScore: 8,
+        published: 1,
+        nodes: [
+          { id: "rn-1", roadmapId: "roadmap-static-career", title: "Start here", description: "Introduction", nodeType: "concept", position: 1 },
+          { id: "rn-2", roadmapId: "roadmap-static-career", title: "Components & props", description: "Build composable UI.", nodeType: "concept", position: 2 },
+        ],
+        edges: [{ id: "re-1", roadmapId: "roadmap-static-career", fromNodeId: "rn-1", toNodeId: "rn-2" }],
+        userProgress: null,
+      },
+    ] as unknown as LmsRoadmap[];
+  }
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
@@ -88,6 +111,10 @@ export async function createRoadmap(payload: Record<string, unknown>) {
 }
 
 export async function getRoadmap(id: string) {
+  if (isStaticPrototype()) {
+    const roadmaps = await listRoadmaps();
+    return roadmaps.find((roadmap) => roadmap.id === id) || roadmaps[0];
+  }
   return requestData<LmsRoadmap>(`/api/lms/roadmaps/${encodeURIComponent(id)}`);
 }
 

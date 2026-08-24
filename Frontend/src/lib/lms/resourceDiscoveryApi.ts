@@ -113,6 +113,20 @@ export async function getUpcomingPyqs() {
 }
 
 export async function listLmsCollections() {
+  if (isStaticPrototype()) {
+    return [
+      {
+        id: "col-exam-pack",
+        userId: "AP23110010234",
+        name: "DBMS exam pack",
+        description: "Everything queued for the CSE301 final.",
+        isPublic: 1,
+        items: [],
+        itemCount: 0,
+        createdAt: "2026-06-01T10:00:00.000Z",
+      },
+    ] as LmsCollection[];
+  }
   return requestData<LmsCollection[]>("/api/lms/collections");
 }
 

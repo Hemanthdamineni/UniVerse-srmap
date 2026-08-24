@@ -98,37 +98,38 @@ import type {
   ResourceFormState
 } from "./_shared/LmsPageShared";
 
-export function PYQBankPage() {
-  const { code = "" } = useParams();
+export function PYQBankSection({ code }: { code: string }) {
   const navigate = useNavigate();
   const { data, loading, error } = useAsyncPage(() => getPyqBank(code, { limit: 50, page: 1, sort: "recent" }), [code]);
   const items = data?.items || [];
   return (
-    <LmsFrame title={`PYQ Bank • ${code}`} loading={loading} error={error}>
+    <div className="space-y-4">
       <ResourceGrid
         items={items}
         emptyTitle={`No past papers shared for ${code} yet`}
         emptyDescription="Contribute a previous year question paper from the Contribute page — it helps every batch that follows."
         emptyActionLabel="Contribute a PYQ"
-        emptyActionTo="/resources/add"
+        emptyActionTo="/learn/contribute/new"
         emptyActionDescription="Upload notes, PYQs, quizzes and more for your subjects."
       />
-      {!loading && !error ? (
-        <div className="flex gap-2">
-          <Link
-            to={`/resources/subject/${encodeURIComponent(code)}`}
-            className="lms-btn lms-btn-ghost no-underline"
-          >
-            Subject overview
-          </Link>
-          <button
-            className="lms-btn lms-btn-ghost"
-            onClick={() => navigate("/resources/add")}
-          >
-            Contribute a PYQ
-          </button>
-        </div>
+      {!loading && !error && items.length > 0 ? (
+        <button
+          className="lms-btn lms-btn-ghost"
+          onClick={() => navigate("/learn/contribute/new")}
+        >
+          Contribute a PYQ
+        </button>
       ) : null}
+    </div>
+  );
+}
+
+export function PYQBankPage() {
+  const { code = "" } = useParams();
+
+  return (
+    <LmsFrame title={`PYQ Bank • ${code}`}>
+      <PYQBankSection code={code} />
     </LmsFrame>
   );
 }

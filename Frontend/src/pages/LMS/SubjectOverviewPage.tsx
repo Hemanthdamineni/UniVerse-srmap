@@ -98,9 +98,9 @@ import type {
   ResourceFilterState,
   ResourceFormState
 } from "./_shared/LmsPageShared";
+import { SkeletonCard } from "../../components/ui";
 
-export function SubjectOverviewPage() {
-  const { code = "" } = useParams();
+export function SubjectOverviewSection({ code }: { code: string }) {
   const navigate = useNavigate();
   const { data, loading, error } = useAsyncPage(() => getSubjectOverview(code), [code]);
   const topByUnit = useMemo(() => ((data?.topByUnit as Array<Record<string, unknown>>) || []), [data]);
@@ -109,10 +109,11 @@ export function SubjectOverviewPage() {
     data && (topByUnit.length > 0 || topicMastery.length > 0 || Number(data.studyingCount || 0) > 0)
   );
 
-  return (
-    <LmsFrame title={`Subject ${code}`} loading={loading} error={error}>
-      {hasActivity ? (
-      <>
+  if (loading) return <SkeletonCard />;
+  if (error) return <InlineError message={error} />;
+
+  return hasActivity ? (
+    <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Studying now" value={String(data?.studyingCount || 0)} />
         <StatCard label="Units covered" value={String(topByUnit.length)} />
@@ -122,7 +123,7 @@ export function SubjectOverviewPage() {
       <SectionCard title="Top Resources by Unit">
         <div className="divide-y divide-[var(--comp-border)]">
           {topByUnit.map((entry) => (
-            <Link key={String(entry.unitNormalized)} to={`/resources/${String((entry.topResource as Record<string, unknown>)?.id || "")}`} className="block space-y-1 py-3">
+            <Link key={String(entry.unitNormalized)} to={`/learn/r/${String((entry.topResource as Record<string, unknown>)?.id || "")}`} className="block space-y-1 py-3">
               <p className="text-sm font-semibold text-[var(--comp-text-primary)]">{String(entry.unit || entry.unitNormalized)}</p>
               <p className="text-sm text-[var(--text-secondary)]">{String((entry.topResource as Record<string, unknown>)?.title || "")}</p>
             </Link>
@@ -136,15 +137,23 @@ export function SubjectOverviewPage() {
           mastery: Number(entry.mastery || 0),
         }))}
       />
-      </>
-      ) : (
-        <EmptyView
-          title={`No community activity for ${code} yet`}
-          description="Once students study, bookmark, or request resources for this subject, its overview appears here."
-          actionLabel="Browse all resources"
-          onAction={() => navigate("/resources/browse")}
-        />
-      )}
+    </div>
+  ) : (
+    <EmptyView
+      title={`No community activity for ${code} yet`}
+      description="Once students study, bookmark, or request resources for this subject, its overview appears here."
+      actionLabel="Browse all resources"
+      onAction={() => navigate("/learn/discover")}
+    />
+  );
+}
+
+export function SubjectOverviewPage() {
+  const { code = "" } = useParams();
+
+  return (
+    <LmsFrame title={`Subject ${code}`}>
+      <SubjectOverviewSection code={code} />
     </LmsFrame>
   );
 }

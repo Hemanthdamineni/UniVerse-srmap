@@ -54,7 +54,7 @@ export function CollectionsPage() {
         {collections.map((collection) => (
           <div key={collection.id} className="space-y-3 py-3">
             <Link
-              to={`/resources/me/collections?collectionId=${collection.id}`}
+              to={`/learn/me?tab=collections&collectionId=${collection.id}`}
               className="block no-underline"
               onClick={() => setOpenId(collection.id)}
             >
@@ -228,7 +228,7 @@ function CollectionManager({
           ) : (
             (detail.items || []).map((item: LmsResource) => (
               <div key={item.id} className="flex items-center justify-between gap-2 text-xs">
-                <Link to={`/resources/${item.id}`} className="min-w-0 flex-1 truncate no-underline text-[var(--comp-text-secondary)] hover:text-[var(--info)]">
+                <Link to={`/learn/r/${item.id}`} className="min-w-0 flex-1 truncate no-underline text-[var(--comp-text-secondary)] hover:text-[var(--info)]">
                   {item.title}
                 </Link>
                 <button

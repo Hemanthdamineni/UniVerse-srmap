@@ -27,7 +27,6 @@ const AcademicPlannerPage = lazy(() => import("../pages/AcademicTracker/Academic
 const AcademicAdvisingPage = lazy(() => import("../pages/AcademicTracker/AcademicAdvisingPage"));
 const AlumniConnect = lazy(() => import("../pages/CareerPortal/AlumniConnect"));
 const HostelRegistrationPage = lazy(() => import("../pages/ERP/HostelRegistrationPage"));
-const TransportRegistrationPage = lazy(() => import("../pages/ERP/TransportRegistrationPage"));
 const ApplicationTrackerPage = lazy(() => import("../pages/CareerPortal/ApplicationTrackerPage"));
 const BookmarksPage = lazy(() => import("../pages/CareerPortal/BookmarksPage"));
 const CareerHomePage = lazy(() => import("../pages/CareerPortal/CareerHomePage"));
@@ -72,7 +71,6 @@ const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/feedback/hostel-mess-feedback": <HostelMessFeedback />,
   "/feedback/transport-feedback": <TransportFeedback />,
   "/registration/hostel-registration": <HostelRegistrationPage blueprint={{ route: "/registration/hostel-registration", heading: "Hostel Registration", fetchKeys: ["hostel/hostel-booking-for-full-year"], renderer: "document" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native" }} />,
-  "/registration/transport-registration": <TransportRegistrationPage blueprint={{ route: "/registration/transport-registration", heading: "Transport Registration", fetchKeys: ["transport/transport-registration", "transport/registration-acknowledgment", "transport/transport-&-faqs"], renderer: "document" as PageBlueprint["renderer"], domain: "campus", sourceMode: "erp" as any, integrationState: "native" }} />,
   "/academic-tracker/academic-insights": <AcademicHubPage />,
   "/academic-tracker/progress": <AcademicProgressPage />,
   "/academic-tracker/planner": <AcademicPlannerPage />,
@@ -127,9 +125,9 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
       component = <>{DOMAIN_PAGE_MAP[blueprint.route]}</>;
     } else if (blueprint.route === "/feedback/course-feedback") {
       component = <CourseFeedbackAssistantPage blueprint={blueprint} />;
-    } else if (blueprint.route === "/resources/learning-materials") {
+    } else if (blueprint.route === "/learn/materials") {
       component = <LearningMaterialsPage blueprint={blueprint} />;
-    } else if (blueprint.route === "/resources/advanced-access") {
+    } else if (blueprint.route === "/learn/advanced-access") {
       component = <LearningMaterialsPage blueprint={blueprint} advanced />;
     } else if (blueprint.renderer === "attendance") {
       component = <AttendanceDetailsPage blueprint={blueprint} />;

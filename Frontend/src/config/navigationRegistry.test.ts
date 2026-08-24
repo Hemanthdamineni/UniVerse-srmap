@@ -34,13 +34,13 @@ describe("navigationRegistry", () => {
   });
 
   it("resolves longest catalog route for nested LMS paths", () => {
-    const hit = resolveCatalogRoute("/resources/browse");
-    expect(hit?.route).toBe("/resources/browse");
+    const hit = resolveCatalogRoute("/learn/discover");
+    expect(hit?.route).toBe("/learn/discover");
   });
 
   it("includes supplemental and blueprint routes in catalog", () => {
     const routes = new Set(getRouteCatalog({ isAdmin: true }).map((r) => r.route));
-    expect(routes.has("/resources/browse")).toBe(true);
+    expect(routes.has("/learn/discover")).toBe(true);
     expect(routes.has("/dashboard")).toBe(true);
     expect(routes.has("/events/:eventId/manage")).toBe(true);
     expect(routes.has("/admin/events-management/:eventId")).toBe(true);

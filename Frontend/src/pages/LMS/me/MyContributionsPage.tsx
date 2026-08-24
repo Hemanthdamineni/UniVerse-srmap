@@ -83,7 +83,7 @@ export function MyContributionsPage() {
           {liveResources.map((resource) => (
             <div key={resource.id} className="dashboard-card flex items-center justify-between gap-3 p-4">
               <Link
-                to={`/resources/${resource.id}`}
+                to={`/learn/r/${resource.id}`}
                 className="min-w-0 flex-1 no-underline space-y-1"
               >
                 <p className="truncate text-sm font-semibold text-[var(--comp-text-primary)] hover:text-[var(--info)]">
@@ -97,7 +97,7 @@ export function MyContributionsPage() {
               </Link>
               <div className="flex shrink-0 gap-2">
                 <Link
-                  to={`/resources/add?edit=${encodeURIComponent(resource.id)}`}
+                  to={`/learn/contribute/new?edit=${encodeURIComponent(resource.id)}`}
                   className="lms-btn lms-btn-ghost no-underline"
                 >
                   Edit
@@ -141,7 +141,7 @@ export function MyContributionsPage() {
       <SectionCard title="My Guides">
         <div className="space-y-2">
           {guides.map((guide) => (
-            <Link key={guide.id} to={`/resources/guides/${guide.id}`} className="dashboard-card block p-4 no-underline">
+            <Link key={guide.id} to={`/learn/guides/${guide.id}`} className="dashboard-card block p-4 no-underline">
               <p className="text-sm font-semibold text-[var(--comp-text-primary)] hover:text-[var(--info)]">{guide.title}</p>
             </Link>
           ))}
@@ -152,7 +152,7 @@ export function MyContributionsPage() {
       <SectionCard title="My Roadmaps">
         <div className="space-y-2">
           {roadmaps.map((roadmap) => (
-            <Link key={roadmap.id} to={`/resources/roadmaps/${roadmap.id}`} className="dashboard-card block p-4 no-underline">
+            <Link key={roadmap.id} to={`/learn/roadmaps/${roadmap.id}`} className="dashboard-card block p-4 no-underline">
               <p className="text-sm font-semibold text-[var(--comp-text-primary)] hover:text-[var(--info)]">{roadmap.title}</p>
             </Link>
           ))}

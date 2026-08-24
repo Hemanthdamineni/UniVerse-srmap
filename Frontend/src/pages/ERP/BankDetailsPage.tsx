@@ -164,7 +164,7 @@ export default function BankDetailsPage({ blueprint }: Props) {
       )}
 
       {!error && fields.length > 0 && (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="dashboard-card space-y-6 p-4 md:p-6">
           {/* Form header */}
           <div className="flex items-center gap-3">
             <div

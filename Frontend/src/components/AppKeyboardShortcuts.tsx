@@ -52,7 +52,7 @@ export default function AppKeyboardShortcuts() {
       if (gRef.current && event.key === "h") {
         event.preventDefault();
         gRef.current = false;
-        navigate("/resources");
+        navigate("/learn");
         return;
       }
 

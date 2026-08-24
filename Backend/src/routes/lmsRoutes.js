@@ -18,6 +18,7 @@ const { registerTrackerRoutes } = require("./lmsRoutes/trackerRoutes");
 const { registerResourceRoutes } = require("./lmsRoutes/resourceRoutes");
 const { registerGuideRoadmapRoutes } = require("./lmsRoutes/guideRoadmapRoutes");
 const { registerLearningAdminRoutes } = require("./lmsRoutes/learningAdminRoutes");
+const { registerSearchRoutes } = require("./lmsRoutes/searchRoutes");
 
 function sendLmsSuccess(res, req, data, status = 200) {
   return res.status(status).json({
@@ -201,6 +202,7 @@ function createLmsRoutes({
     ensureAdmin,
     renderGuidePdf,
   });
+  registerSearchRoutes(router, { createHandle, lmsStore });
 
   return router;
 }

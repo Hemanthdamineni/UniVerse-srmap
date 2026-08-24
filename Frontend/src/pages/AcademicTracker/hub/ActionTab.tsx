@@ -73,7 +73,7 @@ export function ActionTab({
                       label="Browse Learning Materials"
                       variant="outline"
                       className="text-xs py-1 px-2"
-                      onClick={() => onQuickAction("/resources/learning-materials")}
+                      onClick={() => onQuickAction("/learn/discover")}
                     />
                   )}
                 </div>
@@ -96,7 +96,7 @@ export function ActionTab({
                 skill={skill.title}
                 demand={skill.opportunityDemand}
                 gapLevel={skill.gapLevel}
-                onClick={() => onQuickAction("/resources/learning-materials")}
+                onClick={() => onQuickAction("/learn/discover")}
               />
             ))}
           </div>
@@ -221,7 +221,7 @@ export function ActionTab({
               <ActionButton
                 label="Learning Materials"
                 variant="ghost"
-                onClick={() => onQuickAction("/resources/learning-materials")}
+                onClick={() => onQuickAction("/learn/discover")}
               />
             </div>
           </div>

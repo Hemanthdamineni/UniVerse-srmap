@@ -49,6 +49,7 @@ import {
   getLmsProgress,
   getLmsResource,
   getLmsStreak,
+  getLmsProgressOverview,
   getMyBookmarks,
   getMyContributions,
   getPendingExamFeedback,
@@ -111,6 +112,7 @@ export function LmsHomePage() {
   const requests = useAsyncPage(() => listLmsRequests({ status: "open", limit: 5 }), []);
   const leaderboard = useAsyncPage(() => getWeeklyLeaderboard(), []);
   const streak = useAsyncPage(() => getLmsStreak(), []);
+  const academic = useAsyncPage(() => getLmsProgressOverview(), []);
 
   useEffect(() => {
     if (!examPrep.data?.length) return;
@@ -130,6 +132,17 @@ export function LmsHomePage() {
 
   return (
     <LmsFrame title="LMS Home" loading={recommendations.loading || examPrep.loading || roadmapRecommendations.loading || continueLearning.loading} error={recommendations.error || examPrep.error || roadmapRecommendations.error || continueLearning.error}>
+      {pendingExam.data?.length ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[color-mix(in_srgb,var(--comp-accent)_24%,transparent)] bg-[color-mix(in_srgb,var(--comp-accent)_8%,var(--comp-surface))] px-4 py-3">
+          <p className="text-sm text-[var(--text-secondary)]">
+            {pendingExam.data.length} resource{pendingExam.data.length === 1 ? "" : "s"} you studied appeared on your exam — tell others whether they helped.
+          </p>
+          <Link to="/learn/exam-feedback" className="lms-btn lms-btn-primary no-underline">
+            Share exam feedback
+          </Link>
+        </div>
+      ) : null}
+
       <SectionCard title="Momentum">
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Current streak" value={String(streak.data?.currentStreak || 0)} />
@@ -137,6 +150,21 @@ export function LmsHomePage() {
           <StatCard label="Exam feedback pending" value={String(pendingExam.data?.length || 0)} />
         </div>
       </SectionCard>
+
+      {academic.data ? (
+        <SectionCard title="Academic pulse">
+          <div className="grid gap-4 md:grid-cols-3">
+            <StatCard label="CGPA" value={String(academic.data.currentCgpa)} />
+            <StatCard label="Attendance" value={`${academic.data.attendancePct}%`} />
+            <StatCard label="Subjects at risk" value={String(academic.data.subjectsAtRisk ?? 0)} />
+          </div>
+          <div className="mt-3">
+            <Link to="/academic-tracker/academic-insights" className="lms-btn lms-btn-ghost no-underline">
+              Open Academic Hub
+            </Link>
+          </div>
+        </SectionCard>
+      ) : null}
 
       {continueLearning.data ? (
         <SectionCard title="Continue Learning">
@@ -152,7 +180,7 @@ export function LmsHomePage() {
             {roadmapRecommendations.data.map((roadmap) => (
               <Link
                 key={roadmap.id}
-                to={`/resources/roadmaps/${roadmap.id}`}
+                to={`/learn/roadmaps/${roadmap.id}`}
                 className="rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4 no-underline transition hover:bg-[var(--comp-surface-hover)]"
               >
                 <div className="flex items-start justify-between gap-3">
