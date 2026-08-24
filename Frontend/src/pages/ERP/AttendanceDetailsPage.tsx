@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { ErpPageResponse } from "../../lib/erp/index";
 import { executePipeline } from "../../lib/erp/erpTransformers";
 import type { AttendanceModel, ErpGenericTable } from "../../lib/erp/erpTransformers";
@@ -16,42 +18,40 @@ interface AttendanceDetailsPageProps {
 
 export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPageProps) {
   const [model, setModel] = useState<AttendanceModel | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(null);
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load attendance details.");
+  }, [batchQuery.error]);
 
-    getErpBatch(blueprint.fetchKeys)
-      .then((batch) => {
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const result = batch["academic/attendance-details"];
-        if (!result || (result as any).success === false) {
-          setError("Attendance data unavailable.");
-          setLoading(false);
-          return;
-        }
+    const result = batch["academic/attendance-details"];
+    if (!result || (result as any).success === false) {
+      setError("Attendance data unavailable.");
+      return;
+    }
 
-        const pipelineResult = executePipeline(blueprint, batch);
-        if (pipelineResult?.isValid && pipelineResult.data) {
-          setModel(pipelineResult.data as AttendanceModel);
-        } else {
-          setError("Invalid attendance data format.");
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(err.message || "Failed to load attendance details.");
-        setLoading(false);
-      });
+    const pipelineResult = executePipeline(blueprint, batch);
+    if (pipelineResult?.isValid && pipelineResult.data) {
+      setModel(pipelineResult.data as AttendanceModel);
+      setError(null);
+    } else {
+      setError("Invalid attendance data format.");
+    }
+  }, [batchQuery.data, blueprint]);
 
-    return () => { active = false; };
-  }, [blueprint.fetchKeys, refreshTrigger]);
+  const loading = batchQuery.isPending;
 
   return (
     <ErpPageShell

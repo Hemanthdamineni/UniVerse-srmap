@@ -17,7 +17,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient } from '../test/testUtils';
 
 // ─── Module mocks (hoisted) ──────────────────────────────────────────────
 
@@ -29,15 +31,6 @@ vi.mock('../lib/campus/campusApi', () => ({
 vi.mock('../lib/events/competitionsApi', () => ({
   getMyRole: vi.fn(),
   getMySubmission: vi.fn(),
-}));
-
-vi.mock('../lib/events/eventCache', () => ({
-  eventCache: {
-    get: vi.fn(),
-    set: vi.fn(),
-    invalidate: vi.fn(),
-    invalidatePrefix: vi.fn(),
-  },
 }));
 
 vi.mock('../lib/events/eventPhase', () => ({
@@ -72,10 +65,10 @@ import {
 
 import * as campusApiModule from '../lib/campus/campusApi';
 import * as competitionsApiModule from '../lib/events/competitionsApi';
-import * as eventCacheModule from '../lib/events/eventCache';
 import * as eventPhaseModule from '../lib/events/eventPhase';
 import * as eventUserStateModule from '../lib/events/eventUserState';
 import * as identityModule from '../lib/core/identity';
+import { eventKeys } from '../lib/events/queryKeys';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────
 
@@ -163,7 +156,6 @@ function resetMocks(): void {
   vi.mocked(campusApiModule.getCompetitionConfig).mockResolvedValue(mockCompetitionConfig as any);
   vi.mocked(competitionsApiModule.getMyRole).mockResolvedValue(mockMyRole as any);
   vi.mocked(competitionsApiModule.getMySubmission).mockResolvedValue(null);
-  vi.mocked(eventCacheModule.eventCache.get).mockReturnValue(null);
   vi.mocked(eventPhaseModule.getEventPhase).mockReturnValue('REGISTRATION_OPEN');
   vi.mocked(eventUserStateModule.getEventUserState).mockReturnValue(mockUserState as any);
   vi.mocked(identityModule.getCurrentRegNo).mockReturnValue(USER_ID);
@@ -175,16 +167,46 @@ function resetMocks(): void {
 function createWrapper(
   eventId: string = EVENT_ID,
 ): React.FC<{ children: ReactNode }> {
+  const queryClient = createTestQueryClient();
   const Wrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <EventProvider eventId={eventId}>{children}</EventProvider>
+    <QueryClientProvider client={queryClient}>
+      <EventProvider eventId={eventId}>{children}</EventProvider>
+    </QueryClientProvider>
   );
   Wrapper.displayName = 'EventProviderWrapper';
   return Wrapper;
 }
 
+/** Standalone provider wrapper for tests that render JSX directly. */
+function TestEventProvider({
+  eventId = EVENT_ID,
+  children,
+}: {
+  eventId?: string;
+  children: ReactNode;
+}) {
+  const [queryClient] = useState(() => createTestQueryClient());
+  return (
+    <QueryClientProvider client={queryClient}>
+      <EventProvider eventId={eventId}>{children}</EventProvider>
+    </QueryClientProvider>
+  );
+}
+
 /** Render a hook that reads the full EventContext value. */
 function renderEventHook(eventId: string = EVENT_ID) {
   return renderHook(() => useEvent(), { wrapper: createWrapper(eventId) });
+}
+
+/** Like renderEventHook but also exposes the shared test query client. */
+function renderEventHookWithClient(eventId: string = EVENT_ID) {
+  const queryClient = createTestQueryClient();
+  const Wrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
+    <QueryClientProvider client={queryClient}>
+      <EventProvider eventId={eventId}>{children}</EventProvider>
+    </QueryClientProvider>
+  );
+  return { ...renderHook(() => useEvent(), { wrapper: Wrapper }), queryClient };
 }
 
 /** Helper to wait for loading to finish. */
@@ -209,9 +231,9 @@ afterEach(() => {
 describe('EventProvider — renders children', () => {
   it('renders simple text content', () => {
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <span data-testid="child">Hello</span>
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     expect(screen.getByTestId('child')).toHaveTextContent('Hello');
@@ -219,11 +241,11 @@ describe('EventProvider — renders children', () => {
 
   it('renders complex nested children', () => {
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <div data-testid="parent">
           <span data-testid="nested">Nested</span>
         </div>
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     expect(screen.getByTestId('parent')).toBeInTheDocument();
@@ -232,10 +254,10 @@ describe('EventProvider — renders children', () => {
 
   it('renders multiple children', () => {
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <span data-testid="a">A</span>
         <span data-testid="b">B</span>
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     expect(screen.getByTestId('a')).toBeInTheDocument();
@@ -407,84 +429,54 @@ describe('EventProvider — successful data load', () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// EventProvider — caching behavior
+// EventProvider — caching behavior (React Query)
 // ──────────────────────────────────────────────────────────────────────────
 
 describe('EventProvider — caching', () => {
-  it('checks cache on mount before calling APIs', async () => {
-    renderEventHook();
-
-    await waitFor(() => {
-      expect(eventCacheModule.eventCache.get).toHaveBeenCalledWith(`event:${EVENT_ID}`);
-    });
-    expect(eventCacheModule.eventCache.get).toHaveBeenCalledWith(`config:${EVENT_ID}`);
-    expect(eventCacheModule.eventCache.get).toHaveBeenCalledWith(`role:${EVENT_ID}`);
-  });
-
-  it('uses cached values and skips API calls when cache hit', async () => {
-    vi.mocked(eventCacheModule.eventCache.get).mockImplementation((key: string) => {
-      if (key === `event:${EVENT_ID}`) return mockEvent;
-      if (key === `config:${EVENT_ID}`) return mockCompetitionConfig;
-      if (key === `role:${EVENT_ID}`) return mockMyRole;
-      return null;
-    });
-
-    const { result } = renderEventHook();
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    // API calls should NOT have been made
-    expect(campusApiModule.getEvent).not.toHaveBeenCalled();
-    expect(campusApiModule.getCompetitionConfig).not.toHaveBeenCalled();
-    expect(competitionsApiModule.getMyRole).not.toHaveBeenCalled();
-
-    // Values should come from cache
-    expect(result.current.event).toEqual(mockEvent);
-    expect(result.current.config).toEqual(mockCompetitionConfig);
-    expect(result.current.myRole).toEqual(mockMyRole);
-  });
-
-  it('sets cache entries after successful API fetch', async () => {
-    renderEventHook();
-
-    await waitFor(() => {
-      expect(eventCacheModule.eventCache.set).toHaveBeenCalled();
-    });
-
-    expect(eventCacheModule.eventCache.set).toHaveBeenCalledWith(
-      `event:${EVENT_ID}`,
-      mockEvent,
-      60_000,
+  it('serves a second mount from the query cache without refetching', async () => {
+    const queryClient = createTestQueryClient();
+    const Wrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
+      <QueryClientProvider client={queryClient}>
+        <EventProvider eventId={EVENT_ID}>{children}</EventProvider>
+      </QueryClientProvider>
     );
-    expect(eventCacheModule.eventCache.set).toHaveBeenCalledWith(
-      `config:${EVENT_ID}`,
-      mockCompetitionConfig,
-      120_000,
-    );
+
+    const first = renderHook(() => useEvent(), { wrapper: Wrapper });
+    await waitForLoaded(first.result);
+    expect(campusApiModule.getEvent).toHaveBeenCalledTimes(1);
+
+    // Within staleTime (60s) a second provider mount reuses the cached entry.
+    const second = renderHook(() => useEvent(), { wrapper: Wrapper });
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+
+    expect(campusApiModule.getEvent).toHaveBeenCalledTimes(1);
+    expect(second.result.current.event).toEqual(mockEvent);
   });
 
-  it('refetch with skipCache=true bypasses cache', async () => {
-    // Seed the cache
-    vi.mocked(eventCacheModule.eventCache.get).mockImplementation((key: string) => {
-      if (key === `event:${EVENT_ID}`) return mockEvent;
-      return null;
-    });
-
-    const { result } = renderEventHook();
+  it('populates the query cache after a successful fetch', async () => {
+    const { result, queryClient } = renderEventHookWithClient();
 
     await waitForLoaded(result);
 
-    // Reset call counts
-    vi.clearAllMocks();
+    expect(queryClient.getQueryData(eventKeys.detail(EVENT_ID))).toEqual(mockEvent);
+    expect(queryClient.getQueryData(eventKeys.config(EVENT_ID))).toEqual(mockCompetitionConfig);
+    expect(queryClient.getQueryData(eventKeys.role(EVENT_ID))).toEqual(mockMyRole);
+  });
 
-    // Refetch with skipCache=true
+  it('refetch() invalidates and refetches even within staleTime', async () => {
+    const { result, queryClient } = renderEventHookWithClient();
+
+    await waitForLoaded(result);
+    expect(campusApiModule.getEvent).toHaveBeenCalledTimes(1);
+
+    vi.clearAllMocks();
+    vi.mocked(campusApiModule.getEvent).mockResolvedValue(mockEvent as any);
+
     await act(async () => {
       result.current.refetch(true);
     });
 
-    // Should call APIs despite cache being available
+    // Invalidation must trigger a real network refetch despite staleTime.
     await waitFor(() => {
       expect(campusApiModule.getEvent).toHaveBeenCalledWith(EVENT_ID);
     });
@@ -510,21 +502,17 @@ describe('EventProvider — platform admin override', () => {
     expect(competitionsApiModule.getMyRole).toHaveBeenCalledWith(EVENT_ID);
   });
 
-  it('uses cached role for platform admin when cache hit', async () => {
+  it('assigns owner role even when getMyRole fails for platform admin', async () => {
     vi.mocked(identityModule.isPlatformAdmin).mockReturnValue(true);
-    vi.mocked(eventCacheModule.eventCache.get).mockImplementation((key: string) => {
-      if (key === `event:${EVENT_ID}`) return mockEvent;
-      return null;
-    });
+    vi.mocked(competitionsApiModule.getMyRole).mockRejectedValue(new Error('forbidden'));
 
     const { result } = renderEventHook();
 
     await waitForLoaded(result);
 
-    // Even with cache hit, admin role should be synthetically assigned
+    // The synthetic admin override does not depend on the role endpoint
+    // resolving — it applies even when the role query errors out.
     expect(result.current.myRole).toEqual(mockAdminRole);
-    // getMyRole is called because the cache only stores role data; admin
-    // override replaces the fetched value after resolution
   });
 
   it('overrides getMyRole response with owner role for platform admin', async () => {
@@ -829,11 +817,14 @@ describe('EventProvider — edge cases', () => {
     });
 
     // Use a re-renderable wrapper (factory won't work since wrapper is fixed)
+    const edgeCaseClient = createTestQueryClient();
     const { result, rerender } = renderHook(
       ({ id }: { id: string }) => useEvent(),
       {
         wrapper: ({ children }) => (
-          <EventProvider eventId={EVENT_ID}>{children}</EventProvider>
+          <QueryClientProvider client={edgeCaseClient}>
+            <EventProvider eventId={EVENT_ID}>{children}</EventProvider>
+          </QueryClientProvider>
         ),
         initialProps: { id: EVENT_ID },
       },
@@ -1000,9 +991,9 @@ describe('Integration — read context from a child component', () => {
     }
 
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <EventTitle />
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     // Initially loading
@@ -1025,9 +1016,9 @@ describe('Integration — read context from a child component', () => {
     }
 
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <EventStatus />
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     await waitFor(() => {
@@ -1060,9 +1051,9 @@ describe('Integration — read context from a child component', () => {
     const user = userEvent.setup();
 
     render(
-      <EventProvider eventId={EVENT_ID}>
+      <TestEventProvider>
         <EventTitle />
-      </EventProvider>,
+      </TestEventProvider>,
     );
 
     await waitFor(() => {

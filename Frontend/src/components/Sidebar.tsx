@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
+import { SidebarNavIcon } from "./SidebarNavIcons";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { sessionKeys } from "../lib/core/queryKeys";
 import { useAdminMode } from "../contexts/AdminModeContext";
@@ -31,14 +32,6 @@ function SidebarContrastText({ text, className = "" }: { text: string; className
 function normalizeRoute(route: string) {
   const normalized = String(route || "").replace(/\/+$/, "");
   return normalized || "/";
-}
-
-function resolveAssetPath(src: string) {
-  if (!src.startsWith("/assets/")) return src;
-
-  const base = import.meta.env.BASE_URL || "/";
-  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-  return `${normalizedBase}${src.slice(1)}`;
 }
 
 export default function Sidebar() {
@@ -268,11 +261,7 @@ export default function Sidebar() {
                           sidebarClosed ? "justify-center" : ""
                         } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
                       >
-                        <img
-                          src={resolveAssetPath(item.icon ?? "/assets/icons/Dashboard.png")}
-                          alt=""
-                          className="sidebar-icon h-6 w-6"
-                        />
+                        <SidebarNavIcon icon={item.icon} />
                         {!sidebarClosed && <SidebarContrastText text={item.label} />}
                       </Link>
                     );
@@ -303,11 +292,7 @@ export default function Sidebar() {
                           if (sidebarClosed) setSidebarClosed(false);
                         }}
                       >
-                        <img
-                          src={resolveAssetPath(item.icon ?? "/assets/icons/Dashboard.png")}
-                          alt=""
-                          className="sidebar-icon h-6 w-6"
-                        />
+                        <SidebarNavIcon icon={item.icon} />
                         {!sidebarClosed ? <SidebarContrastText text={item.label} /> : null}
                         {!sidebarClosed ? (
                           <ChevronDownIcon
@@ -393,7 +378,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
               >
-                <img src={resolveAssetPath(item.icon)} alt="" className="sidebar-icon h-6 w-6" loading="lazy" />
+                <SidebarNavIcon icon={item.icon} />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </button>
             ) : (
@@ -406,7 +391,7 @@ export default function Sidebar() {
                   sidebarClosed ? "justify-center" : ""
                 }`}
               >
-                <img src={resolveAssetPath(item.icon)} alt="" className="sidebar-icon h-6 w-6" loading="lazy" />
+                <SidebarNavIcon icon={item.icon} />
                 {!sidebarClosed && <SidebarContrastText text={item.label} />}
               </Link>
             )

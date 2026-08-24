@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import AcademicHubPage from "./AcademicHubPage";
 import { getLmsProgressOverview, getLmsAcademicInsights, getLmsUnifiedInsights, getLmsStreak } from "../../lib/lms/index";
 import { getErpBatch } from "../../lib/erp";
+import { createTestQueryClient } from "../../test/testUtils";
 
 vi.mock("../../lib/lms/index", () => ({
   getLmsProgressOverview: vi.fn(),
@@ -50,9 +52,11 @@ describe("AcademicHubPage", () => {
 
   it("renders the academic hub successfully with KPI metrics", async () => {
     render(
-      <MemoryRouter>
-        <AcademicHubPage />
-      </MemoryRouter>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter>
+          <AcademicHubPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     // Initial loading state

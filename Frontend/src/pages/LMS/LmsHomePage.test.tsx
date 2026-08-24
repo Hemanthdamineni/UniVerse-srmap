@@ -18,7 +18,9 @@
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createTestQueryClient } from "../../test/testUtils";
 
 // Polyfill ResizeObserver for jsdom (used by usePageContrast inside ErpPageShell)
 if (typeof ResizeObserver === "undefined") {
@@ -208,11 +210,23 @@ const mockLeaderboardItem = { userId: "user-1", score: 250 };
 // ---------------------------------------------------------------------------
 
 function renderPage() {
-  return render(
-    <MemoryRouter>
-      <LmsHomePage />
-    </MemoryRouter>
+  const queryClient = createTestQueryClient();
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <LmsHomePage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
+  // Tests that assert settled content can await this instead of racing
+  // individual elements across React Query's notification batches.
+  return { ...view, queryClient };
+}
+
+async function waitForSettledQueries(queryClient: ReturnType<typeof createTestQueryClient>) {
+  await waitFor(() => {
+    expect(queryClient.isFetching()).toBe(0);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -305,13 +319,11 @@ describe("LmsHomePage", () => {
     });
     lmsApi.getWeeklyLeaderboard.mockResolvedValue([mockLeaderboardItem]);
 
-    renderPage();
+    const { queryClient } = renderPage();
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: "Momentum" })
-      ).toBeInTheDocument();
-    });
+    await waitForSettledQueries(queryClient);
+
+    expect(screen.getByRole("heading", { name: "Momentum" })).toBeInTheDocument();
 
     // -- Momentum StatCards --
     expect(screen.getByText("Current streak")).toBeInTheDocument();
@@ -389,13 +401,13 @@ describe("LmsHomePage", () => {
 
   it("hides optional sections and shows placeholder text when data is empty or null", async () => {
     // All mocks return the beforeEach defaults (empty arrays / null)
-    renderPage();
+    const { queryClient } = renderPage();
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: "Momentum" })
-      ).toBeInTheDocument();
-    });
+    await waitForSettledQueries(queryClient);
+
+    expect(
+      screen.getByRole("heading", { name: "Momentum" })
+    ).toBeInTheDocument();
 
     // Continue Learning is hidden when data is null
     expect(

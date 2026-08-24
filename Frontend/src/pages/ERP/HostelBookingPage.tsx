@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { ErpPageShell, SectionCard, StatusBanner, KpiGrid } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { SkeletonCard } from "../../components/ui/Skeletons";
@@ -45,42 +47,40 @@ const MOCK_HOSTELS: HostelOption[] = [
 export default function HostelBookingPage({ blueprint }: Props) {
   const [hostels, setHostels] = useState<HostelOption[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceRequest[]>(MOCK_REQUESTS);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setIsAdmin(localStorage.getItem("adminMode") === "true");
+  }, []);
 
-    let active = true;
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        const batch = await getErpBatch(blueprint.fetchKeys);
+  const batchQuery = useQuery({
+    queryKey: erpKeys.batch(blueprint.fetchKeys),
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+    retry: false,
+  });
 
-        if (!active) return;
-
-        // Extract hostel data from batch response if available
-        const hostelData = batch["hostel/hostel-booking-for-full-year"];
-        if (hostelData && (hostelData as any)?.data) {
-          setHostels((hostelData as any)?.data?.hostels ?? []);
-        } else {
-          setHostels(MOCK_HOSTELS);
-        }
-      } catch {
-        if (active) {
-          setHostels(MOCK_HOSTELS);
-          setMaintenance(MOCK_REQUESTS);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
+  useEffect(() => {
+    if (batchQuery.error) {
+      // Mock fallback keeps this page usable during scraper outages.
+      setHostels(MOCK_HOSTELS);
+      setMaintenance(MOCK_REQUESTS);
+      return;
     }
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-    load();
-    return () => { active = false; };
-  }, [blueprint.fetchKeys]);
+    // Extract hostel data from batch response if available
+    const hostelData = batch["hostel/hostel-booking-for-full-year"];
+    if (hostelData && (hostelData as any)?.data) {
+      setHostels((hostelData as any)?.data?.hostels ?? []);
+    } else {
+      setHostels(MOCK_HOSTELS);
+    }
+  }, [batchQuery.data, batchQuery.error]);
+
+  const loading = batchQuery.isPending;
 
   const occupancyRate = hostels.length > 0
     ? Math.round((hostels.reduce((s, h) => s + h.occupants, 0) / hostels.reduce((s, h) => s + h.capacity, 0)) * 100)

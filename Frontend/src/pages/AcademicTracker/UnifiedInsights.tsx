@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, MousePointerClick, Route, ShieldCheck, Target, UserRoundCog } from "lucide-react";
 import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import { StatusBadge } from "../../components/ui/Badges";
@@ -30,47 +31,35 @@ function ScoreBar({ value, max }: { value: number; max: number }) {
 }
 
 export default function UnifiedInsights() {
-  const [insights, setInsights] = useState<UnifiedInsightsModel | null>(null);
-  const [profile, setProfile] = useState<UnifiedProfile | null>(null);
-  const [platformRecommendations, setPlatformRecommendations] = useState<PlatformRecommendation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    Promise.allSettled([
-      getLmsUnifiedInsights(),
-      getUnifiedProfile(),
-      getPlatformRecommendations("home"),
-    ])
-      .then(([insightsResult, profileResult, recommendationsResult]) => {
-        if (!active) return;
-        if (insightsResult.status === "fulfilled") {
-          setInsights(insightsResult.value);
-        } else {
-          setError(insightsResult.reason instanceof Error ? insightsResult.reason.message : "Failed to load unified insights.");
-        }
-        if (profileResult.status === "fulfilled") {
-          setProfile(profileResult.value);
-        }
-        if (recommendationsResult.status === "fulfilled") {
-          setPlatformRecommendations(recommendationsResult.value.items || []);
-        }
-      })
-      .catch((loadError) => {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load unified insights.");
-      })
-      .finally(() => {
-        if (!active) return;
-        setLoading(false);
-      });
+  const insightsQuery = useQuery({
+    queryKey: ["lms", "unified-insights-page"],
+    queryFn: () => getLmsUnifiedInsights(),
+    staleTime: 30_000,
+  });
+  const profileQuery = useQuery({
+    queryKey: ["career", "unified-profile"],
+    queryFn: () => getUnifiedProfile(),
+    staleTime: 60_000,
+  });
+  const recommendationsQuery = useQuery({
+    queryKey: ["lms", "platform-recommendations", "home"],
+    queryFn: () => getPlatformRecommendations("home"),
+    staleTime: 30_000,
+  });
 
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Primary source only: profile/recommendations degrade silently.
+  const error = insightsQuery.isError
+    ? insightsQuery.error instanceof Error
+      ? insightsQuery.error.message
+      : "Failed to load unified insights."
+    : "";
+  const insights = insightsQuery.data ?? null;
+  const profile = profileQuery.data ?? null;
+  const platformRecommendations = recommendationsQuery.data?.items || [];
+  const loading =
+    insightsQuery.isPending || profileQuery.isPending || recommendationsQuery.isPending;
 
   const kpis = useMemo(() => {
     if (!insights) return [];

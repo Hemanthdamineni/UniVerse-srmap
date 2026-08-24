@@ -12,7 +12,6 @@ import { requestData, requestMultipart } from '../core/apiClient';
 import { handleSessionAuthFailure } from '../core/session';
 import { isStaticPrototype } from '../core/prototype';
 import { getCurrentRegNo } from '../core/identity';
-import { eventCache } from './eventCache';
 import {
   getPrototypeEventTeam,
   isPrototypeEventRegistered,
@@ -328,14 +327,10 @@ export async function getMyRole(eventId: string): Promise<MyRoleResponse> {
 // ─── Events ───────────────────────────────────────────────────────────────────
 
 export async function getEvent(eventId: string): Promise<EventDetail> {
-  const cacheKey = `event:${eventId}`;
-  const cached = eventCache.get<EventDetail>(cacheKey);
-  if (cached) return cached;
 
   const data = await safeFetch(() =>
     requestData<EventDetail>(`${eventsBase}/${enc(eventId)}`)
   );
-  eventCache.set(cacheKey, data, 60_000);
   return data;
 }
 
@@ -346,7 +341,6 @@ export async function createEvent(data: Partial<EventDetail>): Promise<EventDeta
       body: JSON.stringify(data),
     })
   );
-  eventCache.invalidatePrefix('events-list');
   return result;
 }
 
@@ -356,8 +350,6 @@ export async function deleteEvent(eventId: string): Promise<void> {
       method: 'DELETE',
     })
   );
-  eventCache.invalidate(`event:${eventId}`);
-  eventCache.invalidatePrefix('events-list');
 }
 
 export async function getMyRegisteredEvents(): Promise<EventSummary[]> {
@@ -369,7 +361,6 @@ export async function getMyRegisteredEvents(): Promise<EventSummary[]> {
 export async function registerForEvent(eventId: string): Promise<void> {
   if (isStaticPrototype()) {
     setPrototypeEventRegistration(eventId, true);
-    eventCache.invalidate(`event:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -378,7 +369,6 @@ export async function registerForEvent(eventId: string): Promise<void> {
       body: JSON.stringify({}),
     })
   );
-  eventCache.invalidate(`event:${eventId}`);
 }
 
 // ─── Teams ────────────────────────────────────────────────────────────────────
@@ -396,7 +386,6 @@ export async function createTeam(eventId: string, name: string): Promise<Team> {
       createdAt: now,
     };
     savePrototypeEventTeam(team);
-    eventCache.invalidate(`team:${eventId}`);
     return team;
   }
   const result = await safeFetch(() =>
@@ -405,21 +394,16 @@ export async function createTeam(eventId: string, name: string): Promise<Team> {
       body: JSON.stringify({ name }),
     })
   );
-  eventCache.invalidate(`team:${eventId}`);
   return result;
 }
 
 export async function getMyTeam(eventId: string): Promise<Team | null> {
   if (isStaticPrototype()) return getPrototypeEventTeam(eventId);
-  const cacheKey = `team:${eventId}`;
-  const cached = eventCache.get<Team | null>(cacheKey);
-  if (cached !== null) return cached;
 
   try {
     const data = await safeFetch(() =>
       requestData<Team | null>(`${compBase(eventId)}/teams/my-team`)
     );
-    eventCache.set(cacheKey, data, 30_000);
     return data;
   } catch {
     return null;
@@ -438,7 +422,6 @@ export async function inviteMember(
       team.members.push({ regNo, name: regNo, joinedAt: new Date().toISOString(), status: 'pending' });
       savePrototypeEventTeam(team);
     }
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -447,13 +430,11 @@ export async function inviteMember(
       { method: 'POST', body: JSON.stringify({ inviteeRegisterNumber: regNo }) }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function acceptInvite(eventId: string, invitationId: string): Promise<void> {
   if (isStaticPrototype()) {
     // In prototype mode, just invalidate cache - UI will re-fetch
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -462,12 +443,10 @@ export async function acceptInvite(eventId: string, invitationId: string): Promi
       { method: 'POST', body: JSON.stringify({}) }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function declineInvitation(eventId: string, invitationId: string): Promise<void> {
   if (isStaticPrototype()) {
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -476,7 +455,6 @@ export async function declineInvitation(eventId: string, invitationId: string): 
       { method: 'POST', body: JSON.stringify({}) }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function getMyInvitations(eventId: string): Promise<TeamInvitation[]> {
@@ -499,7 +477,6 @@ export async function leaveTeam(eventId: string, teamId: string): Promise<void> 
       team.members = team.members.filter(m => m.regNo !== currentRegNo);
       savePrototypeEventTeam(team);
     }
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -508,13 +485,11 @@ export async function leaveTeam(eventId: string, teamId: string): Promise<void> 
       { method: 'DELETE' }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function deleteTeam(eventId: string, teamId: string): Promise<void> {
   if (isStaticPrototype()) {
     deletePrototypeEventTeam(eventId);
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -523,7 +498,6 @@ export async function deleteTeam(eventId: string, teamId: string): Promise<void>
       { method: 'DELETE' }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function transferLeadership(eventId: string, teamId: string, newLeaderId: RegNo): Promise<void> {
@@ -540,7 +514,6 @@ export async function transferLeadership(eventId: string, teamId: string, newLea
       team.leaderRegNo = newLeaderId;
       savePrototypeEventTeam(team);
     }
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -549,7 +522,6 @@ export async function transferLeadership(eventId: string, teamId: string, newLea
       { method: 'PUT', body: JSON.stringify({ newLeaderId }) }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function cancelInvitation(eventId: string, teamId: string, inviteeRegisterNumber: RegNo): Promise<void> {
@@ -563,7 +535,6 @@ export async function cancelInvitation(eventId: string, teamId: string, inviteeR
       team.members = team.members.filter(m => m.regNo !== inviteeRegisterNumber);
       savePrototypeEventTeam(team);
     }
-    eventCache.invalidate(`team:${eventId}`);
     return;
   }
   await safeFetch(() =>
@@ -572,7 +543,6 @@ export async function cancelInvitation(eventId: string, teamId: string, inviteeR
       { method: 'DELETE' }
     )
   );
-  eventCache.invalidate(`team:${eventId}`);
 }
 
 export async function getEventTeams(eventId: string): Promise<Team[]> {
@@ -597,7 +567,6 @@ export async function upsertTeamRecruitmentPost(
       body: JSON.stringify(payload),
     })
   );
-  eventCache.invalidate(`team:${eventId}`);
   return result;
 }
 
@@ -613,15 +582,11 @@ export async function getMySubmission(
   eventId: string,
   roundId: string
 ): Promise<Submission | null> {
-  const cacheKey = `my-submission:${eventId}:${roundId}`;
-  const cached = eventCache.get<Submission | null>(cacheKey);
-  if (cached !== null) return cached;
 
   try {
     const data = await safeFetch(() =>
       requestData<Submission | null>(`${roundBase(eventId, roundId)}/my-submission`)
     );
-    eventCache.set(cacheKey, data, 30_000);
     return data;
   } catch {
     return null;
@@ -631,15 +596,11 @@ export async function getMySubmission(
 export async function getCompetitionConfig(
   eventId: string
 ): Promise<CompetitionConfig | null> {
-  const cacheKey = `config:${eventId}`;
-  const cached = eventCache.get<CompetitionConfig | null>(cacheKey);
-  if (cached !== null) return cached;
 
   try {
     const data = await safeFetch(() =>
       requestData<CompetitionConfig>(`${compBase(eventId)}/config`)
     );
-    eventCache.set(cacheKey, data, 120_000);
     return data;
   } catch {
     return null;
@@ -737,7 +698,6 @@ export async function assignRole(
       body: JSON.stringify({ regNo, role }),
     })
   );
-  eventCache.invalidate(`event:${eventId}`);
   return result;
 }
 
@@ -747,7 +707,6 @@ export async function removeRole(eventId: string, regNo: RegNo): Promise<void> {
       method: 'DELETE',
     })
   );
-  eventCache.invalidate(`event:${eventId}`);
 }
 
 // ─── Persistent Teams ─────────────────────────────────────────────────────────

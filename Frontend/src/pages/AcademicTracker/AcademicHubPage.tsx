@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyView } from "../../components/ui/Feedback";
 import { SegmentedControl } from "../../components/ui";
@@ -25,51 +26,41 @@ import { ActionTab } from "./hub/ActionTab";
 export default function AcademicHubPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [overview, setOverview] = useState<OverviewData | null>(null);
-  const [insights, setInsights] = useState<InsightsData | null>(null);
-  const [unified, setUnified] = useState<UnifiedData | null>(null);
   const [history, setHistory] = useState<HistoryData | null>(null);
-  const [streak, setStreak] = useState<{ currentStreak: number; longestStreak: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    Promise.allSettled([
-      getLmsProgressOverview(),
-      getLmsAcademicInsights(),
-      getLmsUnifiedInsights().catch(() => null),
-      getLmsStreak().catch(() => null),
-    ]).then((results) => {
-      if (!active) return;
-      const [progressRes, insightsRes, unifiedRes, streakRes] = results;
+  // Phase 5: four independent insight queries. unified/streak are treated as
+  // supplementary (null on failure) exactly like the old allSettled contract.
+  const overviewQuery = useQuery({
+    queryKey: ["lms", "progress-overview"],
+    queryFn: () => getLmsProgressOverview(),
+    staleTime: 30_000,
+  });
+  const insightsQuery = useQuery({
+    queryKey: ["lms", "academic-insights"],
+    queryFn: () => getLmsAcademicInsights(),
+    staleTime: 30_000,
+  });
+  const unifiedQuery = useQuery({
+    queryKey: ["lms", "unified-insights"],
+    queryFn: () => getLmsUnifiedInsights().catch(() => null),
+    staleTime: 30_000,
+  });
+  const streakQuery = useQuery({
+    queryKey: ["lms", "streak"],
+    queryFn: () => getLmsStreak().catch(() => null),
+    staleTime: 60_000,
+  });
 
-      if (progressRes.status === "fulfilled" && progressRes.value) {
-        setOverview(progressRes.value as OverviewData);
-      }
-      if (insightsRes.status === "fulfilled" && insightsRes.value) {
-        setInsights(insightsRes.value as InsightsData);
-      }
-      if (unifiedRes.status === "fulfilled" && (unifiedRes as PromiseFulfilledResult<UnifiedData>).value) {
-        setUnified((unifiedRes as PromiseFulfilledResult<UnifiedData>).value as UnifiedData);
-      }
-      if (streakRes.status === "fulfilled" && streakRes.value) {
-        setStreak(streakRes.value as { currentStreak: number; longestStreak: number });
-      }
-
-      const hasError = progressRes.status === "rejected" && insightsRes.status === "rejected";
-      if (hasError) setError("Could not load academic data. Please try again.");
-      else setError(null);
-      setLoading(false);
-    }).catch((err) => {
-      if (active) {
-        setError(err instanceof Error ? err.message : "Failed to load academic data.");
-        setLoading(false);
-      }
-    });
-    return () => { active = false; };
-  }, []);
+  const overview = (overviewQuery.data ?? null) as OverviewData | null;
+  const insights = (insightsQuery.data ?? null) as InsightsData | null;
+  const unified = (unifiedQuery.data ?? null) as UnifiedData | null;
+  const streak = (streakQuery.data ?? null) as { currentStreak: number; longestStreak: number } | null;
+  const error =
+    overviewQuery.isError && insightsQuery.isError
+      ? "Could not load academic data. Please try again."
+      : null;
+  const loading = overviewQuery.isPending || insightsQuery.isPending || unifiedQuery.isPending || streakQuery.isPending;
 
   const loadHistory = async () => {
     if (history) return;

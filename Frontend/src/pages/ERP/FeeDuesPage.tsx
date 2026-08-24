@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { executePipeline, type FeeDuesModel } from "../../lib/erp/erpTransformers";
 // ErpPageShell section-card; fee table structure unchanged.
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
@@ -47,45 +49,49 @@ function FinanceClearanceCard({ notes }: { notes: string[] }) {
 }
 
 export default function FeeDuesPage({ blueprint }: Props) {
-  const [data, setData] = useState<FeeDuesModel | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  const [data, setData] = useState<FeeDuesModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load fee dues");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const mainKey = blueprint.fetchKeys[0];
-        const rawData = (batch[mainKey] as any)?.data;
-        
-        if (!rawData) {
-          throw new Error("No data found for fee dues.");
-        }
+    try {
+      const mainKey = blueprint.fetchKeys[0];
+      const rawData = (batch[mainKey] as any)?.data;
 
-        const pipelineResult = executePipeline("finance-dues", rawData);
-        if (!pipelineResult.isValid || !pipelineResult.data) {
-          throw new Error("Validation failed for fee dues data.");
-        }
-
-        setData(pipelineResult.data as FeeDuesModel);
-        setNotes(extractFeeDueNotes(rawData));
-      } catch (err: any) {
-        if (active) setError(err.message || "Failed to load fee dues");
-      } finally {
-        if (active) setLoading(false);
+      if (!rawData) {
+        throw new Error("No data found for fee dues.");
       }
-    }
 
-    load();
-    return () => { active = false; };
-  }, [blueprint, refreshTrigger]);
+      const pipelineResult = executePipeline("finance-dues", rawData);
+      if (!pipelineResult.isValid || !pipelineResult.data) {
+        throw new Error("Validation failed for fee dues data.");
+      }
+
+      setData(pipelineResult.data as FeeDuesModel);
+      setNotes(extractFeeDueNotes(rawData));
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to load fee dues");
+    }
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   return (
     <ErpPageShell

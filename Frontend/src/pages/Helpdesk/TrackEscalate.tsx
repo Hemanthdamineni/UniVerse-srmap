@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -8,6 +9,7 @@ import {
 } from "../../components/erp/ErpPrimitives";
 import { Markdown } from "../../components/markdown";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
+import { helpdeskKeys } from "../../lib/helpdesk/queryKeys";
 import {
   bulkUpdateHelpdeskTickets,
   escalateHelpdeskTicket,
@@ -28,66 +30,61 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function TrackEscalate({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();
-  const [tickets, setTickets] = useState<CampusTicket[]>([]);
-  const [counts, setCounts] = useState({
-    total: 0,
-    filtered: 0,
-    open: 0,
-    inProgress: 0,
-    escalated: 0,
-    resolved: 0,
-    slaBreached: 0,
-    queues: {} as Record<string, number>,
-  });
-  const [workload, setWorkload] = useState<Array<{ assignedTeam: string; ownerName: string; open: number; breached: number; total: number }>>([]);
+  const queryClient = useQueryClient();
   const [filterQueue, setFilterQueue] = useState<QueueFilter>("all");
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string>>({});
   const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  async function loadTickets() {
-    setLoading(true);
-    try {
-      const filters: Record<string, string> = {};
-      if (filterQueue !== "all") filters.queue = filterQueue;
-      if (query.trim()) filters.query = query.trim();
-      const data = await listHelpdeskTickets(
-        filters,
-        adminMode && admin.unlocked ? admin.adminHeaders : undefined
-      );
-      setTickets(data.items);
-      setCounts({
-        ...data.counts,
-        filtered: data.counts.filtered || data.items.length,
-        queues: data.counts.queues || {},
-      });
-      setWorkload(data.workload || []);
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Failed to load helpdesk tickets.",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const isAdminView = adminMode && admin.unlocked;
+  const adminHeaders = isAdminView ? admin.adminHeaders : undefined;
+  const ticketFilters: Record<string, string> = {
+    ...(filterQueue !== "all" ? { queue: filterQueue } : {}),
+    view: isAdminView ? "admin" : "student",
+  };
+
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive view flag + queue; the raw headers object deliberately stays out of the key */
+  const ticketsQuery = useQuery({
+    queryKey: helpdeskKeys.tickets(ticketFilters),
+    queryFn: () =>
+      listHelpdeskTickets(
+        query.trim() ? { ...ticketFilters, query: query.trim() } : ticketFilters,
+        adminHeaders
+      ),
+    staleTime: 15_000,
+    placeholderData: keepPreviousData,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
+
+  const tickets = ticketsQuery.data?.items ?? [];
+  const serverCounts = ticketsQuery.data?.counts;
+  const counts = {
+    total: serverCounts?.total ?? 0,
+    open: serverCounts?.open ?? 0,
+    inProgress: serverCounts?.inProgress ?? 0,
+    escalated: serverCounts?.escalated ?? 0,
+    resolved: serverCounts?.resolved ?? 0,
+    slaBreached: serverCounts?.slaBreached ?? 0,
+    queues: serverCounts?.queues ?? ({} as Record<string, number>),
+    filtered: serverCounts?.filtered || tickets.length,
+  };
+  const workload = ticketsQuery.data?.workload ?? [];
+  const loading = ticketsQuery.isFetching;
+
+  // Search submits and manual refreshes re-validate the active entry.
+  function refreshTickets() {
+    void queryClient.invalidateQueries({ queryKey: helpdeskKeys.tickets() });
   }
-
-  useEffect(() => {
-    void loadTickets();
-  }, [admin.adminHeaders, admin.unlocked, adminMode, filterQueue]);
-
-  const filtered = useMemo(() => tickets, [tickets]);
 
   async function runAction(action: () => Promise<unknown>, successText: string) {
     setBanner(null);
     try {
       await action();
       setBanner({ tone: "success", text: successText });
-      await loadTickets();
+      await queryClient.invalidateQueries({ queryKey: helpdeskKeys.tickets() });
     } catch (error) {
       setBanner({
         tone: "warning",
@@ -157,7 +154,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
             className="flex w-full flex-1 basis-56 gap-2"
             onSubmit={(event) => {
               event.preventDefault();
-              void loadTickets();
+              refreshTickets();
             }}
           >
             <input
@@ -195,11 +192,11 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
           </div>
         ) : null}
 
-        {filtered.length === 0 ? (
+        {tickets.length === 0 ? (
           <EmptyStateCard message="No tickets match the current filter." />
         ) : (
           <div className="space-y-3">
-            {filtered.map((ticket) => (
+            {tickets.map((ticket) => (
               <div key={ticket.id} className="rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex-1 space-y-2">

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ErpPageShell, SectionCard, StatusBanner, KpiGrid } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { ProgressBar, StatCard } from "../../components/ui/Progress";
@@ -41,9 +42,6 @@ interface PredictionInputs {
 }
 
 export default function AcademicTrackerPage() {
-  const [data, setData] = useState<MergedData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [inputs, setInputs] = useState<PredictionInputs>({
     semester1: "",
     semester2: "",
@@ -54,65 +52,38 @@ export default function AcademicTrackerPage() {
     targetCgpa: "",
   });
 
-  useEffect(() => {
-    let active = true;
+  // Reuses the AcademicHubPage cache entries for both getters.
+  const progressQuery = useQuery({
+    queryKey: ["lms", "progress-overview"],
+    queryFn: () => getLmsProgressOverview(),
+    staleTime: 30_000,
+  });
+  const insightsQuery = useQuery({
+    queryKey: ["lms", "academic-insights"],
+    queryFn: () => getLmsAcademicInsights(),
+    staleTime: 30_000,
+  });
 
-    Promise.allSettled([
-      getLmsProgressOverview(),
-      getLmsAcademicInsights(),
-    ])
-      .then((results) => {
-        if (!active) return;
-
-        const progressResult = results[0] as PromiseResult<Awaited<ReturnType<typeof getLmsProgressOverview>>>;
-        const insightsResult = results[1] as PromiseResult<Awaited<ReturnType<typeof getLmsAcademicInsights>>>;
-
-        let progressData = null;
-        let insightsData = null;
-        let combinedError = null;
-
-        if (progressResult.status === 'fulfilled') {
-          progressData = progressResult.value;
-        } else {
-          combinedError = (combinedError ? combinedError + '; ' : '') + 'Progress Overview failed to load';
-        }
-
-        if (insightsResult.status === 'fulfilled') {
-          insightsData = insightsResult.value;
-        } else {
-          combinedError = (combinedError ? combinedError + '; ' : '') + 'Academic Insights failed to load';
-        }
-
-        if (progressData && insightsData) {
-          const merged: MergedData = {
-            ...progressData,
-            gpaTrend: insightsData.gpaTrend,
-            categoryPerformance: insightsData.categoryPerformance,
-            highlights: insightsData.highlights,
-            recommendations: insightsData.recommendations,
-            overview: insightsData.overview,
-            recommendationEvents: insightsData.recommendationEvents,
-          };
-          setData(merged);
-        } else if (combinedError) {
-          setError(combinedError);
-        } else {
-          setError('Failed to load academic data');
-        }
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      })
-      .finally(() => {
-        if (!active) return;
-        setLoading(false);
-      });
-
-    return () => {
-      active = false;
+  const data = useMemo<MergedData | null>(() => {
+    const progressData = progressQuery.data;
+    const insightsData = insightsQuery.data;
+    if (!progressData || !insightsData) return null;
+    return {
+      ...progressData,
+      gpaTrend: insightsData.gpaTrend,
+      categoryPerformance: insightsData.categoryPerformance,
+      highlights: insightsData.highlights,
+      recommendations: insightsData.recommendations,
+      overview: insightsData.overview,
+      recommendationEvents: insightsData.recommendationEvents,
     };
-  }, []);
+  }, [progressQuery.data, insightsQuery.data]);
+
+  const loading = progressQuery.isPending || insightsQuery.isPending;
+  const error = [
+    ...(progressQuery.isError ? ["Progress Overview failed to load"] : []),
+    ...(insightsQuery.isError ? ["Academic Insights failed to load"] : []),
+  ].join("; ");
 
   const handleInputChange = (field: keyof PredictionInputs, value: string) => {
     setInputs(prev => ({ ...prev, [field]: value }));

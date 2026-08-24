@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getErpBatch, type ErpBatchPageResult, type ErpPageFailure } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { extractApiErrorMessage } from "../../lib/core/auth";
 import { handleSessionAuthFailure, isSessionAuthFailure } from "../../lib/core/session";
 import type { PageBlueprint } from "../../config/erpBlueprints";
@@ -207,55 +209,56 @@ export default function ResultsEarlierPage({ blueprint }: Props) {
   const [availableSemesters, setAvailableSemesters] = useState<number[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
   const [internalMarks, setInternalMarks] = useState<InternalMarkRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [internalLoading, setInternalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [internalError, setInternalError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load earlier semester results.");
+  }, [batchQuery.error]);
 
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        const marksResult = batch["examination/exam-mark-details"];
-        const internalResult = batch["examination/earlier-internal-marks"];
+    const marksResult = batch["examination/exam-mark-details"];
+    const internalResult = batch["examination/earlier-internal-marks"];
 
-        if (isBatchFailure(marksResult)) {
-          throw new Error(marksResult.error || "Failed to load historical exam marks.");
-        }
-        if (isBatchFailure(internalResult)) {
-          throw new Error(internalResult.error || "Failed to load earlier internal marks.");
-        }
-
-        const marksRows = parseHistoricalExamMarks(marksResult?.data);
-        const semesters = parseAvailableSemesters(internalResult?.data);
-        // Default to the highest available semester; fall back to the highest
-        // semester found in historical exam marks if the extractor returned none.
-        const initialSemester =
-          semesters[semesters.length - 1] ||
-          Math.max(...marksRows.map((r) => parseInt(r.semester, 10)).filter((n) => !isNaN(n)), 0) ||
-          1;
-
-        if (!active) return;
-        setHistoricalMarks(marksRows);
-        setAvailableSemesters(semesters);
-        setSelectedSemester(initialSemester);
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : "Failed to load earlier semester results.");
-      } finally {
-        if (active) setLoading(false);
+    try {
+      if (isBatchFailure(marksResult)) {
+        throw new Error(marksResult.error || "Failed to load historical exam marks.");
       }
-    }
+      if (isBatchFailure(internalResult)) {
+        throw new Error(internalResult.error || "Failed to load earlier internal marks.");
+      }
 
-    load();
-    return () => { active = false; };
-  }, [blueprint.fetchKeys, refreshTrigger]);
+      const marksRows = parseHistoricalExamMarks(marksResult?.data);
+      const semesters = parseAvailableSemesters(internalResult?.data);
+      // Default to the highest available semester; fall back to the highest
+      // semester found in historical exam marks if the extractor returned none.
+      const initialSemester =
+        semesters[semesters.length - 1] ||
+        Math.max(...marksRows.map((r) => parseInt(r.semester, 10)).filter((n) => !isNaN(n)), 0) ||
+        1;
+
+      setHistoricalMarks(marksRows);
+      setAvailableSemesters(semesters);
+      setSelectedSemester(initialSemester);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load earlier semester results.");
+    }
+  }, [batchQuery.data]);
+
+  const loading = batchQuery.isPending;
 
   useEffect(() => {
     if (!selectedSemester) return;

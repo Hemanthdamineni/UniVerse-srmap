@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -6,6 +7,7 @@ import {
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
+import { careerKeys } from "../../lib/career/queryKeys";
 import {
   bookInterviewSlot,
   cancelInterviewBooking,
@@ -31,8 +33,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function InterviewBooking({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();
-  const [slots, setSlots] = useState<InterviewSlot[]>([]);
-  const [bookings, setBookings] = useState<InterviewBooking[]>([]);
+  const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [form, setForm] = useState<{
@@ -51,32 +52,33 @@ export default function InterviewBooking({ adminMode = false }: { adminMode?: bo
     status: "open",
   });
 
-  async function loadData() {
-    try {
-      const [slotResponse, bookingResponse] = await Promise.all([
-        listInterviewSlots(adminMode && admin.unlocked ? admin.adminHeaders : undefined),
-        listInterviewBookings(),
-      ]);
-      setSlots(slotResponse.items);
-      setBookings(bookingResponse.items);
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Failed to load interview data.",
-      });
-    }
-  }
+  const isAdminView = adminMode && admin.unlocked;
+  const adminHeaders = isAdminView ? admin.adminHeaders : undefined;
 
-  useEffect(() => {
-    void loadData();
-  }, [admin.adminHeaders, admin.unlocked, adminMode]);
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive view flag; the raw headers object deliberately stays out of the key */
+  const slotsQuery = useQuery({
+    queryKey: careerKeys.interviewSlots({ view: isAdminView ? "admin" : "student" }),
+    queryFn: () => listInterviewSlots(adminHeaders),
+    staleTime: 30_000,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
+
+  const bookingsQuery = useQuery({
+    queryKey: careerKeys.interviewBookings(),
+    queryFn: () => listInterviewBookings(),
+    staleTime: 30_000,
+  });
+
+  const slots = slotsQuery.data?.items ?? [];
+  const bookings = bookingsQuery.data?.items ?? [];
+  const loading = slotsQuery.isFetching || bookingsQuery.isFetching;
 
   async function runAction(action: () => Promise<unknown>, successText: string) {
     setBanner(null);
     try {
       await action();
       setBanner({ tone: "success", text: successText });
-      await loadData();
+      await queryClient.invalidateQueries({ queryKey: careerKeys.all });
     } catch (error) {
       setBanner({
         tone: "warning",

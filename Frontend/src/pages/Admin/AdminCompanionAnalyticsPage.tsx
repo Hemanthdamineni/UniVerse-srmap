@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { adminQueueOptions } from "../../lib/core/queryOptions";
 import { ErpPageShell, KpiGrid } from "../../components/erp/ErpPrimitives";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
 import {
@@ -30,26 +32,22 @@ function labelize(value: string) {
 
 export default function AdminCompanionAnalyticsPage() {
   const [days, setDays] = useState(30);
-  const [report, setReport] = useState<CompanionAnalyticsReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadReport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getCompanionAnalyticsReport({ days, limit: 12 });
-      setReport(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load companion analytics.");
-    } finally {
-      setLoading(false);
-    }
-  }, [days]);
+  const reportQuery = useQuery({
+    queryKey: ["admin", "companion-analytics", days],
+    queryFn: () => getCompanionAnalyticsReport({ days, limit: 12 }),
+    staleTime: adminQueueOptions.staleTime,
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
-    loadReport();
-  }, [loadReport]);
+    if (!reportQuery.error) return;
+    setError(reportQuery.error instanceof Error ? reportQuery.error.message : "Failed to load companion analytics.");
+  }, [reportQuery.error]);
+
+  const report = reportQuery.data ?? null;
+  const loading = reportQuery.isPending;
 
   const maxCategory = useMemo(
     () => Math.max(1, ...(report?.byCategory || []).map((item) => item.count)),
@@ -62,7 +60,7 @@ export default function AdminCompanionAnalyticsPage() {
       source="Internal API"
       isLoading={loading}
       loadingMessage="Loading companion analytics..."
-      onRefresh={loadReport}
+      onRefresh={() => void reportQuery.refetch()}
       headerActions={
         <Select
           value={String(days)}
@@ -79,7 +77,7 @@ export default function AdminCompanionAnalyticsPage() {
       {/* Subtitle */}
       <p className="comp-body max-w-[68ch]">Adoption, recommendation, and conversion signals from LMS, Career, Events, and public profile workflows.</p>
 
-      {error ? <ErrorMessage message={error} onRetry={loadReport} /> : null}
+      {error ? <ErrorMessage message={error} onRetry={() => void reportQuery.refetch()} /> : null}
 
       {report ? (
         <>

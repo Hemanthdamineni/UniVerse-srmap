@@ -4,7 +4,9 @@
  * participation metrics, and inter-department comparisons.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminQueueOptions } from '../../lib/core/queryOptions';
 import { ErpPageShell, KpiGrid } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { listEvents } from '../../lib/campus/campusApi';
@@ -28,23 +30,23 @@ interface DeptMetric {
 /* ---------- Main Page ---------- */
 
 export default function AdminDeptPerformancePage() {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'events' | 'participants' | 'satisfaction'>('events');
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await listEvents(); // Trigger API to validate connectivity
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load department data.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Connectivity check only; department metrics are curated statics below.
+  const connectivityQuery = useQuery({
+    queryKey: ["admin", "dept-connectivity"],
+    queryFn: () => listEvents(),
+    staleTime: adminQueueOptions.staleTime,
+    retry: false,
+  });
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    if (!connectivityQuery.error) return;
+    setError(connectivityQuery.error instanceof Error ? connectivityQuery.error.message : 'Failed to load department data.');
+  }, [connectivityQuery.error]);
+
+  const loading = connectivityQuery.isPending;
 
   const departments = ([
     { id: 'd1', name: 'Computer Science Society', code: 'CS', eventsHosted: 142, totalParticipants: 8420, avgSatisfaction: 4.8, activeClubs: 5, trend: 'up', trendPct: 12 },
@@ -83,7 +85,7 @@ export default function AdminDeptPerformancePage() {
           ]}
         />
 
-        {error && <ErrorMessage message={error} onRetry={loadData} />}
+        {error && <ErrorMessage message={error} onRetry={() => void connectivityQuery.refetch()} />}
 
         {/* Sort controls */}
         <DataToolbar

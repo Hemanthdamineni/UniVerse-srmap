@@ -8,6 +8,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
+import { useQuery } from "@tanstack/react-query";
 import { extractSections, sanitizeText, type ParsedSection } from "../../lib/erp/sanitize";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
@@ -638,9 +640,7 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
   const rawMode = searchParams.get("mode") === "raw";
 
   // ERP data state (like RegistrationErpPage)
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [responsesByKey, setResponsesByKey] = useState<Record<string, ErpPageResponse>>({});
   const [tick, setTick] = useState(0);
   const refresh = () => setTick((n) => n + 1);
 
@@ -665,36 +665,53 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
     setSearchParams(next, { replace: true });
   }, [rawMode, searchParams, setSearchParams]);
 
-  // Fetch ERP page data (like RegistrationErpPage)
-  const loadErpPage = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (!blueprint.fetchKeys.length) {
+  // Fetch ERP page data via React Query (same pattern as RegistrationErpPage).
+  const { fetchKeys } = blueprint;
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(fetchKeys), tick],
+    queryFn: async () => {
+      if (!fetchKeys.length) {
         throw new ApiError("No ERP fetch keys configured.", 500, "NO_FETCH_KEYS", false);
       }
-      const batch = await getErpBatch(blueprint.fetchKeys);
-      const ok: Record<string, ErpPageResponse> = {};
-      const fails: string[] = [];
-      for (const key of blueprint.fetchKeys) {
-        const r = batch[key];
-        if (!r || (r as any).success === false) {
-          fails.push(sanitizeText((r as any)?.error) || `Failed to load ${key}`);
-        } else {
-          ok[key] = r as ErpPageResponse;
-        }
+      return getErpBatch(fetchKeys);
+    },
+    staleTime: 60_000,
+  });
+
+  const loading = batchQuery.isPending;
+
+  useEffect(() => {
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load page");
+  }, [batchQuery.error]);
+
+  const responsesByKey: Record<string, ErpPageResponse> = useMemo(() => {
+    const batch = batchQuery.data;
+    if (!batch) return {};
+    const ok: Record<string, ErpPageResponse> = {};
+    for (const key of fetchKeys) {
+      const r = batch[key];
+      if (r && (r as any).success !== false) {
+        ok[key] = r as ErpPageResponse;
       }
-      if (!Object.keys(ok).length) {
-        throw new ApiError(fails[0] || "Failed to load feedback data", 500, "LOAD_FAIL", false);
-      }
-      setResponsesByKey(ok);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load page");
-      setResponsesByKey({});
-    } finally {
-      setLoading(false);
     }
-  }, [blueprint.fetchKeys]);
+    return ok;
+  }, [batchQuery.data, fetchKeys]);
+
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch || Object.keys(responsesByKey).length > 0) return;
+
+    let firstFailure = "Failed to load feedback data";
+    for (const key of fetchKeys) {
+      const r = batch[key];
+      if (!r || (r as any).success === false) {
+        firstFailure = sanitizeText((r as any)?.error) || `Failed to load ${key}`;
+        break;
+      }
+    }
+    setError(firstFailure);
+  }, [batchQuery.data, responsesByKey, fetchKeys]);
 
   // Fetch feedback status (from internal API)
   const fetchTemplate = useCallback(async (force = false) => {
@@ -723,9 +740,8 @@ export default function CourseFeedbackAssistantPage({ blueprint }: Props) {
   }, [fetchTemplate]);
 
   useEffect(() => {
-    loadErpPage();
     loadStatus();
-  }, [loadErpPage, loadStatus, tick]);
+  }, [loadStatus, tick]);
 
   const handleSubmit = async () => {
     if (commentError) {

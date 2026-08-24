@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import type { AcademicCalendar, CurriculumModel } from "../../lib/erp/types";
 import CurriculumPage from "./CurriculumPage";
+import { createTestQueryClient } from "../../test/testUtils";
 
 // ── Module mocks ──────────────────────────────────────────────────────
 
@@ -46,9 +48,11 @@ function renderPage(blueprint?: Partial<PageBlueprint>) {
     loadingMessage: "Loading curriculum...",
   };
   return render(
-    <MemoryRouter>
-      <CurriculumPage blueprint={{ ...defaultBlueprint, ...blueprint }} />
-    </MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter>
+        <CurriculumPage blueprint={{ ...defaultBlueprint, ...blueprint }} />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

@@ -1,6 +1,9 @@
 // Opportunities: PageHeader, FilterBar, SkeletonCard loading, EmptyState; listOpportunities unchanged.
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
+import { careerKeys } from "../../lib/career/queryKeys";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import OpportunityCard from "../../components/career/OpportunityCard";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/ui/Layouts";
@@ -16,39 +19,31 @@ interface OpportunitiesPageProps {
 const TYPE_FILTERS = ["all", "job", "internship", "hackathon", "competition", "fellowship", "workshop"] as const;
 
 const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) => {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [opportunities, setOpportunities] = useState<CareerOpportunity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("query") || "");
   const [type, setType] = useState(initialType || searchParams.get("type") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "relevance");
-  const [error, setError] = useState<string | null>(null);
+  // Keeps typing from firing a request per keystroke.
+  const debouncedSearch = useDebouncedValue(searchTerm);
 
-  const fetchOpps = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const filters: Record<string, string> = {};
-      if (searchTerm) filters.query = searchTerm;
-      if (type) filters.type = type;
-      if (sort) filters.sort = sort;
+  const opportunityFilters: Record<string, string> = {};
+  if (debouncedSearch) opportunityFilters.query = debouncedSearch;
+  if (type) opportunityFilters.type = type;
+  if (sort) opportunityFilters.sort = sort;
 
-      const data = await listOpportunities(filters);
-      setOpportunities(data.items);
-    } catch (err) {
-      console.error("Failed to fetch opportunities", err);
-      setError(err instanceof Error ? err.message : "Could not load opportunities.");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm, type, sort]);
+  const opportunitiesQuery = useQuery({
+    queryKey: careerKeys.opportunities(opportunityFilters),
+    queryFn: () => listOpportunities(opportunityFilters),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetchOpps();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [fetchOpps]);
+  const opportunities = opportunitiesQuery.data?.items ?? [];
+  const loading = opportunitiesQuery.isPending || opportunitiesQuery.isPlaceholderData;
+  const error = opportunitiesQuery.error
+    ? opportunitiesQuery.error instanceof Error ? opportunitiesQuery.error.message : "Could not load opportunities."
+    : null;
 
   const handleSearch = (val: string) => {
     setSearchTerm(val);
@@ -76,15 +71,35 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
     });
   };
 
-  const handleBookmarkToggle = async (id: string) => {
-    setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o));
-    try {
-      const result = await bookmarkOpportunity(id);
-      setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: result.bookmarked } : o));
-    } catch (err) {
+  // Canonical optimistic pattern: cancel in-flight refetches, patch the cache,
+  // roll back on error, reconcile with the server verdict on success.
+  const bookmarkToggle = useMutation({
+    mutationFn: (id: string) => bookmarkOpportunity(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: careerKeys.opportunities() });
+      const previous = queryClient.getQueryData(careerKeys.opportunities(opportunityFilters));
+      queryClient.setQueryData(careerKeys.opportunities(opportunityFilters), (old: { items: CareerOpportunity[] } | undefined) => ({
+        ...(old ?? { items: [] }),
+        items: (old?.items ?? []).map((o) => (o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o)),
+      }));
+      return { previous };
+    },
+    onError: (err, _id, context) => {
       console.error(err);
-      setOpportunities(prev => prev.map(o => o.id === id ? { ...o, isBookmarked: !o.isBookmarked } : o));
-    }
+      if (context?.previous) {
+        queryClient.setQueryData(careerKeys.opportunities(opportunityFilters), context.previous);
+      }
+    },
+    onSuccess: (result, id) => {
+      queryClient.setQueryData(careerKeys.opportunities(opportunityFilters), (old: { items: CareerOpportunity[] } | undefined) => ({
+        ...(old ?? { items: [] }),
+        items: (old?.items ?? []).map((o) => (o.id === id ? { ...o, isBookmarked: result.bookmarked } : o)),
+      }));
+    },
+  });
+
+  const handleBookmarkToggle = (id: string) => {
+    void bookmarkToggle.mutateAsync(id).catch(() => undefined);
   };
 
   return (
@@ -138,7 +153,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
           title="Opportunities could not load"
           message={error}
           description="Retry the listing, or open your tracker if you only need applications you already saved."
-          onRetry={fetchOpps}
+          onRetry={() => opportunitiesQuery.refetch()}
           action={
             <Link to="/career/me/tracker" className="rounded-md border border-[var(--comp-border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] no-underline">
               Open tracker

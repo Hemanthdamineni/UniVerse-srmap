@@ -3,7 +3,9 @@
  * Queue for reviewing and approving/rejecting proposed events.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { adminQueueOptions } from '../../lib/core/queryOptions';
 import { ErpPageShell } from '../../components/erp/ErpPrimitives';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { EmptyState } from '../../components/competition/CompetitionEmptyState';
@@ -27,23 +29,23 @@ interface ApprovalItem {
 /* ---------- Main Page ---------- */
 
 export default function AdminEventApprovalsPage() {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await listEvents();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load approvals.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Connectivity check only; the approval board is local state by design.
+  const connectivityQuery = useQuery({
+    queryKey: ["admin", "approvals-connectivity"],
+    queryFn: () => listEvents(),
+    staleTime: adminQueueOptions.staleTime,
+    retry: false,
+  });
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    if (!connectivityQuery.error) return;
+    setError(connectivityQuery.error instanceof Error ? connectivityQuery.error.message : 'Failed to load approvals.');
+  }, [connectivityQuery.error]);
+
+  const loading = connectivityQuery.isPending;
 
   const items: ApprovalItem[] = [
     { id: 'ap1', title: 'Annual Hackathon 2025', organizer: 'CS Society', department: 'Computer Science', submittedDate: new Date(Date.now() - 86400000).toISOString(), category: 'Technical', estimatedAttendees: 500, status: 'pending', priority: 'high' },
@@ -105,7 +107,7 @@ export default function AdminEventApprovalsPage() {
           }
         />
 
-        {error && <ErrorMessage message={error} onRetry={loadData} />}
+        {error && <ErrorMessage message={error} onRetry={() => void connectivityQuery.refetch()} />}
 
         {/* Items */}
         {displayItems.length === 0 ? (

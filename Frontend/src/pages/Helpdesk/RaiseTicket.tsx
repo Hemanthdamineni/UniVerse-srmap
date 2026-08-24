@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -7,7 +8,10 @@ import {
 } from "../../components/erp/ErpPrimitives";
 import { Markdown } from "../../components/markdown";
 import { FormField } from "../../components/forms/FormField";
-import { createHelpdeskTicket, listHelpdeskTickets, type CampusTicket } from "../../lib/campus/campusApi";
+import { createHelpdeskTicket, listHelpdeskTickets } from "../../lib/campus/campusApi";
+import { helpdeskKeys } from "../../lib/helpdesk/queryKeys";
+import { useApiMutation } from "../../lib/core/useApiMutation";
+import { toErrorMessage } from "../../lib/core/toErrorMessage";
 
 type TicketCategory = "IT Support" | "Academic" | "Hostel" | "Finance" | "Transport" | "Other";
 type TicketPriority = "low" | "medium" | "high" | "urgent";
@@ -23,60 +27,57 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
 };
 
 export default function RaiseTicket() {
+  const queryClient = useQueryClient();
   const [category, setCategory] = useState<TicketCategory>("IT Support");
   const [priority, setPriority] = useState<TicketPriority>("medium");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
-  const [tickets, setTickets] = useState<CampusTicket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
 
-  async function loadTickets() {
-    setLoading(true);
-    try {
-      const data = await listHelpdeskTickets();
-      setTickets(data.items.slice(0, 5));
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Failed to load recent tickets.",
+  const recentTicketsQuery = useQuery({
+    queryKey: helpdeskKeys.tickets(),
+    queryFn: () => listHelpdeskTickets(),
+    staleTime: 15_000,
+  });
+
+  const tickets = useMemo(() => (recentTicketsQuery.data?.items ?? []).slice(0, 5), [recentTicketsQuery.data]);
+
+  const createTicket = useApiMutation({
+    mutationFn: (input: { category: TicketCategory; priority: TicketPriority; subject: string; description: string }) =>
+      createHelpdeskTicket(input),
+    successText: (created) => `Ticket submitted successfully. Reference ID: ${created.id}`,
+    errorFallback: "Couldn't submit your ticket. Check your connection and try again.",
+    invalidateKeys: [helpdeskKeys.tickets()],
+    onSuccess: (created) => {
+      // Instant feedback in the recent list; the invalidation refetch then
+      // reconciles with server truth.
+      queryClient.setQueryData(helpdeskKeys.tickets(), (prev: unknown) => {
+        const current = (prev as { items?: unknown[] } | undefined)?.items ?? [];
+        return { items: [created, ...current] };
       });
-    } finally {
-      setLoading(false);
-    }
-  }
+      setSubject("");
+      setDescription("");
+    },
+  });
 
-  useEffect(() => {
-    void loadTickets();
-  }, []);
+  const banner = createTicket.banner ?? (recentTicketsQuery.error
+    ? {
+        tone: "warning" as const,
+        text: toErrorMessage(recentTicketsQuery.error, "Failed to load recent tickets."),
+      }
+    : null);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setBanner(null);
-    try {
-      const created = await createHelpdeskTicket({
-        category,
-        priority,
-        subject: subject.trim(),
-        description: description.trim(),
-      });
-      setTickets((prev) => [created, ...prev].slice(0, 5));
-      setSubject("");
-      setDescription("");
-      setBanner({
-        tone: "success",
-        text: `Ticket submitted successfully. Reference ID: ${created.id}`,
-      });
-    } catch (error) {
-      setBanner({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "Couldn't submit your ticket. Check your connection and try again.",
-      });
-    }
+    await createTicket.mutate({
+      category,
+      priority,
+      subject: subject.trim(),
+      description: description.trim(),
+    });
   }
 
   return (
-    <ErpPageShell title="Raise a Ticket" source="Internal API" isLoading={loading} loadingMessage="Loading helpdesk...">
+    <ErpPageShell title="Raise a Ticket" source="Internal API" isLoading={recentTicketsQuery.isFetching} loadingMessage="Loading helpdesk...">
       {banner ? <StatusBanner message={{ id: "helpdesk-banner", tone: banner.tone, text: banner.text }} /> : null}
 
       <SectionCard title="New Ticket">

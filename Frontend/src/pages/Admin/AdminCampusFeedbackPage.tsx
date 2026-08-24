@@ -1,4 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminKeys } from "../../lib/admin/queryKeys";
+import { adminQueueOptions } from "../../lib/core/queryOptions";
 import { ErpPageShell, SectionCard, KpiGrid, EmptyStateCard } from "../../components/erp/ErpPrimitives";
 import { StarRating } from "../../components/ui/Progress";
 import { FeedbackStatusPill } from "../../components/ui/Feedback";
@@ -37,16 +40,45 @@ function formatDate(value: string) {
 
 export default function AdminCampusFeedbackPage() {
   const admin = useAdminAccess();
+  const queryClient = useQueryClient();
   const [type, setType] = useState<"" | CampusFeedbackType>("");
   const [status, setStatus] = useState<"" | CampusFeedbackStatus>("pending");
-  const [entries, setEntries] = useState<CampusFeedbackEntry[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [pagination, setPagination] = useState({ limit: PAGE_SIZE, offset: 0, total: 0 });
   const [reasonById, setReasonById] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
+  const [pagination, setPagination] = useState({ limit: PAGE_SIZE, offset: 0, total: 0 });
+
+  /* eslint-disable @tanstack/query/exhaustive-deps -- cache is scoped by the primitive filters + pagination offset below; the raw headers object deliberately stays out of the key */
+  const queueQuery = useQuery({
+    queryKey: adminKeys.campusFeedbackQueue({ type: type || "all", status: status || "all", offset: pagination.offset }),
+    queryFn: () =>
+      getAdminCampusFeedback(
+        { type, status, limit: PAGE_SIZE, offset: pagination.offset },
+        admin.adminHeaders
+      ),
+    staleTime: adminQueueOptions.staleTime,
+    placeholderData: keepPreviousData,
+  });
+  /* eslint-enable @tanstack/query/exhaustive-deps */
+
+  useEffect(() => {
+    if (!queueQuery.error) return;
+    setError(queueQuery.error instanceof Error ? queueQuery.error.message : "Unable to load campus feedback queue.");
+  }, [queueQuery.error]);
+
+  const entries = queueQuery.data?.items ?? [];
+  const counts = queueQuery.data?.counts ?? {};
+  const loading = queueQuery.isPending;
+
+  // Keep pager state in sync with server-side totals.
+  useEffect(() => {
+    if (queueQuery.data?.pagination) setPagination(queueQuery.data.pagination);
+  }, [queueQuery.data]);
+
+  async function loadQueue() {
+    await queryClient.invalidateQueries({ queryKey: adminKeys.campusFeedbackQueue() });
+  }
 
   // KPI data for overview section
   const kpis = useMemo(() => [
@@ -55,28 +87,6 @@ export default function AdminCampusFeedbackPage() {
     { label: "Approved", value: String(counts.approved || 0) },
     { label: "Rejected", value: String(counts.rejected || 0) },
   ], [counts]);
-
-  async function loadQueue() {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await getAdminCampusFeedback(
-        { type, status, limit: PAGE_SIZE, offset: pagination.offset },
-        admin.adminHeaders
-      );
-      setEntries(data.items);
-      setCounts(data.counts || {});
-      setPagination(data.pagination || { limit: PAGE_SIZE, offset: pagination.offset, total: data.items.length });
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load campus feedback queue.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadQueue();
-  }, [type, status, pagination.offset]);
 
   async function decide(entry: CampusFeedbackEntry, nextStatus: Exclude<CampusFeedbackStatus, "pending">) {
     const reason = (reasonById[entry.id] || "").trim();

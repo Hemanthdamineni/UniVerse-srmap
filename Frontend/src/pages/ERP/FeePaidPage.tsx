@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { executeErpAction, getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erp/erpTransformers";
 import { ErpPageShell, TableCardHeader, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
@@ -20,7 +22,6 @@ type PrintTarget = {
 };
 
 export default function FeePaidPage({ blueprint }: Props) {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FeesPaidModel | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
@@ -58,72 +59,75 @@ export default function FeePaidPage({ blueprint }: Props) {
     }
   }
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        const batch = await getErpBatch(blueprint.fetchKeys);
-        if (!active) return;
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load fees paid.");
+  }, [batchQuery.error]);
 
-        const rawData = Object.fromEntries(
-          blueprint.fetchKeys.map((key) => [
-            key,
-            batch[key] || {
-              success: false,
-              pageKey: key,
-              error: "Source was not returned by the ERP batch endpoint.",
-              status: 502,
-              code: "ERP_BATCH_SOURCE_MISSING",
-            },
-          ])
-        );
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
 
-        const hasAnyLoadedSource = Object.values(rawData).some(
-          (value) => value && typeof value === "object" && (value as { success?: boolean }).success !== false
-        );
+    try {
+      const rawData = Object.fromEntries(
+        blueprint.fetchKeys.map((key) => [
+          key,
+          batch[key] || {
+            success: false,
+            pageKey: key,
+            error: "Source was not returned by the ERP batch endpoint.",
+            status: 502,
+            code: "ERP_BATCH_SOURCE_MISSING",
+          },
+        ])
+      );
 
-        if (!hasAnyLoadedSource) {
-          throw new Error("No data found for fees paid.");
-        }
+      const hasAnyLoadedSource = Object.values(rawData).some(
+        (value) => value && typeof value === "object" && (value as { success?: boolean }).success !== false
+      );
 
-        const pipelineResult = executePipeline("finance-paid", rawData);
-        if (!pipelineResult.isValid || !pipelineResult.data) {
-          // Pipeline failed — log warning and show errors to user rather than crashing
-          console.warn("Pipeline failed for finance-paid:", pipelineResult.errors);
-          setData({
-            title: blueprint.heading,
-            records: [],
-            sections: [],
-            sources: [],
-            duplicates: [],
-            warnings: pipelineResult.errors,
-            integrity: {
-              sourceCount: 0,
-              rawRowCount: 0,
-              extractedRowCount: 0,
-              deduplicatedRowCount: 0,
-              duplicateCount: 0,
-              warningCount: pipelineResult.errors.length,
-            },
-          });
-          return;
-        }
-
-        setData(pipelineResult.data as FeesPaidModel);
-      } catch (loadError) {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load fees paid.");
-      } finally {
-        if (active) setLoading(false);
+      if (!hasAnyLoadedSource) {
+        throw new Error("No data found for fees paid.");
       }
+
+      const pipelineResult = executePipeline("finance-paid", rawData);
+      if (!pipelineResult.isValid || !pipelineResult.data) {
+        // Pipeline failed — log warning and show errors to user rather than crashing
+        console.warn("Pipeline failed for finance-paid:", pipelineResult.errors);
+        setData({
+          title: blueprint.heading,
+          records: [],
+          sections: [],
+          sources: [],
+          duplicates: [],
+          warnings: pipelineResult.errors,
+          integrity: {
+            sourceCount: 0,
+            rawRowCount: 0,
+            extractedRowCount: 0,
+            deduplicatedRowCount: 0,
+            duplicateCount: 0,
+            warningCount: pipelineResult.errors.length,
+          },
+        });
+        setError(null);
+        return;
+      }
+
+      setError(null);
+      setData(pipelineResult.data as FeesPaidModel);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load fees paid.");
     }
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [blueprint, refreshTrigger]);
+  }, [batchQuery.data, blueprint]);
+
+  const loading = batchQuery.isPending;
 
   const warnings = data?.warnings || [];
 

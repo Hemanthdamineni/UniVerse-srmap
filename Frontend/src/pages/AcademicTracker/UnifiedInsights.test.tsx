@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import UnifiedInsights from "./UnifiedInsights";
 
 const getLmsUnifiedInsights = vi.fn();
@@ -156,10 +158,15 @@ describe("UnifiedInsights", () => {
   });
 
   it("renders profile graph, ATS rubric, eligible recommendations, and saves feedback", async () => {
-    render(<UnifiedInsights />);
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <UnifiedInsights />
+      </QueryClientProvider>
+    );
 
     expect(await screen.findByRole("heading", { name: "Unified Insights" })).toBeInTheDocument();
-    expect(screen.getByText("Academic Record")).toBeInTheDocument();
+    // Graph nodes render only after the insights query lands — anchor on it.
+    await screen.findByText("Academic Record");
     expect(screen.getByText("ATS Rubric")).toBeInTheDocument();
     expect(screen.getByText("Build Node.js")).toBeInTheDocument();
     expect(screen.getByText("Frontend Engineering Intern")).toBeInTheDocument();

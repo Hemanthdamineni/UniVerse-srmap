@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { getAcademicCalendar } from "../../lib/erp/calendarApi";
 import { executePipeline, type CurriculumModel } from "../../lib/erp/erpTransformers";
 import type { AcademicCalendar } from "../../lib/erp/types";
@@ -26,57 +28,50 @@ const TABS: Array<{ value: PageTab; label: string }> = [
 
 export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
   const [model, setModel] = useState<CurriculumModel | null>(null);
-  const [calendar, setCalendar] = useState<AcademicCalendar | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState<PageTab>("subjects");
 
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(blueprint.fetchKeys), refreshTrigger],
+    queryFn: () => getErpBatch(blueprint.fetchKeys),
+    staleTime: 60_000,
+  });
+
+  // The two sources are independent: a scraper outage must not hide the calendar.
+  const calendarQuery = useQuery({
+    queryKey: ["academic-calendar"],
+    queryFn: () => getAcademicCalendar(),
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+  const calendar = calendarQuery.data ?? null;
+
   useEffect(() => {
-    let active = true;
-    setLoading(true);
+    if (!batchQuery.error) return;
+    setError((batchQuery.error as Error)?.message || "Failed to load curriculum.");
+  }, [batchQuery.error]);
 
-    // The two sources are independent: a scraper outage must not hide the calendar.
-    const curriculumPromise = getErpBatch(blueprint.fetchKeys)
-      .then((batch) => {
-        if (!active) return;
-        const result = batch["academic/student-wise-subjects"];
-        if (!result || (result as any).success === false) {
-          setError("Curriculum data unavailable.");
-          return;
-        }
-        const rawData = (result as any).data;
-        const pipelineResult = executePipeline(blueprint, rawData);
-        if (pipelineResult?.isValid && pipelineResult.data) {
-          setError(null);
-          setModel(pipelineResult.data as CurriculumModel);
-        } else {
-          setError("Invalid curriculum data format.");
-        }
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setError((err as Error)?.message || "Failed to load curriculum.");
-      });
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch) return;
+    const result = batch["academic/student-wise-subjects"];
+    if (!result || (result as any).success === false) {
+      setError("Curriculum data unavailable.");
+      return;
+    }
+    const rawData = (result as any).data;
+    const pipelineResult = executePipeline(blueprint, rawData);
+    if (pipelineResult?.isValid && pipelineResult.data) {
+      setError(null);
+      setModel(pipelineResult.data as CurriculumModel);
+    } else {
+      setError("Invalid curriculum data format.");
+    }
+  }, [batchQuery.data, blueprint]);
 
-    const calendarPromise = getAcademicCalendar()
-      .then((data) => {
-        if (active) setCalendar(data);
-      })
-      .catch(() => {
-        // Calendar is supplementary on this page; the dedicated tabs surface the failure.
-        if (active) setCalendar(null);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-      void curriculumPromise;
-      void calendarPromise;
-    };
-  }, [blueprint.fetchKeys, blueprint, refreshTrigger]);
+  // Calendar is supplementary; the dedicated tabs surface its failure.
+  const loading = batchQuery.isPending;
 
   return (
     <ErpPageShell

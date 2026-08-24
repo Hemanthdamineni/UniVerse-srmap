@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../../test/testUtils";
 import AdminLmsModerationPage from "./AdminLmsModerationPage";
 
 const adminHeaders = { "x-admin-password": "test-admin" };
@@ -104,9 +106,11 @@ describe("AdminLmsModerationPage", () => {
   it("renders moderation evidence and enforces reasoned decisions", async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
-        <AdminLmsModerationPage />
-      </MemoryRouter>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter>
+          <AdminLmsModerationPage />
+        </MemoryRouter>
+      </QueryClientProvider>
     );
 
     expect(await screen.findByText("Normalization checklist")).toBeInTheDocument();

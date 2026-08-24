@@ -78,6 +78,7 @@ const mockGetEndSemesterFeedbackStatus = vi.fn();
 vi.mock("../../lib/core/session", () => ({
   hasSessionAuth: (...args: unknown[]) => mockHasSessionAuth(...args),
   fetchSessionProfile: (...args: unknown[]) => mockFetchSessionProfile(...args),
+  readStoredProfileData: () => null,
 }));
 
 vi.mock("../../lib/erp/index", () => ({
@@ -211,12 +212,8 @@ describe("Dashboard", () => {
 
     renderDashboard();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("dashboard-layout")).toBeInTheDocument();
-    });
-
-    // Welcome card
-    expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+    // Wait on content that only exists once every gated query has landed.
+    await screen.findByText("Welcome back!");
 
     // Basic Info section
     expect(screen.getByText("Basic Info")).toBeInTheDocument();

@@ -1,34 +1,20 @@
-import { useEffect, useState } from "react";
 import { ErpPageShell, KpiGrid, SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
 import { getLmsProgressOverview } from "../../lib/lms/index";
+import { useQuery } from "@tanstack/react-query";
 
 type ProgressOverviewModel = Awaited<ReturnType<typeof getLmsProgressOverview>>;
 
 export default function ProgressOverview() {
-  const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<ProgressOverviewModel | null>(null);
-  const [error, setError] = useState("");
+  // Shares the AcademicHubPage cache entry for the same getter.
+  const overviewQuery = useQuery({
+    queryKey: ["lms", "progress-overview"],
+    queryFn: () => getLmsProgressOverview(),
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    let active = true;
-    getLmsProgressOverview()
-      .then((response) => {
-        if (!active) return;
-        setOverview(response);
-      })
-      .catch((loadError) => {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load progress overview.");
-      })
-      .finally(() => {
-        if (!active) return;
-        setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const overview = overviewQuery.data ?? null;
+  const loading = overviewQuery.isPending;
+  const error = overviewQuery.error instanceof Error ? overviewQuery.error.message : "";
 
   return (
     <ErpPageShell

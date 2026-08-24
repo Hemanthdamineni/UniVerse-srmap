@@ -2,12 +2,11 @@
  * eventsApi.test.ts — Comprehensive Vitest tests for competitionsApi.ts
  *
  * Covers: Event CRUD, registration, teams, submissions, analytics,
- * certificates, roles, safeFetch error handling, and eventCache behavior.
+ * certificates, roles, and safeFetch error handling.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as api from './competitionsApi';
-import { eventCache } from './eventCache';
 import * as session from '../core/session';
 
 // ─── Fixture factories ────────────────────────────────────────────────────
@@ -238,7 +237,6 @@ function wrapped(data: unknown) {
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
-  eventCache.invalidatePrefix(''); // clears entire cache
 });
 
 afterEach(() => {
@@ -290,14 +288,14 @@ describe('Event CRUD', () => {
       );
     });
 
-    it('returns cached data on second call without fetch', async () => {
+    it('returns the event payload on every call (caching lives in React Query)', async () => {
       mockFetch(wrapped(eventData));
-      await api.getEvent('evt_001'); // primes cache
-
-      // Second call must NOT call fetch
+      const first = await api.getEvent('evt_001');
+      mockFetch(wrapped(eventData));
       const result = await api.getEvent('evt_001');
+      expect(first).toEqual(eventData);
       expect(result).toEqual(eventData);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('fetches again after cache TTL expires', async () => {
@@ -305,7 +303,6 @@ describe('Event CRUD', () => {
       await api.getEvent('evt_001');
 
       // Force expiration by advancing the internal timestamp
-      eventCache.invalidate('event:evt_001');
 
       mockFetch(wrapped({ ...eventData, title: 'Refetched' }));
       const result = await api.getEvent('evt_001');
@@ -338,22 +335,17 @@ describe('Event CRUD', () => {
 
     it('invalidates events-list cache prefix on success', async () => {
       // Put something in the events-list cache bucket
-      eventCache.set('events-list:?registered=true', [{ id: 'old' }], 30_000);
-      expect(eventCache.get('events-list:?registered=true')).not.toBeNull();
 
       mockFetch(wrapped(created));
       await api.createEvent({ title: 'New' });
 
       // Cache should be cleared
-      expect(eventCache.get('events-list:?registered=true')).toBeNull();
     });
   });
 
   describe('deleteEvent', () => {
-    it('sends DELETE and invalidates caches', async () => {
+    it('sends DELETE', async () => {
       mockFetch(wrapped({ deleted: true }));
-      eventCache.set('event:evt_001', makeEventDetail(), 60_000);
-      eventCache.set('events-list:?all', [makeEventSummary()], 30_000);
 
       await api.deleteEvent('evt_001');
 
@@ -361,8 +353,6 @@ describe('Event CRUD', () => {
         '/api/events/evt_001',
         expect.objectContaining({ method: 'DELETE' }),
       );
-      expect(eventCache.get('event:evt_001')).toBeNull();
-      expect(eventCache.get('events-list:?all')).toBeNull();
     });
   });
 
@@ -390,9 +380,8 @@ describe('Event CRUD', () => {
 // ─── Registration ─────────────────────────────────────────────────────────
 
 describe('registerForEvent', () => {
-  it('sends POST and invalidates event cache', async () => {
+  it('sends POST', async () => {
     mockFetch(wrapped({}));
-    eventCache.set('event:evt_001', makeEventDetail(), 60_000);
 
     await api.registerForEvent('evt_001');
 
@@ -400,7 +389,6 @@ describe('registerForEvent', () => {
       '/api/events/evt_001/register',
       expect.objectContaining({ method: 'POST' }),
     );
-    expect(eventCache.get('event:evt_001')).toBeNull();
   });
 
   it('re-throws error on failure', async () => {
@@ -417,7 +405,6 @@ describe('Teams', () => {
 
     it('creates a team and invalidates team cache', async () => {
       mockFetch(wrapped(team));
-      eventCache.set('team:evt_001', { id: 'stale' }, 30_000);
 
       const result = await api.createTeam('evt_001', 'Byte Brigade');
 
@@ -429,7 +416,6 @@ describe('Teams', () => {
           body: JSON.stringify({ name: 'Byte Brigade' }),
         }),
       );
-      expect(eventCache.get('team:evt_001')).toBeNull();
     });
   });
 
@@ -448,12 +434,13 @@ describe('Teams', () => {
       expect(result).toBeNull();
     });
 
-    it('returns cached data on second call', async () => {
+    it('fetches on every call (caching lives in React Query)', async () => {
       mockFetch(wrapped(team));
       await api.getMyTeam('evt_001');
+      mockFetch(wrapped(team));
       const result = await api.getMyTeam('evt_001');
       expect(result).toEqual(team);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('returns null on network error (caught internally)', async () => {
@@ -472,7 +459,6 @@ describe('Teams', () => {
   describe('inviteMember', () => {
     it('sends invite POST and invalidates team cache', async () => {
       mockFetch(wrapped({}));
-      eventCache.set('team:evt_001', makeTeam(), 30_000);
 
       await api.inviteMember('evt_001', 'team_001', 'AP21110030');
 
@@ -483,14 +469,12 @@ describe('Teams', () => {
           body: JSON.stringify({ inviteeRegisterNumber: 'AP21110030' }),
         }),
       );
-      expect(eventCache.get('team:evt_001')).toBeNull();
     });
   });
 
   describe('acceptInvite', () => {
     it('sends accept POST and invalidates team cache', async () => {
       mockFetch(wrapped({}));
-      eventCache.set('team:evt_001', makeTeam(), 30_000);
 
       await api.acceptInvite('evt_001', 'inv_001');
 
@@ -498,7 +482,6 @@ describe('Teams', () => {
         '/api/competitions/evt_001/invitations/inv_001/accept',
         expect.objectContaining({ method: 'POST' }),
       );
-      expect(eventCache.get('team:evt_001')).toBeNull();
     });
   });
 
@@ -544,7 +527,6 @@ describe('Teams', () => {
 
     it('sends PUT and invalidates team cache', async () => {
       mockFetch(wrapped(post));
-      eventCache.set('team:evt_001', makeTeam(), 30_000);
 
       const payload = { neededSkills: ['React'], description: 'Looking for devs', openSlots: 2 };
       const result = await api.upsertTeamRecruitmentPost('evt_001', payload);
@@ -557,7 +539,6 @@ describe('Teams', () => {
           body: JSON.stringify(payload),
         }),
       );
-      expect(eventCache.get('team:evt_001')).toBeNull();
     });
   });
 
@@ -601,12 +582,13 @@ describe('Submissions', () => {
       expect(result).toBeNull();
     });
 
-    it('returns cached data on second call', async () => {
+    it('fetches on every call (caching lives in React Query)', async () => {
       mockFetch(wrapped(submission));
       await api.getMySubmission('evt_001', 'r1');
+      mockFetch(wrapped(submission));
       const result = await api.getMySubmission('evt_001', 'r1');
       expect(result).toEqual(submission);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('returns null on network error (caught internally)', async () => {
@@ -641,12 +623,13 @@ describe('Submissions', () => {
       expect(result).toBeNull();
     });
 
-    it('returns cached data on second call', async () => {
+    it('fetches on every call (caching lives in React Query)', async () => {
       mockFetch(wrapped(config));
       await api.getCompetitionConfig('evt_001');
+      mockFetch(wrapped(config));
       const result = await api.getCompetitionConfig('evt_001');
       expect(result).toEqual(config);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('returns null on network error (caught internally)', async () => {
@@ -796,9 +779,8 @@ describe('Roles management', () => {
   describe('assignRole', () => {
     const assignment = makeEventRoleAssignment();
 
-    it('sends POST and invalidates event cache', async () => {
+    it('sends POST', async () => {
       mockFetch(wrapped(assignment));
-      eventCache.set('event:evt_001', makeEventDetail(), 60_000);
 
       const result = await api.assignRole('evt_001', 'AP21110020', 'co-organizer');
 
@@ -810,14 +792,12 @@ describe('Roles management', () => {
           body: JSON.stringify({ regNo: 'AP21110020', role: 'co-organizer' }),
         }),
       );
-      expect(eventCache.get('event:evt_001')).toBeNull();
     });
   });
 
   describe('removeRole', () => {
     it('sends DELETE and invalidates event cache', async () => {
       mockFetch(wrapped({ removed: true }));
-      eventCache.set('event:evt_001', makeEventDetail(), 60_000);
 
       await api.removeRole('evt_001', 'AP21110020');
 
@@ -825,7 +805,6 @@ describe('Roles management', () => {
         '/api/competitions/evt_001/roles/AP21110020',
         expect.objectContaining({ method: 'DELETE' }),
       );
-      expect(eventCache.get('event:evt_001')).toBeNull();
     });
   });
 });

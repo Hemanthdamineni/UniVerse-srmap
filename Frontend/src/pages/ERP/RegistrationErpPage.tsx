@@ -4,8 +4,10 @@
  * Pattern: FeeDuesPage. Fetches live ERP data, renders status + tables,
  * then directs the student to the official portal for submission.
  */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
+import { erpKeys } from "../../lib/erp/queryKeys";
 import { extractSections, sanitizeText, type ParsedSection } from "../../lib/erp/sanitize";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
@@ -515,45 +517,58 @@ function EmptyRegistration({ meta }: { meta: RegMeta }) {
 // ── Main component ──────────────────────────────────────────────────────────
 
 export default function RegistrationErpPage({ blueprint, extraContent }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [responsesByKey, setResponsesByKey] = useState<Record<string, ErpPageResponse>>({});
   const [tick, setTick] = useState(0);
   const refresh = () => setTick((n) => n + 1);
 
   const meta = getRegMeta(blueprint.route);
+  const { fetchKeys } = blueprint;
 
-  const loadPage = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (!blueprint.fetchKeys.length) {
+  const batchQuery = useQuery({
+    queryKey: [...erpKeys.batch(fetchKeys), tick],
+    queryFn: async () => {
+      if (!fetchKeys.length) {
         throw new ApiError("No ERP fetch keys configured.", 500, "NO_FETCH_KEYS", false);
       }
-      const batch = await getErpBatch(blueprint.fetchKeys);
-      const ok: Record<string, ErpPageResponse> = {};
-      const fails: string[] = [];
-      for (const key of blueprint.fetchKeys) {
-        const r = batch[key];
-        if (!r || (r as any).success === false) {
-          fails.push(sanitizeText((r as any)?.error) || `Failed to load ${key}`);
-        } else {
-          ok[key] = r as ErpPageResponse;
-        }
-      }
-      if (!Object.keys(ok).length) {
-        throw new ApiError(fails[0] || "Failed to load registration data", 500, "LOAD_FAIL", false);
-      }
-      setResponsesByKey(ok);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load page");
-      setResponsesByKey({});
-    } finally {
-      setLoading(false);
-    }
-  }, [blueprint.fetchKeys]);
+      return getErpBatch(fetchKeys);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => { loadPage(); }, [loadPage, tick]);
+  const [error, setError] = useState<string | null>(null);
+  const responsesByKey: Record<string, ErpPageResponse> = useMemo(() => {
+    const batch = batchQuery.data;
+    if (!batch) return {};
+    const ok: Record<string, ErpPageResponse> = {};
+    for (const key of blueprint.fetchKeys) {
+      const r = batch[key];
+      if (r && (r as any).success !== false) {
+        ok[key] = r as ErpPageResponse;
+      }
+    }
+    return ok;
+  }, [batchQuery.data, blueprint.fetchKeys]);
+
+  useEffect(() => {
+    if (!batchQuery.error) return;
+    setError(batchQuery.error instanceof Error ? batchQuery.error.message : "Failed to load page");
+  }, [batchQuery.error]);
+
+  useEffect(() => {
+    const batch = batchQuery.data;
+    if (!batch || Object.keys(responsesByKey).length > 0) return;
+
+    let firstFailure = "Failed to load registration data";
+    for (const key of blueprint.fetchKeys) {
+      const r = batch[key];
+      if (!r || (r as any).success === false) {
+        firstFailure = sanitizeText((r as any)?.error) || `Failed to load ${key}`;
+        break;
+      }
+    }
+    setError(firstFailure);
+  }, [batchQuery.data, responsesByKey, blueprint.fetchKeys]);
+
+  const loading = batchQuery.isPending;
 
   const sections = extractSections(responsesByKey);
   const hasContent = sections.some((s) => s.tables.some((t) => t.length > 0) || s.text || s.title);
