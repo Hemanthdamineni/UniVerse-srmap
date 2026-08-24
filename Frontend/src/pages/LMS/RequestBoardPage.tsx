@@ -5,6 +5,8 @@ import {
   EmptyView,
   RequestCard,
   createLmsRequest,
+  fulfillLmsRequest,
+  getLmsResource,
   listLmsRequests,
   upvoteLmsRequest,
   closeLmsRequest,
@@ -35,6 +37,29 @@ export function RequestBoardPage() {
   );
   const [listError, setListError] = useState("");
   const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
+  const [fulfilBusyId, setFulfilBusyId] = useState<string | null>(null);
+  const [fulfilError, setFulfilError] = useState("");
+
+  async function handleFulfil(requestId: string, requestTitle: string) {
+    const input = window.prompt(
+      `Paste the resource ID that fulfils "${requestTitle}" — you can copy it from the resource page URL (/learn/r/<id>).`
+    );
+    const resourceId = input?.trim();
+    if (!resourceId) return;
+    setFulfilError("");
+    setFulfilBusyId(requestId);
+    try {
+      await getLmsResource(resourceId);
+      await fulfillLmsRequest(requestId, resourceId);
+      await refresh({ status: statusFilter, subjectCode: subjectFilter });
+    } catch (err) {
+      setFulfilError(
+        err instanceof Error ? err.message : "Couldn't link that resource to the request. Please try again."
+      );
+    } finally {
+      setFulfilBusyId(null);
+    }
+  }
 
   const requests: LmsRequest[] = data?.items || [];
   // "My requests" is a client-side view over the fetched page (owner close needs
@@ -114,10 +139,12 @@ export function RequestBoardPage() {
       </SectionCard>
 
       {listError ? <InlineError message={listError} /> : null}
+      {fulfilError ? <InlineError message={fulfilError} /> : null}
 
       <div className="space-y-3">
         {visibleRequests.map((request) => {
           const canClose = request.status === "open" && request.userId === currentRegNo;
+          const canFulfil = request.status === "open" && request.userId !== currentRegNo;
           return (
             <div key={request.id} className="space-y-1">
               <RequestCard
@@ -127,13 +154,22 @@ export function RequestBoardPage() {
                   await refresh({ status: statusFilter, subjectCode: subjectFilter });
                 }}
               />
-              {(canClose || request.status !== "open") && (
+              {(canClose || canFulfil || request.status !== "open") && (
                 <div className="flex items-center justify-end gap-2 px-1">
                   {request.status !== "open" && (
                     <span className="text-xs font-medium capitalize text-[var(--comp-text-muted)]">
                       {request.status}
                       {request.fulfilledBy ? ` by ${request.fulfilledBy}` : ""}
                     </span>
+                  )}
+                  {canFulfil && (
+                    <button
+                      className="lms-btn lms-btn-ghost border-[color-mix(in_srgb,var(--info)_25%,transparent)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
+                      disabled={fulfilBusyId !== null}
+                      onClick={() => void handleFulfil(request.id, request.title)}
+                    >
+                      {fulfilBusyId === request.id ? "Linking..." : "I have this resource"}
+                    </button>
                   )}
                   {canClose && (
                     <button

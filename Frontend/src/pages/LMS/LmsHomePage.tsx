@@ -101,6 +101,9 @@ import type {
   ResourceFormState
 } from "./_shared/LmsPageShared";
 import { track } from "../../lib/core/analytics";
+// Canonical SectionCard (supports `actions`) — shadows the legacy ErpPrimitives
+// re-export pulled in through the shared barrel.
+import { SectionCard as CanonicalSectionCard } from "../../components/ui";
 
 export function LmsHomePage() {
   const recommendations = useAsyncPage(() => getRecommendations({ limit: 6 }), []);
@@ -174,7 +177,14 @@ export function LmsHomePage() {
 
       <RecommendationSection title="Exam prep" items={examPrep.data || []} />
 
-      <SectionCard title="Recommended Roadmaps">
+      <CanonicalSectionCard
+        title="Recommended Roadmaps"
+        actions={
+          <Link to="/learn/roadmaps" className="text-xs font-medium text-[var(--comp-accent)] no-underline hover:underline">
+            Browse all
+          </Link>
+        }
+      >
         {roadmapRecommendations.data?.length ? (
           <div className="grid gap-4 md:grid-cols-2">
             {roadmapRecommendations.data.map((roadmap) => (
@@ -211,7 +221,7 @@ export function LmsHomePage() {
         ) : (
           <p className="body-text text-sm">Roadmap recommendations appear as you build learning history across subjects.</p>
         )}
-      </SectionCard>
+      </CanonicalSectionCard>
 
       <RecommendationSection title="Recommended for you" items={recommendations.data || []} />
 

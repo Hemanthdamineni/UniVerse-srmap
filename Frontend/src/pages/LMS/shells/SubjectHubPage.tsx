@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   listLmsResources,
   useAsyncPage,
@@ -43,12 +42,22 @@ function SubjectResourcesSection({ code }: { code: string }) {
 
 export default function SubjectHubPage() {
   const { code = "" } = useParams();
-  const [tab, setTab] = useState<SubjectTab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get("tab");
+  const tab: SubjectTab = TAB_OPTIONS.some((option) => option.value === requested)
+    ? (requested as SubjectTab)
+    : "overview";
 
   return (
     <LmsFrame title={`Subject ${code}`}>
       <div className="space-y-4">
-        <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} />
+        <SegmentedControl
+          options={TAB_OPTIONS}
+          value={tab}
+          onChange={(value) =>
+            setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
+          }
+        />
         {tab === "overview" ? <SubjectOverviewSection code={code} /> : null}
         {tab === "resources" ? <SubjectResourcesSection code={code} /> : null}
         {tab === "pyq" ? <PYQBankSection code={code} /> : null}

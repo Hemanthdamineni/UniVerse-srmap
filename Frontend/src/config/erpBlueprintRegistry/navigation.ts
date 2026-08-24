@@ -164,6 +164,14 @@ export const MAIN_NAV: NavSection[] = [
       },
       {
         type: "link",
+        label: "Roadmaps",
+        route: "/learn/roadmaps",
+        icon: "Route",
+        domain: "lms",
+        access: "B",
+      },
+      {
+        type: "link",
         label: "My Learning",
         route: "/learn/me",
         icon: "Folders",

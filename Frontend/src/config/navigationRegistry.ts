@@ -65,6 +65,8 @@ export const SUPPLEMENTAL_ROUTE_CATALOG: RouteCatalogEntry[] = [
   { route: "/learn/discover", label: "Learn", group: "Learning", domain: "lms", keywords: "browse search discover resources guides roadmaps pyq explore" },
   { route: "/learn/materials", label: "Official materials", group: "Learning", domain: "lms", keywords: "learning materials official year course subject" },
   { route: "/learn/practice", label: "Practice", group: "Learning", domain: "lms", keywords: "revision question bank quiz exam prep practice" },
+  { route: "/learn/roadmaps", label: "Roadmaps", group: "Learning", domain: "lms", keywords: "roadmaps skill journey career path" },
+  { route: "/learn/guides", label: "Guides", group: "Learning", domain: "lms", keywords: "guides study notes directory" },
   { route: "/learn/me", label: "My Learning", group: "Learning", domain: "lms", keywords: "bookmarks collections progress mastery saved" },
   { route: "/learn/contribute", label: "Contribute", group: "Learning", domain: "lms", keywords: "contribute add resource contributions request board" },
   { route: "/learn/contribute/new", label: "New resource", group: "Learning", domain: "lms" },
