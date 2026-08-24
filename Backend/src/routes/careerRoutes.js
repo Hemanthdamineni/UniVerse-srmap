@@ -4,7 +4,7 @@ const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { resolveSessionId } = require("../utils/cookies");
 const { createCareerCache } = require("../services/career/careerServices");
 
-function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, redisClient = null }) {
+function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, redisClient = null, scraperSupervisorStatus = null, scraperTriggerOnce = null }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
   // Redis-backed read-through cache for global career reads; degrades to a
@@ -169,6 +169,28 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     sources: careerStore.getScraperHealth(),
     recentRuns: careerStore.getScraperRuns(10),
   })));
+
+  // Admin-only: full scraper pipeline status (runs, breaker state, DB counts).
+  router.get("/career/scraper-status", wrap((req) => {
+    ensureCareerAdmin(req);
+    return {
+      ...careerStore.getScraperStatus(),
+      supervisor: typeof scraperSupervisorStatus === "function" ? scraperSupervisorStatus() : null,
+    };
+  }));
+
+  // Admin-only: request an immediate scrape run. When the scheduler daemon
+  // is alive it picks up a flag file within ~1s; otherwise a one-shot
+  // `main.py --once` process is spawned.
+  router.post("/career/scraper-trigger", wrap((req) => {
+    ensureCareerAdmin(req);
+    if (typeof scraperTriggerOnce !== "function") {
+      const error = new Error("Scraper trigger is not available.");
+      error.status = 503;
+      throw error;
+    }
+    return { trigger: scraperTriggerOnce() };
+  }));
 
   router.get("/career/stats", wrapAsync(async () => {
     const cached = await careerCache.getJson("stats");

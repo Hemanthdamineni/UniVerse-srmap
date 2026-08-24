@@ -130,6 +130,18 @@ const CAREER_SUBMISSION_REVIEW_ROLES = process.env.CAREER_SUBMISSION_REVIEW_ROLE
 const CAREER_CACHE_TTL_SEC = Number(process.env.CAREER_CACHE_TTL_SEC || 90);
 /** When set, paired header `x-career-load-token` authenticates k6/load tests (dev/staging only). */
 const CAREER_LOAD_TEST_TOKEN = process.env.CAREER_LOAD_TEST_TOKEN || "";
+// Career scraper supervisor: spawns the Python pipeline (Scraper/main.py) for
+// the backend's lifetime instead of relying on a system service. The run
+// cadence itself is controlled by SCRAPER_RUN_INTERVAL_HOURS inside the
+// Python scheduler.
+const CAREER_SCRAPER_ENABLED =
+  String(process.env.CAREER_SCRAPER_ENABLED || "1") !== "0";
+const CAREER_SCRAPER_RESTART_DELAY_MS = Number(
+  process.env.CAREER_SCRAPER_RESTART_DELAY_MS || 30 * 1000
+);
+const CAREER_SCRAPER_RESTART_DELAY_MAX_MS = Number(
+  process.env.CAREER_SCRAPER_RESTART_DELAY_MAX_MS || 15 * 60 * 1000
+);
 const FEEDBACK_AUTOMATION_ENABLED =
   String(
     process.env.FEEDBACK_AUTOMATION_ENABLED ||
@@ -224,6 +236,9 @@ module.exports = {
   CAREER_SUBMISSION_REVIEW_ROLES,
   CAREER_CACHE_TTL_SEC,
   CAREER_LOAD_TEST_TOKEN,
+  CAREER_SCRAPER_ENABLED,
+  CAREER_SCRAPER_RESTART_DELAY_MS,
+  CAREER_SCRAPER_RESTART_DELAY_MAX_MS,
   FEEDBACK_AUTOMATION_ENABLED,
   UPLOADS_DIR,
   LMS_FILES_DIR,

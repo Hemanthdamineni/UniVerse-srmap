@@ -8,6 +8,8 @@ Scraper/venv/
 Scraper/__pycache__/
 Scraper/scrapers/__pycache__/
 Scraper/logs/
+Scraper/.scraper.lock
+Scraper/.run-now
 **/__pycache__/
 *.pyc
 

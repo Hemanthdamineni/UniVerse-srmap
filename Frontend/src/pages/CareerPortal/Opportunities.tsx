@@ -20,6 +20,7 @@ import {
   unsaveCareerOpportunity,
   updateCareerOpportunity,
 } from "../../lib/career/careerApi";
+import { ScraperHealthCard } from "./ScraperHealthCard";
 
 const ALL_TYPES = ["internship", "hackathon", "competition", "workshop", "job", "fellowship"] as const;
 
@@ -167,6 +168,8 @@ export default function Opportunities({ adminMode = false }: { adminMode?: boole
   return (
     <ErpPageShell title="Opportunities" source="Internal API">
       {banner ? <StatusBanner message={{ id: "opp-banner", tone: banner.tone, text: banner.text }} /> : null}
+
+      {adminMode && admin.unlocked ? <ScraperHealthCard headers={admin.adminHeaders} /> : null}
 
       {adminMode && admin.unlocked ? (
         <SectionCard title={editingId ? "Edit Opportunity" : "Publish Opportunity"}>

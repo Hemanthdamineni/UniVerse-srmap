@@ -7,6 +7,8 @@ from playwright.async_api import async_playwright, Page, Browser, TimeoutError a
 import config
 from normalizer import normalize_opportunity
 from db import CareerDB
+from scrapers.browser import launch_stealth_browser, scroll_until_stable
+from scrapers.net import pool
 
 logger = logging.getLogger("Scraper.Internshala")
 
@@ -14,7 +16,20 @@ logger = logging.getLogger("Scraper.Internshala")
 # usually work. However the class names have shifted over time.
 # Strategy: multiple fallback selectors per data field.
 
-INTERNSHALA_URL = "https://internshala.com/internships/computer-science-internship,web-development-internship,software-development-internship"
+# Category pages to scrape. Each entry is a comma-separated slug group that
+# Internshala treats as a multi-category filter. Unknown slugs simply yield
+# empty listings and are skipped gracefully.
+INTERNSHALA_URLS = [
+    # Core tech (original coverage)
+    "https://internshala.com/internships/computer-science-internship,web-development-internship,software-development-internship",
+    # Data/ML track
+    "https://internshala.com/internships/data-science-internship,machine-learning-internship",
+    # App/design/marketing + electronics
+    "https://internshala.com/internships/mobile-app-development-internship,digital-marketing-internship,graphic-design-internship",
+]
+
+# Generic fallback when every category page comes back empty
+INTERNSHALA_FALLBACK_URL = "https://internshala.com/internships"
 
 # Selectors to find each internship card container
 CARD_SELECTORS = [
@@ -168,44 +183,57 @@ async def run_internshala(db: CareerDB) -> dict:
     """Scrape internships from Internshala."""
     logger.info("Starting Internshala scraper...")
     counts = {"new": 0, "updated": 0, "skipped": 0, "errors": 0}
+    proxy = pool.next()
+    if proxy:
+        logger.info("Using proxy from SCRAPER_PROXIES pool")
 
     browser: Optional[Browser] = None
+    seen_urls: set[str] = set()
+    all_raw: list[dict] = []
     async with async_playwright() as p:
         try:
-            browser = await p.chromium.launch(
-                headless=config.PLAYWRIGHT_HEADLESS,
-            )
-            context = await browser.new_context(
-                user_agent=config.PLAYWRIGHT_USER_AGENT,
-                viewport={"width": 1280, "height": 900},
-                # Set Accept-Language to appear more human
-                extra_http_headers={
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                }
-            )
+            browser, context = await launch_stealth_browser(p, viewport=(1280, 900), proxy=proxy)
             page = await context.new_page()
             page.set_default_timeout(config.PAGE_NAVIGATION_TIMEOUT_MS)
 
-            logger.info(f"Navigating to {INTERNSHALA_URL}")
-            await page.goto(INTERNSHALA_URL, wait_until="domcontentloaded")
+            for page_url in INTERNSHALA_URLS:
+                try:
+                    logger.info(f"Navigating to {page_url}")
+                    await page.goto(page_url, wait_until="domcontentloaded")
+                    await page.wait_for_timeout(2000)
+                    await scroll_until_stable(page, CARD_SELECTORS[0])
 
-            # Wait for server-rendered content to appear
-            await page.wait_for_timeout(2000)
+                    cards = await _find_cards(page)
+                    logger.info(f"{len(cards)} internship cards from {page_url}")
 
-            cards = await _find_cards(page)
+                    for card in cards:
+                        raw = await _extract_card(card)
+                        if raw and raw.get("url") and raw["url"] not in seen_urls:
+                            seen_urls.add(raw["url"])
+                            all_raw.append(raw)
 
-            if not cards:
-                logger.warning("No internship cards found. Retrying with generic URL...")
-                # Fallback to the generic internships page
-                await page.goto(
-                    "https://internshala.com/internships",
-                    wait_until="domcontentloaded",
+                    # Polite delay between category pages
+                    await asyncio.sleep(2)
+                except PWTimeout:
+                    logger.warning(f"Timeout on {page_url}; continuing with next category")
+                except Exception as exc:
+                    logger.warning(f"Error scraping {page_url}: {exc}")
+
+            if not all_raw:
+                logger.warning(
+                    "All category pages empty. Falling back to generic listing..."
                 )
+                await page.goto(INTERNSHALA_FALLBACK_URL, wait_until="domcontentloaded")
                 await page.wait_for_timeout(2000)
+                await scroll_until_stable(page, CARD_SELECTORS[0])
                 cards = await _find_cards(page)
+                for card in cards:
+                    raw = await _extract_card(card)
+                    if raw and raw.get("url") and raw["url"] not in seen_urls:
+                        seen_urls.add(raw["url"])
+                        all_raw.append(raw)
 
-            if not cards:
+            if not all_raw:
                 logger.warning(
                     "Still no cards found on Internshala. "
                     "Page structure may have changed significantly."
@@ -213,15 +241,10 @@ async def run_internshala(db: CareerDB) -> dict:
                 logger.info(f"Page title: {await page.title()}")
                 return counts
 
-            logger.info(f"Processing {len(cards)} internship cards from Internshala")
+            logger.info(f"Processing {len(all_raw)} unique internship cards from Internshala")
 
-            for card in cards:
+            for raw in all_raw:
                 try:
-                    raw = await _extract_card(card)
-                    if not raw or not raw.get("url"):
-                        counts["skipped"] += 1
-                        continue
-
                     location_str = raw.get("location", "")
                     is_remote = "work from home" in location_str.lower() or "remote" in location_str.lower()
 
@@ -255,6 +278,7 @@ async def run_internshala(db: CareerDB) -> dict:
             raise
         finally:
             if browser:
+                await context.close()
                 await browser.close()
 
     logger.info(

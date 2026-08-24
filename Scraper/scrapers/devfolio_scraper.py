@@ -7,6 +7,8 @@ from playwright.async_api import async_playwright, Page, BrowserContext, Timeout
 import config
 from normalizer import from_devfolio
 from db import CareerDB
+from scrapers.browser import launch_stealth_browser, scroll_until_stable
+from scrapers.net import pool
 
 logger = logging.getLogger("Scraper.Devfolio")
 
@@ -163,18 +165,9 @@ async def _scrape_page(
         logger.info(f"Devfolio [{label}] → {url}")
         await page.goto(url, wait_until="domcontentloaded")
 
-        # Wait for GraphQL hydration
+        # Wait for GraphQL hydration, then scroll to trigger lazy-loaded cards
         await page.wait_for_timeout(_HYDRATION_WAIT_MS)
-
-        # Scroll to trigger lazy-loaded cards
-        prev_count = 0
-        for _ in range(4):
-            await page.evaluate("window.scrollBy(0, window.innerHeight * 1.5)")
-            await page.wait_for_timeout(1200)
-            cards_now = await page.query_selector_all(_CARD_SELECTOR)
-            if len(cards_now) == prev_count and prev_count > 0:
-                break  # No new cards loaded — stop scrolling
-            prev_count = len(cards_now)
+        await scroll_until_stable(page, _CARD_SELECTOR)
 
         cards = await _find_cards(page)
 
@@ -208,13 +201,12 @@ async def run_devfolio(db: CareerDB) -> dict:
     """Scrape hackathons from Devfolio across open, featured, and upcoming pages."""
     logger.info("Starting Devfolio scraper (multi-page)...")
     counts = {"new": 0, "updated": 0, "skipped": 0, "errors": 0}
+    proxy = pool.next()
+    if proxy:
+        logger.info("Using proxy from SCRAPER_PROXIES pool")
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=config.PLAYWRIGHT_HEADLESS)
-        context = await browser.new_context(
-            user_agent=config.PLAYWRIGHT_USER_AGENT,
-            viewport={"width": 1280, "height": 800},
-        )
+        browser, context = await launch_stealth_browser(p, proxy=proxy)
 
         try:
             seen_titles: set[str] = set()
@@ -251,6 +243,7 @@ async def run_devfolio(db: CareerDB) -> dict:
                     counts["errors"] += 1
 
         finally:
+            await context.close()
             await browser.close()
 
     logger.info(

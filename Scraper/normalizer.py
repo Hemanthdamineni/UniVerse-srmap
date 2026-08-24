@@ -3,8 +3,8 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from intelligence import extract_skills, parse_eligible_years, compute_base_relevance
-from deduplicator import generate_fingerprint
+from intelligence import extract_skills, parse_eligible_years, compute_base_relevance, parse_stipend
+from deduplicator import generate_fingerprint, compute_dupe_key
 
 logger = logging.getLogger("Normalizer")
 
@@ -98,6 +98,11 @@ def normalize_opportunity(raw_data: dict, source: str) -> Optional[dict]:
 
     # ── Intelligence-based fields ────────────────────────────────────────
     full_text = f"{opp['title']} {opp['description']} {_safe_str(opp.get('requirements'))}"
+
+    # Structured stipend range (monthly INR) for sorting/filtering.
+    stipend_low, stipend_high = parse_stipend(opp.get("stipend"))
+    opp["stipendMin"] = stipend_low
+    opp["stipendMax"] = stipend_high
     opp["skills"] = extract_skills(full_text)
     opp["eligibleYears"] = parse_eligible_years(full_text)
     opp["shortDescription"] = description[:200].strip() if description else ""
@@ -113,6 +118,8 @@ def normalize_opportunity(raw_data: dict, source: str) -> Optional[dict]:
     # ── Fingerprint for cross-source dedup ───────────────────────────────
     opp["fingerprint"] = generate_fingerprint(opp)
     opp["sources"] = [source]
+    # Near-duplicate key (normalized title+employer) used by the DB merge step.
+    opp["dupeKey"] = compute_dupe_key(opp)
 
     # ── Relevance score ──────────────────────────────────────────────────
     opp["relevanceScore"] = compute_base_relevance(opp)
