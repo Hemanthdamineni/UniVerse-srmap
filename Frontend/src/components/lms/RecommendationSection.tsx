@@ -26,13 +26,7 @@ export default function RecommendationSection({
       </div>
 
       {items.length === 0 ? (
-        <div
-          className="flex min-h-20 items-center justify-center rounded-xl px-6"
-          style={{
-            border: "1.5px dashed var(--comp-border)",
-            background: "color-mix(in srgb, var(--comp-surface-hover) 50%, transparent)",
-          }}
-        >
+        <div className="flex min-h-20 items-center justify-center rounded-xl border-[1.5px] border-dashed border-[var(--comp-border)] bg-[var(--comp-surface)] px-6">
           <p className="text-sm text-[var(--comp-text-muted)]">
             No {title.toLowerCase()} yet
           </p>

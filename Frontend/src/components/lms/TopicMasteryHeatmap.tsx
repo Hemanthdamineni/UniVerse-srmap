@@ -5,7 +5,7 @@ export default function TopicMasteryHeatmap({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed p-6 text-sm text-[var(--comp-text-muted)]" style={{ borderColor: "var(--comp-border)" }}>
+      <div className="rounded-xl border border-dashed border-[var(--comp-border)] bg-[var(--comp-surface)] p-6 text-sm text-[var(--comp-text-muted)]">
         No mastery data yet.
       </div>
     );

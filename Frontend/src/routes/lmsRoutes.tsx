@@ -17,6 +17,7 @@ const ResourceDetailPage = lazy(() => import("../pages/LMS/ResourceDetailPage"))
 const RoadmapBuilderPage = lazy(() => import("../pages/LMS/roadmaps/RoadmapBuilderPage"));
 const RoadmapViewerPage = lazy(() => import("../pages/LMS/roadmaps/RoadmapViewerPage"));
 const RoadmapsListPage = lazy(() => import("../pages/LMS/roadmaps/RoadmapsListPage"));
+const RequestBoardPage = lazy(() => import("../pages/LMS/RequestBoardPage"));
 const SubjectHubPage = lazy(() => import("../pages/LMS/shells/SubjectHubPage"));
 
 export const lmsRoutes = [
@@ -26,6 +27,7 @@ export const lmsRoutes = [
   { path: "/learn/me", element: <ProtectedPage><SuspenseWrapper><MyLearningPage /></SuspenseWrapper></ProtectedPage> },
   { path: "/learn/contribute", element: <ProtectedPage><SuspenseWrapper><ContributePage /></SuspenseWrapper></ProtectedPage> },
   { path: "/learn/contribute/new", element: <ProtectedPage><SuspenseWrapper><AddResourcePage /></SuspenseWrapper></ProtectedPage> },
+  { path: "/learn/requests", element: <ProtectedPage><SuspenseWrapper><RequestBoardPage /></SuspenseWrapper></ProtectedPage> },
   { path: "/learn/contributors/:userId", element: <ProtectedPage><SuspenseWrapper><ContributorProfilePage /></SuspenseWrapper></ProtectedPage> },
   { path: "/learn/r/:id", element: <ProtectedPage><SuspenseWrapper><ResourceDetailPage /></SuspenseWrapper></ProtectedPage> },
   { path: "/learn/subjects/:code", element: <ProtectedPage><SuspenseWrapper><SubjectHubPage /></SuspenseWrapper></ProtectedPage> },
