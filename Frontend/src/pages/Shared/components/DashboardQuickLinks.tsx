@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
-import { DASHBOARD_QUICK_LINKS } from "../../../config/erpBlueprints";
+import { DASHBOARD_QUICK_LINKS, isPageVisible, PAGE_BLUEPRINTS } from "../../../config/erpBlueprints";
 
 export default function DashboardQuickLinks() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ export default function DashboardQuickLinks() {
   return (
     <SectionCard title="Quick Links">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {DASHBOARD_QUICK_LINKS.map((link) => (
+        {DASHBOARD_QUICK_LINKS.filter((link) => (PAGE_BLUEPRINTS[link.route] ? isPageVisible(PAGE_BLUEPRINTS[link.route]) : true)).map((link) => (
           <button
             key={link.route}
             type="button"
