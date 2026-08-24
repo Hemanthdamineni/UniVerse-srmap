@@ -34,6 +34,8 @@ function normalizeRoute(route: string) {
   return normalized || "/";
 }
 
+const SHOW_MENU_MODE_TOGGLE = false;
+
 export default function Sidebar() {
   const admin = useAdminMode();
   const [sidebarClosed, setSidebarClosed] = useState(() =>
@@ -335,38 +337,40 @@ export default function Sidebar() {
         <div className="mx-6 my-6 border-t" style={{ borderColor: "var(--border)" }} />
 
         <nav className={`${sidebarClosed ? "px-2" : "px-4"} space-y-1`}>
-          <div data-page-contrast="true" className="sidebar-segment-shell rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
-            {!sidebarClosed ? (
-              <div className="sidebar-segment-track flex w-full overflow-hidden rounded-md">
-                <button
-                  type="button"
-                  data-page-contrast="true"
-                  onClick={() => setShowAdvanced(false)}
-                  className={`flex-1 py-2 text-sm font-medium transition ${
-                    !showAdvanced
-                      ? "sidebar-segment-active shadow"
-                      : "sidebar-item-muted sidebar-item-hover"
-                  }`}
-                >
-                  <SidebarContrastText text="Essential" />
-                </button>
-                <button
-                  type="button"
-                  data-page-contrast="true"
-                  onClick={() => setShowAdvanced(true)}
-                  className={`flex-1 py-2 text-sm font-medium transition ${
-                    showAdvanced
-                      ? "sidebar-segment-active shadow"
-                      : "sidebar-item-muted sidebar-item-hover"
-                  }`}
-                >
-                  <SidebarContrastText text="Full Menu" />
-                </button>
-              </div>
-            ) : null}
-          </div>
+          {SHOW_MENU_MODE_TOGGLE ? (
+            <div data-page-contrast="true" className="sidebar-segment-shell rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
+              {!sidebarClosed ? (
+                <div className="sidebar-segment-track flex w-full overflow-hidden rounded-md">
+                  <button
+                    type="button"
+                    data-page-contrast="true"
+                    onClick={() => setShowAdvanced(false)}
+                    className={`flex-1 py-2 text-sm font-medium transition ${
+                      !showAdvanced
+                        ? "sidebar-segment-active shadow"
+                        : "sidebar-item-muted sidebar-item-hover"
+                    }`}
+                  >
+                    <SidebarContrastText text="Essential" />
+                  </button>
+                  <button
+                    type="button"
+                    data-page-contrast="true"
+                    onClick={() => setShowAdvanced(true)}
+                    className={`flex-1 py-2 text-sm font-medium transition ${
+                      showAdvanced
+                        ? "sidebar-segment-active shadow"
+                        : "sidebar-item-muted sidebar-item-hover"
+                    }`}
+                  >
+                    <SidebarContrastText text="Full Menu" />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
-          {BOTTOM_NAV.map((item) =>
+          {BOTTOM_NAV.filter((item) => (PAGE_BLUEPRINTS[item.route] ? isPageVisible(PAGE_BLUEPRINTS[item.route]) : true)).map((item) =>
             item.label === "Logout" ? (
               <button
                 key={item.label}
