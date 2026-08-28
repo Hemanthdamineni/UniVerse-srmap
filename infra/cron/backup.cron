@@ -1,0 +1,17 @@
+# crontab entry for automated daily backups (Gate 8 P0).
+# Install with: crontab infra/cron/backup.cron
+#
+# Schedule: 02:00 every day. The script is idempotent — re-runs
+# within the same timestamp window are safe but wasteful, so we
+# pin to a single 02:00 entry. Add a second entry for staging if
+# the schedule needs to differ.
+#
+# Prereq: BACKUP_DIR, REDIS_PASSWORD (if backing up Redis), and
+# any BACKUP_DEST must be exported in the cron environment. Edit
+# the `BACKUP_DIR=...` line below to match the operator's chosen
+# location (default: /var/backups/university-erp).
+#
+# Example log: /var/log/university-erp-backup.log
+#
+# m h dom mon dow command
+0 2 * * *  BACKUP_DIR=/var/backups/university-erp /opt/universe-erp/infra/scripts/setup-backups.sh >> /var/log/university-erp-backup.log 2>&1
