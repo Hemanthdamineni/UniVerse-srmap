@@ -1,6 +1,5 @@
 // Header bar uses --comp-accent instead of hardcoded hex for theme parity.
 import { Link, useLocation } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
 import { hasSessionAuth } from "../lib/core/session";
 import srmLogo from "../assets/FullSrmlogo.png";
 
@@ -62,7 +61,6 @@ function Header() {
                         <HeaderButton key={button.label} {...button} />
                     ))}
                 </div>
-                <ThemeToggle />
             </div>
         </header>
     );

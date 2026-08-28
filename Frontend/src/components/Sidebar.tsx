@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
-import ThemeToggle from "./ThemeToggle";
 import { SidebarNavIcon } from "./SidebarNavIcons";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { isStaticPrototype } from "../lib/core/prototype";
@@ -443,9 +442,6 @@ export default function Sidebar() {
             </div>
           ) : null}
         </Link>
-        <div className={sidebarClosed ? "mt-2 flex justify-center w-full shrink-0" : "ml-2 shrink-0"}>
-          <ThemeToggle />
-        </div>
       </div>
       {!sidebarClosed && admin.potentialAdmin ? (
         <div className="px-3 pb-2">
