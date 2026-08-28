@@ -1,0 +1,33 @@
+# Alertmanager config (Gate 8 P0). Routes all fired rules to a
+# single webhook by default. Operators set ALERT_WEBHOOK_URL
+# (and optionally ALERT_SLACK_WEBHOOK_URL / ALERT_DISCORD_WEBHOOK_URL)
+# in .env to fan out to one or more chat / paging endpoints.
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: ''
+  smtp_from: ''
+  smtp_require_tls: false
+
+route:
+  receiver: default
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="critical"]
+      receiver: critical-webhook
+      group_wait: 10s
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url: ${ALERT_WEBHOOK_URL}
+        send_resolved: true
+        max_alerts: 0
+
+  - name: critical-webhook
+    webhook_configs:
+      - url: ${ALERT_WEBHOOK_URL}
+        send_resolved: true
+        max_alerts: 0
