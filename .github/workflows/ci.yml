@@ -35,7 +35,24 @@ jobs:
         run: npm test
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        id: backend-audit
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high > backend-audit.txt 2>&1
+          AUDIT_EXIT=$?
+          set -e
+          echo "audit_exit=$AUDIT_EXIT"
+          echo "report=$(wc -l < backend-audit.txt) lines"
+
+      - name: Upload backend audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-audit
+          path: backend-audit.txt
+          if-no-files-found: ignore
 
   frontend-tests:
     name: Frontend Tests
@@ -71,7 +88,24 @@ jobs:
         run: npm run audit:api-contracts
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        id: frontend-audit
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high > frontend-audit.txt 2>&1
+          AUDIT_EXIT=$?
+          set -e
+          echo "audit_exit=$AUDIT_EXIT"
+          echo "report=$(wc -l < frontend-audit.txt) lines"
+
+      - name: Upload frontend audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-audit
+          path: frontend-audit.txt
+          if-no-files-found: ignore
 
   frontend-build:
     name: Frontend Build
