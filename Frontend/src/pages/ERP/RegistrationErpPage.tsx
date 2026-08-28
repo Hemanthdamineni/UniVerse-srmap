@@ -174,10 +174,20 @@ function isTextRedundant(text: string, reference: string): boolean {
 }
 
 function detectStatus(sections: ParsedSection[]): "registered" | "pending" | "not-registered" | null {
-  const combined = sections.map((s) => `${s.title} ${s.text}`.toLowerCase()).join(" ");
-  if (/registered|confirmed|success|approved|allocated/i.test(combined)) return "registered";
+  // Negative evidence must win: ERP ack pages routinely contain both
+  // "TRANSPORT REGISTRATION 2025" and "You are not registered to Transport",
+  // and every negative phrase embeds a positive one ("not **registered**").
+  const combined = sections
+    .map((s) => [
+      s.title,
+      s.text,
+      ...s.tables.flat().map((row) => Object.values(row).join(" ")),
+    ].join(" "))
+    .join(" ")
+    .toLowerCase();
+  if (/not registered|no registration|not found|no record|no data/i.test(combined)) return "not-registered";
   if (/pending|processing|hold|awaiting/i.test(combined)) return "pending";
-  if (/not registered|no registration|not found|no record/i.test(combined)) return "not-registered";
+  if (/registered|confirmed|success|approved|allocated/i.test(combined)) return "registered";
   if (sections.some((s) => s.tables.some((t) => t.length > 0))) return "registered";
   return null;
 }
@@ -262,7 +272,7 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
         className="flex items-start gap-3 rounded-xl p-4"
         style={{
           border: "1px solid color-mix(in srgb, var(--comp-warning) 30%, transparent)",
-          background: "color-mix(in srgb, var(--comp-warning) 8%, transparent)",
+          background: "color-mix(in srgb, var(--comp-warning) 8%, var(--background))",
         }}
         role="alert"
       >
@@ -301,7 +311,7 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
         className="rounded-xl border"
         style={{
           borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)",
-          background: "color-mix(in srgb, var(--surface) 60%, transparent)",
+          background: "color-mix(in srgb, var(--surface) 60%, var(--background))",
         }}
       >
         <div className="grid gap-x-6 gap-y-0 md:grid-cols-2">
@@ -340,6 +350,7 @@ function StructuredTextField({ text, title }: { text: string; title: string }) {
       className="rounded-xl border px-4 py-3 text-sm leading-6"
       style={{
         borderColor: "color-mix(in srgb, var(--comp-border) 50%, transparent)",
+        backgroundColor: "var(--background)",
         color: "var(--comp-text-secondary)",
       }}
     >
@@ -454,7 +465,7 @@ function PortalCta({ meta }: { meta: RegMeta }) {
       className="flex items-start gap-4 rounded-xl p-5"
       style={{
         border: "1px solid color-mix(in srgb, var(--comp-accent) 20%, transparent)",
-        background: "color-mix(in srgb, var(--comp-accent) 5%, transparent)",
+        background: "color-mix(in srgb, var(--comp-accent) 5%, var(--background))",
       }}
     >
       <svg
@@ -611,7 +622,7 @@ export default function RegistrationErpPage({ blueprint, extraContent }: Props) 
               )}
 
               {/* Text-only section: render as structured key-value cards */}
-              {section.text && section.tables.length === 0 && (
+              {section.text.trim() && section.tables.length === 0 && (
                 (!section.title || isTitleRedundant(section.title, blueprint.heading) || !isTextRedundant(section.text, section.title)) ? (
                   <StructuredTextField text={section.text} title={section.title} />
                 ) : null

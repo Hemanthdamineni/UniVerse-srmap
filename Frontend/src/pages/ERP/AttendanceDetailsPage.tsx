@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getErpBatch } from "../../lib/erp/index";
@@ -67,7 +67,12 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
 
       {model && (
         <>
-          <AttendanceTrendSection refreshTrigger={refreshTrigger} />
+          {/* Mark attendance — pinned to the top */}
+          <StudentAttendanceCard />
+
+          {model.studentAttendanceTables && (
+            <TodayAttendanceSection tables={model.studentAttendanceTables} />
+          )}
 
           {/* MAIN attendance summary table */}
           <section>
@@ -157,6 +162,8 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
             </div>
           </section>
 
+          <AttendanceTrendSection refreshTrigger={refreshTrigger} />
+
           {model.notes.length > 0 && (
             <section className="dashboard-card p-4">
               <h2 className="label-text mb-2">Notes</h2>
@@ -174,29 +181,73 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
           {model.odMlTables && model.odMlTables.length > 0 && (
             <OdMlDetailsSection title="OD/ML Details" tables={model.odMlTables} />
           )}
-
-          {model.studentAttendanceTables && (
-            <TodayAttendanceSection tables={model.studentAttendanceTables} />
-          )}
-
-          {/* Mark attendance — collapsed into a slim trailing section */}
-          <StudentAttendanceCard />
         </>
       )}
     </ErpPageShell>
   );
 }
 
+const CODE_LENGTH = 7;
+
 function StudentAttendanceCard() {
-  const [code, setCode] = useState("");
+  const [cells, setCells] = useState<string[]>(() => Array(CODE_LENGTH).fill(""));
+  const cellRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const code = cells.join("");
+
+  const clearFeedback = () => {
+    if (formError) setFormError("");
+    if (success) setSuccess(false);
+  };
+
+  // Single char overwrites the cell and advances; multi-char input (paste) distributes.
+  const writeChars = (index: number, raw: string) => {
+    const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!clean) {
+      if (!cells[index]) return;
+      const next = [...cells];
+      next[index] = "";
+      setCells(next);
+      return;
+    }
+    const chars = clean.length === 2 && clean[0] === cells[index] ? clean.slice(1) : clean;
+    const next = [...cells];
+    for (let i = 0; i < chars.length && index + i < CODE_LENGTH; i++) {
+      next[index + i] = chars[i];
+    }
+    setCells(next);
+    cellRefs.current[Math.min(index + chars.length, CODE_LENGTH - 1)]?.focus();
+  };
+
+  const handleCellKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      const next = [...cells];
+      if (next[index]) {
+        next[index] = "";
+      } else if (index > 0) {
+        next[index - 1] = "";
+        cellRefs.current[index - 1]?.focus();
+      } else {
+        return;
+      }
+      setCells(next);
+      clearFeedback();
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      cellRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < CODE_LENGTH - 1) {
+      e.preventDefault();
+      cellRefs.current[index + 1]?.focus();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = code.trim();
-    if (trimmed.length !== 7) {
+    if (code.length !== CODE_LENGTH) {
       setFormError("Code must be exactly 7 characters.");
       return;
     }
@@ -208,14 +259,14 @@ function StudentAttendanceCard() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ acode: trimmed }),
+        body: JSON.stringify({ acode: code }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         throw new Error(json?.error?.message || `Request failed (${res.status})`);
       }
       setSuccess(true);
-      setCode("");
+      setCells(Array(CODE_LENGTH).fill(""));
     } catch (err: any) {
       setFormError(err.message || "Submission failed. Try again.");
     } finally {
@@ -224,59 +275,83 @@ function StudentAttendanceCard() {
   };
 
   return (
-    <section className="dashboard-card overflow-hidden p-0" aria-label="Online attendance marking">
-      <div className="px-5 py-3">
+    <section className="dashboard-card overflow-hidden" aria-label="Online attendance marking">
+      <div className="px-5 py-4 sm:px-6">
         {formError && (
-          <div className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--error)_8%,transparent)] border border-[color-mix(in_srgb,var(--error)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--error)]">
+          <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--error)_8%,transparent)] border border-[color-mix(in_srgb,var(--error)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--error)]">
             <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 4.25a.75.75 0 0 0-1.5 0v3.5a.75.75 0 0 0 1.5 0v-3.5zm-.75 6a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75z"/></svg>
             {formError}
           </div>
         )}
         {success && (
-          <div className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--success)_8%,transparent)] border border-[color-mix(in_srgb,var(--success)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--success)]">
+          <div role="status" className="mb-3 flex items-start gap-2.5 rounded-md bg-[color-mix(in_srgb,var(--success)_8%,transparent)] border border-[color-mix(in_srgb,var(--success)_22%,transparent)] px-3.5 py-3 text-sm text-[var(--success)]">
             <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.28 5.03a.75.75 0 0 0-1.06-1.06L7 8.19 5.78 6.97a.75.75 0 0 0-1.06 1.06l1.75 1.75a.75.75 0 0 0 1.06 0l3.75-3.75z"/></svg>
             Attendance marked successfully.
           </div>
         )}
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* Label block */}
-          <div className="min-w-0">
-            <h2 className="label-text">Online Attendance</h2>
-            <p className="mt-1 text-sm font-semibold leading-snug text-[var(--comp-text-primary)]">Mark today's session</p>
-            <p className="text-xs leading-relaxed text-[var(--comp-text-secondary)]">
-              Enter the 7-character code shared by your faculty to confirm your presence.
-            </p>
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-0">
+          {/* Identity zone */}
+          <div className="flex items-start gap-3.5 md:pr-8">
+            <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--comp-accent-light)] text-[var(--comp-accent)]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+                <path d="M7.76 16.24a6 6 0 0 1 0-8.48" />
+                <path d="M16.24 7.76a6 6 0 0 1 0 8.48" />
+                <path d="M4.93 19.07a10 10 0 0 1 0-14.14" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <h2 className="label-text">Online Attendance</h2>
+              <p className="mt-0.5 text-sm font-semibold leading-snug text-[var(--comp-text-primary)]">Mark today's session</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-[var(--comp-text-secondary)]">
+                Enter the 7-character code shared by your faculty to confirm your presence.
+              </p>
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="shrink-0 md:pl-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="min-w-0">
-                <label htmlFor="attendanceCode" className="mb-1 block text-xs font-medium" style={{ color: 'var(--comp-text-secondary)' }}>
-                  Attendance Code
-                </label>
-                <input
-                  id="attendanceCode"
-                  type="text"
-                  value={code}
-                  onChange={(e) => {
-                    setCode(e.target.value.toUpperCase());
-                    if (formError) setFormError("");
-                    if (success) setSuccess(false);
-                  }}
-                  placeholder="e.g. A123456"
-                  className="w-full rounded-lg border border-[var(--comp-border-strong)] bg-[var(--background)] px-3.5 py-2 font-mono text-sm tracking-[0.08em] text-[var(--comp-text-primary)] transition-colors placeholder:text-[var(--comp-text-muted)] focus:border-[var(--comp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50 sm:w-56"
-                  maxLength={7}
-                  disabled={submitting}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
+          {/* Code console */}
+          <form
+            onSubmit={handleSubmit}
+            className="md:border-l md:border-[color-mix(in_srgb,var(--comp-border-strong)_40%,transparent)] md:pl-8"
+          >
+            <label htmlFor="attendance-code-0" className="label-text mb-1.5 block">
+              Attendance Code
+            </label>
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+              <div className="flex w-full gap-1 sm:w-auto sm:gap-2">
+                {cells.map((char, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => { cellRefs.current[i] = el; }}
+                    id={i === 0 ? "attendance-code-0" : undefined}
+                    type="text"
+                    value={char}
+                    onChange={(e) => { writeChars(i, e.target.value); clearFeedback(); }}
+                    onKeyDown={(e) => handleCellKeyDown(i, e)}
+                    onPaste={(e) => { e.preventDefault(); writeChars(i, e.clipboardData.getData("text")); }}
+                    onFocus={(e) => e.currentTarget.select()}
+                    aria-label={i === 0 ? undefined : `Attendance code, character ${i + 1} of ${CODE_LENGTH}`}
+                    autoComplete={i === 0 ? "one-time-code" : "off"}
+                    autoCapitalize="characters"
+                    inputMode="text"
+                    spellCheck={false}
+                    disabled={submitting}
+                    className={`h-11 min-w-0 flex-1 rounded-md border bg-[var(--background)] text-center font-mono text-base font-semibold uppercase text-[var(--comp-text-primary)] outline-none transition-[border-color,box-shadow] duration-150 focus:border-[var(--comp-accent)] focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50 sm:h-12 sm:w-10 sm:flex-none sm:text-lg ${
+                      formError
+                        ? "border-[var(--error)]"
+                        : char
+                          ? "border-[var(--comp-border-strong)]"
+                          : "border-[color-mix(in_srgb,var(--comp-border-strong)_50%,transparent)]"
+                    }`}
+                  />
+                ))}
               </div>
               <button
                 type="submit"
-                disabled={submitting || code.trim().length !== 7}
-                className="comp-btn-primary min-h-[42px] shrink-0"
+                disabled={submitting || code.length !== CODE_LENGTH}
+                className="comp-btn-primary min-h-[44px] w-full shrink-0 sm:w-auto"
               >
                 {submitting ? "Marking..." : "Mark Attendance"}
               </button>
@@ -293,32 +368,14 @@ function TodayAttendanceSection({ tables }: { tables: ErpGenericTable[] }) {
   const allTables = tables.filter(t => t.columns.length > 0);
   const hasAnyRows = allTables.some(t => t.rows.length > 0);
 
+  // Hide entirely when faculty hasn't marked any session today
+  if (!hasAnyRows) return null;
+
   return (
     <section>
       <h2 className="label-text mb-3">Today's Attendance</h2>
-
-      {!hasAnyRows ? (
-        <div className="erp-table-shell">
-          <table className="erp-table">
-            <thead className="erp-table-head">
-              <tr>
-                {(allTables[0]?.columns ?? []).map((col) => (
-                  <th key={col} className="erp-table-head-cell label-text">{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="erp-table-body">
-              <TableEmptyRow
-                colSpan={Math.max(allTables[0]?.columns.length ?? 1, 1)}
-                message="No sessions recorded yet"
-                hint="Today's attendance will appear here once your faculty marks sessions. Mark your attendance using the form below."
-              />
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {allTables.map((table, tIdx) => (
+      <div className="space-y-6">
+        {allTables.map((table, tIdx) => (
             <div key={tIdx} className="erp-table-shell overflow-x-auto">
               <table className="erp-table">
                 <thead className="erp-table-head">
@@ -354,8 +411,7 @@ function TodayAttendanceSection({ tables }: { tables: ErpGenericTable[] }) {
               </table>
             </div>
           ))}
-        </div>
-      )}
+      </div>
     </section>
   );
 }

@@ -52,7 +52,7 @@ function parseSemesterNumber(value: string) {
   return romanMatch ? romanMap[romanMatch[1].toUpperCase()] || null : null;
 }
 
-function extractCgpaSummary(payload: unknown) {
+export function extractCgpaSummary(payload: unknown) {
   const grouped = payload as Record<string, any>;
   const section = grouped?.Academic?.["CGPA Summary"];
   const currentCgpa =
