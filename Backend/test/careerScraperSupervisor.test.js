@@ -87,6 +87,8 @@ function createSupervisor(harness, overrides = {}) {
     spawnFn: harness.spawnFn,
     setTimeoutFn: harness.setTimeoutFn,
     clearTimeoutFn: harness.clearTimeoutFn,
+    existsFn: (p) => p.endsWith("venv/bin/python3"),
+    scraperDir: "/fake/scraper",
     enabled: true,
     baseDelayMs: 1000,
     maxDelayMs: 16000,
@@ -130,7 +132,7 @@ test("start spawns the scraper once and reports running state", () => {
   assert.equal(harness.children.length, 1);
   assert.equal(harness.children[0].spawnArgs[0], "main.py");
   assert.match(harness.children[0].spawnCommand, /venv\/bin\/python3$/);
-  assert.equal(harness.children[0].spawnOptions.cwd, SCRAPER_DIR);
+  assert.equal(harness.children[0].spawnOptions.cwd, "/fake/scraper");
 
   // Idempotent: a second start must not spawn another process.
   supervisor.start();
