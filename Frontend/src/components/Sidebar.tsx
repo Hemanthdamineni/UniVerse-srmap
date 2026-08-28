@@ -169,7 +169,7 @@ export default function Sidebar() {
   // no photo on the ERP shell) via the img's onError swap below.
   const profilePhoto =
     isStaticPrototype() || photoFailed
-      ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%2334AEBE%27 rx=%278%27/%3E%3Ctext x=%2720%27 y=%2724%27 text-anchor=%27middle%27 fill=%27white%27 font-size=%2718%27 font-family=%27sans-serif%27 font-weight=%27600%27%3E%3F%3C/text%3E%3C/svg%3E"
+      ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%232EBFA8%27 rx=%278%27/%3E%3Ctext x=%2720%27 y=%2724%27 text-anchor=%27middle%27 fill=%27white%27 font-size=%2718%27 font-family=%27sans-serif%27 font-weight=%27600%27%3E%3F%3C/text%3E%3C/svg%3E"
       : "/api/profile/photo";
   const tableContent =
     profileData && typeof profileData.TableContent === "object" && profileData.TableContent
