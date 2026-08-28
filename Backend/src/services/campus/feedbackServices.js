@@ -412,6 +412,8 @@ class ExternalDataStore {
     const dirPath = path.dirname(dbPath);
     fs.mkdirSync(dirPath, { recursive: true });
     this.db = new DatabaseSync(dbPath);
+    this.db.exec("PRAGMA journal_mode = WAL");
+    this.db.exec("PRAGMA foreign_keys = ON");
     this.db.exec("PRAGMA busy_timeout = 5000");
     this.ensureSchema();
     this.seedMissing(EXTERNAL_PAGE_SEED_DATA);

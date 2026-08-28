@@ -777,8 +777,9 @@ class CampusFeedbackStore {
     const resolved = path.resolve(dbPath);
     fs.mkdirSync(path.dirname(resolved), { recursive: true });
     this.db = new DatabaseSync(resolved);
-    this.db.exec("PRAGMA busy_timeout = 5000");
+    this.db.exec("PRAGMA journal_mode = WAL");
     this.db.exec("PRAGMA foreign_keys = ON");
+    this.db.exec("PRAGMA busy_timeout = 5000");
     this._ensureSchema();
   }
 }
