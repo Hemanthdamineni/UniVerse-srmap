@@ -194,8 +194,9 @@
   --comp-text-primary: #e8f4f5;
   --comp-text-secondary: #8ab8be;
   --comp-text-muted: #a8c3c7;
-  --comp-accent: #34AEBE;
-  --comp-accent-hover: #288a99;
+  --comp-accent: #2EBFA8;
+  --comp-accent-hover: #1FA88F;
+  --accent-blue: #2EBFA8;
   --comp-accent-light: #0d2d32;
   --comp-accent-fg: #0A3035;
   --comp-warning: #FFCA28;

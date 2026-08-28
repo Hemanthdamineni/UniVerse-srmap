@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  NODE_VERSION: "22"
+
 jobs:
   backend-tests:
     name: Backend Tests
@@ -18,10 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Backend/package-lock.json
 
@@ -30,6 +33,26 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Audit production dependencies
+        id: backend-audit
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high > backend-audit.txt 2>&1
+          AUDIT_EXIT=$?
+          set -e
+          echo "audit_exit=$AUDIT_EXIT"
+          echo "report=$(wc -l < backend-audit.txt) lines"
+
+      - name: Upload backend audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-audit
+          path: backend-audit.txt
+          if-no-files-found: ignore
 
   frontend-tests:
     name: Frontend Tests
@@ -42,10 +65,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Frontend/package-lock.json
 
@@ -64,6 +87,26 @@ jobs:
       - name: API contract audit
         run: npm run audit:api-contracts
 
+      - name: Audit production dependencies
+        id: frontend-audit
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high > frontend-audit.txt 2>&1
+          AUDIT_EXIT=$?
+          set -e
+          echo "audit_exit=$AUDIT_EXIT"
+          echo "report=$(wc -l < frontend-audit.txt) lines"
+
+      - name: Upload frontend audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-audit
+          path: frontend-audit.txt
+          if-no-files-found: ignore
+
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -76,10 +119,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Frontend/package-lock.json
 
@@ -88,6 +131,42 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  knip:
+    name: Knip dead-export check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install frontend dependencies (for knip config + plugins)
+        working-directory: Frontend
+        run: npm ci
+
+      - name: Install knip
+        run: npm install --no-save knip@^6
+
+      - name: Run knip
+        id: knip
+        run: |
+          npx knip > knip-report.txt 2>&1 || echo "knip exited non-zero — see report"
+          echo "report=$(wc -l < knip-report.txt) lines"
+
+      - name: Upload knip report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-report
+          path: knip-report.txt
+          if-no-files-found: ignore
 
   responsive-audit:
     name: Responsive Layout Audit
@@ -100,10 +179,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: Frontend/package-lock.json
 
