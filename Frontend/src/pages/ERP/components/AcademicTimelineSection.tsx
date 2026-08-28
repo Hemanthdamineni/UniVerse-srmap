@@ -61,14 +61,21 @@ export function AcademicTimelineSection({
   useEffect(() => {
     if (nextIndex < 0 || hasScrolledRef.current) return;
     const node = upcomingRef.current;
-    if (!node) return;
+    const scroller = node?.closest("main");
+    if (!node || !scroller) return;
     hasScrolledRef.current = true;
     const reduceMotion =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (typeof node.scrollIntoView === "function") {
-      node.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
-    }
+    // Bring the next event into the page viewport with explicit math —
+    // scrollIntoView also walks the overflow-hidden shell ancestors and
+    // can shift the whole app up when the page has no scroll range.
+    const scrollerRect = scroller.getBoundingClientRect();
+    const nodeRect = node.getBoundingClientRect();
+    if (nodeRect.top >= scrollerRect.top && nodeRect.bottom <= scrollerRect.bottom) return;
+    const target =
+      scroller.scrollTop + (nodeRect.top - scrollerRect.top) - scrollerRect.height * 0.2;
+    scroller.scrollTo({ top: Math.max(0, target), behavior: reduceMotion ? "auto" : "smooth" });
   }, [nextIndex, term]);
 
   return (
@@ -77,7 +84,7 @@ export function AcademicTimelineSection({
         role="tablist"
         aria-label="Select semester"
         className="inline-flex w-fit max-w-full overflow-x-auto rounded-lg border p-1"
-        style={{ borderColor: "var(--comp-border)" }}
+        style={{ borderColor: "var(--comp-border)", backgroundColor: "var(--comp-surface)" }}
         onKeyDown={handleTabArrowKeys}
       >
         {TERM_TABS.map((tab) => (
@@ -103,7 +110,10 @@ export function AcademicTimelineSection({
 
       <ol className="relative flex flex-col gap-2" role="tabpanel" aria-label={`${term} semester events`}>
         {events.length === 0 ? (
-          <li className="dashboard-card p-4 text-sm text-[var(--comp-text-muted)]">
+          <li
+            className="rounded-xl border border-dashed p-4 text-sm text-[var(--comp-text-muted)]"
+            style={{ borderColor: "var(--comp-border)" }}
+          >
             No events published for this term.
           </li>
         ) : null}
@@ -125,11 +135,10 @@ export function AcademicTimelineSection({
                       : "var(--comp-border)",
                 background:
                   state === "past"
-                    ? "color-mix(in srgb, var(--success) 6%, transparent)"
+                    ? "color-mix(in srgb, var(--success) 6%, var(--background))"
                     : state === "ongoing"
-                      ? "color-mix(in srgb, var(--warning) 8%, transparent)"
-                      : "transparent",
-                opacity: state === "past" ? 0.75 : 1,
+                      ? "color-mix(in srgb, var(--warning) 8%, var(--background))"
+                      : "var(--background)",
               }}
             >
               <span
@@ -146,7 +155,13 @@ export function AcademicTimelineSection({
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[var(--comp-text-primary)] md:text-base">
+                  <p
+                    className={`text-sm font-medium md:text-base ${
+                      state === "past"
+                        ? "text-[var(--comp-text-muted)]"
+                        : "text-[var(--comp-text-primary)]"
+                    }`}
+                  >
                     {event.details}
                     {state === "ongoing" ? (
                       <span

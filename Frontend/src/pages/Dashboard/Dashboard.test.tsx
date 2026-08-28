@@ -213,7 +213,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     // Wait on content that only exists once every gated query has landed.
-    await screen.findByText("Welcome back!");
+    await screen.findByText(/Good (morning|afternoon|evening)/);
 
     // Basic Info section
     expect(screen.getByText("Basic Info")).toBeInTheDocument();
@@ -239,7 +239,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+      expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
     });
 
     expect(screen.getByText("Student Tasks")).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+      expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
     });
 
     expect(screen.getByText("To-Do-List (0)")).toBeInTheDocument();
@@ -269,7 +269,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+      expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
     });
 
     // Week calendar shows day names
@@ -306,7 +306,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+      expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
     });
 
     expect(
@@ -323,7 +323,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+      expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
     });
 
     // Should not crash — feedbackPendingCount defaults to 0
@@ -331,8 +331,10 @@ describe("Dashboard", () => {
   });
 
   // --- First-run onboarding ---
+  // FirstRunGuide is no longer rendered on the dashboard; the greeting is
+  // time-aware and greets the student by their (properly cased) first name.
 
-  it("shows the first-run guide and personal greeting for first-time logins", async () => {
+  it("greets the student by time of day and keeps the guide unmounted", async () => {
     window.localStorage.removeItem("erp.onboarding.seenVersion");
     mockHasSessionAuth.mockReturnValue(true);
     mockGetErpBatch.mockResolvedValue({});
@@ -342,9 +344,12 @@ describe("Dashboard", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("Welcome, Alice!")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Good (morning|afternoon|evening), Alice!/),
+      ).toBeInTheDocument();
     });
-    expect(screen.getByText("Synced with your SRM account")).toBeInTheDocument();
-    expect(screen.queryByText("Welcome back!")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Synced with your SRM account"),
+    ).not.toBeInTheDocument();
   });
 });

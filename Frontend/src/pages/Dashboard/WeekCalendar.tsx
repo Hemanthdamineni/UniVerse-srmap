@@ -68,20 +68,20 @@ function WeekCalendar({ onDateSelect }: WeekCalendarProps) {
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => navigateWeek(-1)}
-          className="btn-ghost flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-primary)] transition-colors hover:border-[color:var(--comp-border-strong)] hover:bg-[var(--comp-surface-hover)]"
           aria-label="Previous week"
         >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         </button>
         <h2 className="card-title font-semibold">
           {monthNames[midWeek.getMonth()]} {midWeek.getFullYear()}
         </h2>
         <button
           onClick={() => navigateWeek(1)}
-          className="btn-ghost flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-primary)] transition-colors hover:border-[color:var(--comp-border-strong)] hover:bg-[var(--comp-surface-hover)]"
           aria-label="Next week"
         >
-          <ChevronRight className="h-5 w-5" aria-hidden="true" />
+          <ChevronRight className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         </button>
       </div>
 

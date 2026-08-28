@@ -2,6 +2,7 @@ import { readExtracted, readExtractedPage } from "./shared";
 import type {
   CurrentResultSubject,
   CurrentResultModel,
+  InternalMarkAssessment,
   InternalMarkSubject,
   InternalMarksModel,
   ExamMarkDetailsSubject,
@@ -129,6 +130,25 @@ export function transformInternalMarks(rawData: unknown): InternalMarksModel | n
   return buildInternalMarks(extracted);
 }
 
+// Backend extractor emits components as `{ "Mid Semester Exam I": { conducted, converted }, ... }`
+function parseAssessmentComponents(raw: unknown): InternalMarkAssessment[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+
+  return Object.entries(raw as Record<string, unknown>)
+    .map(([name, values]) => {
+      const v =
+        values && typeof values === "object"
+          ? (values as Record<string, unknown>)
+          : {};
+      return {
+        name,
+        conducted: String(v.conducted ?? ""),
+        converted: String(v.converted ?? ""),
+      };
+    })
+    .filter((a) => a.name);
+}
+
 function buildInternalMarks(extracted: Record<string, unknown>): InternalMarksModel | null {
   if (!Array.isArray(extracted.records)) return null;
 
@@ -146,7 +166,7 @@ function buildInternalMarks(extracted: Record<string, unknown>): InternalMarksMo
         status:
           percentage >= 80 ? "excellent" : percentage >= 60 ? "good" : "needs-improvement",
         detailTableIndex: i + 1,
-        assessments: [],
+        assessments: parseAssessmentComponents(r.components),
       } as InternalMarkSubject;
     })
     .filter((s) => s.code);

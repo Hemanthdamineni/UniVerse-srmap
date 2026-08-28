@@ -50,7 +50,7 @@ const { ErpAggregationService } = require("./services/erp/erpAggregationService"
 const { ErpUiMapStore } = require("./services/erp/erpUiMapStore");
 const { ErpActionExecutor } = require("./services/erp/erpActionExecutor");
 const { AttendanceSnapshotStore } = require("./services/erp/attendanceSnapshotStore");
-const { VacantRoomStore } = require("./services/erp/vacantRoomStore");
+const { VacantRoomStore, timetableScheduleFromPagePayload } = require("./services/erp/vacantRoomStore");
 const { createApiContext } = require("./services/erp/erpClient");
 const { PagePolicyStore } = require("./services/core/sessionServices");
 const { EventsStore } = require("./services/events/eventsStore");
@@ -300,8 +300,14 @@ async function startServer() {
               attendanceSnapshotStore.record({ userKey, pageKey, records: payload.records });
               return;
             }
-            if (pageKey === "academic/time-table" && Array.isArray(payload.schedule)) {
-              vacantRoomStore.ingestTimetable(payload.schedule);
+            if (pageKey === "academic/time-table" || pageKey === "academic/timetable") {
+              // Live payloads nest the schedule under _extracted
+              // (adaptToLegacyPayload); resolve through the shared helper so
+              // both payload generations ingest.
+              const timetableSchedule = timetableScheduleFromPagePayload(payload);
+              if (timetableSchedule) {
+                vacantRoomStore.ingestTimetable(timetableSchedule);
+              }
             }
           })
           .catch(() => {});

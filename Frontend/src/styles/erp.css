@@ -46,6 +46,7 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
+  gap: 0.3rem;
   border-radius: 9999px;
   border: 1px solid transparent;
   padding: 0.2rem 0.55rem;

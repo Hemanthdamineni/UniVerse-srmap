@@ -32,6 +32,18 @@ function extractRoomToken(periodText) {
 }
 
 /**
+ * Resolves the day/period schedule from an ERP v2 page payload as delivered
+ * to erpDataSink.onLivePageFetched. Live payloads embed the typed extractor
+ * result under `_extracted` (see adaptToLegacyPayload); the top-level shape
+ * stays supported for callers holding raw extractor output.
+ */
+function timetableScheduleFromPagePayload(payload) {
+  const extractedSchedule = payload?._extracted?.schedule;
+  if (Array.isArray(extractedSchedule)) return extractedSchedule;
+  return Array.isArray(payload?.schedule) ? payload.schedule : null;
+}
+
+/**
  * Accumulates which rooms are occupied on which weekday/slot from every
  * live timetable fetch, then answers "which rooms are free right now".
  * Occupancy rows carry no user identity — only day/slot/room.
@@ -125,6 +137,7 @@ module.exports = {
   VacantRoomStore,
   normalizeDay,
   extractRoomToken,
+  timetableScheduleFromPagePayload,
   SLOT_TIMES,
   DAY_ORDER,
 };

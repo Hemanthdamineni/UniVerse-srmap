@@ -37,6 +37,13 @@
 }
 
 .login-identity-panel {
+  /* The panel is deep-teal in BOTH themes, so its content must not follow
+     theme-flipping tokens (--comp-accent-fg goes dark in dark mode and would
+     vanish against this surface). Scope always-light tokens to the panel. */
+  --panel-fg: #F2F7F7;
+  --panel-fg-muted: rgba(242, 247, 247, 0.62);
+  --panel-fg-faint: rgba(242, 247, 247, 0.40);
+  --panel-accent: #34AEBE;
   position: relative;
   background:
     radial-gradient(ellipse 65% 55% at 15% 25%, var(--mesh-c1), transparent 70%),
@@ -133,7 +140,7 @@
   width: 100%;
   padding: 13px 20px;
   background: var(--comp-accent);
-  color: #fff;
+  color: var(--comp-accent-fg);
   border: none;
   border-radius: 10px;
   font-size: 0.9rem;
@@ -158,6 +165,7 @@
 .login-btn-primary:disabled { opacity: 0.52; cursor: not-allowed; }
 .login-btn-primary.login-btn-success {
   background: var(--success);
+  color: var(--on-success);
   box-shadow: 0 4px 16px color-mix(in srgb, var(--success) 30%, transparent);
 }
 .login-btn-check { animation: login-check-in 0.35s cubic-bezier(0.16,1,0.3,1) both; }
@@ -180,6 +188,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Full-bleed: the public layout centers us in a row-flex <main>, so without
+     an explicit width the shell shrink-wraps the card and the mesh + dot grid
+     paint as a hard-edged band down the middle of the page. */
+  width: 100%;
   min-height: 100%;
   padding: 40px 20px;
   position: relative;
@@ -242,6 +254,32 @@
   border-color: var(--comp-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--comp-accent) 18%, transparent), 0 2px 8px rgba(10,38,42,0.08) !important;
 }
+
+/* ── Captcha image ──
+   The ERP serves dark strokes on a white background. Multiply blending melts
+   the white into the tinted input surface in light mode; in dark mode the
+   image keeps its native white chip so the characters stay legible. */
+.login-captcha-img {
+  display: block;
+  height: 40px;
+  width: auto;
+  max-width: 168px;
+  border-radius: 4px;
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .login-captcha-img {
+  mix-blend-mode: normal;
+}
+
+/* ── Autofill: keep Chrome's saved-credential tint from breaking the palette ── */
+.login-form-panel input:-webkit-autofill,
+.login-form-panel input:-webkit-autofill:hover,
+.login-form-panel input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+}
+
 /* ── Mobile: single-column card, marketing panel hidden ── */
 @media (max-width: 760px) {
   .login-page-shell {

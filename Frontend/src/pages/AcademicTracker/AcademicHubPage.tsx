@@ -6,6 +6,12 @@ import { SegmentedControl } from "../../components/ui";
 import { getLmsProgressOverview, getLmsAcademicInsights, getLmsUnifiedInsights, getLmsStreak } from "../../lib/lms/index";
 import { getErpBatch } from "../../lib/erp";
 import { executePipeline } from "../../lib/erp/erpTransformers";
+import type {
+  CourseRegistrationModel,
+  CurriculumModel,
+  CurrentResultModel,
+} from "../../lib/erp/erpTransformers";
+import { extractCgpaSummary } from "../ERP/ResultsCurrentPage";
 import { useNavigate } from "react-router-dom";
 import { TABS } from "./hub/types";
 import type {
@@ -13,6 +19,7 @@ import type {
   InsightsData,
   KpiItem,
   OverviewData,
+  PlannerPrefill,
   Tab,
   UnifiedData,
 } from "./hub/types";
@@ -28,6 +35,8 @@ export default function AcademicHubPage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [history, setHistory] = useState<HistoryData | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [plannerPrefill, setPlannerPrefill] = useState<PlannerPrefill | null>(null);
+  const [plannerLoading, setPlannerLoading] = useState(false);
 
   // Phase 5: four independent insight queries. unified/streak are treated as
   // supplementary (null on failure) exactly like the old allSettled contract.
@@ -100,6 +109,34 @@ export default function AcademicHubPage() {
     }
   };
 
+  const loadPlannerPrefill = async () => {
+    if (plannerPrefill || plannerLoading) return;
+    setPlannerLoading(true);
+    try {
+      const batch = await getErpBatch([
+        "examination/current-semester-results",
+        "academic/course-registration",
+        "academic/student-wise-subjects",
+        "academic/cgpa-summary",
+      ]);
+      const resultsModel = executePipeline("results-current", batch);
+      const coursePayload = (batch["academic/course-registration"] as any)?.data;
+      const courseModel = coursePayload ? executePipeline("course-registration", coursePayload) : null;
+      const curriculumPayload = (batch["academic/student-wise-subjects"] as any)?.data;
+      const curriculumModel = curriculumPayload ? executePipeline("curriculum", curriculumPayload) : null;
+      setPlannerPrefill({
+        currentCourse: courseModel?.isValid ? (courseModel.data as CourseRegistrationModel) : null,
+        curriculum: curriculumModel?.isValid ? (curriculumModel.data as CurriculumModel) : null,
+        currentResults: resultsModel?.isValid ? (resultsModel.data as CurrentResultModel) : null,
+        cgpaSummary: extractCgpaSummary((batch["academic/cgpa-summary"] as any)?.data),
+      });
+    } catch {
+      // prefill is best-effort; manual mode still works without it
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
   const kpis = useMemo<KpiItem[]>(() => {
     if (!overview) return [];
     const cgpaTrend = insights?.gpaTrend && insights.gpaTrend.length >= 2
@@ -136,6 +173,7 @@ export default function AcademicHubPage() {
             onChange={(key) => {
               setActiveTab(key);
               if (key === "history" && !history) loadHistory();
+              if (key === "planner" && !plannerPrefill) loadPlannerPrefill();
             }}
             options={TABS.map((tab) => ({
               value: tab.key,
@@ -170,6 +208,8 @@ export default function AcademicHubPage() {
             <PlannerTab
               overview={overview}
               insights={insights}
+              plannerPrefill={plannerPrefill}
+              plannerLoading={plannerLoading}
             />
           )}
 

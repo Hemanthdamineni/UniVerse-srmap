@@ -60,7 +60,7 @@ export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
     domain: "campus",
     sourceMode: "internal",
     integrationState: "native",
-    renderer: "generic",
+    renderer: "vacant-rooms",
     loadingMessage: "Finding vacant rooms...",
   } as PageBlueprint,
   "/academic/sap-scholarships": { ...erp("/academic/sap-scholarships", "SAP & Scholarships", ["sap/attachments", "sap/details"], "sap-scholarships", "Loading SAP and scholarship details..."), status: "hidden" as PageBlueprint["status"] },

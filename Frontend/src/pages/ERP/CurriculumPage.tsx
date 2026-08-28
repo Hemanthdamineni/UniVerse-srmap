@@ -88,7 +88,7 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
           role="tablist"
           aria-label="Curriculum page sections"
           className="inline-flex w-fit max-w-full overflow-x-auto rounded-lg border p-1"
-          style={{ borderColor: "var(--comp-border)" }}
+          style={{ borderColor: "var(--comp-border)", backgroundColor: "var(--comp-surface)" }}
           onKeyDown={handleTabArrowKeys}
         >
           {TABS.map((tab) => (
@@ -132,7 +132,9 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
 
           {activeTab === "calendar" ? (
             calendar ? (
-              <AcademicTimelineSection calendar={calendar} />
+              <div className="dashboard-card p-4 md:p-6">
+                <AcademicTimelineSection calendar={calendar} />
+              </div>
             ) : (
               !loading && (
                 <InlineError
@@ -145,7 +147,9 @@ export default function CurriculumPage({ blueprint }: CurriculumPageProps) {
 
           {activeTab === "holidays" ? (
             calendar ? (
-              <HolidaysSection calendar={calendar} />
+              <div className="dashboard-card p-4 md:p-6">
+                <HolidaysSection calendar={calendar} />
+              </div>
             ) : (
               !loading && (
                 <InlineError

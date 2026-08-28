@@ -75,16 +75,18 @@ export function describeSlotTiming(
 
   if (status === "Live") {
     const remaining = windowEnd(targetDate, window).getTime() - now.getTime();
-    return { status, label: `ends in ${minutes(remaining)} min` };
+    // Compact units ("in 8h 41m") keep the label short enough that the
+    // Schedule row's room text survives next to the status pill.
+    return { status, label: `ends in ${minutes(remaining)}m` };
   }
   if (status === "Upcoming") {
     const until = windowStart(targetDate, window).getTime() - now.getTime();
     if (until > 90 * 60 * 1000) {
       const hours = Math.floor(until / (60 * 60 * 1000));
       const mins = Math.round((until % (60 * 60 * 1000)) / 60000);
-      return { status, label: mins > 0 ? `starts in ${hours} hr ${mins} min` : `starts in ${hours} hr` };
+      return { status, label: mins > 0 ? `in ${hours}h ${mins}m` : `in ${hours}h` };
     }
-    return { status, label: `starts in ${minutes(until)} min` };
+    return { status, label: `in ${minutes(until)}m` };
   }
   return { status, label: null };
 }

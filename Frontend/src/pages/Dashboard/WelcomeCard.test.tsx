@@ -1,92 +1,86 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import WelcomeCard from "./WelcomeCard";
 
 vi.mock("../../lib/core/identity", () => ({
   getCurrentProfileName: vi.fn(),
-  getCurrentRegNo: vi.fn(),
 }));
 
-import { getCurrentProfileName, getCurrentRegNo } from "../../lib/core/identity";
+import { getCurrentProfileName } from "../../lib/core/identity";
 
-const ONBOARDING_SEEN_KEY = "erp.onboarding.seenVersion";
-
-function renderCard(profileData?: Record<string, unknown> | null) {
-  return render(<WelcomeCard profileData={profileData} />);
+// Pin the wall clock so time-of-day greetings are deterministic.
+function atTime(hour: number) {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 7, 24, hour, 0)); // Monday, 24 August 2026
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("WelcomeCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default to returning-user behavior; first-run tests opt out below.
-    window.localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
+    atTime(9);
   });
 
-  it("renders welcome message", () => {
-    vi.mocked(getCurrentProfileName).mockReturnValue("John Doe");
-    vi.mocked(getCurrentRegNo).mockReturnValue("AP23110010419");
-    renderCard({});
-    expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+  it("greets by the properly cased first name in the morning", () => {
+    vi.mocked(getCurrentProfileName).mockReturnValue("DAMINENI HEMANTH SATYA VEER");
+    render(<WelcomeCard profileData={{}} />);
+    expect(screen.getByRole("heading", { name: "Good morning, Damineni!" })).toBeInTheDocument();
   });
 
-  it("displays student name from profile", () => {
+  it("switches greeting with time of day", () => {
     vi.mocked(getCurrentProfileName).mockReturnValue("Alice Smith");
-    vi.mocked(getCurrentRegNo).mockReturnValue("AP23110010419");
-    renderCard({});
-    expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
+
+    atTime(13);
+    const { rerender } = render(<WelcomeCard profileData={{}} />);
+    expect(screen.getByRole("heading", { name: "Good afternoon, Alice!" })).toBeInTheDocument();
+
+    atTime(20);
+    rerender(<WelcomeCard profileData={{}} />);
+    expect(screen.getByRole("heading", { name: "Good evening, Alice!" })).toBeInTheDocument();
   });
 
-  it("displays register number when available", () => {
-    vi.mocked(getCurrentProfileName).mockReturnValue("Bob");
-    vi.mocked(getCurrentRegNo).mockReturnValue("AP23110010500");
-    renderCard({});
-    expect(screen.getByText(/Register No\. AP23110010500/)).toBeInTheDocument();
+  it("shows today's date below the greeting", () => {
+    vi.mocked(getCurrentProfileName).mockReturnValue("Alice Smith");
+    render(<WelcomeCard profileData={{}} />);
+    expect(screen.getByText("Monday, 24 August")).toBeInTheDocument();
   });
 
-  it("omits register number portion when regNo is empty", () => {
-    vi.mocked(getCurrentProfileName).mockReturnValue("Charlie");
-    vi.mocked(getCurrentRegNo).mockReturnValue("");
-    renderCard({});
-    expect(screen.getByText("Charlie")).toBeInTheDocument();
-    expect(screen.queryByText(/Register No\./)).not.toBeInTheDocument();
+  it("renders a two-letter monogram from the name", () => {
+    vi.mocked(getCurrentProfileName).mockReturnValue("DAMINENI HEMANTH SATYA VEER");
+    render(<WelcomeCard profileData={{}} />);
+    const avatar = document.querySelector(".welcome-avatar");
+    expect(avatar).toHaveTextContent("DH");
+    expect(avatar).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("renders with null profileData", () => {
+  it("leaves genuinely mixed-case names untouched", () => {
+    vi.mocked(getCurrentProfileName).mockReturnValue("McDonald Alice");
+    render(<WelcomeCard profileData={{}} />);
+    expect(screen.getByRole("heading", { name: "Good morning, McDonald!" })).toBeInTheDocument();
+  });
+
+  it("omits the name and monogram for the generic Student fallback", () => {
     vi.mocked(getCurrentProfileName).mockReturnValue("Student");
-    vi.mocked(getCurrentRegNo).mockReturnValue("");
-    renderCard(null);
-    expect(screen.getByText("Welcome back!")).toBeInTheDocument();
+    render(<WelcomeCard profileData={{}} />);
+    expect(screen.getByRole("heading", { name: "Good morning!" })).toBeInTheDocument();
+    expect(document.querySelector(".welcome-avatar")).not.toBeInTheDocument();
+  });
+
+  it("falls back to a nameless greeting when no name is available", () => {
+    vi.mocked(getCurrentProfileName).mockReturnValue("");
+    render(<WelcomeCard profileData={null} />);
+    expect(screen.getByRole("heading", { name: "Good morning!" })).toBeInTheDocument();
+    expect(document.querySelector(".welcome-avatar")).not.toBeInTheDocument();
   });
 
   it("renders no interactive controls (decorative bell was removed)", () => {
-    vi.mocked(getCurrentProfileName).mockReturnValue("Dana");
-    vi.mocked(getCurrentRegNo).mockReturnValue("");
-    renderCard({});
+    vi.mocked(getCurrentProfileName).mockReturnValue("Dana Lane");
+    render(<WelcomeCard profileData={{}} />);
     // The bell button was removed: it had no handler and its permanently
     // lit red dot implied false notifications.
     expect(document.querySelector("button")).not.toBeInTheDocument();
-  });
-
-  // --- First-login variant ---
-
-  it("greets first-time users by first name", () => {
-    window.localStorage.removeItem(ONBOARDING_SEEN_KEY);
-    vi.mocked(getCurrentProfileName).mockReturnValue("Alice Johnson");
-    vi.mocked(getCurrentRegNo).mockReturnValue("AP23110010419");
-
-    renderCard({});
-
-    expect(screen.getByText("Welcome, Alice!")).toBeInTheDocument();
-    expect(screen.queryByText("Welcome back!")).not.toBeInTheDocument();
-    expect(screen.getByText(/Register No\. AP23110010419/)).toBeInTheDocument();
-  });
-
-  it("falls back to a generic greeting when no name is available", () => {
-    window.localStorage.removeItem(ONBOARDING_SEEN_KEY);
-    vi.mocked(getCurrentProfileName).mockReturnValue("");
-
-    renderCard(null);
-
-    expect(screen.getByText("Welcome!")).toBeInTheDocument();
   });
 });

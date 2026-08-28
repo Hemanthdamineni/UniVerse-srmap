@@ -52,6 +52,7 @@ describe("VacantRoomsPage", () => {
   it("renders heading and day/slot selectors with a result list", async () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Vacant Rooms" })).toBeInTheDocument();
+    expect(screen.getByText(/coverage grows as more students use the portal/i)).toBeInTheDocument();
     expect(await screen.findByText("AB-301")).toBeInTheDocument();
     expect(screen.getByText("C205")).toBeInTheDocument();
     expect(screen.getByText(/2 vacant of 5 known rooms/)).toBeInTheDocument();
@@ -70,7 +71,7 @@ describe("VacantRoomsPage", () => {
     expect(getVacantRooms).toHaveBeenLastCalledWith("Friday", expect.any(Number));
   });
 
-  it("shows an empty state when no vacancy data exists", async () => {
+  it("shows a coverage empty state when no timetable data exists", async () => {
     getVacantRooms.mockResolvedValue({
       ok: true,
       day: "friday",
@@ -82,8 +83,45 @@ describe("VacantRoomsPage", () => {
     });
     renderPage();
     expect(
-      await screen.findByText(/No vacancy data yet/i)
+      await screen.findByText(/not enough coverage for this slot/i)
     ).toBeInTheDocument();
+  });
+
+  it("distinguishes full occupancy from missing coverage", async () => {
+    getVacantRooms.mockResolvedValue({
+      ok: true,
+      day: "monday",
+      slotIndex: 2,
+      timeWindow: "11:00–11:50",
+      vacant: [],
+      occupiedCount: 5,
+      knownRooms: 5,
+    });
+    renderPage();
+    expect(await screen.findByText(/every known room is in class/i)).toBeInTheDocument();
+    expect(screen.getByText(/all 5 rooms with timetable coverage/i)).toBeInTheDocument();
+  });
+
+  it("advances to the next slot from the empty-state action", async () => {
+    getVacantRooms.mockResolvedValue({
+      ok: true,
+      day: "friday",
+      slotIndex: 2,
+      timeWindow: "11:00–11:50",
+      vacant: [],
+      occupiedCount: 0,
+      knownRooms: 0,
+    });
+    renderPage();
+    await screen.findByText(/not enough coverage for this slot/i);
+
+    await userEvent.selectOptions(screen.getByLabelText("Time slot"), "2");
+    await waitFor(() => {
+      expect(getVacantRooms).toHaveBeenLastCalledWith(expect.any(String), 2);
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: /try next slot/i }));
+    expect(getVacantRooms).toHaveBeenLastCalledWith(expect.any(String), 3);
   });
 
   it("surfaces an error with retry", async () => {
