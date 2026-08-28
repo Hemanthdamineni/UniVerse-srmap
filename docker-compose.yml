@@ -35,8 +35,10 @@ services:
       - EXTERNAL_DB_PATH=/app/data/external-pages.sqlite
       - EVENTS_DB_PATH=/app/data/events.sqlite
       - EVENTS_DATA_DIR=/app/data/events
-      - DUMP_SNAPSHOT_DIR=/app/data/erp-dump/2026-02-24T15-58-26-664Z
-      - DUMP_SUMMARY_FILE=/app/data/erp-dump/2026-02-24T15-58-26-664Z/summary.json
+      # Scraper disabled in container: Scraper/venv is not shipped in the image.
+      # The supervisor reflects this via /api/career/health ("unavailable" state).
+      # Set CAREER_SCRAPER_ENABLED=1 and ship Scraper/venv to enable.
+      - CAREER_SCRAPER_ENABLED=${CAREER_SCRAPER_ENABLED:-0}
       - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-}
       - ADMIN_CONTENT_PASSWORD=${ADMIN_CONTENT_PASSWORD:-}
     volumes:
