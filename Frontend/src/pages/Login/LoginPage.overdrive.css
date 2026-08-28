@@ -43,7 +43,7 @@
   --panel-fg: #F2F7F7;
   --panel-fg-muted: rgba(242, 247, 247, 0.62);
   --panel-fg-faint: rgba(242, 247, 247, 0.40);
-  --panel-accent: #34AEBE;
+  --panel-accent: #2EBFA8;
   position: relative;
   background:
     radial-gradient(ellipse 65% 55% at 15% 25%, var(--mesh-c1), transparent 70%),
@@ -329,7 +329,7 @@
 }
 [data-theme="dark"] .login-card {
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #34AEBE 20%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--comp-accent) 20%, transparent),
     0 32px 100px rgba(0,0,0,0.5),
     0 8px 24px rgba(0,0,0,0.3);
 }
