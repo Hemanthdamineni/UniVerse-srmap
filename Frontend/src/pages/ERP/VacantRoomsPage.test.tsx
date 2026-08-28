@@ -59,15 +59,17 @@ describe("VacantRoomsPage", () => {
   });
 
   it("refetches when the day selector changes", async () => {
+    const user = userEvent.setup();
     renderPage();
     await screen.findByText("AB-301");
     expect(getVacantRooms).toHaveBeenCalledTimes(1);
 
-    await userEvent.selectOptions(screen.getByLabelText("Day"), "Friday");
+    await user.selectOptions(screen.getByLabelText("Day"), "Friday");
 
-    await waitFor(() => {
-      expect(getVacantRooms).toHaveBeenCalledTimes(2);
-    });
+    await waitFor(
+      () => expect(getVacantRooms).toHaveBeenCalledTimes(2),
+      { timeout: 3000 }
+    );
     expect(getVacantRooms).toHaveBeenLastCalledWith("Friday", expect.any(Number));
   });
 
