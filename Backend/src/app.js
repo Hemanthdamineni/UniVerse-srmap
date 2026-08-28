@@ -77,7 +77,28 @@ function createApp({
 }) {
   const app = express();
 
-  app.use(cors());
+  // Same-origin CORS lockdown (Gate 6 P1). The frontend and the API
+  // are served from the same origin behind nginx, so a permissive
+  // cors() is just attack surface. Reflect the request's Origin
+  // header only when it matches a same-origin allowlist, and only
+  // when credentials are present (cookie-mode routes).
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ? process.env.CORS_ALLOWED_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+  app.use(
+    cors({
+      origin(origin, cb) {
+        // Same-origin requests have no Origin header in many cases;
+        // allow them. For cross-origin, require an explicit allowlist
+        // entry — empty by default, so cross-origin is rejected
+        // unless the operator opts in.
+        if (!origin) return cb(null, true);
+        if (allowedOrigins.includes(origin)) return cb(null, true);
+        return cb(null, false);
+      },
+      credentials: true,
+    })
+  );
   app.use(helmet());
   app.use(cookieParser());
   app.use(compression());
