@@ -36,18 +36,18 @@ describe("describeSlotTiming", () => {
   it("labels live slots with remaining minutes", () => {
     const timing = describeSlotTiming(TODAY, 0, at(9, 38));
     expect(timing.status).toBe("Live");
-    expect(timing.label).toMatch(/^ends in \d+ min$/);
+    expect(timing.label).toMatch(/^ends in \d+m$/);
   });
 
-  it("labels upcoming slots with start countdown", () => {
+  it("labels upcoming slots with a compact start countdown", () => {
     const timing = describeSlotTiming(TODAY, 2, at(9, 45));
     expect(timing.status).toBe("Upcoming");
-    expect(timing.label).toBe("starts in 75 min");
+    expect(timing.label).toBe("in 75m");
   });
 
   it("uses hour formatting for distant slots", () => {
-    const timing = describeSlotTiming(TODAY, 7, at(9, 0));
-    expect(timing.label).toBe("starts in 7 hr");
+    expect(describeSlotTiming(TODAY, 7, at(9, 0)).label).toBe("in 7h");
+    expect(describeSlotTiming(TODAY, 2, at(7, 45)).label).toBe("in 3h 15m");
   });
 
   it("gives no label for other days or completed slots", () => {

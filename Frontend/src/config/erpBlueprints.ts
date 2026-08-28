@@ -149,7 +149,7 @@ function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
   if (item.type === "link") {
     return {
       label: item.label,
-      icon: item.icon ?? "/assets/icons/Dashboard.png",
+      icon: item.icon ?? "LayoutDashboard",
       domain: item.domain,
       route: item.route,
       type: item.access,
@@ -158,7 +158,7 @@ function convertNavItemToSidebarItem(item: NavItem): SidebarItem {
 
   return {
     label: item.label,
-    icon: item.icon ?? "/assets/icons/Dashboard.png",
+    icon: item.icon ?? "LayoutDashboard",
     domain: item.domain ?? "mixed",
     submenu: item.children.map((child) => ({
       label: child.label,

@@ -50,7 +50,7 @@ export function HolidaysSection({
         role="tablist"
         aria-label="Select holiday list"
         className="inline-flex w-fit max-w-full overflow-x-auto rounded-lg border p-1"
-        style={{ borderColor: "var(--comp-border)" }}
+        style={{ borderColor: "var(--comp-border)", backgroundColor: "var(--comp-surface)" }}
       >
         {SEMESTER_TABS.map((tab) => (
           <button
@@ -73,7 +73,10 @@ export function HolidaysSection({
 
       <ul role="tabpanel" aria-label={`${semester} semester holidays`} className="flex flex-col gap-2">
         {holidays.length === 0 ? (
-          <li className="dashboard-card p-4 text-sm text-[var(--comp-text-muted)]">
+          <li
+            className="rounded-xl border border-dashed p-4 text-sm text-[var(--comp-text-muted)]"
+            style={{ borderColor: "var(--comp-border)" }}
+          >
             No holidays published for this semester.
           </li>
         ) : null}
@@ -86,13 +89,16 @@ export function HolidaysSection({
               style={{
                 borderColor: "var(--comp-border)",
                 background: passed
-                  ? "color-mix(in srgb, var(--success) 6%, transparent)"
-                  : "transparent",
-                opacity: passed ? 0.75 : 1,
+                  ? "color-mix(in srgb, var(--success) 6%, var(--background))"
+                  : "var(--background)",
               }}
             >
               <div>
-                <p className="text-sm font-medium text-[var(--comp-text-primary)] md:text-base">
+                <p
+                  className={`text-sm font-medium md:text-base ${
+                    passed ? "text-[var(--comp-text-muted)]" : "text-[var(--comp-text-primary)]"
+                  }`}
+                >
                   {holiday.occasion}
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--comp-text-muted)] md:text-sm">{holiday.day}</p>
@@ -109,7 +115,7 @@ export function HolidaysSection({
       </ul>
 
       {calendar.importantNotes.length > 0 ? (
-        <div className="dashboard-card p-4">
+        <div className="dashboard-subcard p-4">
           <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Important Notes</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-[var(--comp-text-muted)] md:text-sm">
             {calendar.importantNotes.map((note) => (
@@ -144,7 +150,7 @@ function BreakBanner({ card, now }: { card: BreakCard; now: Date }) {
       className="rounded-xl border p-4"
       style={{
         borderColor: `color-mix(in srgb, ${tone} 35%, transparent)`,
-        background: `color-mix(in srgb, ${tone} 8%, transparent)`,
+        background: `color-mix(in srgb, ${tone} 8%, var(--background))`,
       }}
     >
       <div className="flex items-start justify-between gap-2">

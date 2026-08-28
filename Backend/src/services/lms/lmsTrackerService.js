@@ -185,32 +185,44 @@ function buildCareerReadiness({ careerStore, user, academicSignals }) {
 
 function readEarnedCreditsConfig(cgpaData) {
   const defaultReq = 160;
-  if (!cgpaData || typeof cgpaData !== "object") {
-    return { requiredCredits: defaultReq, completedCredits: 0, currentCgpa: "0.00" };
+  const result = { requiredCredits: defaultReq, completedCredits: 0, currentCgpa: "0.00" };
+  if (!cgpaData || typeof cgpaData !== "object") return result;
+
+  // fetchCgpaSummary shape: { Academic: { "CGPA Summary": { text, TableContent, tables, meta } } }
+  const summary = ensureObject(ensureObject(cgpaData.Academic)["CGPA Summary"]);
+  const cgpaCandidate = toSafeString(
+    ensureObject(summary.meta).cgpa || ensureObject(summary.TableContent)["Current CGPA"] || ""
+  );
+  const cgpaMatch = cgpaCandidate.match(/(\d{1,2}(?:\.\d{1,3})?)/);
+  if (cgpaMatch) {
+    const parsed = Number.parseFloat(cgpaMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) result.currentCgpa = parsed.toFixed(2);
+  } else {
+    const textMatch = toSafeString(summary.text).match(
+      /c\.?\s*g\.?\s*p\.?\s*a\.?\s*[:\-]?\s*(\d{1,2}(?:\.\d{1,3})?)/i
+    );
+    if (textMatch) {
+      const parsed = Number.parseFloat(textMatch[1]);
+      if (Number.isFinite(parsed) && parsed > 0) result.currentCgpa = parsed.toFixed(2);
+    }
   }
 
+  // Raw SRM Table shape fallback; also the only source of an explicit earned-credits figure
   const records = Array.isArray(cgpaData) ? cgpaData : ensureArray(cgpaData.Table);
-  let completedCredits = 0;
-  let currentCgpa = "0.00";
-
   for (const row of records) {
     if (!row || typeof row !== "object") continue;
     const serialized = JSON.stringify(row).toLowerCase();
     if (serialized.includes("earned") && serialized.includes("credit")) {
       const match = serialized.match(/(?:value|text|:)\s*"?(\d+)/i);
-      if (match) completedCredits = Number.parseInt(match[1] || "0", 10) || 0;
+      if (match) result.completedCredits = Number.parseInt(match[1] || "0", 10) || 0;
     }
-    if (serialized.includes("cgpa")) {
+    if (result.currentCgpa === "0.00" && serialized.includes("cgpa")) {
       const match = serialized.match(/(?:value|text|:)\s*"?(\d\.\d+)/i);
-      if (match) currentCgpa = Number.parseFloat(match[1] || "0").toFixed(2);
+      if (match) result.currentCgpa = Number.parseFloat(match[1] || "0").toFixed(2);
     }
   }
 
-  return {
-    requiredCredits: defaultReq,
-    completedCredits,
-    currentCgpa,
-  };
+  return result;
 }
 
 function extractAttendanceRecords(attendanceRaw) {
@@ -512,6 +524,14 @@ const coreMethods = {
 
   _buildOverviewFromBatch({ examMarkRaw, currentRaw, attendanceRaw, cgpaRaw, user = null }) {
     const creditSummary = readEarnedCreditsConfig(cgpaRaw);
+    if (!creditSummary.completedCredits) {
+      // The CGPA report carries no earned-credits figure; derive it from passed exam-mark rows
+      // using the same GRADE_POINTS > 0 rule as normalizeHistoricalSgpa.
+      creditSummary.completedCredits = parseExamMarkDetailsRows(examMarkRaw).reduce(
+        (sum, row) => sum + ((GRADE_POINTS[row.grade] || 0) > 0 ? row.credit : 0),
+        0
+      );
+    }
     const gpaTrend = normalizeHistoricalSgpa(examMarkRaw, currentRaw);
     const attendanceRecords = extractAttendanceRecords(attendanceRaw);
     const attendancePct = attendanceRecords.length

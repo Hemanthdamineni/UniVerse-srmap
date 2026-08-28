@@ -1,5 +1,5 @@
 // Header bar uses --comp-accent instead of hardcoded hex for theme parity.
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { hasSessionAuth } from "../lib/core/session";
 import srmLogo from "../assets/FullSrmlogo.png";
@@ -35,6 +35,7 @@ function HeaderButton(props: { label: string; to: string; primary?: boolean }) {
 
 function Header() {
     const authenticated = hasSessionAuth();
+    const { pathname } = useLocation();
     const buttons = authenticated
         ? [
             { label: "Home", to: "/" },
@@ -43,7 +44,8 @@ function Header() {
         ]
         : [
             { label: "Home", to: "/" },
-            { label: "Login", to: "/login", primary: true },
+            // No "Login" pill while already on the login screen.
+            ...(pathname === "/login" ? [] : [{ label: "Login", to: "/login", primary: true }]),
         ];
 
     return (

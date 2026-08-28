@@ -18,6 +18,40 @@
 const cheerio = require("cheerio");
 const { cleanText } = require("../../../utils/text");
 
+/** ERP data-entry casing is inconsistent ("Cse 457"); codes render uppercase. */
+function normalizeCourseCode(code) {
+  return String(code || "").replace(/\s+/g, " ").trim().toUpperCase();
+}
+
+/** ERP appends pure-digit employee IDs: "Dr Ravi Kant Kumar (19073)" → "Dr Ravi Kant Kumar". */
+function normalizeFacultyLabel(faculty) {
+  return String(faculty || "")
+    .replace(/\(\s*\d+\s*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * ERP packs multiple rooms into adjacent parens: "(C 302)(c 507)" → "C 302, C 507".
+ * Single-letter room prefixes are uppercased; non-paren values pass through untouched.
+ */
+function normalizeClassroomList(classroom) {
+  const raw = String(classroom || "").trim();
+  if (!raw) return "";
+  const rooms = [];
+  const parenPattern = /\(([^)]+)\)/g;
+  let match;
+  while ((match = parenPattern.exec(raw)) !== null) {
+    rooms.push(match[1].trim());
+  }
+  if (rooms.length === 0) return raw;
+  return rooms
+    .map((room) =>
+      room.replace(/^([a-z])\s*(\d+)$/i, (_m, letter, digits) => `${letter.toUpperCase()} ${digits}`)
+    )
+    .join(", ");
+}
+
 /**
  * @param {string} html - Raw HTML from the SRM timetable page
  * @returns {import("./types").TimetableData}
@@ -99,7 +133,13 @@ function extractTimetable(html) {
 
     if (!code || !/[A-Z]/i.test(code)) return;
 
-    subjects.push({ code, description, ltpc, faculty, classroom });
+    subjects.push({
+      code: normalizeCourseCode(code),
+      description,
+      ltpc,
+      faculty: normalizeFacultyLabel(faculty),
+      classroom: normalizeClassroomList(classroom),
+    });
   });
 
   return {

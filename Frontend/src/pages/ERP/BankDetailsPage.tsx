@@ -169,7 +169,7 @@ export default function BankDetailsPage({ blueprint }: Props) {
           <div className="flex items-center gap-3">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-full"
-              style={{ background: "color-mix(in srgb, var(--comp-accent) 12%, transparent)" }}
+              style={{ background: "color-mix(in srgb, var(--comp-accent) 12%, var(--background))" }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--comp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -243,8 +243,8 @@ export default function BankDetailsPage({ blueprint }: Props) {
                   ? "color-mix(in srgb, var(--success) 30%, transparent)"
                   : "color-mix(in srgb, var(--error) 30%, transparent)",
                 background: submitResult.success
-                  ? "color-mix(in srgb, var(--success) 8%, transparent)"
-                  : "color-mix(in srgb, var(--error) 8%, transparent)",
+                  ? "color-mix(in srgb, var(--success) 8%, var(--background))"
+                  : "color-mix(in srgb, var(--error) 8%, var(--background))",
                 color: submitResult.success ? "var(--success)" : "var(--error)",
               }}
             >

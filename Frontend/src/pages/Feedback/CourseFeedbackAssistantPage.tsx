@@ -177,7 +177,7 @@ function StructuredTextField({ text }: { text: string; title?: string }) {
         className="rounded-xl border"
         style={{
           borderColor: "color-mix(in srgb, var(--comp-border) 60%, transparent)",
-          background: "color-mix(in srgb, var(--surface) 60%, transparent)",
+          background: "color-mix(in srgb, var(--surface) 60%, var(--background))",
         }}
       >
         <div className="grid gap-x-6 gap-y-0 md:grid-cols-2">
@@ -215,6 +215,7 @@ function StructuredTextField({ text }: { text: string; title?: string }) {
       className="rounded-xl border px-4 py-3 text-sm leading-6"
       style={{
         borderColor: "color-mix(in srgb, var(--comp-border) 50%, transparent)",
+        backgroundColor: "var(--background)",
         color: "var(--comp-text-secondary)",
       }}
     >
@@ -355,7 +356,7 @@ function PortalCta({ meta }: { meta: PortalMeta }) {
       className="flex items-start gap-4 rounded-xl p-5"
       style={{
         border: "1px solid color-mix(in srgb, var(--comp-accent) 20%, transparent)",
-        background: "color-mix(in srgb, var(--comp-accent) 5%, transparent)",
+        background: "color-mix(in srgb, var(--comp-accent) 5%, var(--background))",
       }}
     >
       <svg

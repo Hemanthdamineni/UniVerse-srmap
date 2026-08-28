@@ -27,6 +27,7 @@ import {
   StatusMessage,
 } from "./LoginParts";
 import LoginIdentityPanel from "./LoginIdentityPanel";
+import { useAutoCroppedCaptcha } from "./useAutoCroppedCaptcha";
 import "./LoginPage.overdrive.css";
 
 type SubmitPhase = "idle" | "loading" | "success";
@@ -68,7 +69,6 @@ export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "", captcha: "" });
   const [sessionId, setSessionId] = useState("");
   const [captchaBase64, setCaptchaBase64] = useState("");
-  const [captchaDisplaySrc, setCaptchaDisplaySrc] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [showPassword, setShowPassword] = useState(false);
@@ -121,42 +121,7 @@ export default function LoginPage() {
 
   useEffect(() => () => window.clearTimeout(slowVerifyTimerRef.current), []);
 
-  // ── Canvas auto-crop: trim right-side whitespace from captcha ──
-  useEffect(() => {
-    if (!captchaBase64) { setCaptchaDisplaySrc(""); return; }
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { setCaptchaDisplaySrc(captchaBase64); return; }
-      ctx.drawImage(img, 0, 0);
-      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // scan right-to-left to find last column with non-background content
-      let rightBound = img.width;
-      outer: for (let x = img.width - 1; x >= Math.floor(img.width * 0.25); x--) {
-        for (let y = 0; y < img.height; y++) {
-          const i = (y * img.width + x) * 4;
-          const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-          if (a > 30 && (r < 230 || g < 230 || b < 230)) {
-            rightBound = x + 14; // 14px right padding
-            break outer;
-          }
-        }
-      }
-      rightBound = Math.min(rightBound, img.width);
-      const cropped = document.createElement("canvas");
-      cropped.width = rightBound;
-      cropped.height = img.height;
-      const ctx2 = cropped.getContext("2d");
-      if (!ctx2) { setCaptchaDisplaySrc(captchaBase64); return; }
-      ctx2.drawImage(img, 0, 0);
-      setCaptchaDisplaySrc(cropped.toDataURL());
-    };
-    img.onerror = () => setCaptchaDisplaySrc(captchaBase64);
-    img.src = captchaBase64;
-  }, [captchaBase64]);
+  const captchaDisplaySrc = useAutoCroppedCaptcha(captchaBase64);
 
   // ── Detect debug mode and auto-login ──
   useEffect(() => {
@@ -346,10 +311,18 @@ export default function LoginPage() {
 
   const captchaSecondsLeft = Math.ceil(captchaRemainingMs / 1000);
   const captchaProgressPct = captchaTotalMs > 0 ? Math.min(100, (captchaRemainingMs / captchaTotalMs) * 100) : 0;
-  const captchaUrgentColor =
-    captchaRemainingMs <= 10_000 ? "var(--error)"
-    : captchaRemainingMs <= 30_000 ? "var(--warning)"
-    : "var(--comp-accent)";
+  const captchaUrgent = captchaRemainingMs <= 10_000;
+  const captchaExpiringSoon = captchaRemainingMs <= 30_000;
+  // Bright teal reads as a deliberate live indicator; --comp-accent is dark
+  // navy in light mode and would read as a border artifact on the meter.
+  const captchaMeterColor =
+    captchaUrgent ? "var(--error)"
+    : captchaExpiringSoon ? "var(--warning)"
+    : "var(--accent-blue)";
+  const captchaCountdownColor =
+    captchaUrgent ? "var(--error)"
+    : captchaExpiringSoon ? "var(--warning)"
+    : "var(--text-secondary)";
 
   return (
     <div className="login-page-shell">
@@ -425,8 +398,8 @@ export default function LoginPage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
                 <label htmlFor="captcha" className="label-text">Captcha</label>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "12px" }}>
-                  {!captchaLoading && captchaRemainingMs > 0 && captchaRemainingMs <= 30_000 && (
-                    <span title="Time before this captcha expires" style={{ fontSize: "var(--text-xs)", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: captchaUrgentColor }}>
+                  {!captchaLoading && captchaRemainingMs > 0 && (
+                    <span title="Time before this captcha expires" style={{ fontSize: "var(--text-xs)", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: captchaCountdownColor }}>
                       {captchaSecondsLeft}s
                     </span>
                   )}
@@ -437,26 +410,30 @@ export default function LoginPage() {
                   </button>
                 </span>
               </div>
-              <div style={{ position: "relative", borderRadius: "8px", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", display: "flex", alignItems: "stretch", boxShadow: focusedField === "captcha" ? FIELD_FOCUS_SHADOW : "none" }}>
-                <div style={{ flexShrink: 0, background: "#ffffff", borderRight: "1px solid color-mix(in srgb, var(--border) 80%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "72px", minWidth: "80px", maxWidth: "180px", overflow: "hidden" }}>
-                  {captchaLoading
-                    ? <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", animation: "login-pulse 1.4s ease-in-out infinite", padding: "0 12px" }}>Loading...</span>
-                    : (captchaDisplaySrc || captchaBase64)
-                      ? <img src={captchaDisplaySrc || captchaBase64} alt="Captcha challenge" style={{ display: "block", height: "72px", width: "auto", maxWidth: "180px" }} />
-                      : <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", padding: "0 12px" }}>No captcha</span>
-                  }
+              <div className="flex flex-col">
+                <div style={{ display: "flex", alignItems: "stretch", borderRadius: "var(--border-radius-md)", border: `1px solid ${focusedField === "captcha" ? "var(--comp-accent)" : "color-mix(in srgb, var(--border) 90%, transparent)"}`, background: "var(--background)", overflow: "hidden", transition: "border-color 0.2s ease, box-shadow 0.2s ease", boxShadow: focusedField === "captcha" ? FIELD_FOCUS_SHADOW : "none" }}>
+                  <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", height: "48px", padding: "0 10px", borderRight: "1px solid color-mix(in srgb, var(--border) 55%, transparent)", overflow: "hidden" }}>
+                    {captchaLoading
+                      ? <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", animation: "login-pulse 1.4s ease-in-out infinite", padding: "0 4px" }}>Loading...</span>
+                      : (captchaDisplaySrc || captchaBase64)
+                        ? <img src={captchaDisplaySrc || captchaBase64} alt="Captcha challenge" className="login-captcha-img" />
+                        : <span style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", padding: "0 4px" }}>No captcha</span>
+                    }
+                  </div>
+                  <input
+                    id="captcha" name="captcha" ref={captchaInputRef}
+                    value={form.captcha} onChange={handleChange}
+                    onFocus={() => setFocusedField("captcha")}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Type the characters above"
+                    autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                    style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
+                  />
                 </div>
-                <input
-                  id="captcha" name="captcha" ref={captchaInputRef}
-                  value={form.captcha} onChange={handleChange}
-                  onFocus={() => setFocusedField("captcha")}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="Type the characters above"
-                  autoComplete="off"
-                  style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
-                />
-                {!captchaLoading && captchaExpiresAt > 0 && (
-                  <div aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, height: "3px", width: `${captchaProgressPct}%`, maxWidth: "100%", background: captchaUrgentColor, transition: "width 0.5s linear, background 0.3s ease" }} />
+                {!captchaLoading && captchaExpiresAt > 0 && captchaTotalMs > 0 && (
+                  <div aria-hidden="true" style={{ marginTop: "6px", height: "2px", borderRadius: 999, background: "color-mix(in srgb, var(--border) 40%, transparent)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${captchaProgressPct}%`, background: captchaMeterColor, transition: "width 0.5s linear, background 0.3s ease" }} />
+                  </div>
                 )}
               </div>
             </div>
