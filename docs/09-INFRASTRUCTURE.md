@@ -218,6 +218,62 @@ REDIS_SENTINEL_MASTER_NAME=mymaster
 | `npm run lint` | `eslint .` | Lint check |
 | `npm run preview` | `vite preview` | Preview production build |
 
+## Staging / production separation (Gate 9 P0)
+
+Staging exists so the same images that ship to production can be
+exercised against a real data path before the rollout goes live.
+The contract:
+
+1. **Same images.** Staging runs the exact same backend and
+   frontend image tags as production — only the env file changes.
+   No `staging-only` code branches; if a change needs different
+   behavior in staging, it's not ready for production either.
+2. **Separate credentials.** Staging has its own `REDIS_PASSWORD`,
+   `ADMIN_CONTENT_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, and
+   `BACKUP_DEST`. None of these are reused from production. See
+   `.env.staging.example` for the full template.
+3. **Separate data volumes.** `COMPOSE_PROJECT_NAME=university-erp-staging`
+   ensures docker compose names the staging volumes with a
+   different prefix, so an accidental `docker compose down` on
+   the wrong host cannot delete the production data.
+4. **Separate ERP dump directory.** `ERP_DUMP_BASE_DIR` points at a
+   staging-only path; the live ERP integration tests against that
+   directory, never the production one.
+5. **Never point at production credentials.** A test that needs the
+   real ERP uses a *recorded proxy* or a sandbox account, not the
+   real student register numbers.
+
+If staging starts behaving differently from production (an image
+that runs in staging but errors in production, or vice versa) the
+first thing to check is whether someone bypassed any of these
+rules. The secret-rotation runbook (`infra/runbooks/secret-rotation.md`)
+covers the operational procedure; this file covers the contract.
+
+## Expected-downtime model (Gate 9 P2)
+
+The platform runs on a single host in the current deployment. That
+implies a brief restart window during image-tag rollouts and
+security rotations. The expected-downtime budget:
+
+- **Routine image-tag rollout:** 30–60s of 503s from the
+  proxy. Frontend static assets are served by nginx directly; only
+  the backend restarts. Drain and restart budget is enforced at 8s
+  (PR 3 `fix(be): hard shutdown budget on SIGTERM`).
+- **Planned secret rotation:** 5–15s, same single-host profile.
+  See `infra/runbooks/secret-rotation.md`.
+- **Emergency rollback (image tag):** 60–120s including cache
+  warm-up. Procedure in `infra/runbooks/rollback.md`.
+- **Unplanned outage (host failure):** Until the host is replaced
+  or restarted, the platform is down. Mitigations: weekly
+  `setup-backups.sh` runs + offsite `BACKUP_DEST` rsync + the
+  02:00 cron entry in `infra/cron/backup.cron` (PR 8).
+
+If the deployment grows beyond a single host, revisit this section:
+the model changes materially when there's more than one backend
+behind a load balancer (zero-downtime rolling restarts become
+feasible, and the SHUTDOWN_BUDGET_MS hard deadline can be relaxed).
+
+>>>>>>> 2d3b17a (chore(infra): staging env file, downtime model, ERP outage escalation (Gate 9))
 ## Monitoring Data Policy
 
 The Prometheus + Grafana + Loki stack stores all telemetry in
