@@ -7,8 +7,13 @@ const {
   VacantRoomStore,
   extractRoomToken,
   normalizeDay,
+  timetableScheduleFromPagePayload,
 } = require("../src/services/erp/vacantRoomStore");
 const { createVacantRoomRoutes } = require("../src/routes/vacantRoomRoutes");
+const {
+  adaptToLegacyPayload,
+  extractTimetable,
+} = require("../src/services/erp/extractors");
 
 function tempDbPath() {
   return path.join(os.tmpdir(), `vacant-${Date.now()}-${Math.random().toString(36).slice(2)}.sqlite`);
@@ -60,6 +65,38 @@ test("vacantRooms rejects invalid day/slot", () => {
   assert.equal(store.vacantRooms({ day: "sunday", slotIndex: 0 }).ok, false);
   assert.equal(store.vacantRooms({ day: "monday", slotIndex: 9 }).ok, false);
   assert.equal(store.vacantRooms({ day: "monday" }).ok, false);
+  store.close();
+});
+
+// The erpDataSink receives adaptToLegacyPayload output, where the typed
+// extractor result lives under `_extracted`. Reading `payload.schedule`
+// directly silently ingested nothing — this pins the real producer shape.
+const TIMETABLE_HTML = `
+<table id="tblClassTimetable">
+  <tr class="timetablehead"><td>1</td><td>2</td><td>3</td></tr>
+  <tr class="subheader"><td></td><td>09:00 To 09:50</td><td>10:00 To 10:50</td></tr>
+  <tr>
+    <td class="subheader">Monday</td>
+    <td title="CODING SKILLS">CSE401(C311)</td>
+    <td title="NETWORKS">CSE402(AB-305)</td>
+  </tr>
+</table>`;
+
+test("dataSink payload shape yields an ingestable schedule", () => {
+  const payload = adaptToLegacyPayload(extractTimetable(TIMETABLE_HTML));
+
+  // The pre-fix sink expression — must stay falsy-proof via the helper.
+  assert.equal(payload.schedule, undefined);
+
+  const schedule = timetableScheduleFromPagePayload(payload);
+  assert.ok(Array.isArray(schedule), "schedule must resolve from _extracted");
+  assert.equal(schedule[0].day, "Monday");
+  assert.match(schedule[0].periods[0], /C311/);
+
+  const store = new VacantRoomStore({ dbPath: tempDbPath() });
+  const written = store.ingestTimetable(timetableScheduleFromPagePayload(payload));
+  assert.equal(written, 2);
+  assert.equal(store.vacantRooms({ day: "monday", slotIndex: 0 }).occupiedCount, 1);
   store.close();
 });
 

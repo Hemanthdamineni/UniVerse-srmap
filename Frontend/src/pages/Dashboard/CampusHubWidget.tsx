@@ -119,7 +119,7 @@ export default function CampusHubWidget() {
       <SegmentedControl
         size="sm"
         ariaLabel="Campus hub sections"
-        className="mb-3 grid w-full shrink-0 grid-cols-2"
+        className="mb-2 grid w-full shrink-0 grid-cols-2"
         value={activeTab}
         onChange={setActiveTab}
         options={[
@@ -157,7 +157,7 @@ export default function CampusHubWidget() {
       {activeTab === "events" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
           {eventsState === "loading" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-shimmer h-16 rounded-lg" />
               ))}
@@ -187,7 +187,7 @@ export default function CampusHubWidget() {
           )}
 
           {eventsState === "data" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {events.map((event) => {
                 const dl = eventDeadlineLabel(event);
                 const color = categoryColor(event.category);
@@ -203,12 +203,12 @@ export default function CampusHubWidget() {
                         navigate(`/events/${encodeURIComponent(event.id)}`);
                       }
                     }}
-                    className="cursor-pointer rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-3 transition-all hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
+                    className="cursor-pointer rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-2.5 transition-all hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <span
-                          className="mb-1 inline-block rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide"
+                          className="mb-0.5 inline-block rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide"
                           style={{
                             backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`,
                             color,
@@ -240,7 +240,7 @@ export default function CampusHubWidget() {
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
           {careerState === "loading" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="skeleton-shimmer h-16 rounded-lg" />
               <div className="skeleton-shimmer h-16 rounded-lg" />
             </div>
@@ -269,7 +269,7 @@ export default function CampusHubWidget() {
           )}
 
           {careerState === "data" && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {opportunities.slice(0, 3).map((op) => (
                 <div
                   key={op.id}
@@ -282,13 +282,13 @@ export default function CampusHubWidget() {
                       navigate(`/career/opportunities/${op.id}`);
                     }
                   }}
-                  className="cursor-pointer rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-3 transition-all hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
+                  className="cursor-pointer rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-2.5 transition-all hover:bg-[var(--comp-surface-hover)] hover:shadow-sm"
                 >
                   <p className="truncate text-sm font-semibold text-[var(--comp-text-primary)]">{op.title}</p>
                   <p className="truncate text-xs text-[var(--comp-text-secondary)]">
                     {op.company || op.organizer || "Unknown company"}
                   </p>
-                  <div className="mt-2 flex items-center justify-between">
+                  <div className="mt-1.5 flex items-center justify-between">
                     <span
                       className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium"
                       style={{
@@ -313,7 +313,7 @@ export default function CampusHubWidget() {
       <button
         onClick={() => navigate(activeTab === "events" ? "/events" : "/career")}
         type="button"
-        className="mt-3 flex w-full shrink-0 items-center justify-center gap-1 rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        className="mt-2 flex w-full shrink-0 items-center justify-center gap-1 rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
       >
         {activeTab === "events" ? "Browse all events" : "Go to Career Portal"}
         <ArrowRight size={15} aria-hidden="true" />

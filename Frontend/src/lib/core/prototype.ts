@@ -113,6 +113,37 @@ function legacyRows(section: Record<string, unknown>, tableIndex = 0) {
   return tables[tableIndex].filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === "object" && !Array.isArray(row));
 }
 
+const DETAIL_HEADER_LABELS = new Set([
+  "Name",
+  "Mark Secured(Conducted)",
+  "Mark Secured(Converted)",
+]);
+
+/**
+ * The generic DOM dump flattens each subject's hidden component table into a
+ * detail row of col5+ cells: three header labels, then (name, conducted,
+ * converted) triples. Recover them so the static prototype can render the
+ * same assessment breakdown the live extractor provides.
+ */
+function parseFixtureComponents(detailRow: Record<string, unknown> | undefined) {
+  if (!detailRow) return undefined;
+
+  const values = Object.keys(detailRow)
+    .filter((key) => /^col\d+$/.test(key))
+    .sort((a, b) => Number(a.slice(3)) - Number(b.slice(3)))
+    .map((key) => String(detailRow[key] ?? "").trim())
+    .filter((value) => value && !DETAIL_HEADER_LABELS.has(value));
+
+  const components: Record<string, { conducted: string; converted: string }> = {};
+  for (let i = 0; i + 2 < values.length; i += 3) {
+    components[values[i]] = {
+      conducted: values[i + 1],
+      converted: values[i + 2],
+    };
+  }
+  return Object.keys(components).length > 0 ? components : undefined;
+}
+
 /**
  * Production APIs provide `_extracted` typed records. The checked-in static
  * snapshot predates that contract, so adapt only the three student-critical
@@ -182,14 +213,24 @@ function addStaticExtraction(pageKey: string, result: StaticErpBatchPageResult) 
   }
 
   if (pageKey === "examination/internal-mark-details") {
-    const records = legacyRows(section)
-      .filter((row) => /^[A-Z]{2,}\s*\d+/i.test(String(row["Subject Code"] || "")))
-      .map((row) => ({
+    const rows = legacyRows(section);
+    // "Max.Marks" only exists on real subject rows — component rows like
+    // "CLA 1" also match the code pattern and must be excluded.
+    const isSubjectRow = (row: Record<string, unknown>) =>
+      /^[A-Z]{2,}\s*\d+/i.test(String(row["Subject Code"] || "")) &&
+      "Max.Marks" in row;
+    const records = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (!isSubjectRow(row)) continue;
+      records.push({
         subjectCode: String(row["Subject Code"] || ""),
         subjectName: String(row["Subject Description"] || ""),
         marksObtained: String(row["Marks Obtained"] || "0"),
         totalMarks: String(row["Max.Marks"] || "50"),
-      }));
+        components: parseFixtureComponents(rows[i + 1]),
+      });
+    }
     section._extracted = { type: "internal-marks", records };
   }
 

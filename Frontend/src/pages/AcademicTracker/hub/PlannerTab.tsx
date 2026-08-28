@@ -1,31 +1,44 @@
 import { useState } from "react";
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
 import SgpaCgpaPredictor from "../../ERP/components/SgpaCgpaPredictor";
-import type { InsightsData, OverviewData } from "./types";
+import type { InsightsData, OverviewData, PlannerPrefill } from "./types";
 
 export function PlannerTab({
   overview,
   insights,
+  plannerPrefill,
+  plannerLoading,
 }: {
   overview: OverviewData | null;
   insights: InsightsData | null;
+  plannerPrefill: PlannerPrefill | null;
+  plannerLoading: boolean;
 }) {
+  const cgpaSummary =
+    plannerPrefill?.cgpaSummary?.currentCgpa || plannerPrefill?.cgpaSummary?.semesterNumber
+      ? plannerPrefill.cgpaSummary
+      : {
+          currentCgpa: overview?.currentCgpa || "0",
+          semesterLabel: overview?.semesters?.length ? `Semester ${Math.max(...overview.semesters.map(s => s.semester))}` : "",
+          semesterNumber: overview?.semesters?.length ? Math.max(...overview.semesters.map(s => s.semester)) : null,
+        };
+
   return (
     <div className="space-y-6">
       <SectionCard title="SGPA / CGPA Planner">
         <p className="text-sm" style={{ color: "var(--comp-text-secondary)" }}>
           Predict your CGPA based on expected grades, or calculate the SGPA needed to reach a target CGPA.
         </p>
-        <SgpaCgpaPredictor
-          currentCourse={null}
-          curriculum={null}
-          data={{ title: "Planner", subjects: [], sgpa: "", disclaimer: "" }}
-          cgpaSummary={{
-            currentCgpa: overview?.currentCgpa || "0",
-            semesterLabel: overview?.semesters?.length ? `Semester ${Math.max(...overview.semesters.map(s => s.semester))}` : "",
-            semesterNumber: overview?.semesters?.length ? Math.max(...overview.semesters.map(s => s.semester)) : null,
-          }}
-        />
+        {plannerLoading ? (
+          <p className="text-sm" style={{ color: "var(--comp-text-muted)" }}>Loading planner subjects...</p>
+        ) : (
+          <SgpaCgpaPredictor
+            currentCourse={plannerPrefill?.currentCourse ?? null}
+            curriculum={plannerPrefill?.curriculum ?? null}
+            data={plannerPrefill?.currentResults ?? { title: "Planner", subjects: [], sgpa: "", disclaimer: "" }}
+            cgpaSummary={cgpaSummary}
+          />
+        )}
       </SectionCard>
 
       {/* Target Calculator */}

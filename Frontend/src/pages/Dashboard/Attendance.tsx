@@ -62,14 +62,14 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
 
   return (
     <div className="flex h-full flex-col p-4">
-      <h2 className="card-title mb-3 font-semibold shrink-0">Attendance</h2>
+      <h2 className="card-title mb-2 font-semibold shrink-0">Attendance</h2>
 
       {/* Headline average + secondary stat tiles */}
-      <div className="mb-3 shrink-0 rounded border border-[var(--comp-border)] p-2 flex items-baseline justify-between gap-2">
+      <div className="mb-2 shrink-0 rounded border border-[var(--comp-border)] p-2 flex items-baseline justify-between gap-2">
         <span className="text-xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{avgPct.toFixed(0)}%</span>
         <span className="label-text">Avg</span>
       </div>
-      <div className="mb-2 grid shrink-0 grid-cols-3 gap-2">
+      <div className="mb-1.5 grid shrink-0 grid-cols-3 gap-2">
         {secondaryStats.map(({ key, caption, value, color, tinted }) => (
           <div
             key={key}
@@ -85,8 +85,12 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
         ))}
       </div>
 
-      <div className="flex-1 min-h-0">
-        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
+      {/* min-h floor + absolute chart: on unstretched (mobile/auto-height)
+          cards the h-full percentage chain is indefinite and a
+          ResponsiveContainer collapses to 0. inset-0 sizes the chart from its
+          containing block instead, on any card height. */}
+      <div className="relative min-h-[150px] flex-1">
+        <ChartContainer config={chartConfig} className="absolute inset-0 aspect-auto">
           <BarChart
             data={subjects}
             margin={{ top: 4, right: 4, left: 0, bottom: needsAngle ? 26 : 10 }}

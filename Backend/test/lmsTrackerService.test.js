@@ -5,6 +5,7 @@ const path = require("path");
 
 const { LmsTrackerService } = require("../src/services/lms/lmsTrackerService");
 const { LmsTrackerStore } = require("../src/services/lms/lmsTrackerStore");
+const { buildCgpaSummaryPayload } = require("../src/services/erp/erpServices");
 
 function createErpAggregationService() {
   const service = {
@@ -200,6 +201,33 @@ test("LmsTrackerService combines ERP academic signals with career readiness inpu
   assert.ok(insights.careerReadiness.nextActions.some((action) => action.includes("Node.js")));
   assert.ok(insights.careerReadiness.inputsUsed.academicSignals.includes("subjectsAtRisk"));
   assert.equal(erpAggregationService.calls, 1);
+});
+
+test("LmsTrackerService reads CGPA from the fetchCgpaSummary payload shape and derives earned credits from exam marks", async () => {
+  const base = createErpAggregationService();
+  const erpAggregationService = {
+    async getBatch(params) {
+      const batch = await base.getBatch(params);
+      // Real shape produced by ErpLiveService.fetchCgpaSummary — not the raw-SRM Table shape
+      batch["academic/cgpa-summary"] = {
+        data: buildCgpaSummaryPayload({
+          cgpa: "8.75",
+          semesterLabel: "Semester 6",
+          semesterNumber: 6,
+          sourceText: "CGPA : 8.75",
+        }),
+      };
+      return batch;
+    },
+  };
+  const service = new LmsTrackerService({ erpAggregationService });
+
+  const overview = await service.getOverview({ sessionId: "session-1", user: null });
+
+  assert.equal(overview.currentCgpa, "8.75");
+  // 4 credits (Sem 1, grade A) + 3 credits (Sem 2, grade B+) derived from passed exam-mark rows
+  assert.equal(overview.completedCredits, 7);
+  assert.equal(overview.progressPercent, Math.round((7 / 160) * 100));
 });
 
 test("LmsTrackerService persists snapshots and recommendation events", async () => {

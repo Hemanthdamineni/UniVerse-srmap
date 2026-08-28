@@ -11,13 +11,14 @@ import QuickLinks from "./QuickLinks";
 import WeekCalendar from "./WeekCalendar";
 import ToDo from "./ToDo";
 import WelcomeCard from "./WelcomeCard";
-import FirstRunGuide from "./FirstRunGuide";
+// FirstRunGuide is intentionally not rendered on the dashboard anymore.
+// The component (and its tests) stay intact in ./FirstRunGuide.tsx for future reuse.
+// import FirstRunGuide from "./FirstRunGuide";
 import CampusHubWidget from "./CampusHubWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, hasSessionAuth, readStoredProfileData } from "../../lib/core/session";
 import { sessionKeys } from "../../lib/core/queryKeys";
 import { erpKeys } from "../../lib/erp/queryKeys";
-import { hasSeenOnboarding } from "../../lib/core/onboarding";
 import { getErpBatch } from "../../lib/erp/index";
 import { getEndSemesterFeedbackStatus } from "../../lib/campus/studentToolsApi";
 import { InlineError } from "../../components/ui/Feedback";
@@ -27,7 +28,6 @@ import { DashboardLayout } from "../../components/layout/PageLayouts";
 
 function Dashboard() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [showFirstRunGuide, setShowFirstRunGuide] = useState(() => !hasSeenOnboarding());
   const dashboardRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
 
@@ -86,7 +86,7 @@ function Dashboard() {
   if (loading || profileLoading) {
     return (
       <DashboardLayout>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:h-[calc(100vh-var(--dash-chrome))]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:min-h-[calc(100vh-var(--dash-chrome))] xl:grid-rows-[minmax(0,1fr)]">
         <div className="grid gap-4 md:col-span-9">
           <SkeletonCard className="h-14" />
           <SkeletonCard className="h-[150px]" />
@@ -144,11 +144,15 @@ function Dashboard() {
 
   return (
     <DashboardLayout>
-    <div ref={dashboardRef} className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:h-[calc(100vh-var(--dash-chrome))]">
-      {/* Vertical share: welcome/basic info size to content, widget row gets
-          3 parts and To-Do 2 parts of the remaining height. Minimums keep
-          card controls (tabs, CTAs) usable on shorter desktop screens. The
-          one-time first-run guide adds its own auto row while visible. */}
+    <div ref={dashboardRef} className="grid grid-cols-1 gap-4 md:grid-cols-12 xl:min-h-[calc(100vh-var(--dash-chrome))] xl:grid-rows-[minmax(0,1fr)]">
+      {/* Vertical share: rows are content-sized (implicit auto tracks — no
+          definite height here, so a track can never shrink below its cards
+          and clip under overflow-hidden). fr maxima were deliberately
+          dropped: they made the widget row absorb the zone's leftover space
+          and QuickLinks' flex grid stretch to match it. The two flexible
+          rows instead carry viewport-proportional min-height floors so tall
+          viewports still fill; on shorter screens the floors sit below the
+          natural content heights and the page scrolls. */}
       {/* Mobile (<md): both zone wrappers dissolve via display:contents so the
           leaf cards interleave in reading order — Welcome → Basic Info →
           Week Calendar → Schedule → Attendance → Quick Links → Campus Hub →
@@ -156,7 +160,7 @@ function Dashboard() {
           engagement row). md+: wrappers are real grid zones again
           (main 9 / rail 3) and every max-md:* utility goes inert, so the xl
           two-zone template lays out exactly as before. */}
-      <div className={`grid min-h-0 gap-4 max-md:contents md:col-span-9 ${showFirstRunGuide ? "grid-rows-[auto_auto_auto_minmax(340px,3fr)_minmax(210px,2fr)]" : "grid-rows-[auto_auto_minmax(340px,3fr)_minmax(210px,2fr)]"}`}>
+      <div className="grid min-h-0 gap-4 max-md:contents md:col-span-9">
         <div data-page-contrast="true" className="page-contrast-fg">
           {/* Card chassis required: with the flat page surface the brand wedge
               passes behind this bare block on narrow viewports and the greeting
@@ -166,47 +170,53 @@ function Dashboard() {
           </SectionCard>
         </div>
 
-        {showFirstRunGuide && (
-          <FirstRunGuide onDismiss={() => setShowFirstRunGuide(false)} />
-        )}
-
         <SectionCard interactive title="Basic Info" className="overflow-hidden p-4">
           <BasicInfo profileData={profileData} />
         </SectionCard>
 
-        {/* Single row: Attendance | Student Tasks | Campus Hub. At mobile the
-            row group sorts after the rail pair (max-md:order-2) and within it
-            Attendance leads (primary daily check) — desktop cells unchanged. */}
-        <div className="grid min-h-0 grid-cols-1 items-stretch gap-4 max-md:order-2 md:grid-cols-2 xl:grid-cols-3">
-          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-2">
+        {/* Single row: Attendance | Student Tasks | Campus Hub. fill keeps the
+            three cards equal-height with no dead space — QuickLinks' natural
+            tile height drives the row and the other two compress/flex to
+            match it. The viewport-proportional floor only binds on tall
+            viewports (above ~990px tall) where it fills instead. At mobile
+            the row group sorts after the rail pair (max-md:order-2) and
+            within it Attendance leads (primary daily check) — desktop cells
+            unchanged. */}
+        <div className="grid min-h-0 grid-cols-1 items-stretch gap-4 max-md:order-2 md:grid-cols-2 xl:grid-cols-3 xl:min-h-[calc((100vh-var(--dash-chrome))*0.35)]">
+          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-2">
             <QuickLinks feedbackPendingCount={feedbackPendingCount} />
           </SectionCard>
 
-          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-3">
+          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-3">
             <CampusHubWidget />
           </SectionCard>
 
           {/* Attendance width reduced from 5 to 3 columns (equal thirds) */}
-          <SectionCard interactive className="min-h-[280px] overflow-hidden p-0 md:col-span-2 xl:col-span-1 xl:min-h-0 max-md:order-1">
+          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 md:col-span-2 xl:col-span-1 xl:min-h-0 max-md:order-1">
             <Suspense fallback={<SkeletonCard className="h-full w-full" />}>
               <Attendance attendanceData={data} />
             </Suspense>
           </SectionCard>
         </div>
 
-        <SectionCard interactive className="overflow-hidden p-0 max-md:order-2">
+        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-2 xl:min-h-[calc((100vh-var(--dash-chrome))*0.28)]">
           <ToDo selectedDate={selectedDate} profileData={profileData} />
         </SectionCard>
       </div>
 
       {/* Rail dissolves into the outer grid below md so Week Calendar and
-          Schedule can slot in after Basic Info (max-md:order-1). */}
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 max-md:contents md:col-span-3">
+          Schedule can slot in after Basic Info (max-md:order-1). The small
+          md+ bottom margin lets the Schedule card run down into the zone
+          where the fixed search/shortcuts overlay floats; the card keeps
+          its own internal footer padding so rows never sit under the
+          overlay — the column reads calendar → schedule (full-height card
+          with blank footer) → overlay on top of that blank footer. */}
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 pb-6 max-md:contents md:col-span-3">
         <SectionCard interactive className="overflow-hidden p-4 max-md:order-1">
           <WeekCalendar onDateSelect={setSelectedDate} />
         </SectionCard>
 
-        <SectionCard interactive className="overflow-hidden p-0 max-md:order-1">
+        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-1">
           <Schedule scheduleData={data} selectedDate={selectedDate} />
         </SectionCard>
       </div>

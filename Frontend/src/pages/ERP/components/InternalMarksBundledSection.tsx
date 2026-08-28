@@ -84,18 +84,31 @@ export function InternalMarksBundledSection({
 
                     <div className="flex shrink-0 items-center gap-5">
                       <div className="text-right">
-                        <p className="text-sm tabular-nums">
-                          <span className="font-bold text-[var(--comp-accent)]">
-                            {subject.marksObtained.toFixed(2)}
+                        <div className="flex items-center justify-end gap-2.5">
+                          <p className="text-sm tabular-nums">
+                            <span className="font-bold text-[var(--comp-accent)]">
+                              {subject.marksObtained.toFixed(2)}
+                            </span>
+                            <span className="mx-0.5 text-[var(--comp-text-muted)]">
+                              /
+                            </span>
+                            <span className="text-xs text-[var(--comp-text-muted)]">
+                              {subject.maxMarks.toFixed(0)}
+                            </span>
+                          </p>
+                          <span
+                            className={`erp-status-pill tabular-nums text-xs font-bold ${
+                              pct >= 75
+                                ? "erp-status-pill-success"
+                                : pct >= 50
+                                  ? "erp-status-pill-warning"
+                                  : "erp-status-pill-error"
+                            }`}
+                          >
+                            {pct.toFixed(1)}%
                           </span>
-                          <span className="mx-0.5 text-[var(--comp-text-muted)]">
-                            /
-                          </span>
-                          <span className="text-xs text-[var(--comp-text-muted)]">
-                            {subject.maxMarks.toFixed(0)}
-                          </span>
-                        </p>
-                        <div className="mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
+                        </div>
+                        <div className="ml-auto mt-1.5 h-1 w-16 overflow-hidden rounded-full bg-[var(--comp-surface-hover)]">
                           <div
                             className="h-full w-full origin-left rounded-full transition-transform duration-300"
                             style={{
@@ -105,18 +118,6 @@ export function InternalMarksBundledSection({
                           />
                         </div>
                       </div>
-
-                      <span
-                        className={`erp-status-pill tabular-nums text-xs font-bold ${
-                          pct >= 75
-                            ? "erp-status-pill-success"
-                            : pct >= 50
-                              ? "erp-status-pill-warning"
-                              : "erp-status-pill-error"
-                        }`}
-                      >
-                        {pct.toFixed(1)}%
-                      </span>
 
                       {hasAssessments ? (
                         <ChevronDown

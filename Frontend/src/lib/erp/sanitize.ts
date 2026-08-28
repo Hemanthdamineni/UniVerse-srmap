@@ -102,6 +102,29 @@ function sanitizeRow(row: TableRow): TableRow | null {
 
 // ── Main extraction ─────────────────────────────────────────────────────────
 
+const NUMERIC_KEY_PATTERN = /^(?:0|[1-9]\d*)$/;
+
+/**
+ * A "degenerate" row is legacy pipeline noise rather than tabular data:
+ * - numeric keys ("0", "1", …) — an array row that lost its headers, so the
+ *   array indices leaked in as column names (renders as a raw "0" header)
+ * - a single cell whose header echoes its own value — a notice box scraped
+ *   as a one-column table
+ * Returns the row's display text when degenerate, else null.
+ */
+function degenerateRowText(row: TableRow): string | null {
+  const keys = Object.keys(row);
+  if (keys.length === 0) return null;
+  const values = Object.values(row)
+    .map((v) => v.trim())
+    .filter(Boolean);
+  if (values.length === 0) return null;
+  const allNumericKeys = keys.every((k) => NUMERIC_KEY_PATTERN.test(k.trim()));
+  const singleEchoCell = keys.length === 1 && keys[0].trim().length > 3 && values[0] === keys[0].trim();
+  if (allNumericKeys || singleEchoCell) return values.join(" ");
+  return null;
+}
+
 /**
  * Extract, sanitize, and deduplicate display sections from raw ERP responses.
  */
@@ -120,20 +143,34 @@ export function extractSections(
     const rawText = sanitizeErpDisplayText(record.text, "");
     const rawTables = record.tables;
 
-    const tables: TableRow[][] = Array.isArray(rawTables)
-      ? (rawTables as unknown[])
-          .filter(Array.isArray)
-          .map((table) =>
-            (table as unknown[])
-              .filter((row): row is TableRow => !!row && typeof row === "object")
-              .map((row) => sanitizeRow(row))
-              .filter((row): row is TableRow => row !== null),
-          )
-          .filter((t) => t.length > 0)
-      : [];
+    const tables: TableRow[][] = [];
+    const tableText: string[] = [];
+
+    if (Array.isArray(rawTables)) {
+      for (const rawTable of rawTables as unknown[]) {
+        if (!Array.isArray(rawTable)) continue;
+        const rows = (rawTable as unknown[])
+          .filter((row): row is TableRow => !!row && typeof row === "object")
+          .map((row) => sanitizeRow(row))
+          .filter((row): row is TableRow => row !== null);
+
+        if (rows.length === 0) continue;
+
+        const textLines = rows.map(degenerateRowText);
+        if (textLines.every((line) => line !== null)) {
+          // The whole table is notice/echo noise — surface it as text so the
+          // renderer can style it as a callout instead of a headerless table.
+          tableText.push(...(textLines as string[]));
+        } else {
+          const realRows = rows.filter((_, i) => textLines[i] === null);
+          if (realRows.length > 0) tables.push(realRows);
+        }
+      }
+    }
 
     // Suppress text that is just a dump of the table content
-    const text = isTableDump(rawText, title) ? "" : rawText;
+    const baseText = isTableDump(rawText, title) ? "" : rawText;
+    const text = [baseText, ...tableText].filter(Boolean).join("\n");
 
     if (title || text || tables.length > 0) {
       raw.push({ title, text, tables });

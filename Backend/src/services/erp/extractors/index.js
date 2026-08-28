@@ -305,10 +305,37 @@ function adaptToLegacyPayload(extracted) {
       }))
     );
   } else if (type === "generic-table" && Array.isArray(extracted.tables)) {
-    // generic-table already has the right {columns, rows} structure
+    // Two table shapes reach this adapter: extractGenericTable emits
+    // {columns, rows} with object rows, while bespoke extractors may emit
+    // {headers, rows} with array rows. Array rows must be zipped against
+    // their headers here — pushing them through verbatim leaks array
+    // indices ("0", "1", …) into the legacy payload as column names.
     extracted.tables.forEach((t) => {
-      if (Array.isArray(t.rows) && t.rows.length > 0) {
+      if (!Array.isArray(t.rows) || t.rows.length === 0) return;
+      const firstRow = t.rows[0];
+
+      if (firstRow && typeof firstRow === "object" && !Array.isArray(firstRow)) {
         tables.push(t.rows);
+        return;
+      }
+
+      const headers = (Array.isArray(t.headers) ? t.headers : Array.isArray(t.columns) ? t.columns : [])
+        .map((h) => (h == null ? "" : String(h).trim()))
+        .filter(Boolean);
+      if (!headers.length) return;
+
+      const objectRows = t.rows
+        .filter(Array.isArray)
+        .map((cells) => {
+          const row = {};
+          headers.forEach((header, i) => {
+            row[header] = cells[i] == null ? "" : String(cells[i]);
+          });
+          return row;
+        })
+        .filter((row) => Object.values(row).some((v) => v && v.length > 0));
+      if (objectRows.length > 0) {
+        tables.push(objectRows);
       }
     });
   } else if (type === "transport-registration-ack" && Array.isArray(extracted.fields)) {
