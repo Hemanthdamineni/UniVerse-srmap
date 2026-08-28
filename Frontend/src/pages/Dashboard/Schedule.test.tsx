@@ -91,25 +91,44 @@ describe("Schedule", () => {
     expect(screen.getByText("Free Period")).toBeInTheDocument();
   });
 
-  it("renders course IDs in brackets (sanitizer title-cases all-caps)", () => {
+  it("renders course IDs without brackets", () => {
     mockExecutePipeline.mockReturnValue({
       isValid: true,
       data: makeTimetableData(),
     });
     renderSchedule({}, MONDAY);
-    // sanitizeErpDisplayText title-cases all-caps strings, so CS101 becomes Cs101
-    expect(screen.getByText(/\[Cs101\]/)).toBeInTheDocument();
-    expect(screen.getByText(/\[Cs102\]/)).toBeInTheDocument();
+    expect(screen.getByText("CS101")).toBeInTheDocument();
+    expect(screen.getByText("CS102")).toBeInTheDocument();
   });
 
-  it("renders room numbers alongside lecture type", () => {
+  it("splits ERP multi-room paren lists and uppercases the code", () => {
+    const data = makeTimetableData({
+      days: [
+        {
+          day: "Monday",
+          slots: [
+            { classDetails: "Cse457(C 302)(c 507)" },
+            { classDetails: "" },
+            { classDetails: "" },
+          ],
+        },
+      ],
+      subjects: [],
+    });
+    mockExecutePipeline.mockReturnValue({ isValid: true, data });
+    renderSchedule({}, MONDAY);
+    expect(screen.getByText("C 302, C 507")).toBeInTheDocument();
+    expect(screen.getByText("CSE457")).toBeInTheDocument();
+  });
+
+  it("renders room numbers", () => {
     mockExecutePipeline.mockReturnValue({
       isValid: true,
       data: makeTimetableData(),
     });
     renderSchedule({}, MONDAY);
-    expect(screen.getByText(/Lecture - Room 101/)).toBeInTheDocument();
-    expect(screen.getByText(/Lecture - Room 102/)).toBeInTheDocument();
+    expect(screen.getByText(/Room 101/)).toBeInTheDocument();
+    expect(screen.getByText(/Room 102/)).toBeInTheDocument();
   });
 
   it("renders 5:30 pm footer", () => {
@@ -215,6 +234,6 @@ describe("Schedule", () => {
     // CSS capitalize transforms text, so "CODING SKILLS - III" becomes "Coding Skills - Iii"
     expect(screen.getByText("Coding Skills - Iii")).toBeInTheDocument();
     expect(screen.getByText("Dr. Shreeram Hudda")).toBeInTheDocument();
-    expect(screen.getByText(/Lecture - C 311/)).toBeInTheDocument();
+    expect(screen.getByText(/C 311/)).toBeInTheDocument();
   });
 });

@@ -6,7 +6,6 @@ import {
   findFocusSlotIndex,
   SLOT_WINDOWS,
 } from "../../lib/erp/scheduleTiming";
-import { StatusBadge } from "../../components/ui/Badges";
 
 const TIME_SLOTS = [
   { slot: "1", time: "9:00 am" },
@@ -51,6 +50,11 @@ function matchesDayLabel(cellValue: unknown, targetDay: string) {
   return aliases.some((alias) => normalizedCell === alias || normalizedCell.includes(alias));
 }
 
+/** Normalizes a room token's single-letter block prefix: "c 507"/"C507" → "C 507". */
+function formatRoomToken(room: string) {
+  return room.replace(/^([a-z])\s*(\d+)$/i, (_m, letter: string, digits: string) => `${letter.toUpperCase()} ${digits}`);
+}
+
 function extractCourseInfo(rawValue: string) {
   const trimmed = sanitizeVisibleText(rawValue);
   if (!trimmed) return null;
@@ -66,15 +70,30 @@ function extractCourseInfo(rawValue: string) {
     token = token.substring(0, dashIndex).trim();
   }
 
-  const match = token.match(/^([A-Z]{2,}\s*\d{2,4}(?:\s*[A-Z])?)\s*(?:\(|-)??\s*([^()-]+?)?\s*(?:\)|-)?$/i);
+  // Split the course code from its room list. ERP emits one or more
+  // parenthesized rooms ("CSE457(C 302)(c 507)") or a dash-delimited room
+  // ("CSE457-C302"); the old single-group regex dropped everything past the
+  // first ")" and dumped the raw string into the title.
+  const codeMatch = token.match(/^([A-Za-z]{2,}\s*\d{2,4}(?:\s*[A-Za-z])?)\s*(.*)$/);
 
-  if (match) {
-    const courseCode = sanitizeVisibleText(match[1].replace(/\s+/g, " "));
-    const room = sanitizeVisibleText(match[2], "TBA");
+  if (codeMatch) {
+    const courseCode = codeMatch[1].replace(/\s+/g, " ").trim().toUpperCase();
+    const rooms: string[] = [];
+    let rest = codeMatch[2]
+      .replace(/\(([^)]*)\)/g, (_m, inner: string) => {
+        if (inner.trim()) rooms.push(inner.trim());
+        return " ";
+      })
+      .replace(/\s+/g, " ")
+      .trim();
+    if (rooms.length === 0 && rest) {
+      rest = rest.replace(/^[-\s]+|[-\s]+$/g, "");
+      if (rest) rooms.push(rest);
+    }
     return {
       title: courseCode,
       courseCode,
-      room,
+      room: rooms.length ? rooms.map(formatRoomToken).join(", ") : "TBA",
     };
   }
 
@@ -130,11 +149,23 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
       timetable?.subjects.find((subject) => normalizeText(subject.name) === normalizeText(classInfo)) ||
       null;
     const timing = describeSlotTiming(targetDate, index);
+    // Subject names are raw model values and need sanitizing; the extracted
+    // fallback title was already sanitized + uppercased inside
+    // extractCourseInfo, and a second pass would re-title-case codes
+    // ("CSE 306" → "Cse 306").
+    const resolvedName = courseDetail?.name
+      ? sanitizeVisibleText(courseDetail.name)
+      : String(courseInfo?.title || "").trim();
+    // Codes are normalized upstream (uppercase); sanitizeVisibleText would
+    // re-title-case them ("CSE 457" → "Cse 457"), so only trim here.
+    const resolvedId = String(courseDetail?.code || courseInfo?.courseCode || "").trim();
 
     return {
       time,
-      coursename: sanitizeVisibleText(courseDetail?.name || courseInfo?.title),
-      courseid: sanitizeVisibleText(courseDetail?.code || courseInfo?.courseCode),
+      coursename: resolvedName,
+      courseid: resolvedId,
+      // When no subject matched, the title IS the code — don't render it twice.
+      showCourseId: resolvedName !== resolvedId,
       professor: sanitizeVisibleText(courseDetail?.faculty || "Faculty TBA"),
       type: "Lecture",
       room: sanitizeVisibleText(courseDetail?.room || courseInfo?.room, "TBA"),
@@ -145,6 +176,7 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
   });
 
   const entryRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const hasAutoScrolledRef = useRef(false);
 
   const focusSlotIndex = useMemo(
@@ -159,67 +191,98 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
 
   useEffect(() => {
     if (focusSlotIndex < 0 || hasAutoScrolledRef.current) return;
+    const list = listRef.current;
     const node = entryRefs.current[focusSlotIndex];
-    if (!node || typeof node.scrollIntoView !== "function") return;
+    if (!list || !node) return;
     hasAutoScrolledRef.current = true;
     const reduceMotion =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    node.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    // Center the live slot within this list only. scrollIntoView would climb
+    // past the list (equal-grow rows often leave it without overflow) into
+    // the overflow-hidden app shell and shift the whole page up.
+    const listRect = list.getBoundingClientRect();
+    const nodeRect = node.getBoundingClientRect();
+    const target =
+      list.scrollTop + (nodeRect.top - listRect.top) - (list.clientHeight - nodeRect.height) / 2;
+    list.scrollTo({ top: Math.max(0, target), behavior: reduceMotion ? "auto" : "smooth" });
   }, [focusSlotIndex]);
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-4">
-      <h2 className="card-title mb-3 font-semibold shrink-0">Schedule</h2>
+    <div className="flex h-full flex-col p-4 pb-20">
+      <h2 className="card-title mb-2 font-semibold shrink-0">Schedule</h2>
 
-      {/* Slot list: flat column rhythm via gap; auto-scroll-to-live targets
-          these rows (unchanged behavior). */}
-      <div className="flex flex-col gap-2">
+      {/* Slot list: calendar-grid semantics — basis-0 + equal grow gives
+          every slot an identical share of the card, so Free Period blocks
+          are exactly as tall as class blocks (user preference). The 70px
+          floor mirrors the class card's content height (3 rows + padding)
+          so equal shares never shrink a slot below readable. auto-scroll-
+          to-live targets these rows (unchanged behavior). The root is NOT
+          the scroller — this inner list is — so the root's pb-20 stays a
+          fixed blank footer and the floating search/shortcuts overlay
+          always sits on empty card surface, never on a row. */}
+      <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {scheduleEntries.map((entry, index) => (
           <div
             key={index}
             ref={(el) => {
               entryRefs.current[index] = el;
             }}
-            className="flex items-stretch gap-2"
+            className="flex min-h-[70px] grow basis-0 items-stretch gap-2"
           >
-            <div className="flex w-16 shrink-0 flex-col items-start gap-0.5 pt-2 min-[480px]:w-20">
-              {entry.time.split(/\s+TO\s+/i).map((part, i) => (
-                <p key={i} className="label-text leading-tight">
-                  {part}
-                </p>
-              ))}
+            <div className="flex w-12 shrink-0 flex-col items-start pt-2.5 min-[480px]:w-14">
+              <p className="label-text leading-tight">
+                {entry.time.split(/\s+TO\s+/i)[0]}
+              </p>
             </div>
             {entry.isEmpty ? (
-              <div className="flex-1 dashboard-subcard p-2 flex items-center justify-center">
+              <div className="flex-1 dashboard-subcard p-2.5 flex items-center justify-center">
                 <p className="body-text text-sm italic">Free Period</p>
               </div>
             ) : (
-              <div className="flex-1 min-w-0 dashboard-subcard p-2">
-                <div className="flex flex-col h-full justify-between">
+              <div
+                className="flex-1 min-w-0 dashboard-subcard p-2.5"
+                // Local surface lift: a whisper of the brand teal so class
+                // blocks read solid next to the neutral Free Period cards
+                // (dashboard-subcard's own bg is shared with QuickLinks and
+                // stays near-invisible at 12% mix).
+                style={{ background: "color-mix(in srgb, var(--comp-accent) 5%, var(--comp-surface))" }}
+              >
+                <div className="flex flex-col h-full">
                   <p className="text-sm leading-none capitalize truncate" style={{ color: 'var(--comp-text-primary)' }}>
                     {entry.coursename}
                   </p>
                   <div className="flex justify-between items-center mt-1">
                     <p className="text-xs leading-none flex-1 truncate" style={{ color: 'var(--comp-text-primary)' }}>{entry.professor}</p>
-                    <p className="text-xs leading-none ml-2 shrink-0" style={{ color: 'var(--comp-text-muted)' }}>
-                      [{entry.courseid}]
-                    </p>
+                    {entry.showCourseId ? (
+                      <p className="text-xs leading-none ml-2 shrink-0 tabular-nums" style={{ color: 'var(--comp-text-muted)' }}>
+                        {entry.courseid}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex justify-between items-center mt-1">
+                    {/* Room only: the type is hardcoded "Lecture" for every
+                        entry, and the prefix crowded the room into ellipsis. */}
                     <p className="text-xs leading-none truncate" style={{ color: 'var(--comp-text-muted)' }}>
-                      {entry.type} - {entry.room}
+                      {entry.room}
                     </p>
-                    <span className="ml-2 shrink-0 flex items-center gap-2">
-                      {entry.timingLabel ? (
-                        <span
-                          className="text-xs leading-none font-semibold"
-                          style={{ color: entry.status === "Live" ? "var(--warning)" : "var(--comp-text-muted)" }}
-                        >
-                          {entry.timingLabel}
-                        </span>
-                      ) : null}
-                      <StatusBadge status={entry.status} />
+                    {/* The countdown takes the status pill's place — same
+                        status-badge chassis and token colors, but the label
+                        is the timer. The status word remains only where no
+                        countdown exists (viewing another day). Inline
+                        metrics keep the pill at 14px so rows stay on their
+                        64px floor and the rail keeps fitting the viewport. */}
+                    <span
+                      className={`ml-2 shrink-0 status-badge tabular-nums ${
+                        entry.status === "Live"
+                          ? "status-badge-live"
+                          : entry.status === "Upcoming"
+                            ? "status-badge-open"
+                            : "status-badge-closed"
+                      }`}
+                      style={{ paddingTop: 1, paddingBottom: 1, lineHeight: 1, borderWidth: 0 }}
+                    >
+                      {entry.timingLabel ?? entry.status}
                     </span>
                   </div>
                 </div>
