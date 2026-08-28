@@ -1,3 +1,9 @@
+import type {
+  CourseRegistrationModel,
+  CurrentResultModel,
+  CurriculumModel,
+} from "../../../lib/erp/erpTransformers";
+
 export type Tab = "overview" | "history" | "planner" | "risks" | "action";
 
 export const TABS: { key: Tab; label: string }[] = [
@@ -83,6 +89,13 @@ export function computeSgpa(history: HistoryData["semesters"]): Record<string, {
     };
   }
   return result;
+}
+
+export interface PlannerPrefill {
+  currentCourse: CourseRegistrationModel | null;
+  curriculum: CurriculumModel | null;
+  currentResults: CurrentResultModel | null;
+  cgpaSummary: { currentCgpa: string; semesterLabel: string; semesterNumber: number | null };
 }
 
 export type KpiItem = { label: string; value: string; trend?: number; trendLabel?: string; subtitle?: string };

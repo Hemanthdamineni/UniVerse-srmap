@@ -7,6 +7,7 @@ import { getMainNavSections } from "../config/navigationRegistry";
 import ThemeToggle from "./ThemeToggle";
 import { SidebarNavIcon } from "./SidebarNavIcons";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
+import { isStaticPrototype } from "../lib/core/prototype";
 import { sessionKeys } from "../lib/core/queryKeys";
 import { useAdminMode } from "../contexts/AdminModeContext";
 
@@ -47,6 +48,7 @@ export default function Sidebar() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(true);
   const [profileData, setProfileData] = useState<Record<string, unknown> | null>(null);
+  const [photoFailed, setPhotoFailed] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
 
   const location = useLocation();
@@ -163,10 +165,13 @@ export default function Sidebar() {
     navigate("/login");
   }, [navigate, queryClient]);
 
+  // The avatar is served by the backend's ERP photo proxy; the inline SVG
+  // covers static prototype mode and any proxy failure (no ERP session,
+  // no photo on the ERP shell) via the img's onError swap below.
   const profilePhoto =
-    typeof profileData?.photo === "string"
-      ? profileData.photo
-      : "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%2334AEBE%27 rx=%278%27/%3E%3Ctext x=%2720%27 y=%2724%27 text-anchor=%27middle%27 fill=%27white%27 font-size=%2718%27 font-family=%27sans-serif%27 font-weight=%27600%27%3E%3F%3C/text%3E%3C/svg%3E";
+    isStaticPrototype() || photoFailed
+      ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 fill=%27%2334AEBE%27 rx=%278%27/%3E%3Ctext x=%2720%27 y=%2724%27 text-anchor=%27middle%27 fill=%27white%27 font-size=%2718%27 font-family=%27sans-serif%27 font-weight=%27600%27%3E%3F%3C/text%3E%3C/svg%3E"
+      : "/api/profile/photo";
   const tableContent =
     profileData && typeof profileData.TableContent === "object" && profileData.TableContent
       ? (profileData.TableContent as Record<string, unknown>)
@@ -200,7 +205,7 @@ export default function Sidebar() {
           data-testid="sidebar-backdrop"
           onClick={() => setSidebarClosed(true)}
           className="fixed inset-0 z-20"
-          style={{ backgroundColor: "rgba(10, 38, 42, 0.45)", backdropFilter: "blur(2px)" }}
+          style={{ backgroundColor: "rgba(10, 38, 42, 0.45)" }}
         />
       ) : null}
       <div
@@ -415,7 +420,13 @@ export default function Sidebar() {
           data-page-contrast="true"
           className="sidebar-item-hover flex cursor-pointer items-center gap-3 rounded-lg p-1 transition-colors flex-1 min-w-0"
         >
-          <img src={profilePhoto} alt="User avatar" className="h-10 w-10 shrink-0 rounded-full" loading="lazy" />
+          <img
+            src={profilePhoto}
+            alt="User avatar"
+            className="h-10 w-10 shrink-0 rounded-full"
+            loading="lazy"
+            onError={() => setPhotoFailed(true)}
+          />
           {!sidebarClosed ? (
             <div className="flex-1 min-w-0 overflow-hidden">
               <p className="sidebar-item-muted text-xs truncate">
