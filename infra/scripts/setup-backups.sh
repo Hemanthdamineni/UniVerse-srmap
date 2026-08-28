@@ -15,6 +15,17 @@ BACKUP_DEST="${BACKUP_DEST:-}"
 REDIS_RDB_PATH="${REDIS_RDB_PATH:-/var/lib/redis/dump.rdb}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
+# File directories the prod-readiness audit identified as needing
+# backup (D13). Each entry is relative to PROJECT_ROOT and is
+# copied to the daily backup tar under a matching subdirectory.
+BACKUP_FILE_DIRS=(
+  "Backend/data/uploads"
+  "Backend/data/lms"
+  "Backend/data/certificates"
+  "Backend/data/submissions"
+  "Backend/data/events"
+)
+
 DRY_RUN=false
 if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
@@ -75,7 +86,32 @@ else
 fi
 
 # -----------------------------------------------------------
-# 3. Back up Redis RDB
+# 3. Back up file directories (uploads, lms, certificates, ...)
+# -----------------------------------------------------------
+echo ""
+announce "Backing up file directories ..."
+
+for rel in "${BACKUP_FILE_DIRS[@]}"; do
+  src="${PROJECT_ROOT}/${rel}"
+  dest="${DAILY_DIR}/${rel}"
+  if [[ ! -d "$src" ]]; then
+    dry "Skip (missing): ${rel}"
+    continue
+  fi
+  if [[ "$DRY_RUN" == true ]]; then
+    dry "Would copy: ${rel} -> ${dest}"
+    continue
+  fi
+  mkdir -p "$(dirname "$dest")"
+  # -a (archive) preserves modes/timestamps. Skip the dest directory
+  # itself (it may already exist on the second run of the day) and
+  # copy the contents.
+  cp -a "$src/." "$dest/" 2>/dev/null || cp -a "$src" "$dest"
+  announce "Backed up file dir: ${rel}"
+done
+
+# -----------------------------------------------------------
+# 4. Back up Redis RDB
 # -----------------------------------------------------------
 echo ""
 announce "Backing up Redis RDB ..."
@@ -112,7 +148,7 @@ if [[ "$CREATE_WEEKLY" == true ]]; then
 fi
 
 # -----------------------------------------------------------
-# 4. Rsync to remote destination (if configured)
+# 5. Rsync to remote destination (if configured)
 # -----------------------------------------------------------
 if [[ -n "$BACKUP_DEST" ]]; then
   echo ""
@@ -130,7 +166,7 @@ else
 fi
 
 # -----------------------------------------------------------
-# 5. Rotation: keep 7 daily backups, 4 weekly backups
+# 6. Rotation: keep 7 daily backups, 4 weekly backups
 # -----------------------------------------------------------
 echo ""
 announce "Rotating backups ..."
@@ -179,7 +215,7 @@ else
 fi
 
 # -----------------------------------------------------------
-# 6. Print cron instructions
+# 7. Print cron instructions
 # -----------------------------------------------------------
 echo ""
 echo "============================================================"
