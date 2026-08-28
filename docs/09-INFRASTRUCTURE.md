@@ -217,3 +217,37 @@ REDIS_SENTINEL_MASTER_NAME=mymaster
 | `npm run build` | `tsc -b && vite build` | Production build |
 | `npm run lint` | `eslint .` | Lint check |
 | `npm run preview` | `vite preview` | Preview production build |
+
+## Monitoring Data Policy
+
+The Prometheus + Grafana + Loki stack stores all telemetry in
+docker-managed volumes on the host that runs the monitoring
+override. The volumes are:
+
+- `prometheus_data` — Prometheus time-series DB
+- `grafana_data` — Grafana dashboards, datasources, users
+- `loki_data` — Loki log chunks
+- `alertmanager_data` — alert silences + notification state
+
+These volumes are **declared expendable** in the prod-readiness
+audit (Gate 8). The rationale:
+
+1. **Telemetry is reproducible.** Scrape configs and the Grafana
+   dashboards are checked into this repo and re-applied by the
+   `infra/docker/compose.monitoring.yml` override.
+2. **Alerts are reproducible.** The `infra/monitoring/prometheus/alerts.yml`
+   file is the source of truth; Alertmanager's silence state is not.
+3. **Logs are sampled.** Loki retention is 30 days; the runbooks
+   (this file, `infra/runbooks/*`) are the source of truth for
+   operational knowledge, not the log archive.
+
+If the monitoring host is lost, the override can be re-deployed
+and Prometheus + Grafana + Loki will re-bootstrap from zero in
+under 5 minutes — losing the volumes costs alerts history and
+dashboard favorites, but no operational data the team needs to
+recover the system.
+
+This is a deliberate trade-off against the cost of backing up
+multi-GB time-series DBs on a small host. Operators who need
+longer retention can override the policy in the runbook and add
+the volumes to `infra/scripts/setup-backups.sh` directly.

@@ -36,3 +36,48 @@ groups:
         annotations:
           summary: "ERP circuit breaker open"
           description: "At least one ERP page group is circuit-open for more than 5m"
+
+      - alert: NodeFilesystemSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root filesystem has <20% free space"
+          description: "Available: {{ $value | printf \"%.1f\" }}% — investigate before /tmp or / fill up"
+
+      - alert: NodeMemoryPressure
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Available memory dropped below 10% on {{ $labels.instance }}"
+
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~"university-erp-backend|redis|grafana|prometheus"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} has been down >2m"
+          description: "Either the container crashed or the node exporter is not scraping it"
+
+      - alert: PrometheusBackendScrapeFailed
+        expr: up{job="backend"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus cannot scrape the backend"
+          description: "If the backend is up, this is a probe/label-mismatch; otherwise the backend is down"
+
+      - alert: TlsCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 24 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS certificate expires in <14 days"
+          description: "Renew cert for {{ $labels.instance }} before {{ $value | humanizeDuration }}"
