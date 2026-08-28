@@ -107,8 +107,13 @@ test.describe("comprehensive-site-audit", () => {
       "/admin/certificate-templates"
     ];
 
-    // Ensure screenshot output directory exists
-    const screenshotsDir = "/home/zorro-omarchy/.gemini/antigravity-ide/brain/d7b3e431-4ea0-42c5-8d55-2cc688a321c7/audit_screenshots";
+    // Ensure screenshot output directory exists. Use the
+    // AUDIT_OUTPUT_DIR env var when set (CI sets it under
+    // $RUNNER_TEMP/audit); fall back to a per-run temp dir so the
+    // spec is also usable locally without polluting $HOME.
+    const auditRoot = process.env.AUDIT_OUTPUT_DIR
+      || `${process.env.TMPDIR || "/tmp"}/university-erp-audit-${process.pid}-${Date.now()}`;
+    const screenshotsDir = `${auditRoot}/screenshots`;
     if (!fs.existsSync(screenshotsDir)) {
       fs.mkdirSync(screenshotsDir, { recursive: true });
     }
@@ -377,7 +382,7 @@ test.describe("comprehensive-site-audit", () => {
         const screenshotFilename = currentPath.replace(/[^a-zA-Z0-9]/g, "_") + ".png";
         const screenshotPath = path.join(screenshotsDir, screenshotFilename);
         await page.screenshot({ path: screenshotPath });
-        pageResult.screenshotPath = `/home/zorro-omarchy/.gemini/antigravity-ide/brain/d7b3e431-4ea0-42c5-8d55-2cc688a321c7/audit_screenshots/${screenshotFilename}`;
+        pageResult.screenshotPath = `${screenshotsDir}/${screenshotFilename}`;
 
       } catch (err: any) {
         console.error(`Error auditing ${currentPath}:`, err);
@@ -424,7 +429,7 @@ test.describe("comprehensive-site-audit", () => {
     }
 
     // Save crawl results to JSON
-    const reportJsonPath = "/home/zorro-omarchy/.gemini/antigravity-ide/brain/d7b3e431-4ea0-42c5-8d55-2cc688a321c7/audit_results.json";
+    const reportJsonPath = `${auditRoot}/audit_results.json`;
     fs.writeFileSync(reportJsonPath, JSON.stringify(results, null, 2));
     console.log(`Saved audit results to ${reportJsonPath}`);
   });
