@@ -76,38 +76,32 @@ describe("ApplicationTrackerPage", () => {
     expect(screen.getByText("2")).toBeTruthy(); // total active count
   });
 
-  it("deletes application after confirming in the removal dialog", async () => {
+  it("deletes application after confirming the native prompt", async () => {
     const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderTracker();
     await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();
     await user.click(trash!);
 
-    const dialog = await waitFor(() => {
-      const el = document.querySelector('[data-slot="dialog-content"]');
-      expect(el).toBeTruthy();
-      return el as HTMLElement;
-    });
-    await user.click(within(dialog).getByRole("button", { name: "Remove" }));
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(deleteApplication).toHaveBeenCalledWith("app1"));
+    confirmSpy.mockRestore();
   });
 
-  it("keeps the application when the removal dialog is dismissed", async () => {
+  it("keeps the application when the native prompt is dismissed", async () => {
     const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderTracker();
     await waitFor(() => expect(screen.getByText("Role")).toBeTruthy());
     const trash = document.querySelector("svg.lucide-trash2")?.closest("button");
     expect(trash).toBeTruthy();
     await user.click(trash!);
 
-    const dialog = await waitFor(() => {
-      const el = document.querySelector('[data-slot="dialog-content"]');
-      expect(el).toBeTruthy();
-      return el as HTMLElement;
-    });
-    await user.click(within(dialog).getByRole("button", { name: "Keep it" }));
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
     expect(deleteApplication).not.toHaveBeenCalled();
     expect(screen.getByText("Role")).toBeTruthy();
+    confirmSpy.mockRestore();
   });
 });
