@@ -733,6 +733,65 @@ async function fetchProfileViaApi(api, options = {}) {
   return profileData;
 }
 
+// The student photo is not part of any JSP fragment (the Profile report
+// HTML has no <img>); it only appears in the post-login shell's top
+// navbar as e.g. src="resources/photos/<...>.jpg". "img.jpg" is the
+// ERP's broken default avatar and must be skipped.
+function extractStudentPhotoSrc(html) {
+  const $ = cheerio.load(String(html || ""));
+  const candidates = [];
+  $("img").each((_idx, el) => {
+    const src = String($(el).attr("src") || "").trim();
+    if (!src || /^(data|blob):/i.test(src)) return;
+    if (/img\.jpg$/i.test(src)) return;
+    if (/photos\//i.test(src)) candidates.push(src);
+  });
+  return candidates[0] || "";
+}
+
+async function fetchStudentPhoto(api) {
+  const shellBase = `${BASE_ORIGIN}${BASE_PATH.replace(/\/+$/, "")}/`;
+
+  let shellResponse;
+  try {
+    shellResponse = await api.get("HRDsystem");
+  } catch {
+    return null;
+  }
+  if (!shellResponse.ok()) return null;
+
+  const src = extractStudentPhotoSrc(await shellResponse.text());
+  if (!src) return null;
+
+  let photoUrl;
+  try {
+    photoUrl = new URL(src, shellBase);
+  } catch {
+    return null;
+  }
+  // The proxy rides the student's ERP cookies — never relay third-party hosts.
+  if (photoUrl.origin !== new URL(shellBase).origin) return null;
+
+  let photoResponse;
+  try {
+    photoResponse = await api.get(photoUrl.href);
+  } catch {
+    return null;
+  }
+  if (!photoResponse.ok()) return null;
+
+  const buffer = await photoResponse.body();
+  if (!buffer || !buffer.length) return null;
+
+  const rawType = String(photoResponse.headers()["content-type"] || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (rawType && !/^image\//i.test(rawType)) return null;
+
+  return { buffer, contentType: rawType || "image/jpeg" };
+}
+
 async function submitAttendanceCodeViaApi(api, payload) {
   const acode = String(payload?.acode || "").trim();
   if (!acode) {
@@ -1903,6 +1962,8 @@ module.exports = {
   validatePasswordResetPassword,
   callEndpointViaApi,
   fetchProfileViaApi,
+  extractStudentPhotoSrc,
+  fetchStudentPhoto,
   submitAttendanceCodeViaApi,
   isUsableProfileData,
   buildFallbackProfileData,

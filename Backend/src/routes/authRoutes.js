@@ -7,6 +7,7 @@ const {
   completePasswordReset,
   createApiContext,
   fetchProfileViaApi,
+  fetchStudentPhoto,
   isUsableProfileData,
   buildFallbackProfileData,
   verifyAuthenticatedShellFromStorageState,
@@ -452,6 +453,37 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
 
   router.get("/profile", handleProfile);
   router.get("/auth/profile", handleProfile);
+
+  // Avatar proxy: streams the ERP-hosted student photo through the app so
+  // the browser never talks to the ERP origin directly. An image request
+  // must never disturb the app session — every failure mode (no ERP
+  // session, no photo on the shell, upstream error) degrades to a plain
+  // 404 that the client renders as its placeholder avatar.
+  async function handleProfilePhoto(req, res) {
+    const sessionId = resolveSessionId(req);
+
+    try {
+      const session = await sessionStore.getOrThrow(sessionId);
+      const api = await createApiContext(session.storageState);
+      try {
+        const photo = await fetchStudentPhoto(api);
+        if (!photo) {
+          res.status(404).end();
+          return;
+        }
+        res.setHeader("Content-Type", photo.contentType);
+        res.setHeader("Cache-Control", "private, max-age=1800");
+        res.status(200).end(photo.buffer);
+      } finally {
+        await api.dispose();
+      }
+    } catch {
+      res.status(404).end();
+    }
+  }
+
+  router.get("/profile/photo", handleProfilePhoto);
+  router.get("/auth/profile/photo", handleProfilePhoto);
 
   return router;
 }
