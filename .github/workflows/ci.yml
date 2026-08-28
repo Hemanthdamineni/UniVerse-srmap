@@ -208,3 +208,65 @@ jobs:
           name: responsive-audit-report
           path: ${{ runner.temp }}/responsive-audit/report.json
           if-no-files-found: ignore
+
+  e2e-realstack:
+    name: Real-stack e2e
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    continue-on-error: true
+    env:
+      NODE_VERSION: "22"
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install backend deps
+        run: NODE_ENV=development npm ci --include=dev
+
+      - name: Start real-stack backend
+        run: |
+          bash Backend/scripts/e2e-stack/start.sh up
+
+      - name: Start frontend dev server (real-stack profile)
+        working-directory: Frontend
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 5173 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:5173/ > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:5173/ > /dev/null
+
+      - name: Install Playwright
+        working-directory: Frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run real-stack Playwright specs
+        working-directory: Frontend
+        env:
+          E2E_BACKEND_URL: "http://127.0.0.1:5500"
+          E2E_FRONTEND_URL: "http://127.0.0.1:5173"
+        run: npx playwright test --config=playwright.config.realstack.ts
+
+      - name: Tear down backend
+        if: always()
+        run: bash Backend/scripts/e2e-stack/start.sh down
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-realstack-report
+          path: |
+            ${{ runner.temp }}/playwright-report
+            ${{ runner.temp }}/test-results
+          if-no-files-found: ignore
