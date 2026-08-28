@@ -388,6 +388,13 @@ async function startServer() {
     });
   });
 
+  // Hard shutdown budget: close the listener, give in-flight requests
+  // SHUTDOWN_BUDGET_MS to drain, then force-close any keep-alive
+  // sockets and exit. Without closeAllConnections, a slow client
+  // holding a keep-alive connection would block server.close()
+  // indefinitely — the unref'd timer below would then never fire.
+  const SHUTDOWN_BUDGET_MS = 8_000;
+
   const shutdown = (signal, exitCode = 0) => {
     if (shuttingDown) return;
     shuttingDown = true;
@@ -411,12 +418,23 @@ async function startServer() {
     });
     });
 
+    // After the budget, force-close keep-alive sockets and exit.
+    // The timer is unref'd so it doesn't itself keep the process alive
+    // if everything else has exited cleanly.
     setTimeout(() => {
-      log({ level: "error", msg: "Forced shutdown after timeout" });
-      shutdownLogger().finally(() => {
-        process.exit(1);
+      log({
+        level: "warn",
+        msg: `Shutdown budget exceeded (${SHUTDOWN_BUDGET_MS}ms); force-closing connections`,
       });
-    }, 10000).unref();
+      if (typeof server.closeAllConnections === "function") {
+        server.closeAllConnections();
+      } else {
+        // Node < 18.2 fallback
+        server.closeIdleConnections?.();
+      }
+      // Give the force-close a brief moment, then exit hard.
+      setTimeout(() => process.exit(exitCode || 1), 250).unref();
+    }, SHUTDOWN_BUDGET_MS).unref();
   };
 
   process.on("unhandledRejection", (error) => {
