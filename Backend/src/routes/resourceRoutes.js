@@ -7,6 +7,21 @@ const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 const { log } = require("../utils/logger");
 const { assertAdminAccess } = require("../utils/adminAccess");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
+const { createHttpError } = require("../services/lms/lmsUtils");
+
+// Extension -> permitted MIME types for the general `/uploads` slot
+// (Gate 5 P1). Kept narrow on purpose: this is a catch-all endpoint
+// and most uploads should go through the LMS resource route which
+// has its own allowlist tuned for course material.
+const RESOURCE_ALLOWED_MIME_TYPES = {
+  ".pdf": ["application/pdf"],
+  ".png": ["image/png"],
+  ".jpg": ["image/jpeg"],
+  ".jpeg": ["image/jpeg"],
+  ".gif": ["image/gif"],
+  ".txt": ["text/plain"],
+  ".csv": ["text/csv", "application/csv"],
+};
 
 function toSafeString(value) {
   if (value === undefined || value === null) return "";
@@ -51,6 +66,20 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
       },
     }),
     limits: { fileSize: 20 * 1024 * 1024 },
+    // MIME allowlist (Gate 5 P1). The endpoint name is `/uploads`
+    // — a general-purpose attachment slot — so the allowlist is a
+    // narrow set of safe types rather than the broader LMS set.
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || "").toLowerCase();
+      const allowed = RESOURCE_ALLOWED_MIME_TYPES[ext];
+      if (!allowed) {
+        return cb(createHttpError(400, `Unsupported file extension: ${ext || "unknown"}`, "RESOURCE_INVALID_FILE"));
+      }
+      if (!allowed.includes(file.mimetype)) {
+        return cb(createHttpError(400, `Unsupported MIME type: ${file.mimetype}`, "RESOURCE_INVALID_MIME"));
+      }
+      return cb(null, true);
+    },
   });
 
   router.post("/uploads", upload.single("file"), (req, res) => {
