@@ -48,6 +48,7 @@ function createCareerScraperSupervisor(overrides = {}) {
   const baseDelayMs = overrides.baseDelayMs ?? CAREER_SCRAPER_RESTART_DELAY_MS;
   const maxDelayMs = overrides.maxDelayMs ?? CAREER_SCRAPER_RESTART_DELAY_MAX_MS;
   const stableUptimeMs = overrides.stableUptimeMs ?? STABLE_UPTIME_MS;
+  const scraperDir = overrides.scraperDir || SCRAPER_DIR;
 
   let state = "idle"; // idle | running | backoff | stopping | stopped | exited | unavailable | disabled
   let child = null;
@@ -126,7 +127,7 @@ function createCareerScraperSupervisor(overrides = {}) {
 
   function spawnChild() {
     if (stopping) return;
-    const resolved = resolveScraperCommand({ scraperDir: SCRAPER_DIR, existsFn });
+    const resolved = resolveScraperCommand({ scraperDir, existsFn });
     if (!resolved) {
       state = "unavailable";
       log({
@@ -234,7 +235,7 @@ function createCareerScraperSupervisor(overrides = {}) {
       return { accepted: false, mode: "oneshot", reason: "a one-shot run is already in progress" };
     }
 
-    const resolved = resolveScraperCommand({ scraperDir: SCRAPER_DIR, existsFn });
+    const resolved = resolveScraperCommand({ scraperDir, existsFn });
     if (!resolved) {
       return { accepted: false, mode: "oneshot", reason: "scraper runtime missing — run Scraper/setup.sh first" };
     }
