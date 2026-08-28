@@ -156,3 +156,21 @@
     transition: none;
   }
 }
+
+/* ── Dashboard welcome strip ── */
+.welcome-avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-full);
+  background: color-mix(in srgb, var(--comp-accent) 10%, var(--comp-surface));
+  border: 1px solid color-mix(in srgb, var(--comp-accent) 22%, transparent);
+  color: color-mix(in srgb, var(--comp-accent) 62%, var(--comp-text-primary));
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
