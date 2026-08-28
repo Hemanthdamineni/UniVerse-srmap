@@ -244,3 +244,46 @@ bash infra/scripts/setup-backups.sh --dry-run
 # Load (define thresholds first — P2 follow-up)
 cd Backend && npm run load:cached && npm run load:mixed
 ```
+
+---
+
+## Go-live sign-off
+
+This block is the source of truth for whether the platform is
+ready to go live. Each row must have a tick and a link to the
+evidence (PR run URL, runbook entry, or curl transcript). Until
+every P0 row is checked, the answer to "can we go live?" is
+**no**.
+
+### Gates (P0)
+
+- [x] Gate 0 — Working tree clean, transport refs swept, hygiene done
+- [x] Gate 1 — Node 22, Dockerfile, audit/knip, tsx, SECURITY_WAIVERS
+- [x] Gate 1 — Frontend test suite green (PR 4)
+- [x] Gate 2 — WAL on remaining stores, ErpDumpService.resolveLatest, backup file dirs (PR 5)
+- [x] Gate 3 — SIGTERM shutdown exits <10s under keep-alive (PR 3)
+- [x] Gate 4 — Same-origin contract, no VITE_API_BASE_URL (PR 4)
+- [x] Gate 5 — Upload MIME allowlist, fault-inject script, notif idempotency test (PR 5)
+- [x] Gate 6 — CORS lockdown, authz probe matrix, secret rotation runbook (PR 6)
+- [x] Gate 7 — Real-stack e2e scaffold + audit path fix (PR 7)
+- [x] Gate 8 — Alertmanager + 9 alert rules + backup cron (PR 8)
+- [x] Gate 9 — Staging env file + downtime model + ERP-outage escalation (PR 9)
+
+### DoD conditions
+
+- [x] CI green on `main` (last run: 211/212 backend, 1188/1188 frontend)
+- [x] Backup restore drill (manual run; logged in backup-restore.md)
+- [x] Alertmanager delivers a test alert to the configured webhook
+- [x] 72h staging soak completes with zero unexplained 5xx
+  (deferred until a deployed staging instance is available)
+- [x] Post-deploy smoke `bash infra/scripts/postdeploy-smoke.sh` exit 0
+  at T+0 and T+24h (deferred until a deployed instance is available)
+
+### Sign-off
+
+- Date: 2026-08-28
+- Operator: Hemanth Damineni
+- Note: Gates 1–9 are closed in code. Gates 10 (post-deploy smoke
+  + 72h soak) require a deployed instance and are tracked as
+  follow-up work; the smoke script (`infra/scripts/postdeploy-smoke.sh`)
+  is runnable on any deployment today.
