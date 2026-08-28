@@ -43,10 +43,10 @@ The frontend is a React SPA served by Vite. The backend is an Express API that a
 | **Routing** | React Router v7 |
 | **State / Data** | TanStack React Query v5 |
 | **Charts** | Recharts |
-| **Backend Runtime** | Node.js 20+ |
+| **Backend Runtime** | Node.js ≥ 22.5 (uses built-in `node:sqlite`) |
 | **HTTP Framework** | Express 5 |
 | **ERP Scraping** | Playwright 1.55 + Cheerio |
-| **Databases** | SQLite (via better-sqlite3 / custom stores) |
+| **Databases** | SQLite (built-in `node:sqlite` / `DatabaseSync`) |
 | **Cache / Session** | Redis 7 (optional, falls back to in-memory) |
 | **Rate Limiting** | express-rate-limit |
 | **Metrics** | prom-client (Prometheus) |
