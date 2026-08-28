@@ -77,6 +77,75 @@ describe("erpTransformers", () => {
     ]);
   });
 
+  it("maps extractor components into subject assessments for internal-marks", () => {
+    const result = executePipeline(
+      "internal-marks",
+      withExtracted({
+        type: "internal-marks",
+        title: "Internal Mark Details",
+        records: [
+          {
+            subjectCode: "CSE 304",
+            subjectName: "Operating Systems",
+            marksObtained: "38.10",
+            totalMarks: "50",
+            components: {
+              "Mid Semester Exam I": { conducted: "16.00 / 25", converted: "9.60 / 15" },
+              "CLA 1": { conducted: "6.50 / 10", converted: "6.50 / 10" },
+            },
+          },
+          {
+            subjectCode: "CSE 306",
+            subjectName: "Software Engineering",
+            marksObtained: "42.86",
+            totalMarks: "50",
+          },
+        ],
+      })
+    );
+
+    expect(result.isValid).toBe(true);
+    const subjects = (result.data as any)?.subjects;
+    expect(subjects[0].assessments).toEqual([
+      { name: "Mid Semester Exam I", conducted: "16.00 / 25", converted: "9.60 / 15" },
+      { name: "CLA 1", conducted: "6.50 / 10", converted: "6.50 / 10" },
+    ]);
+    expect(subjects[1].assessments).toEqual([]);
+  });
+
+  it("keeps bundled internal-marks assessments through the results-current pipeline schema", () => {
+    const result = executePipeline(
+      "results-current",
+      withBundledExtracted({
+        "examination/current-semester-results": {
+          type: "current-results",
+          title: "Current Semester Results",
+          records: [],
+          semesterSummaries: [],
+        },
+        "examination/internal-mark-details": {
+          type: "internal-marks",
+          records: [
+            {
+              subjectCode: "CSE 304",
+              subjectName: "Operating Systems",
+              marksObtained: "38.10",
+              totalMarks: "50",
+              components: {
+                "Mid Semester Exam I": { conducted: "16.00 / 25", converted: "9.60 / 15" },
+              },
+            },
+          ],
+        },
+      })
+    );
+
+    expect(result.isValid).toBe(true);
+    expect((result.data as any)?.internalMarks?.subjects[0].assessments).toEqual([
+      { name: "Mid Semester Exam I", conducted: "16.00 / 25", converted: "9.60 / 15" },
+    ]);
+  });
+
   it("emits MISSING_EXTRACTED_PAYLOAD when results-current payload lacks _extracted", () => {
     const result = executePipeline("results-current", {
       "examination/current-semester-results": {
@@ -396,5 +465,71 @@ describe("erpTransformers", () => {
     expect(data.sections[1].rows).toHaveLength(60);
     expect(data.sections[2].rows).toHaveLength(60);
     expect(durationMs).toBeLessThan(150);
+  });
+
+  // -----------------------------------------------------------------------
+  // TIMETABLE SUBJECT NORMALIZATION
+  // ERP ships noisy subject rows ("Cse 457", "(C 302)(c 507)", "Dr X (19073)");
+  // the transformer must clean them even for stale cached-first payloads.
+  // -----------------------------------------------------------------------
+
+  it("normalizes timetable subject codes, faculty IDs, and room lists", () => {
+    const result = executePipeline(
+      "timetable",
+      withExtracted({
+        type: "timetable",
+        title: "TIME TABLE",
+        timeSlots: ["09:00 To 09:50"],
+        schedule: [{ day: "Monday", periods: ["Deep Learning"] }],
+        subjects: [
+          {
+            code: "Cse 457",
+            description: "Deep Learning",
+            ltpc: "3-0-0-4",
+            faculty: "Dr. Ravi Kant Kumar (19073)",
+            classroom: "(C 302)(c 507)",
+          },
+          {
+            code: "cse401",
+            description: "Coding Skills",
+            ltpc: "0-0-2-1",
+            faculty: "Dr. Shreeram Hudda",
+            classroom: "APJ Block 210",
+          },
+        ],
+      })
+    );
+
+    expect(result.isValid).toBe(true);
+    const data = result.data as any;
+    expect(data.subjects[0]).toEqual({
+      code: "CSE 457",
+      name: "Deep Learning",
+      ltpc: "3-0-0-4",
+      faculty: "Dr. Ravi Kant Kumar",
+      room: "C 302, C 507",
+    });
+    // Non-paren rooms pass through; plain faculty names are untouched.
+    expect(data.subjects[1].room).toBe("APJ Block 210");
+    expect(data.subjects[1].faculty).toBe("Dr. Shreeram Hudda");
+  });
+
+  it("dedupes timetable subjects after code normalization", () => {
+    const result = executePipeline(
+      "timetable",
+      withExtracted({
+        type: "timetable",
+        title: "TIME TABLE",
+        timeSlots: [],
+        schedule: [],
+        subjects: [
+          { code: "Cse 457", description: "Deep Learning", faculty: "Dr A", classroom: "C 302" },
+          { code: "CSE 457", description: "Deep Learning", faculty: "Dr A", classroom: "C 302" },
+        ],
+      })
+    );
+
+    expect(result.isValid).toBe(true);
+    expect(((result.data as any)?.subjects ?? []).length).toBe(1);
   });
 });

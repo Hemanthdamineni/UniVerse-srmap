@@ -12,7 +12,6 @@ import {
   transformRoomDetails,
   transformSapScholarships,
 } from "./financeTransformers";
-import { transformTransportRoutes } from "./transportTransformers";
 import { schemas } from "./schemas";
 import type { SchemaDefinition, TransformerFn, TransformerOutput } from "./types";
 
@@ -32,7 +31,6 @@ const registry: Record<string, TransformerFn> = {
   "sap-scholarships": transformSapScholarships,
   faqs: transformFaqs,
   "refund-change": transformRefundChange,
-  "transport-routes": transformTransportRoutes,
 };
 
 // Derive key dynamically, removing hardcoded coupling

@@ -69,6 +69,36 @@ function requireExtractedPage(
 //          subjects: [{code, description, ltpc, faculty, classroom}] }
 // ---------------------------------------------------------------------------
 
+// Mirrors extractTimetable's subject normalization; reapplied here because the
+// timetable page is served cached-first, so pre-fix payloads still circulate.
+function normalizeCourseCode(value: unknown) {
+  return String(value ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+}
+
+function normalizeFacultyLabel(value: unknown) {
+  return String(value ?? "")
+    .replace(/\(\s*\d+\s*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeClassroomList(value: unknown) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const rooms: string[] = [];
+  const parenPattern = /\(([^)]+)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = parenPattern.exec(raw)) !== null) {
+    rooms.push(match[1].trim());
+  }
+  if (rooms.length === 0) return raw;
+  return rooms
+    .map((room) =>
+      room.replace(/^([a-z])\s*(\d+)$/i, (_m, letter: string, digits: string) => `${letter.toUpperCase()} ${digits}`)
+    )
+    .join(", ");
+}
+
 export function transformTimetable(rawData: unknown): TimetableModel {
   // Accept both the full batch response (from Dashboard) and the page-level
   // payload (from individual timetable page fetch).
@@ -91,19 +121,18 @@ export function transformTimetable(rawData: unknown): TimetableModel {
 
   const seen = new Set<string>();
   const subjects: TimetableSubject[] = subjectsRaw
-    .filter((s) => {
-      const code = String(s.code ?? "");
-      if (!code || seen.has(code)) return false;
-      seen.add(code);
-      return true;
-    })
     .map((s) => ({
-      code: String(s.code ?? ""),
+      code: normalizeCourseCode(s.code),
       name: String(s.description ?? s.code ?? ""),
       ltpc: String(s.ltpc ?? ""),
-      faculty: String(s.faculty ?? ""),
-      room: String(s.classroom ?? ""),
-    }));
+      faculty: normalizeFacultyLabel(s.faculty),
+      room: normalizeClassroomList(s.classroom),
+    }))
+    .filter((s) => {
+      if (!s.code || seen.has(s.code)) return false;
+      seen.add(s.code);
+      return true;
+    });
 
   return { timeSlots, days, subjects };
 }
