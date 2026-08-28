@@ -245,7 +245,12 @@ class RedisErpCacheStore {
 }
 
 // --- erpDumpService.js ---
-const DUMP_BASE_DIR = path.join(__dirname, "../../data/erp-dump");
+// Resolve the dump base dir from this file's location
+// (Backend/src/services/erp/) up to Backend/data/erp-dump. Going up
+// two levels lands at Backend/, then data/erp-dump. The earlier
+// "../../data/erp-dump" landed one level too deep (Backend/src/data),
+// so resolveLatest() silently returned null at runtime.
+const DUMP_BASE_DIR = path.resolve(__dirname, "..", "..", "..", "data", "erp-dump");
 
 function encodeKey(dropdown, subitem) {
   const d = (dropdown || "").replace(/[/\\|]/g, "_");
