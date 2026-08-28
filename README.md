@@ -62,7 +62,7 @@ The frontend is a React SPA served by Vite. The backend is an Express API that a
 
 ### Prerequisites
 
-- **Node.js** 20+ (LTS recommended)
+- **Node.js** 22.5+ (uses built-in `node:sqlite`; matches CI)
 - **Redis** 7+ (optional — backend falls back to in-memory stores)
 - **npm** (ships with Node)
 
