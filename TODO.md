@@ -30,7 +30,7 @@
 - [x] **Grafana credentials** — Hardcoded `admin/admin` replaced with env var references (`GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD`). Compose fails at startup if unset.
 - [x] **Redis authentication** — `--requirepass` added. Port bound to `127.0.0.1` only. Password required via `REDIS_PASSWORD` env var.
 - [x] **Admin password in sessionStorage** — Removed. Password now held in React ref (in-memory only) after unlock, never persisted. `getAdminHeaders()` requires explicit password arg.
-- [x] **Nginx TLS/HTTPS** — Full HTTPS server block configured with SSL, HSTS, CSP, OCSP stapling, HTTP→HTTPS redirect, ACME challenge path. Cert paths point to Let's Encrypt. See `infra/scripts/setup-tls.sh` for provisioning.
+- [x] **Nginx TLS/HTTPS** — Full HTTPS server block configured with SSL, HSTS, CSP, OCSP stapling, HTTP→HTTPS redirect, ACME challenge path. Cert paths point to Let's Encrypt. The TLS path is the `nginx:1.27-alpine` container in `infra/docker/compose.ingress.yml`; `infra/scripts/setup-tls.sh` (host-nginx path) has been removed in favor of a future in-container certbot sidecar.
 - [x] **All ports bound to localhost** — Redis, Grafana, Prometheus, Loki, cAdvisor, node-exporter all changed from `0.0.0.0` to `127.0.0.1`
 
 ### 3. Deployment Consistency
