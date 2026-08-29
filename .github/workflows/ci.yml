@@ -220,9 +220,9 @@ jobs:
     continue-on-error: false
     env:
       NODE_VERSION: "22"
-    defaults:
-      run:
-        working-directory: Backend
+    # No `defaults.working-directory` here because we hop between
+    # Backend, Frontend, and the repo root for different steps.
+    # Each step sets its own working-directory explicitly.
     steps:
       - uses: actions/checkout@v4
 
@@ -234,6 +234,7 @@ jobs:
           cache-dependency-path: Backend/package-lock.json
 
       - name: Install backend deps
+        working-directory: Backend
         run: NODE_ENV=development npm ci --include=dev
 
       - name: Start real-stack backend
