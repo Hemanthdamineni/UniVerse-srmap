@@ -254,11 +254,15 @@ jobs:
       - name: Start frontend dev server (real-stack profile)
         working-directory: Frontend
         env:
-          # Forward /api/* to the backend launched above. The default
-          # in vite.config.ts is http://localhost:5000, but the e2e
-          # launcher runs the backend on 5500.
+          # Vite reads VITE_API_PROXY_TARGET via loadEnv() with
+          # default precedence: process.env at startup > .env file.
+          # We override the .env file's `VITE_API_PROXY_TARGET=http://localhost:5000`
+          # by setting the env at the step level so the dev server
+          # proxies to the e2e backend on 5500 (not the 5000 the .env
+          # file assumes).
           VITE_API_PROXY_TARGET: http://localhost:5500
         run: |
+          unset VITE_API_PROXY_TARGET_FROM_DOTENV
           npm run dev -- --host 127.0.0.1 --port 5173 &
           for i in $(seq 1 60); do
             curl -sf http://127.0.0.1:5173/ > /dev/null && break
