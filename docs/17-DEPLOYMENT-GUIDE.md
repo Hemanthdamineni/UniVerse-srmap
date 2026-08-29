@@ -345,8 +345,12 @@ services:
       # ./data/endpoint-discovery.json from the repo if the discovery file matters on cold start.
     depends_on:
       - redis
-    expose:
-      - "5000"
+    # Publish 5000 to the host on 127.0.0.1 only — needed for the §10
+    # wait-for-healthy loop to curl localhost. NOT bound to 0.0.0.0
+    # (would expose the backend directly to the internet, defeating
+    # the Cloudflare Tunnel design).
+    ports:
+      - "127.0.0.1:5000:5000"
     # Hardening: drop all Linux capabilities, mark root filesystem read-only,
     # disable privilege escalation. The data dir is the only writable mount.
     security_opt:
@@ -392,9 +396,19 @@ services:
     # built from infra/docker/Dockerfile.caddy — see §8.5.
     image: caddy:2-alpine
     restart: unless-stopped
+    # Caddy needs port 80 (for HTTP-01 challenges if you ever fall back to
+    # DuckDNS or pre-§8.5) and 443 (for the TLS cert). Cloudflare Tunnel
+    # doesn't need either — see §4.B-bis if you want to close these too.
     ports:
       - "80:80"
       - "443:443"
+    # Caddy needs CF_API_TOKEN in its environment to do DNS-01 challenges.
+    # The Caddyfile references it as `{env.CF_API_TOKEN}` (see §8.5 step 4).
+    # env_file: .env passes the full .env including CF_API_TOKEN; Caddy only
+    # sees CF_API_TOKEN because Caddy's env loader pulls all .env vars.
+    env_file: .env
+    environment:
+      - CF_API_TOKEN=${CF_API_TOKEN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./frontend-dist:/srv/frontend:ro
@@ -432,8 +446,20 @@ services:
       - NODE_ENV=production
     volumes:
       - ./data:/app/data
-    expose:
-      - "5000"
+    # 127.0.0.1-only host binding; see §7 main compose for rationale
+    ports:
+      - "127.0.0.1:5000:5000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    read_only: false
+    tmpfs:
+      - /tmp:size=200M,mode=1777
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/live', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 10s
@@ -626,6 +652,11 @@ Generate the secrets first — never ship `CHANGE_ME_*` placeholders to prod:
 echo "REDIS_PASSWORD=$(openssl rand -hex 24)"          >> .env
 echo "ADMIN_CONTENT_PASSWORD=$(openssl rand -hex 24)" >> .env
 echo "CF_API_TOKEN=replace-with-cloudflare-token"      >> .env
+# Compose's env_file doesn't do shell interpolation, so write the full
+# REDIS_URL after generating the password. Don't use ${REDIS_PASSWORD}
+# in the .env — it'll be passed through literally.
+sed -i "/^REDIS_URL=/d" .env
+echo "REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379" >> .env
 ```
 
 Then fill in the rest. Every `*_DB_PATH` must point inside `/app/data` — see the WARNING below for why "trust the defaults" is not a viable shortcut today:
@@ -634,7 +665,10 @@ Then fill in the rest. Every `*_DB_PATH` must point inside `/app/data` — see t
 NODE_ENV=production
 PORT=5000
 
-REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+# REDIS_URL is written by the §9 "Generate the secrets" block above
+# (the variable interpolation in .env doesn't work — env_file is verbatim).
+# Format: redis://:<password>@redis:6379
+REDIS_URL=redis://:REPLACE_WITH_REDIS_PASSWORD@redis:6379
 SESSION_STORE_DRIVER=redis
 ERP_CACHE_DRIVER=redis
 SESSION_COOKIE_SECURE=true
@@ -691,6 +725,25 @@ CORS_ALLOWED_ORIGINS=
 FEATURE_ERP_V2_API=1
 FEATURE_ERP_CACHED_FIRST=1
 FEATURE_AUTH_COOKIE_MODE=1
+
+# Healthchecks.io ping URLs (https://healthchecks.io → New Check → Copy ping URL).
+# These are used by the §12 backup, §12½.b integrity, §12½.c restore-test,
+# §13.h cert-expiry, §40.d R2-size, and the logrotate crons. Each cron
+# pings the success URL on success; on failure, append "/fail" to the URL.
+ALERT_WEBHOOK_URL=https://hc-ping.com/REPLACE-WITH-BACKUP-CHECK-UUID
+HC_INTEGRITY_URL=https://hc-ping.com/REPLACE-WITH-INTEGRITY-CHECK-UUID
+HC_RESTORE_URL=https://hc-ping.com/REPLACE-WITH-RESTORE-CHECK-UUID
+HC_CERT_URL=https://hc-ping.com/REPLACE-WITH-CERT-CHECK-UUID
+HC_R2_SIZE_URL=https://hc-ping.com/REPLACE-WITH-R2-SIZE-CHECK-UUID
+
+# Grafana Cloud / Loki (for §13.d log shipping via Promtail)
+LOKI_URL=https://logs-prod-REPLACE-WITH-REGION.grafana.net
+LOKI_USERNAME=REPLACE-WITH-INSTANCE-ID
+LOKI_PASSWORD=REPLACE-WITH-API-KEY
+
+# Sentry (for §13.b error tracking)
+SENTRY_DSN_BACKEND=https://REPLACE-WITH-KEY@REPLACE-WITH-ORG.ingest.sentry.io/REPLACE-WITH-PROJECT
+SENTRY_DSN_FRONTEND=https://REPLACE-WITH-KEY@REPLACE-WITH-ORG.ingest.sentry.io/REPLACE-WITH-PROJECT
 ```
 
 ### 9½. Frontend `.env.production` (separate file, baked at build time)
@@ -784,6 +837,8 @@ If you see `0` or `1` (NONE), the PRAGMAs didn't apply — check that the `init-
 ---
 
 ## 10. First Deploy
+
+> **STOP — before running `docker compose up` for the first time, make sure you've completed §8 (Caddyfile) and saved the file to `/opt/erp-platform/Caddyfile`.** The §7 compose mounts `./Caddyfile:/etc/caddy/Caddyfile`; without that file present, Caddy will start with its default static config and silently serve the wrong site. See §8 for the Caddyfile content.
 
 **Before cloning**, the VM needs SSH access to the GitHub repo. If you cloned using HTTPS during the §5 verification, the deploy step below will fail with `Permission denied (publickey)`. Set up SSH:
 
@@ -896,24 +951,27 @@ curl -s https://srmaperp.duckdns.org/ | grep -i "<title>"
 **Check 3 — The captcha flow (60 seconds, the one that breaks most often):**
 
 ```bash
-curl -s https://srmaperp.duckdns.org/api/auth/captcha/challenge | jq
-# Expected: {"challengeId":"...","imageUrl":"/api/auth/captcha/image/..."}
+curl -sc /tmp/captcha-cookies https://srmaperp.duckdns.org/api/auth/captcha | jq
+# Expected: {"success":true,"sessionId":"...","captchaBase64":"data:image/png;base64,...","issuedAt":"...","expiresInMs":...,"expiresAt":"...","loginAttemptId":"..."}
 # If 404, the captcha route isn't mounted.
 # If 500, the captcha library is missing a system font.
 ```
 
 **Check 4 — Login with a real test account (60 seconds):**
 
-This is the §11b test. **Do it from the VM itself**, not from your laptop, because the IP reputation issue is about the VM's outbound IP:
+This is the §11b test. **Do it from the VM itself**, not from your laptop, because the IP reputation issue is about the VM's outbound IP. **You need a real test account on the SRM AP ERP** — ask a student friend if you don't have one. The production deploy cannot go live without confirming a real login works.
 
 ```bash
-# Get a captcha challenge, solve it (in the real flow a browser does this)
-CHALLENGE=$(curl -s https://srmaperp.duckdns.org/api/auth/captcha/challenge | jq -r .challengeId)
-ANSWER=$(curl -s https://srmaperp.duckdns.org/api/auth/captcha/answer/$CHALLENGE | jq -r .answer)
-# Submit login
-curl -s -X POST https://srmaperp.duckdns.org/api/auth/login \
+# 1. Fetch the captcha (returns the base64 image and a sessionId)
+curl -sc /tmp/captcha-cookies https://srmaperp.duckdns.org/api/auth/captcha > /tmp/captcha.json
+SESSION_ID=$(jq -r .sessionId /tmp/captcha.json)
+# 2. Decode the base64 image and read it. Easiest: open the captcha URL in a browser
+#    on your laptop, read the text, then come back and submit that text here.
+CAPTCHA_TEXT="THE_4_LETTERS_FROM_THE_IMAGE"
+# 3. Submit the login with the captcha text and the sessionId
+curl -sb /tmp/captcha-cookies -X POST https://srmaperp.duckdns.org/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"registerNumber\":\"YOUR_TEST_REGISTER\",\"password\":\"YOUR_TEST_PASSWORD\",\"captchaId\":\"$CHALLENGE\",\"captchaAnswer\":\"$ANSWER\"}" | jq
+  -d "{\"registerNumber\":\"YOUR_TEST_REGISTER\",\"password\":\"YOUR_TEST_PASSWORD\",\"captcha\":\"$CAPTCHA_TEXT\",\"sessionId\":\"$SESSION_ID\"}" | jq
 # Expected: {"token":"...","user":{...}}
 # If 401 "captcha invalid", the captcha bypass isn't working (see §15½.d).
 # If 403 "rate limit", the test got flagged by §15½.a — your VM's IP is on a blocklist.
@@ -1052,16 +1110,42 @@ Caddy is unaffected (it doesn't talk to the ERP). The `NO_PROXY` list keeps intr
 **R2 free-tier quota awareness.** The free tier is 10GB storage + 10M Class A reads/month + 10M Class B writes/month + 1M Class A writes/month. The script below does ~14 sqlite3 `.backup` calls (locally, free), one `rclone copy` write (1 op), one tar (local, free), and one `rclone copy` write (1 op) per night. Well under the free tier. The §12½.e VM snapshot via `rclone rcat` is the one to watch — a 10GB boot volume over a flaky network can consume many Class B writes per upload; throttle it with `--transfers 1 --checkers 1` to avoid surprise.
 
 ```bash
-# One-time: install rclone and configure an R2 remote
-curl https://rclone.org/install.sh | sudo bash
-rclone config   # create a remote named `r2` pointing at your Cloudflare R2 bucket
+# One-time: rclone is already installed via §5 (apt). Configure the R2
+# remote non-interactively by writing the config file directly (the
+# interactive `rclone config` doesn't work in scripts/agents).
+mkdir -p /opt/erp-platform/infra
+cat > /opt/erp-platform/infra/rclone.conf <<EOF
+[r2]
+type = s3
+provider = Cloudflare
+access_key_id = ${R2_ACCESS_KEY_ID}
+secret_access_key = ${R2_SECRET_ACCESS_KEY}
+endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+no_check_bucket = true
+EOF
+chmod 600 /opt/erp-platform/infra/rclone.conf
+# Always invoke rclone with --config /opt/erp-platform/infra/rclone.conf
+# OR export RCLONE_CONFIG=/opt/erp-platform/infra/rclone.conf in the script.
 
 # /opt/erp-platform/backup.sh
 #!/bin/bash
 set -euo pipefail
+export RCLONE_CONFIG=/opt/erp-platform/infra/rclone.conf
 TS=$(date +%F)
 BACKUP_DIR="/opt/erp-platform/data/.backup-staging"
 mkdir -p "$BACKUP_DIR"
+
+# Bail out if no databases exist yet — otherwise we'd ship a 0-byte tarball
+# and the rclone copy would succeed, silently losing every backup the VM
+# hasn't received traffic yet.
+shopt -s nullglob
+dbs=(/opt/erp-platform/data/*.sqlite)
+if [ ${#dbs[@]} -eq 0 ]; then
+  echo "BACKUP FAILED: no .sqlite files in /opt/erp-platform/data/" >&2
+  echo "Has the backend booted at least once?" >&2
+  curl -fsS -m 10 --retry 5 "${ALERT_WEBHOOK_URL:-https://hc-ping.com/INVALID}/fail" >/dev/null 2>&1 || true
+  exit 1
+fi
 
 # Back up every .sqlite file found in the data dir — safe against a live DB,
 # unlike a raw tar. Uses the same disk as the data dir, not /tmp (which may
@@ -1071,17 +1155,14 @@ for db in /opt/erp-platform/data/*.sqlite; do
   sqlite3 "$db" ".backup '$BACKUP_DIR/$name'"
 done
 
-tar -czf "$BACKUP_DIR/../backup-$TS.tar.gz" -C "$BACKUP_DIR" .
+# v14 fix: tar the entire /app/data dir (one tarball, not two) so the
+# uploads/events/submissions/certificates dirs are included.
+tar -czf "$BACKUP_DIR/../backup-$TS.tar.gz" -C /opt/erp-platform data
 rclone copy "$BACKUP_DIR/../backup-$TS.tar.gz" r2:your-bucket-name/backups/
 rm -rf "$BACKUP_DIR" "$BACKUP_DIR/../backup-$TS.tar.gz"
 
-# Non-DB persistent data (uploads, events files) is safe to tar directly —
-# it's not a database being actively written to mid-transaction.
-# v4 put this tar in /tmp which is tmpfs and OOMs on a 12GB VM with large
-# uploads. Both tars now live on the same data disk.
-tar -czf "$BACKUP_DIR/../uploads-$TS.tar.gz" -C /opt/erp-platform/data events submissions 2>/dev/null || true
-rclone copy "$BACKUP_DIR/../uploads-$TS.tar.gz" r2:your-bucket-name/backups/ 2>/dev/null || true
-rm -f "$BACKUP_DIR/../uploads-$TS.tar.gz"
+# Success ping (Healthchecks.io); the URL is in .env
+curl -fsS -m 10 --retry 5 "${ALERT_WEBHOOK_URL:-https://hc-ping.com/INVALID}" >/dev/null 2>&1 || true
 ```
 
 ```bash
@@ -1097,22 +1178,29 @@ Add a logrotate config to keep the log bounded:
 
 ```bash
 sudo tee /etc/logrotate.d/erp-backend <<'EOF'
-/app/data/logs/backend.log {
+/opt/erp-platform/data/logs/backend.log {
     daily
     rotate 7
     compress
     missingok
     notifempty
-    create 0640 1000 1000
+    # The backend container runs as root by default (T1.5 in §19 adds
+    # USER node to the Dockerfile, but until that's applied, the log
+    # file is owned by root). Adjust if you've customized the Dockerfile.
+    create 0640 root root
     sharedscripts
     postrotate
+        # The /app/data path is INSIDE the container; from the host we
+        # need the bind-mount path. USR1 tells the logger to re-open
+        # the file descriptor so it doesn't keep writing to the rotated
+        # (truncated) file.
         docker compose -f /opt/erp-platform/docker-compose.yml kill -s USR1 backend
     endscript
 }
 EOF
 ```
 
-**The `create 0640 1000 1000` line** — adjust the UID/GID to match the backend's runtime user. If the Dockerfile uses `USER node` (T1.5), this is `1000:1000`. If you customized the Dockerfile, run `docker compose exec backend id` to find the right values.
+**The `create 0640 root root` line** — adjust the UID/GID to match the backend's runtime user. If the Dockerfile uses `USER node` (T1.5), this is `1000:1000`. If you customized the Dockerfile, run `docker compose exec backend id` to find the right values.
 
 **The `postrotate` line** sends SIGUSR1 to the backend, which tells the logger to re-open the log file. Without this, the backend keeps writing to the rotated (and truncated) file descriptor, and you lose logs.
 
@@ -1193,17 +1281,16 @@ docker compose exec backend sqlite3 /app/data/content.sqlite \
 # 1   (ON)
 ```
 
-**Wiring into Docker (optional, for repeatability):** add a `postStart` hook to the backend service in §7 compose, OR a separate init service that runs once and exits. The postStart approach is cleaner:
+**Wiring into Docker (optional, for repeatability):** the §7 compose doesn't have a built-in `post_start` hook (Kubernetes pods do, but Docker Compose services don't). To run the PRAGMA init on every container start, add it to the backend's `entrypoint` chain:
 
 ```yaml
 services:
   backend:
     # ... existing config ...
-    post_start:
-      - command: ["bash", "-c", "for db in /app/data/*.sqlite; do sqlite3 $db 'PRAGMA journal_mode=WAL;' 2>/dev/null; done"]
+    entrypoint: ["bash", "-c", "for db in /app/data/*.sqlite; do sqlite3 $db 'PRAGMA journal_mode=WAL;' 2>/dev/null; done && exec node src/server.js"]
 ```
 
-WAL is a per-database property, so the script is safe to re-run. The postStart hook runs on every container start, which means a redeploy won't accidentally reset the PRAGMAs.
+WAL is a per-database property, so the script is safe to re-run. The `entrypoint` chain runs on every container start, which means a redeploy won't accidentally reset the PRAGMAs. (The simpler approach — run the script once and never again — is fine too, because WAL mode persists in the file header.)
 
 ### 12½.b. Daily `PRAGMA integrity_check` cron
 
@@ -1279,15 +1366,25 @@ fi
 
 rclone copyto "$BUCKET/$LATEST" "$WORK/$LATEST"
 mkdir -p "$WORK/sqlite"
-for sql in "$WORK"/*.sql; do
-  rm -f "$WORK/sqlite/test.sqlite"
-  sqlite3 "$WORK/sqlite/test.sqlite" < "$sql"
-  result=$(sqlite3 "$WORK/sqlite/test.sqlite" "PRAGMA integrity_check;")
+cd "$WORK" && tar -xzf "$LATEST"
+# §12 backup produces *.sqlite files (via `sqlite3 .backup`). Each is a
+# complete binary SQLite file — copy to a test path, run integrity_check.
+for db in "$WORK"/*.sqlite; do
+  [ -f "$db" ] || continue
+  name=$(basename "$db")
+  rm -f "$WORK/sqlite/test-$name"
+  cp "$db" "$WORK/sqlite/test-$name"
+  result=$(sqlite3 "$WORK/sqlite/test-$name" "PRAGMA integrity_check;")
   if [ "$result" != "ok" ]; then
-    curl -X POST "$ALERT_WEBHOOK_URL" -d "{\"text\":\"Restore test FAILED: $sql — $result\"}" || true
-    exit 1
+    echo "RESTORE TEST FAILED: $name integrity_check returned: $result" >&2
+    curl -X POST "$ALERT_WEBHOOK_URL" -d "{\"text\":\"Restore test failed: $name integrity=$result\"}" || true
+    exit 3
   fi
+  # Verify row counts > 0 (a fully-restored DB shouldn't be empty)
+  rows=$(sqlite3 "$WORK/sqlite/test-$name" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';")
+  echo "OK: $name has $rows tables, integrity=ok"
 done
+echo "RESTORE TEST PASSED: $(date)"
 rm -rf "$WORK"
 echo "Restore test OK: $LATEST"
 ```
@@ -1354,10 +1451,24 @@ Beyond the data dir, snapshot the *entire VM boot volume* weekly. Oracle makes t
 ```bash
 # /opt/erp-platform/vm-snapshot.sh (runs on the VM host, not in a container)
 #!/bin/bash
+set -euo pipefail
 TS=$(date +%F)
-oci compute instance list --compartment-id "$COMPARTMENT_OCID" --query 'data[0].id' --raw-output > /tmp/instance-id
-# Custom image creation step — agent fills in exact CLI for the OCI SDK
-# Then: rclone rcat /tmp/snapshot-$TS.img r2:your-bucket/vm-snapshots/snapshot-$TS.img
+INSTANCE_ID=$(oci compute instance list \
+  --compartment-id "$COMPARTMENT_OCID" \
+  --query 'data[0].id' --raw-output)
+IMAGE_ID=$(oci compute image create \
+  --compartment-id "$COMPARTMENT_OCID" \
+  --instance-id "$INSTANCE_ID" \
+  --display-name "erp-snapshot-$TS" \
+  --query 'data.id' --raw-output)
+oci compute image export \
+  --image-id "$IMAGE_ID" \
+  --file "/tmp/snapshot-$TS.img" \
+  --export-format QCOW2
+rclone rcat "/tmp/snapshot-$TS.img" "r2:your-bucket/vm-snapshots/snapshot-$TS.img"
+rm -f "/tmp/snapshot-$TS.img"
+oci compute image delete --image-id "$IMAGE_ID" --force
+echo "VM snapshot uploaded: snapshot-$TS.img"
 ```
 
 This is a "set up once, run on cron, never think about it" job. Recovery from a total VM loss becomes "create a new VM from this image, restore data from R2, update DNS, done in 60 minutes" — see §18.
@@ -1494,6 +1605,13 @@ The v3 doc had "ssh in, git pull, docker compose build" as the deploy workflow. 
 ```bash
 sudo useradd -m -s /bin/bash runner
 sudo usermod -aG docker runner
+# The runner will need to write to /opt/erp-platform (frontend-dist, .env
+# updates, etc.). Either give the runner user ownership of that directory
+# OR set ACLs so the runner can write without changing ownership.
+sudo chown -R runner:runner /opt/erp-platform
+# (The §14.b deploy workflow does `npm ci && npm run build && rsync ...`
+# inside /opt/erp-platform/repo; if the runner user can't write to
+# /opt/erp-platform/frontend-dist, the deploy will fail with EACCES.)
 sudo -iu runner   # switch to the runner user
 ```
 
@@ -1502,7 +1620,7 @@ sudo -iu runner   # switch to the runner user
 ```bash
 mkdir /opt/actions-runner && cd /opt/actions-runner
 curl -o actions-runner-linux-arm64.tar.gz -L \
-  https://github.com/actions/runner/releases/latest/download/actions-runner-linux-arm64-2.tar.gz
+  https://github.com/actions/runner/releases/latest/download/actions-runner-linux-arm64.tar.gz
 tar xzf ./actions-runner-linux-arm64.tar.gz
 
 # Replace YOUR_TOKEN with the token from Step 1
@@ -1926,13 +2044,15 @@ if ! rclone lsd r2:your-bucket-name/ >/dev/null 2>&1; then
 fi
 
 echo "=== 1. Base setup (5 min) ==="
-apt-get update && apt-get install -y curl git ufw sqlite3 rclone jq rsync
-curl -fsSL https://get.docker.com | sh
+# Run as root or with sudo in front of each command. The prereq check
+# (step 0) confirms the script is running with sufficient privileges.
+sudo apt-get update && sudo apt-get install -y curl git ufw sqlite3 rclone jq rsync
+curl -fsSL https://get.docker.com | sudo sh
 # SSH-only inbound. 80/443 stay closed — Cloudflare Tunnel handles egress.
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow 22/tcp
-ufw --force enable
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw --force enable
 
 echo "=== 2. Get the code (2 min) ==="
 mkdir -p /opt/erp-platform && cd /opt/erp-platform
@@ -1971,13 +2091,8 @@ cp -a /tmp/restore/. /opt/erp-platform/data/ 2>/dev/null || true
 cd /opt/erp-platform
 
 # Discover the actual backend UID/GID from the running image (not a hardcoded 1000).
-# The Backend/Dockerfile should set USER node (see T1.5 in §19). The actual UID
-# depends on the image — node:22-bookworm-slim uses UID 1000 by default, but
-# a custom Dockerfile may differ. This discovers it dynamically.
-BACKEND_UID=$(docker compose run --rm --entrypoint "id -u" backend 2>/dev/null || echo "1000")
-BACKEND_GID=$(docker compose run --rm --entrypoint "id -g" backend 2>/dev/null || echo "1000")
-echo "Backend runs as UID:GID = $BACKEND_UID:$BACKEND_GID"
-chown -R "$BACKEND_UID:$BACKEND_GID" /opt/erp-platform/data
+# UID/GID discovery is deferred to step 7 (after the image is built)
+# because `docker compose run` needs the image to exist.
 
 echo "=== 5. Init SQLite PRAGMAs (1 min) ==="
 if [ -f /opt/erp-platform/init-pragmas.sh ]; then
@@ -1995,6 +2110,13 @@ echo "=== 7. Start the stack (2-10 min depending on whether image is cached) ===
 cd /opt/erp-platform
 docker compose build backend
 docker compose up -d
+
+# Discover the actual backend UID/GID from the running image (not a hardcoded 1000).
+# Strip the trailing newline that `id -u` outputs.
+BACKEND_UID=$(docker compose run --rm --entrypoint "id -u" backend 2>/dev/null | tr -d '\n' || echo "0")
+BACKEND_GID=$(docker compose run --rm --entrypoint "id -g" backend 2>/dev/null | tr -d '\n' || echo "0")
+echo "Backend runs as UID:GID = $BACKEND_UID:$BACKEND_GID"
+chown -R "$BACKEND_UID:$BACKEND_GID" /opt/erp-platform/data
 
 echo "=== 8. Verify (5 min) ==="
 sleep 60
@@ -3170,6 +3292,8 @@ sudo tailscale ip -4  # gives you the Tailscale IP, e.g., 100.x.y.z
 ```
 
 **Free tier:** 100 devices, 1 user (you). For a personal project, this is plenty. For a multi-contributor setup, the §35.e onboarding step adds teammates to the Tailscale network.
+
+**The `oracle@` username in the example:** the Oracle Ubuntu 24.04 image creates a user named `ubuntu` (or whatever you specified at launch) — *not* `oracle`. The `oracle@` in the SSH example above assumes you created an `oracle` user per §3, or that you renamed `ubuntu` to `oracle`. If you didn't, replace `oracle@` with `ubuntu@` (or whatever your actual SSH user is). Use `whoami` to check after you SSH in.
 
 ### §39.d. The v13 verdict
 
