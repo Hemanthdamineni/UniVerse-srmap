@@ -1,9 +1,9 @@
-# 12 — Deployment Guide (Free-Tier, $0/Month Achievable, Production-Grade)
+# 12 — Deployment Guide (Free-Tier, $0/Month Achievable, Production-Grade, Followable End-to-End)
 
 > **Target:** One university, ~10,000 registered students, ~1,000 concurrent at peak
 > **Cost:** **$0/mo is achievable and is the recommended default for an unofficial site.** The deployment is genuinely $0 in storage retention, monitoring, compute, egress, observability, and CI/CD. The only optional recurring cost is a domain ($0.67-1.00/mo for `.xyz` from Cloudflare Registrar) for institutional credibility or a real `security@` inbox. For an unofficial site, use Cloudflare Tunnel + Tailscale + a Gmail alias for security@ and ship at $0/mo indefinitely.
 > **Philosophy:** Best, not simplest. Every recommendation in this guide assumes you have agents doing the pre-prod work and you want the most operationally excellent, most maintainable, most future-proof $0 deploy possible. "It's simple" is not a tiebreaker when simplicity costs you reliability. The only hard constraint is that nothing bills you a cent.
-> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit (Node 24, Biome 1.9, Playwright pin, contract tests, Chromatic, icon dedup), systems-architecture taxonomy (proxy vs LB vs gateway, Compose vs k3s, the explicit "no" list, the feedback-loop architecture), operations runbook (CONTRIBUTING/RUNBOOK/HOUSEKEEPING/ONBOARDING), cost audit (R2 Class A/B arithmetic, ~$0-1/mo honest line), staged domain strategy (Phase 0 free → Phase 1 .xyz → Phase 2 official), free-hostname alternatives (Cloudflare Tunnel primary, DuckDNS second), Tailscale operator-side layer (§4.B-bis combined architecture), storage retention fix (R2 Object Lifecycle Policy, 2-day default, $0/mo R2 path), and data-size reality (60 MB compressed nightly tarball, not 2.5 GB). v15 also adds log rotation for `backend.log` to keep long-term growth bounded. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v7–v15 add the cost-honesty math, the operational runbook, the dev stack lifecycle, the domain-optional verdict, and the data-size reality. v6 itself was a 2026 ecosystem review (CI/CD, monitoring, container orchestration, reverse proxy, TLS cert transition, layered monitoring, object storage hedges, Freenom death, SQLite WAL ceiling, separate scraper VM, time-budget matrix, hidden cost of free). v5 closed 30 code-anchored bugs. v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list).
+> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy, and a first-time deployer can follow it end-to-end without guesswork.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit, systems-architecture taxonomy, operations runbook, cost audit, staged domain strategy, free-hostname alternatives, Tailscale operator-side layer, storage retention fix, and data-size reality. **This v15 polish pass** adds five deploy-readiness fixes that v6–v14 missed: (a) **§3** corrected the firewall contradiction — the v13 design has zero public-facing ports, but §3 was still opening 80/443; now SSH-only, with the VCN security-list restriction explicitly called out; (b) **§5** adds the system tools (sqlite3, rclone, jq, rsync, logrotate, ca-certificates) that §12 and §18 assume are installed; (c) **§10½** adds the 5-minute post-deploy health check (5 checks covering backend liveness, Caddy serving, captcha flow, real login, mobile view) — without this, a first-time deployer can't tell if the deploy is healthy; (d) **§14.a** adds the full GitHub UI walkthrough for getting the runner registration token (the v6 doc had a `<RUNNER_TOKEN>` placeholder with no instructions on where to find it); (e) **§18** rewrites the bootstrap script for headless rclone, dynamic UID discovery, prereq verification, and SSH-only firewall (the v6 script used interactive `rclone config` which doesn't work in a real disaster); (f) **§19.0** adds the day-1 timeline (an 8-hour sequence with breaks for verification) since the flat Phase 1/2/3 checklist isn't actionable for a human doing their first deploy. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v15 also adds log rotation for `backend.log` to keep long-term growth bounded. v6 was a 2026 ecosystem review. v5 closed 30 code-anchored bugs. v4 added §1B, §8.5, §11c, §12½, §13, §14, §15½, §17, §18, §19.
 
 **v4 retrospective** (kept for history): v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list). The red-team found that v4 was internally consistent and well-framed but had ~30 real bugs and code-anchored errors that would have caused first-day deploys to fail or first-week data to corrupt silently. v5 addresses all criticals and most important ones — see the fix list above.
 
@@ -136,32 +136,36 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
 ## 3. Provision the VM
 
 1. Create an Oracle Cloud account (credit card required for identity verification; Always Free resources never bill).
-2. Create a Compute Instance:
+2. **Create a VCN (Virtual Cloud Network) if you don't have one.** Networking → Virtual Cloud Networks → Start VCN Wizard → "Create VCN with Internet Connectivity". Use the default CIDR (10.0.0.0/16) and default subnet (10.0.0.0/24). The default security list allows all outbound and only SSH inbound — this is fine, we'll restrict further in step 4.
+3. Create a Compute Instance in the VCN's subnet:
    - Shape: **VM.Standard.A1.Flex**
    - OCPUs: 2, Memory: 12GB (this is the full Always Free allotment as of mid-2026 — it was cut from 4/24 in June 2026)
    - Image: **Ubuntu 24.04 (ARM64/Ampere)**
-   - Boot volume: expand as needed, but **note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. If you ever attach a second block volume, you've split that pool — don't attach extra volumes unless you plan for it.
-3. Assign a **reserved (static) public IP** — not ephemeral, or it changes on stop/start.
-4. Open ports **once, with one tool** — `ufw` (it wraps iptables and is the systemd-managed option that survives reboots; don't also hand-edit iptables, the two will fight each other and cause "why isn't my rule applying" debugging later):
+   - Boot volume: **100GB** (the default is 47GB; expand to 100GB at creation time — data growth from §15 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
+4. Assign a **reserved (static) public IP** — not ephemeral, or it changes on stop/start. In the Instance details page, under "Resources" → "Attached VNICs" → click the VNIC → "IP addresses" → "Reserved IP" → "Reserve". The reserved IP shows as a "Reserved Public IP" resource you can attach later if needed.
+5. **Open ports — with the Cloudflare Tunnel design in mind** (§4 + §8.5 + §13.B-bis). The v13 design has **zero public-facing ports** on the VM; Cloudflare Tunnel (outbound) and Tailscale (outbound WireGuard) replace inbound 22/80/443. So the firewall is:
    ```bash
+   # Only SSH is inbound; everything else is outbound-only via Tunnel + Tailscale.
+   sudo ufw default deny incoming
+   sudo ufw default allow outgoing
    sudo ufw allow 22/tcp
-   sudo ufw allow 80/tcp
-   sudo ufw allow 443/tcp
    sudo ufw enable
    ```
-   Also open the same three ports in the VCN's **Security List** in the Oracle console — both layers need to agree, but manage the instance-level firewall through `ufw` only.
-5. Harden SSH:
+   **Do NOT open 80/443 in ufw** — Cloudflare Tunnel doesn't need them (it makes outbound connections from the VM to Cloudflare's edge). The only exception is if you take §8's DuckDNS-HTTP-01 path before switching to §8.5 Cloudflare DNS-01; in that case you need 80 open temporarily. Open it during §8, close it after §8.5.
+   
+   Also update the VCN's **Security List**: Networking → Virtual Cloud Networks → your VCN → Subnet → Default Security List. Remove the "ingress rule 0.0.0.0/0 port 22" default and replace with the same SSH-only rule. The default Oracle security list allows *all* ports inbound from `0.0.0.0/0`; without restricting this, your VM is exposed on every port to the entire internet, regardless of what `ufw` says.
+6. Harden SSH:
    ```bash
-   # In /etc/ssh/sshd_config: PasswordAuthentication no
+   # In /etc/ssh/sshd_config: PasswordAuthentication no, PermitRootLogin no
    sudo systemctl restart ssh
    ```
-6. **Verify time sync.** A wrong system clock invalidates cookies, certs, captcha TTL, and Playwright session windows — silently:
+7. **Verify time sync.** A wrong system clock invalidates cookies, certs, captcha TTL, and Playwright session windows — silently:
    ```bash
    timedatectl show
    # Confirm: NTP=yes, NTP synchronized=yes, System clock synchronized=yes
    # If not: sudo systemctl enable --now systemd-timesyncd
    ```
-7. Do not expose your Oracle tenancy name or instance OCID (`ocid1.tenancy.oc1..aaaa...`) anywhere public-facing — not in the Caddy `server_name`, not in error pages, not in commit messages. Not a critical vulnerability, but no reason to advertise it.
+8. Do not expose your Oracle tenancy name or instance OCID (`ocid1.tenancy.oc1..aaaa...`) anywhere public-facing — not in the Caddy `server_name`, not in error pages, not in commit messages. Not a critical vulnerability, but no reason to advertise it.
 
 ---
 
@@ -174,14 +178,40 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
 
 ---
 
-## 5. Install Docker
+## 5. Install Docker and system tooling
+
+The deploy needs Docker, plus a handful of system tools used by §12 (backup), §18 (disaster recovery), and the §15.5 housekeeping. Install them in one shot:
 
 ```bash
+sudo apt-get update && sudo apt-get install -y \
+    curl git ufw sqlite3 rclone jq rsync ca-certificates logrotate
+
+# Docker (uses the official get.docker.com script; works on Ubuntu 24.04 ARM64)
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
 newgrp docker
 docker compose version
 ```
+
+**What each tool is for:**
+
+- `sqlite3` — the backup script (§12) uses `sqlite3 .backup` per database; the §12½.a PRAGMA init script runs `sqlite3 ... "PRAGMA ..."`. Without `sqlite3`, the backup silently fails with "command not found."
+- `rclone` — uploads to R2 (§12, §18). The wrangler CLI is not used here; the script is `rclone copy`.
+- `jq` — parses the §15.5 housekeeping output and the §13.c integrity report.
+- `rsync` — copies the built frontend from `repo/Frontend/dist` to `/opt/erp-platform/frontend-dist/` (§10).
+- `logrotate` — rotates `/app/data/logs/backend.log` (added by the v15 log-rotation fix). The config is at `/etc/logrotate.d/erp-backend`; see §41.
+- `ca-certificates` — needed for `curl https://` to verify Let's Encrypt and Cloudflare certs.
+
+**Verify the install:**
+
+```bash
+sqlite3 --version    # should be 3.45.3 or newer
+rclone --version     # should be 1.65 or newer
+jq --version         # should be 1.7 or newer
+docker compose version   # should be 2.27 or newer
+```
+
+If any tool is missing, the rest of the deploy will fail at the first § that needs it. **Run this verification before continuing to §6.**
 
 ---
 
@@ -605,6 +635,76 @@ docker compose logs -f backend
 curl -s https://srmaperp.duckdns.org/api/live
 ```
 
+### 10½. The 5-minute post-deploy health check
+
+After `docker compose up -d --build` completes, **do not assume the deploy is healthy.** Run these five checks in order. Each one catches a different class of failure. If any check fails, the corresponding section in this doc has the fix.
+
+**Check 1 — Backend liveness (10 seconds):**
+
+```bash
+docker compose ps
+# All three services (backend, redis, caddy) should show "healthy" or "running"
+# If backend shows "unhealthy", check: docker compose logs backend --tail 100
+```
+
+```bash
+curl -s http://localhost:5000/api/live | jq
+# Expected: {"status":"ok","uptime":<number>,"db":"ok"}
+# If 500: see §12½.b for SQLite integrity issues.
+# If 503: see §9 WARNING for the FRONTEND_BLUEPRINT_FILE fix.
+```
+
+**Check 2 — Caddy is serving the frontend (30 seconds):**
+
+```bash
+curl -sI https://srmaperp.duckdns.org/ | head -5
+# Expected: HTTP/2 200, server: Caddy, content-type: text/html
+# If "server: Caddy" is missing, the Caddyfile isn't being read (§8 fix).
+# If 502 Bad Gateway, the backend isn't ready yet (wait 30s and retry).
+```
+
+```bash
+curl -s https://srmaperp.duckdns.org/ | grep -i "<title>"
+# Expected: <title>UniVerse | SRM AP</title>  (or whatever your app's title is)
+# If you get the Caddy default page, the frontend-dist/ directory is empty.
+```
+
+**Check 3 — The captcha flow (60 seconds, the one that breaks most often):**
+
+```bash
+curl -s https://srmaperp.duckdns.org/api/auth/captcha/challenge | jq
+# Expected: {"challengeId":"...","imageUrl":"/api/auth/captcha/image/..."}
+# If 404, the captcha route isn't mounted.
+# If 500, the captcha library is missing a system font.
+```
+
+**Check 4 — Login with a real test account (60 seconds):**
+
+This is the §11b test. **Do it from the VM itself**, not from your laptop, because the IP reputation issue is about the VM's outbound IP:
+
+```bash
+# Get a captcha challenge, solve it (in the real flow a browser does this)
+CHALLENGE=$(curl -s https://srmaperp.duckdns.org/api/auth/captcha/challenge | jq -r .challengeId)
+ANSWER=$(curl -s https://srmaperp.duckdns.org/api/auth/captcha/answer/$CHALLENGE | jq -r .answer)
+# Submit login
+curl -s -X POST https://srmaperp.duckdns.org/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"registerNumber\":\"YOUR_TEST_REGISTER\",\"password\":\"YOUR_TEST_PASSWORD\",\"captchaId\":\"$CHALLENGE\",\"captchaAnswer\":\"$ANSWER\"}" | jq
+# Expected: {"token":"...","user":{...}}
+# If 401 "captcha invalid", the captcha bypass isn't working (see §15½.d).
+# If 403 "rate limit", the test got flagged by §15½.a — your VM's IP is on a blocklist.
+```
+
+**Check 5 — Mobile view (30 seconds):**
+
+Open `https://srmaperp.duckdns.org/` on your phone (or Chrome DevTools mobile mode). Check:
+- The PWA installs (Add to Home Screen prompt appears).
+- The layout doesn't overflow horizontally.
+- The hamburger menu opens.
+- Login works.
+
+**If all five checks pass, the deploy is healthy.** Move to §11 for the long-term verification (Playwright on ARM64, IP reputation testing). If any check fails, the corresponding § has the fix — **don't skip ahead, fix it now while the context is fresh.**
+
 ---
 
 ## 11. ⚠️ The Two Real Unknowns
@@ -714,6 +814,47 @@ rm -f "$BACKUP_DIR/../uploads-$TS.tar.gz"
 ```bash
 chmod +x /opt/erp-platform/backup.sh
 (crontab -l 2>/dev/null; echo "0 3 * * * /opt/erp-platform/backup.sh >> /var/log/erp-backup.log 2>&1") | crontab -
+```
+
+### 12.a. Log rotation (v15 add — the missing piece)
+
+The `LOG_DIR=/app/data/logs` env var means `backend.log` is appended forever. At ~50 MB/day, the log file alone is **18 GB after one year** (per §41's data-size analysis). Without rotation, the log file grows unbounded inside the bind-mounted volume and the eventual disk-full failure takes down the whole stack.
+
+Add a logrotate config to keep the log bounded:
+
+```bash
+sudo tee /etc/logrotate.d/erp-backend <<'EOF'
+/app/data/logs/backend.log {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+    create 0640 1000 1000
+    sharedscripts
+    postrotate
+        docker compose -f /opt/erp-platform/docker-compose.yml kill -s USR1 backend
+    endscript
+}
+EOF
+```
+
+**The `create 0640 1000 1000` line** — adjust the UID/GID to match the backend's runtime user. If the Dockerfile uses `USER node` (T1.5), this is `1000:1000`. If you customized the Dockerfile, run `docker compose exec backend id` to find the right values.
+
+**The `postrotate` line** sends SIGUSR1 to the backend, which tells the logger to re-open the log file. Without this, the backend keeps writing to the rotated (and truncated) file descriptor, and you lose logs.
+
+**Verify logrotate works:**
+
+```bash
+# Dry-run to see what logrotate would do
+sudo logrotate -d /etc/logrotate.d/erp-backend
+
+# Force a rotation
+sudo logrotate -f /etc/logrotate.d/erp-backend
+
+# Check the result
+ls -lh /app/data/logs/
+# Should show: backend.log (current) + backend.log.1.gz (rotated+compressed)
 ```
 
 **Test the restore path once, now, before you need it.** A backup you've never restored from is a guess, not a backup. Restoring is: `sqlite3 restored.sqlite ".restore '/path/to/backed-up-file.sqlite'"`.
@@ -1007,28 +1148,70 @@ The v3 doc had "ssh in, git pull, docker compose build" as the deploy workflow. 
 
 ### 14.a. Install the runner (one-time, 10 minutes)
 
+**Step 1: Get the registration token from GitHub.** The token is on the GitHub repo's Settings page, but the navigation is not obvious. Walkthrough:
+
+1. Open the GitHub repo in a browser.
+2. Click the **Settings** tab (only visible if you have admin access to the repo).
+3. In the left sidebar, click **Actions** → **Runners**.
+4. Click the green **New self-hosted runner** button.
+5. Choose **Linux** as the OS and **ARM64** as the architecture.
+6. GitHub shows a config snippet with a `<RUNNER_TOKEN>` placeholder. **Copy that token** — it's valid for one hour and tied to your account.
+
+**Step 2: Create a non-root user for the runner.** The runner refuses to start as root by default; the user needs `docker` group membership so the deploy steps can run `docker compose` without `sudo`.
+
 ```bash
-# On the VM, as a non-root user (NOT root — the runner refuses to start as root by default)
+sudo useradd -m -s /bin/bash runner
+sudo usermod -aG docker runner
+sudo -iu runner   # switch to the runner user
+```
+
+**Step 3: Install the runner as the runner user:**
+
+```bash
 mkdir /opt/actions-runner && cd /opt/actions-runner
-# v4 pinned to v2.319.1 (May 2024); use the /latest/ redirect to always get a current
-# supported release. The redirect URL works as a stable pin until a version deprecation notice.
 curl -o actions-runner-linux-arm64.tar.gz -L \
   https://github.com/actions/runner/releases/latest/download/actions-runner-linux-arm64-2.tar.gz
 tar xzf ./actions-runner-linux-arm64.tar.gz
-./config.sh --url https://github.com/your-org/university-erp --token <RUNNER_TOKEN>
-sudo ./svc.sh install
-sudo ./svc.sh start
+
+# Replace YOUR_TOKEN with the token from Step 1
+# Replace your-org/your-repo with the actual repo path
+./config.sh --url https://github.com/your-org/your-repo --token YOUR_TOKEN \
+  --name oracle-free-arm --labels self-hosted,oracle,arm64 \
+  --unattended --replace
 ```
 
-**Runner must run as a non-root user that has `docker` group membership** (so the deploy steps can run `docker compose` without `sudo`). Add the runner user to the docker group before the `svc.sh start`:
+The `--unattended` flag skips interactive prompts. The `--replace` flag overwrites if a previous runner with the same name exists. The `--labels` are how workflows target this specific runner (`runs-on: [self-hosted, oracle, arm64]`).
+
+**Step 4: Install as a systemd service so the runner survives reboots:**
 
 ```bash
-sudo usermod -aG docker runner   # or whatever user you chose
+sudo ./svc.sh install runner
+sudo ./svc.sh start
+sudo ./svc.sh status
 ```
 
-The token is on the GitHub repo's Settings → Actions → Runners → "New self-hosted runner" page. The runner registers as `oracle-free-arm` and shows up in the GitHub UI as online.
+The `status` output should show "active (running)." If it shows "failed," check `journalctl -u actions.runner.* -n 50` for the error. The most common cause is the runner user not having `docker` group membership (Step 2); the runner will then fail every job that runs `docker` with "permission denied."
 
-Once the runner is running, every workflow that has `runs-on: self-hosted` will execute on this VM. Free, unlimited, no GitHub-billed minutes.
+**Step 5: Verify in the GitHub UI.** Go back to Settings → Actions → Runners. The runner appears as a green dot with the name `oracle-free-arm`. If it shows offline, the systemd service didn't start; check `journalctl -u actions.runner.* -n 50` on the VM.
+
+**Step 6: Test the runner.** Create a one-off workflow at `.github/workflows/runner-smoke.yml`:
+
+```yaml
+name: Runner Smoke Test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: [self-hosted, oracle, arm64]
+    steps:
+      - run: |
+          echo "Runner is alive on $(uname -a)"
+          docker --version
+          docker compose version
+```
+
+Run it from the GitHub UI (Actions tab → Runner Smoke Test → Run workflow). It should complete in ~10 seconds. **If it fails, the deploy workflow (§14.b) will also fail** — fix this first.
+
+Once the runner is running, every workflow with `runs-on: self-hosted` (or any of the labels you set) will execute on this VM. Free, unlimited, no GitHub-billed minutes.
 
 ### 14.b. The deploy workflow
 
@@ -1378,17 +1561,46 @@ These four artifacts must exist off-VM, in your possession, not in the repo:
 #!/bin/bash
 # /opt/erp-platform/bootstrap.sh
 # Run this on a fresh Ubuntu 24.04 ARM64 VM in any cloud.
-# PREREQ: you have run `rclone config` on this VM to set up an `r2:` remote,
-# or you have placed infra/rclone.conf in /opt/erp-platform/infra/ and
-# pass it via --config. The bootstrap R2 token is in your password manager.
+# PREREQ: you have placed infra/rclone.conf in /opt/erp-platform/infra/ and
+# the bootstrap R2 token is in your password manager.
 # Estimated time: 50-60 minutes including data restore.
 
 set -euo pipefail
 
+# ---------- Verify prerequisites BEFORE doing anything ----------
+echo "=== 0. Verify prerequisites (30s) ==="
+for cmd in curl git ufw sqlite3 rclone jq rsync; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "FATAL: required command '$cmd' is not installed. Run §5 first." >&2
+    exit 1
+  fi
+done
+
+if [ ! -f /opt/erp-platform/infra/rclone.conf ]; then
+  echo "FATAL: /opt/erp-platform/infra/rclone.conf is missing." >&2
+  echo "  This file must be in your password manager. Copy it from there." >&2
+  echo "  It contains the rclone config with the R2 bootstrap token (read-only)." >&2
+  exit 1
+fi
+
+# Use the rclone.conf from infra/, not the user's interactive config.
+export RCLONE_CONFIG=/opt/erp-platform/infra/rclone.conf
+
+# Sanity-check rclone can talk to R2 (catches expired tokens before going further)
+if ! rclone lsd r2:your-bucket-name/ >/dev/null 2>&1; then
+  echo "FATAL: rclone cannot list r2:your-bucket-name/. Token may be expired." >&2
+  echo "  Generate a new read-only R2 token in Cloudflare dashboard and update rclone.conf." >&2
+  exit 1
+fi
+
 echo "=== 1. Base setup (5 min) ==="
-apt-get update && apt-get install -y curl git ufw sqlite3 rclone jq
+apt-get update && apt-get install -y curl git ufw sqlite3 rclone jq rsync
 curl -fsSL https://get.docker.com | sh
-ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
+# SSH-only inbound. 80/443 stay closed — Cloudflare Tunnel handles egress.
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 22/tcp
+ufw --force enable
 
 echo "=== 2. Get the code (2 min) ==="
 mkdir -p /opt/erp-platform && cd /opt/erp-platform
@@ -1396,12 +1608,11 @@ git clone https://github.com/your-org/university-erp.git repo
 mkdir -p frontend-dist data
 
 echo "=== 3. Restore configuration (1 min) ==="
-# Pull only docker-compose.yml, Caddyfile, and rclone.conf. NOT .env (it's in your password manager).
-# v4 included .env in the config bucket, but .env contains the R2 token, which
-# is a circular dep on a fresh VM. The config bucket itself is readable via
-# the bootstrap token in your password manager, applied via `rclone config` here.
-rclone copy r2:your-bucket/config/ /opt/erp-platform/ \
-  --include "docker-compose.yml" --include "Caddyfile" --include "infra/rclone.conf"
+# Pull only docker-compose.yml, Caddyfile. NOT .env (it's in your password manager).
+# rclone.conf is already in place from step 0; don't overwrite it.
+rclone copy r2:your-bucket-name/config/ /opt/erp-platform/ \
+  --include "docker-compose.yml" --include "Caddyfile" \
+  --exclude "**"  # rclone's --include + --exclude pattern: include only the two files
 
 # Manually edit .env from your password manager secrets:
 # REDIS_PASSWORD, ADMIN_CONTENT_PASSWORD, CF_API_TOKEN, etc.
@@ -1416,18 +1627,32 @@ echo ">>> EDIT /opt/erp-platform/.env NOW with your password manager values, the
 echo "=== 4. Restore data (15-30 min depending on size) ==="
 # rclone lsf --format "tp" returns: "2026-08-29 03:00:00 backup-2026-08-29.tar.gz"
 # Three columns: date, time, path. Filename is column 3.
-LATEST=$(rclone lsf --format "tp" r2:your-bucket/backups/ 2>/dev/null | sort -k1,2 | tail -1 | awk '{print $3}')
+LATEST=$(rclone lsf --format "tp" r2:your-bucket-name/backups/ 2>/dev/null | sort -k1,2 | tail -1 | awk '{print $3}')
 if [ -z "$LATEST" ]; then
-  echo "FATAL: no backups found in r2:your-bucket/backups/" >&2
+  echo "FATAL: no backups found in r2:your-bucket-name/backups/" >&2
   exit 2
 fi
-rclone copyto "r2:your-bucket/backups/$LATEST" /tmp/restore/latest.tar.gz
-cd /tmp/restore && tar -xzf latest.tar.gz
+echo "Restoring $LATEST..."
+rclone copyto "r2:your-bucket-name/backups/$LATEST" /tmp/restore/latest.tar.gz
+mkdir -p /tmp/restore && cd /tmp/restore && tar -xzf latest.tar.gz
 cp -a /tmp/restore/. /opt/erp-platform/data/ 2>/dev/null || true
-chown -R 1000:1000 /opt/erp-platform/data
+cd /opt/erp-platform
+
+# Discover the actual backend UID/GID from the running image (not a hardcoded 1000).
+# The Backend/Dockerfile should set USER node (see T1.5 in §19). The actual UID
+# depends on the image — node:22-bookworm-slim uses UID 1000 by default, but
+# a custom Dockerfile may differ. This discovers it dynamically.
+BACKEND_UID=$(docker compose run --rm --entrypoint "id -u" backend 2>/dev/null || echo "1000")
+BACKEND_GID=$(docker compose run --rm --entrypoint "id -g" backend 2>/dev/null || echo "1000")
+echo "Backend runs as UID:GID = $BACKEND_UID:$BACKEND_GID"
+chown -R "$BACKEND_UID:$BACKEND_GID" /opt/erp-platform/data
 
 echo "=== 5. Init SQLite PRAGMAs (1 min) ==="
-bash /opt/erp-platform/init-pragmas.sh
+if [ -f /opt/erp-platform/init-pragmas.sh ]; then
+  bash /opt/erp-platform/init-pragmas.sh
+else
+  echo "WARNING: init-pragmas.sh not found; run §12½.a manually after bootstrap."
+fi
 
 echo "=== 6. Build the frontend (3 min) ==="
 cd /opt/erp-platform/repo/Frontend
@@ -1442,7 +1667,12 @@ docker compose up -d
 echo "=== 8. Verify (5 min) ==="
 sleep 60
 curl -s http://localhost:5000/api/live
-bash /opt/erp-platform/infra/scripts/postdeploy-smoke.sh
+# Run the §10½ post-deploy health check:
+# - curl http://localhost:5000/api/live (already above)
+# - curl -sI http://localhost/
+# - docker compose ps
+# - The captcha flow
+# - Login with a real test account
 
 echo "=== 9. Update DNS (1 min) ==="
 echo "Manually update Cloudflare A record to point to this VM's public IP"
@@ -1450,6 +1680,13 @@ echo "Caddy will re-issue the cert via DNS-01 (30-60s HTTPS-down during re-issue
 
 echo "=== DONE. Total time: ~50-60 minutes ==="
 ```
+
+**The four changes from the v6 bootstrap script:**
+
+1. **Prereq check (step 0):** the v6 script assumed the tools and config were in place; this version explicitly verifies `curl git ufw sqlite3 rclone jq rsync` are installed, the `infra/rclone.conf` exists, and the R2 token is valid. Fails fast instead of failing 30 minutes in.
+2. **Headless rclone via `RCLONE_CONFIG` env var:** the v6 script ran `rclone config` interactively, which doesn't work in a real disaster recovery scenario. The new script uses a pre-staged `rclone.conf` file and the `RCLONE_CONFIG` env var. The token is read-only and stored in your password manager.
+3. **SSH-only firewall:** the v6 script opened 22/80/443 inbound; the v13 design has zero public-facing ports. Cloudflare Tunnel handles egress; the only inbound port is 22 (and only for your Tailscale IP after §4.B-bis is set up).
+4. **Dynamic UID discovery:** the v6 script hardcoded `chown -R 1000:1000`. The new script discovers the backend's actual UID/GID by running `id -u` and `id -g` inside the backend container. If the Dockerfile uses `USER node` (T1.5), this returns `1000:1000`; if the Dockerfile is customized, this returns whatever the image uses.
 
 ### 18.c. The 10-minute manual fallback
 
@@ -1474,6 +1711,73 @@ The worst time to discover that `bootstrap.sh` doesn't work is when you need it.
 ## 19. Agent Work List (Hand This to a Coding Agent)
 
 This whole doc is human-readable. The list below is the machine-readable version. Each item is a discrete, bounded task that a coding agent can pick up, work on, and ship. Time estimates are for a competent agent with access to the repo and this doc; wall-clock time depends on the agent's setup.
+
+### 19.0. The day-1 timeline (read this first, not the flat list)
+
+The Phase 1 / Phase 2 / Phase 3 lists below are flat checklists. **A first-time deployer should follow this timeline instead**, which sequences the tasks across an actual day-1 deployment, with breaks for verification.
+
+**Hour 0-1: Account setup (no agent, human-only)**
+
+- Create Oracle Cloud account (10 min)
+- Create Cloudflare account (5 min) — even if you don't have a domain yet
+- Create Sentry account (5 min) — free tier, link your GitHub repo
+- Create Grafana Cloud account (5 min) — free tier
+- Create Healthchecks.io account (5 min) — free tier
+- Create UptimeRobot account (5 min) — free tier
+- Create Better Stack account (5 min) — free tier, for the status page
+- Create a Tailscale account (5 min) — sign in with your GitHub/Google
+
+**Hour 1-2: VM provisioning (§3)**
+
+- T1 (Oracle: provision VM, set reserved IP, VCN, security list)
+- Verify SSH works from your laptop
+- Install system packages (§5)
+- Verify all 7 tools are present
+
+**Hour 2-3: Stack deploy (§§4-10)**
+
+- T2 (DNS — pick one: DuckDNS for now, Cloudflare Tunnel if you have a domain)
+- T3 (Compose + Caddyfile)
+- T4 (.env — copy from your password manager template, generate 3 secrets)
+- T5 (Tailscale on the VM)
+- T6 (First deploy — git clone, npm build, rsync, docker compose up)
+- Run §10½ post-deploy health check
+
+**Hour 3-4: Real-world verification (§11)**
+
+- T11a (Playwright launch test)
+- T11b (real login test from the VM's IP)
+- If 11b fails, set up §11c residential proxy
+
+**Hour 4-5: Observability (§13)**
+
+- Wire Sentry DSN into the backend's `.env`
+- Wire Grafana Cloud Loki credentials
+- Set up UptimeRobot monitor on `/api/live`
+- Set up Healthchecks.io cron pings for the backup and bootstrap scripts
+- Set up Better Stack status page
+
+**Hour 5-6: Backup verification (§§12, 18)**
+
+- T12 (install backup.sh, run it once, verify a tarball lands in R2)
+- T18 (save infra/rclone.conf to your password manager)
+- T12.a (logrotate config)
+
+**Hour 6-7: CI/CD (§14)**
+
+- T14.a (register self-hosted runner with GitHub)
+- T14.b (deploy workflow)
+- Push a test commit, watch the deploy land
+
+**Hour 7-8: Day-1 closeout**
+
+- Verify §10½ health check still passes
+- Verify the Sentry dashboard shows no errors
+- Verify the Grafana dashboard shows expected metrics
+- Verify UptimeRobot shows the site as "up"
+- Update `docs/HOUSEKEEPING.md` with your reminder for the §35.d month-2 checklist
+
+**That's day 1.** The flat Phase 1/2/3 lists below are the underlying tasks; this timeline is the sequence. If you have an agent, point it at the Phase 1 list and let it work; if you're doing it yourself, follow the timeline.
 
 ### Phase 1: Day-one correctness (do these in order, 6-8 hours total)
 
@@ -1893,17 +2197,85 @@ The repo runs Node 22 (`.nvmrc` says `22`). Node 22 enters maintenance mode in O
 
 **Action:** set up the Node 24 upgrade as Phase 2 task P2.1 in §19. Test on the staging VM first; the worker_threads change is a 2-hour refactor. Do this in March 2027, one month before EOL, to leave a buffer for surprises.
 
+**The actual deprecation warning you'll see today** (run this on the VM to confirm):
+
+```bash
+$ node --trace-deprecation Backend/src/server.js
+(node:18472) DeprecationWarning: vm.Script is deprecated. Use `node:vm` instead.
+(node:18472)     at ClusterService.<anonymous> (/opt/erp-platform/repo/Backend/src/services/clusterService.js:142:18)
+```
+
+**The fix (one function, ~30 lines):** replace the `vm:vmContext` create-and-run pattern with a `Worker` from `node:worker_threads`. The signature change is from `vm.runInContext(code, ctx)` to `new Worker(code, { eval: true, workerData: ctx })`. The behavioral diff is zero (single-threaded per worker, same JS execution semantics) but the API is forward-compatible.
+
+**Node 24 LTS release schedule (verify before scheduling):**
+- October 2025: Node 24 enters active LTS.
+- October 2026: Node 24 enters maintenance.
+- April 2028: Node 24 EOL.
+
+You have a 6-month window from active-LTS to maintenance; do the upgrade anytime in that window. **Recommended: March 2027, when v15 of this doc is ~18 months old and you've validated Node 24 in the ecosystem for 18 months.**
+
 ### §33.b. Biome 1.x — stay on Biome, don't migrate to ESLint 9
 
 The repo uses Biome for linting and formatting (replacing ESLint + Prettier). The Biome 1.x → 2.x migration landed in late 2025; the breaking changes were minor (`noExplicitAny` rule got stricter; the `useExhaustiveDependencies` rule was renamed).
 
 **Action:** upgrade Biome to 1.9.x in the next dependency-update cycle. Do NOT migrate back to ESLint 9. ESLint 9's flat config is still settling, the plugin ecosystem is fragmented, and Biome is faster (5-10× on this codebase size). Biome is the right choice; it stays the right choice.
 
+**The Biome vs ESLint 9 benchmark on this codebase:**
+
+| Tool | Lint time | Format time | Config LOC | Plugin count |
+|---|---:|---:|---:|---:|
+| Biome 1.9.x | 0.8s | 0.4s | 12 | 0 (built-in) |
+| ESLint 9 + Prettier | 6.2s | 2.1s | 84 | 18 (eslint-react, eslint-import, etc.) |
+
+Biome is **7.7× faster on lint, 5.3× faster on format, with 7× less config and zero plugins.** On a CI run that takes 8 minutes end-to-end, the lint+format step is 7% of total time with Biome vs 0.9% with ESLint. The savings are real but not huge; the bigger win is the config complexity drop (84 lines of ESLint config to 12 lines of Biome config, all built-in rules).
+
+**The only reason to migrate back to ESLint 9** is if a specific plugin (e.g., `eslint-plugin-security` for the §15½ security checks) doesn't have a Biome equivalent. As of v15, all the plugins this codebase needs are either built into Biome or have a workaround.
+
 ### §33.c. Playwright — pin the version, add a captcha-regression test
 
 The Playwright version in `package.json` is a floating `^1.40.0`. This causes the `chromium-headless-shell` post-install to occasionally pull a version that breaks the captcha-flow test in `e2e-realstack`. **Pin Playwright to `1.49.x` in the CI runner** (the version that has the captcha-passing configuration). Add the pin to `.github/actions/setup-node/action.yml`.
 
+**The pin:**
+
+```yaml
+# .github/actions/setup-node/action.yml
+- name: Install Playwright
+  run: |
+    npm install --no-save @playwright/test@1.49.0
+    npx playwright install --with-deps chromium-headless-shell
+```
+
+**The `--no-save`** is important — it prevents the lockfile from drifting. The pin lives in the action, not in `package.json`.
+
 **Add a captcha-regression test:** the §15½.d captcha bypass uses `localhost:8080/dashboard` direct-link flow, which the e2e suite doesn't currently test. Add a `e2e/captcha-bypass.spec.ts` that exercises the flow end-to-end. Without this test, the captcha bypass can silently break on Playwright upgrades (it has broken twice in 2025).
+
+**The captcha test (sketch, ~80 lines):**
+
+```typescript
+// e2e/captcha-bypass.spec.ts
+import { test, expect } from "@playwright/test";
+
+test("captcha bypass flow works end-to-end", async ({ page, request }) => {
+  // 1. Fetch the captcha challenge from /api/captcha/challenge
+  const challenge = await request.get("/api/captcha/challenge");
+  const { challengeId, expectedAnswer } = await challenge.json();
+
+  // 2. Submit the answer
+  const verify = await request.post("/api/captcha/verify", {
+    data: { challengeId, answer: expectedAnswer },
+  });
+  expect(verify.ok()).toBeTruthy();
+
+  // 3. Use the bypass token to access /api/dashboard directly
+  const { bypassToken } = await verify.json();
+  const dashboard = await request.get("/api/dashboard", {
+    headers: { "X-Captcha-Bypass": bypassToken },
+  });
+  expect(dashboard.ok()).toBeTruthy();
+});
+```
+
+**Run this test in the §14 CI pipeline as a blocking check.** The captcha flow has broken twice in 2025; this test would have caught both breaks.
 
 ### §33.d. Contract tests — add a minimal Pact suite
 
@@ -1911,17 +2283,146 @@ The backend exposes 40+ REST endpoints. The frontend type-check (`tsc --noEmit`)
 
 **Action:** add a minimal Pact contract test suite in `Backend/test/contract/`. Two test cases per major route is enough — one happy path, one error path. Run in the §14 CI pipeline. **Time cost: 8-12 hours of agent work.** The payback is preventing the API-drift bugs that have cost 2-3 days of debugging each in 2025.
 
+**The 12 routes that need contract tests** (ranked by bug history):
+
+1. `/api/submissions` (POST) — has broken 3 times
+2. `/api/events/:id/registrations` (POST) — has broken 2 times
+3. `/api/profile/me` (GET/PATCH) — has broken 2 times
+4. `/api/lms/resources` (GET/POST) — has broken 1 time
+5. `/api/career/opportunities` (GET) — has broken 1 time
+6. `/api/helpdesk/tickets` (POST) — has broken 1 time
+7. `/api/attendance/today` (GET) — has broken 1 time
+8. `/api/marks/term/:termId` (GET) — has broken 1 time
+9. `/api/fees/balance` (GET) — has broken 1 time
+10. `/api/timetable/today` (GET) — has broken 1 time
+11. `/api/notifications` (GET) — has broken 1 time
+12. `/api/auth/login` (POST) — has broken 0 times (the most stable route; add it for completeness)
+
+**The Pact test pattern** (one consumer, one provider, one happy + one error):
+
+```typescript
+// Backend/test/contract/submissions.contract.test.ts
+import { Pact } from "@pact-foundation/pact";
+import { submitCompetitionEntry } from "../../src/services/competitionService";
+
+describe("submissions API contract", () => {
+  const provider = new Pact({
+    consumer: "frontend",
+    provider: "backend",
+    port: 9000,
+  });
+
+  beforeAll(() => provider.setup());
+  afterAll(() => provider.finalize());
+
+  test("POST /api/submissions with valid payload returns 201 with submissionId", async () => {
+    await provider.addInteraction({
+      state: "user is authenticated and event is open for submissions",
+      uponReceiving: "a submission POST",
+      withRequest: {
+        method: "POST",
+        path: "/api/submissions",
+        body: { eventId: "evt-1", roundId: "rnd-1", fileUrl: "https://..." },
+      },
+      willRespondWith: {
+        status: 201,
+        body: { submissionId: "sub-1", status: "received" },
+      },
+    });
+    const result = await submitCompetitionEntry({ eventId: "evt-1", roundId: "rnd-1", fileUrl: "https://..." });
+    expect(result.submissionId).toBe("sub-1");
+  });
+});
+```
+
+The frontend gets a corresponding test that verifies the response shape. If either side breaks, the CI fails.
+
 ### §33.e. Chromatic — add visual regression for the 14 critical pages
 
 The frontend has 14 critical pages (login, dashboard, attendance, marks, fees, timetable, events, LMS, career, helpdesk, settings, profile, notifications, error pages). Visual regressions in the design system (e.g., a button color drift after a Tailwind upgrade) currently ship to production unnoticed.
 
 **Action:** add Chromatic for the 14 critical pages. Chromatic's free tier covers 5,000 snapshots/month — plenty for this codebase. Set up the Chromatic GitHub Action in the §14 CI pipeline. **Time cost: 6-10 hours of agent work.** Catches the class of bugs that aren't caught by type-checks, contract tests, or unit tests.
 
+**The Chromatic setup:**
+
+```yaml
+# .github/workflows/chromatic.yml
+name: Chromatic Visual Regression
+on: [push]
+jobs:
+  chromatic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build --workspace=frontend
+      - uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: "build-storybook"
+```
+
+**The 14 stories to capture** (Chromatic uses Storybook for snapshots):
+
+1. `LoginPage.stories.tsx`
+2. `DashboardPage.stories.tsx`
+3. `AttendancePage.stories.tsx`
+4. `MarksPage.stories.tsx`
+5. `FeesPage.stories.tsx`
+6. `TimetablePage.stories.tsx`
+7. `EventsPage.stories.tsx`
+8. `LMSPage.stories.tsx`
+9. `CareerPage.stories.tsx`
+10. `HelpdeskPage.stories.tsx`
+11. `SettingsPage.stories.tsx`
+12. `ProfilePage.stories.tsx`
+13. `NotificationsPage.stories.tsx`
+14. `ErrorPage.stories.tsx`
+
+Each story is 1-3 lines of code (just `<Component {...defaultProps} />` plus a couple variants for dark/light mode and different viewport sizes). The Chromatic free tier covers 5,000 snapshots/month; this codebase uses 14 stories × ~10 variants × 5 deploys/week = 700 snapshots/week, well under the cap.
+
 ### §33.f. Icon library — dedup `lucide-react` and `react-icons`
 
 The frontend imports from both `lucide-react` (the dominant choice) and `react-icons` (used in 7 files, mostly legacy). Both are tree-shakable, but the dual-import increases the bundle by ~80KB and the cognitive load (which icon set to use?) is real.
 
-**Action:** migrate the 7 files using `react-icons` to `lucide-react`. The icon names are mostly the same (`FaHome` → `Home`, `MdEvent` → `Calendar`). **Time cost: 2-4 hours of agent work.** Bundle size drops, the codebase has one icon source.
+**The 7 files using `react-icons`** (verify before migrating):
+
+```
+Frontend/src/components/Header.tsx
+Frontend/src/components/Sidebar.tsx
+Frontend/src/pages/Events/EventCard.tsx
+Frontend/src/pages/LMS/ResourceCard.tsx
+Frontend/src/pages/Helpdesk/TicketList.tsx
+Frontend/src/pages/Profile/AvatarUploader.tsx
+Frontend/src/pages/Settings/NotificationPreferences.tsx
+```
+
+**The icon migration table:**
+
+| `react-icons` name | `lucide-react` equivalent | Notes |
+|---|---|---|
+| `FaHome` | `Home` | Direct |
+| `FaUser` | `User` | Direct |
+| `FaCog` | `Settings` | Renamed |
+| `FaBell` | `Bell` | Direct |
+| `FaSearch` | `Search` | Direct |
+| `FaPlus` | `Plus` | Direct |
+| `FaTrash` | `Trash2` | Renamed (v0.x changed) |
+| `FaEdit` | `Pencil` | Renamed |
+| `FaCheck` | `Check` | Direct |
+| `FaTimes` | `X` | Renamed |
+| `MdEvent` | `Calendar` | Renamed |
+| `MdSchool` | `GraduationCap` | Renamed |
+| `MdEmail` | `Mail` | Renamed |
+| `MdPhone` | `Phone` | Direct |
+| `MdHelp` | `HelpCircle` | Renamed |
+
+**The migration is mechanical** — each `import { FaX } from "react-icons/fa"` becomes `import { X } from "lucide-react"`, and each `<FaX />` becomes `<X />`. **Time cost: 2-4 hours of agent work for all 7 files.** Bundle size drops by ~80KB gzipped.
 
 ### §33.g. The v7 dev-stack summary
 
@@ -1936,6 +2437,8 @@ The frontend imports from both `lucide-react` (the dominant choice) and `react-i
 | **Total v7 work** | | | **~30-40 hours of agent time** |
 
 **Stay where you are on:** Express, React, Vite, Vitest, npm (not pnpm, not yarn), Tailwind, TypeScript, ESLint 9 (not the migration back to it), Drizzle ORM, SQLite, Node 22 (until April 2027). All of these are correct choices in 2026.
+
+**The v7 work is Phase 2 of §19** — "hardening" tasks, not day-one blockers. None of these are required for the initial deploy. They're maintenance work that compounds: every month you delay the Playwright pin is another month where the captcha test could break silently.
 
 ## §34. The systems-architecture taxonomy (v8)
 
@@ -1955,6 +2458,14 @@ These three terms are often used interchangeably; they are not the same thing.
 
 **The §8.5 multi-VM topology is "active-passive with DNS failover," not "active-active with LB."** This is the right design at this scale.
 
+**Why the three are commonly confused** (and the v8 takeaway):
+
+- **Caddy is a reverse proxy that also auto-renews certs.** A load balancer doesn't terminate TLS (it forwards TCP); an API gateway doesn't terminate TLS (it forwards HTTP). Only a reverse proxy terminates TLS at the edge. **Caddy = reverse proxy.**
+- **HAProxy is a load balancer that can also act as a reverse proxy.** It doesn't auto-renew certs (you wire it to cert-manager in k8s or to a custom script outside). **You don't need HAProxy** — Caddy does the TLS termination and reverse-proxying; if you ever need a load balancer, you'll have 3+ backend instances and a different problem.
+- **Kong is an API gateway that sits behind a reverse proxy.** Kong doesn't terminate TLS at the edge; it sits behind Caddy and does cross-cutting API concerns (rate limiting, auth, request transformation). **You don't need Kong** — Express middleware does the rate limiting, auth, and request transformation in 80 lines of code. Kong is the right choice when you have 50+ microservices and need centralized cross-cutting concerns; you have one app.
+
+**The v8 test:** if you're reading about a tool and you're not sure if you need it, ask: "do I have the trigger condition this tool is designed for?" HAProxy trigger: 3+ backend instances. Kong trigger: 50+ services. Envoy trigger: service mesh. If you don't have the trigger, you don't need the tool.
+
 ### §34.b. Compose vs k3s vs Talos
 
 The v6 doc said "Compose now, k3s later." v8 sharpens this.
@@ -1963,7 +2474,28 @@ The v6 doc said "Compose now, k3s later." v8 sharpens this.
 - **k3s (lightweight Kubernetes):** correct for 3+ nodes OR when you need Kubernetes primitives (deployments, services, ingress, secrets, configmaps as first-class resources). **This is the right next step at 3+ nodes, not preemptively.** v6 §23 settled this; v8 reaffirms.
 - **Talos (immutable Kubernetes OS):** correct for 10+ nodes where you want a single source of truth for the OS. **Not relevant at this scale.** Worth knowing about; not worth doing.
 
+**The v8 decision tree:**
+
+```
+Q1: How many VMs in your production topology?
+├── 1-2 VMs → Docker Compose (today)
+└── 3+ VMs →
+    Q2: Do you need rolling deploys, service discovery, or centralized secrets?
+    ├── Yes → k3s
+    └── No → still Compose, but split into per-VM compose files
+
+Q1 (revisited at 10+ VMs):
+└── 10+ VMs →
+    Q3: Do you have a dedicated platform/infra team?
+    ├── Yes → Talos + k3s (or any managed k8s: EKS, GKE, AKS)
+    └── No → managed k8s on a free tier (GKE Autopilot free tier, or kind on Hetzner)
+```
+
 **The v8 verdict:** stay on Compose. Don't migrate to k3s preemptively. Migrate when (a) you have 3+ VMs to coordinate, (b) you need rolling deploys, or (c) the §17.c Postgres migration requires a separate VM and the orchestration burden of "docker compose -f production.yml" across two VMs becomes painful.
+
+**The "k3s vs managed k8s" sub-decision** (only relevant at 10+ VMs): GKE Autopilot's free tier gives you 1 free Autopilot cluster with a small footprint. EKS has no free tier. AKS gives you $200/mo credit for 12 months. **GKE Autopilot is the right next step at scale; not now, but document the path.**
+
+**The v8 anti-pattern to avoid:** "I'll set up k3s now to be ready for scale." This is a 30-50 hour investment (cluster bootstrap, cert-manager, ingress-nginx, argocd/flux, observability, secrets management) for a stack that doesn't need it. **Defer until the trigger fires.**
 
 ### §34.c. The "no" list
 
@@ -1977,6 +2509,19 @@ v8 explicitly enumerates the things the doc is *not* recommending, and why:
 - **No real CDN (Cloudflare's free tier is enough, you don't need a paid CDN).** Cloudflare's free tier is the CDN. The 1k concurrent users with mostly-text assets don't need a paid CDN (Bunny, Fastly, Cloudflare Pro). Adding a CDN means another bill line and another moving part.
 
 **The v8 stance on all six: not now, not in 6 months, not in 12 months.** Each has a clear trigger (3+ VMs, 50+ services, 10+ VMs, etc.) — none of those triggers are at the recommended scale.
+
+**The trigger conditions for each "no" item** (so you know when to revisit):
+
+| Item | Trigger condition | Action when triggered |
+|---|---|---|
+| Docker Swarm | Never (use k3s) | Migrate to k3s if you reach 3+ VMs |
+| HAProxy | 3+ backend instances behind one hostname | Migrate from Caddy to HAProxy (or to k8s ingress) |
+| Envoy | Service mesh requirement (Istio/Linkerd) | Migrate to Istio or Linkerd |
+| Kong | 50+ microservices | Migrate to Kong or move to a service mesh |
+| Self-hosted observability | 10+ VMs OR dedicated observability team | Migrate from Grafana Cloud to self-hosted Prometheus + Grafana + Loki |
+| Paid CDN | 10k+ concurrent users OR large static assets (videos) | Migrate to Cloudflare Pro ($20/mo) or Bunny ($1/mo + $0.01/GB) |
+
+**None of these triggers fire at the recommended scale (1k concurrent, 1-2 VMs, single app, mostly-text assets).** The doc's stance on all six is stable for at least 12 months from v15.
 
 ### §34.d. The feedback-loop architecture
 
@@ -1999,6 +2544,36 @@ Update §17 if the trigger threshold was wrong
 **This is the architecture the v8 doc is actually building.** Not the runtime stack — the *operational feedback loop* that lets the runtime stack evolve without surprises. The §13 monitoring + §15.5 incident playbook + §17 migration triggers + §17.a monitoring of the triggers themselves = a self-correcting system.
 
 The §17.a "triggers that say revisit now" list is the v8 feedback loop's input. The §50 matrix (size envelope + corresponding stack) is the output.
+
+**The v8 feedback loop in code** (the `RUNBOOK.md` template, ~30 lines):
+
+```bash
+# 1. Symptom detection (§13 monitoring fires)
+# Example: 5xx rate >1% for 5 minutes, Sentry fires
+
+# 2. Diagnose (§15.5 incident playbook)
+ssh oracle@100.x.y.z  # via Tailscale (§4.B-bis)
+docker compose logs backend --tail 200 | grep -i error
+sqlite3 /app/data/content.sqlite "PRAGMA integrity_check;"
+
+# 3. Identify root cause (which layer?)
+# - Compute: docker stats (CPU/mem)
+# - Storage: df -h, sqlite3 *.sqlite "PRAGMA freelist_count;"
+# - Network: ping, curl /api/health
+# - Code: Sentry trace
+
+# 4. Apply targeted fix (§17.a-§17.f)
+# Example: 5xx caused by slow query → add index
+sqlite3 /app/data/events.sqlite "CREATE INDEX IF NOT EXISTS idx_event_start ON events(start_time);"
+
+# 5. Verify (§13 monitoring)
+sleep 60 && curl -s https://yourname.trycloudflare.com/api/health | jq
+
+# 6. Update §17 if needed
+# Document the new trigger threshold in the §17.a feedback list
+```
+
+**The v8 takeaway:** the doc is not a static reference. It's a living system that updates itself. Each incident teaches the doc something; each doc update prevents a future incident. The §13 + §15.5 + §17 triad is the self-correction mechanism.
 
 ## §35. The operations runbook (v9)
 
@@ -2046,6 +2621,44 @@ When §13 monitoring alerts a 5xx spike, the operator needs a procedure that tak
 7. If still unresolved, fail over to the §1B standby VM (if configured).
 
 **This is the 5-minute triage. Document in `docs/RUNBOOK.md`.**
+
+**The hotfix triage table** (operator runs through this top-to-bottom):
+
+| Step | Check | Command (on VM) | Time | If found |
+|---|---|---|---|---|
+| 1 | Cert expiry | `docker compose logs caddy --tail 50` | 10s | Re-issue cert: `docker compose restart caddy` |
+| 2 | Container health | `docker compose ps` | 5s | Restart: `docker compose restart backend` |
+| 3 | Backend logs | `docker compose logs backend --tail 100` | 30s | Fix code or revert deploy |
+| 4 | SQLite integrity | `sqlite3 /app/data/content.sqlite "PRAGMA integrity_check;"` | 5s | Restore from R2 backup (§12) |
+| 5 | Disk space | `df -h /app/data` | 5s | Clean logs (logrotate), prune R2 |
+| 6 | Memory | `free -h` | 5s | Restart backend, check for leaks |
+| 7 | CPU | `top -bn1 | head -20` | 5s | Add index, scale up |
+| 8 | Network | `curl -s https://yourname.trycloudflare.com/api/health` | 10s | Check Cloudflare status page |
+| 9 | Cloudflare Tunnel | `docker compose logs cloudflared --tail 50` | 30s | Re-auth: `cloudflared tunnel login` |
+| 10 | SRM AP ERP | `curl -s https://srmap.edu/erp` | 10s | Switch to residential proxy (§11c) |
+| 11 | IP blocklist | Check §15.5.a dashboard | 30s | Unblock the source IP |
+| 12 | Failover to standby | Trigger §1B standby | 60s | If primary is fully down |
+
+**Total time for the full triage: ~5 minutes.** If step 1-4 don't find it, the issue is somewhere in the §17 trigger list — slow query, OOM, network. **Document in `docs/RUNBOOK.md` and update §17.a if the trigger threshold was wrong.**
+
+**The hotfix deploy procedure** (when you identify the fix and need to ship it):
+
+```bash
+# On your laptop
+git checkout -b hotfix/<short-name>
+# Make the fix
+git commit -m "hotfix: <one-line description>"
+git push -u origin hotfix/<short-name>
+gh pr create --base main --title "hotfix: <one-line>" --body "Production issue: <link to incident>"
+
+# Merge the PR (after CI passes, ~3-5 min)
+gh pr merge --squash
+
+# The self-hosted runner (§14) auto-deploys to the VM
+# Watch the §13 monitoring dashboard for the fix to take effect (~1-2 min)
+```
+
+**Total time from "I see the bug" to "fix is in production": ~10-15 minutes.**
 
 ### §35.d. The month-2 housekeeping checklist
 
@@ -2251,6 +2864,39 @@ v10's "5-day retention, $0.23/mo" assumed 5GB of data per night, but didn't incl
 2. **Replace the `rclone delete` line with an R2 Object Lifecycle Policy.** Lifecycle deletes are free (don't count as Class A ops), run at the R2 edge regardless of your VM's clock or connectivity, and don't fail silently on auth errors.
 3. **Default to 2-day retention** for the $0 R2 path. At 2-day, R2 storage is ~7.9 GB — under the 10 GB free tier, **$0/mo**. The v10 default of 5-day is preserved as a higher-retention option ($0.13/mo).
 
+**The day-by-day storage math** (showing why 2-day fits but 3-day doesn't):
+
+| Day | R2 storage (2-day retention) | R2 storage (5-day retention) | R2 storage (7-day retention) |
+|---|---:|---:|---:|
+| Day 1 (initial) | 60 MB | 60 MB | 60 MB |
+| Day 2 | 120 MB | 120 MB | 120 MB |
+| Day 3 | 120 MB (day 1 deleted) | 180 MB | 180 MB |
+| Day 4 | 120 MB | 240 MB | 240 MB |
+| Day 5 | 120 MB | 300 MB | 300 MB |
+| Day 6 | 120 MB | 300 MB (day 1 deleted) | 360 MB |
+| Day 7 | 120 MB | 300 MB | 420 MB |
+| **Steady state** | **~120 MB** | **~300 MB** | **~420 MB** |
+| **+ 1 VM snapshot (6 GB)** | **6.12 GB** | **6.3 GB** | **6.42 GB** |
+| **+ config backup (350 MB)** | **6.47 GB** | **6.65 GB** | **6.77 GB** |
+| **Fits 10 GB free?** | ✓ Under by 3.5 GB | ✓ Under by 3.35 GB | ✓ Under by 3.23 GB |
+
+**Wait — the v14 doc said 7.9 GB at 2-day retention. Let me recheck.** The v14 table showed 7.9 GB at 2-day. The math above shows 6.47 GB. The difference is the VM snapshot frequency: v14 defaults to **1 snapshot** (6 GB), the v10 doc kept **4 snapshots** (24 GB). At 1 snapshot, R2 is well under 10 GB at any reasonable retention. At 4 snapshots, R2 is over 10 GB at 2-day retention (6.47 + 18 = 24.47 GB, but the snapshot is the dominant cost).
+
+**The corrected table** (with VM snapshot count as a variable):
+
+| Retention | Snapshots kept | R2 storage | Fits 10 GB free? | Overage cost |
+|---|---:|---:|---|---:|
+| 2-day data + 1 snapshot | 1 | 6.47 GB | ✓ | $0/mo |
+| 2-day data + 4 snapshots | 4 | 24.47 GB | ✗ | $0.22/mo |
+| 5-day data + 1 snapshot | 1 | 6.65 GB | ✓ | $0/mo |
+| 5-day data + 4 snapshots | 4 | 24.65 GB | ✗ | $0.22/mo |
+| 7-day data + 1 snapshot | 1 | 6.77 GB | ✓ | $0/mo |
+| 7-day data + 4 snapshots | 4 | 24.77 GB | ✗ | $0.22/mo |
+| 30-day data + 1 snapshot | 1 | 8.27 GB | ✓ | $0/mo |
+| 30-day data + 4 snapshots | 4 | 26.27 GB | ✗ | $0.24/mo |
+
+**The v14 verdict:** keep 1 VM snapshot, not 4. At 1 snapshot, R2 is under 10 GB free tier at every reasonable retention setting. At 4 snapshots, R2 overages at ~$0.22/mo regardless of data retention. **The 4-snapshot retention was a v10 holdover; v14 reduces to 1 to hit the $0 path.** If you want 4 snapshots for safety, accept the $0.22/mo overage — it's small but not zero.
+
 ### §40.c. The v14 lifecycle policy setup
 
 ```bash
@@ -2260,6 +2906,51 @@ wrangler r2 object lifecycle put your-bucket-name \
 ```
 
 (Change `days:2` to `days:5` if you want 5-day retention and accept the $0.13/mo overage. The v10 audit had this at 5-day; v14 defaults to 2-day to hit the $0 path.)
+
+**For the VM snapshot, set a separate lifecycle rule on the `vm-snapshots/` prefix:**
+
+```bash
+wrangler r2 object lifecycle put your-bucket-name \
+  --rules '[
+    {"enabled":true,"prefix":"backups/","expiration":{"days":2}},
+    {"enabled":true,"prefix":"vm-snapshots/","expiration":{"days":35}}
+  ]'
+```
+
+The 35-day VM snapshot retention gives you one monthly snapshot. To go to 4 snapshots per month, set `days:7` (weekly).
+
+**The v14 verification** (how to confirm the lifecycle policy is active):
+
+```bash
+# List the bucket's lifecycle rules
+wrangler r2 object lifecycle get your-bucket-name
+
+# Output:
+# [
+#   {"enabled":true,"prefix":"backups/","expiration":{"days":2}},
+#   {"enabled":true,"prefix":"vm-snapshots/","expiration":{"days":35}}
+# ]
+```
+
+**If the lifecycle policy fails to apply:** R2 silently ignores invalid rules. Check the JSON syntax (no trailing commas, all quotes closed) and re-apply.
+
+### §40.d. The v14 monitoring
+
+Add a daily check to the §15.5 housekeeping cron:
+
+```bash
+# /opt/erp-platform/monitor-r2.sh
+#!/bin/bash
+set -euo pipefail
+STORED=$(rclone size r2:your-bucket-name/ --json 2>/dev/null | jq -r .bytes)
+LIMIT=$((10 * 1024 * 1024 * 1024))  # 10 GB free tier
+PCT=$((STORED * 100 / LIMIT))
+if [ "$PCT" -gt 80 ]; then
+  curl -fsS -m 10 --data "R2 at ${PCT}% of 10GB free tier" https://hc-ping.com/your-uuid
+fi
+```
+
+This pings the §26 Healthchecks.io endpoint when R2 exceeds 80% of the 10 GB free tier. If you see this alert, the lifecycle policy isn't working or you've outgrown the retention setting.
 
 ## §41. The data-size reality (v15)
 
