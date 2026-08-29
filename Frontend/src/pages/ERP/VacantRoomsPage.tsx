@@ -8,10 +8,10 @@ import { Button } from "../../components/button";
 import {
   getVacantRooms,
   VACANT_DAY_OPTIONS,
+  VACANT_SLOT_COUNT,
+  VACANT_SLOT_LABELS,
   type VacantRoomsResult,
 } from "../../lib/erp/vacantRoomsApi";
-
-const SLOT_COUNT = 8;
 
 // Ghost pills mirror the shape vacant rooms render as once coverage exists,
 // so the empty state points at where results will appear rather than at a
@@ -77,7 +77,7 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
     };
   }, [day, slot, refreshTrigger]);
 
-  const tryNextSlot = () => setSlot((prev) => (prev + 1) % SLOT_COUNT);
+  const tryNextSlot = () => setSlot((prev) => (prev + 1) % VACANT_SLOT_COUNT);
 
   return (
     <ErpPageShell
@@ -122,14 +122,11 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
               className="min-h-9 rounded-lg border px-3 py-2 text-sm font-normal"
               style={{ borderColor: "var(--comp-border)", color: "var(--comp-text-primary)" }}
             >
-              {Array.from({ length: SLOT_COUNT }, (_, index) => {
-                const startHour = 9 + index;
-                return (
-                  <option key={index} value={index}>
-                    Slot {index + 1} · {index === 7 ? "4:00–5:30 pm" : `${startHour}:00–${startHour}:50`}
-                  </option>
-                );
-              })}
+              {VACANT_SLOT_LABELS.map((label, index) => (
+                <option key={index} value={index}>
+                  Slot {index + 1} · {label}
+                </option>
+              ))}
             </select>
           </label>
         </div>

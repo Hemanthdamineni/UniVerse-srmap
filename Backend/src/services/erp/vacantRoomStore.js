@@ -4,14 +4,14 @@ const fs = require("fs");
 
 const DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const SLOT_TIMES = [
-  "09:00–09:50",
-  "10:00–10:50",
-  "11:00–11:50",
-  "12:00–12:50",
-  "13:00–13:50",
-  "14:00–14:50",
-  "15:00–15:50",
-  "16:00–17:30",
+  "9:00 am – 9:50 am",
+  "10:00 am – 10:50 am",
+  "11:00 am – 11:50 am",
+  "12:00 pm – 12:50 pm",
+  "1:00 pm – 1:50 pm",
+  "2:00 pm – 2:50 pm",
+  "3:00 pm – 3:50 pm",
+  "4:00 pm – 5:30 pm",
 ];
 
 function normalizeDay(day) {

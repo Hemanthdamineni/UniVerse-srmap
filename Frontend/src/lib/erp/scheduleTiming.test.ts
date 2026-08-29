@@ -11,7 +11,7 @@ const at = (h: number, m: number) => new Date(2026, 7, 22, h, m);
 describe("deriveSlotStatus", () => {
   it("marks slots live within their window", () => {
     expect(deriveSlotStatus(TODAY, 0, at(9, 30))).toBe("Live");
-    // Slot 8 is the long lab window (16:00–17:30).
+    // Slot 8 is the long lab window (4:00 pm – 5:30 pm).
     expect(deriveSlotStatus(TODAY, 7, at(17, 15))).toBe("Live");
   });
 

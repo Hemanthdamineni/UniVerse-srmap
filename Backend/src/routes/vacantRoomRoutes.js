@@ -29,8 +29,8 @@ function createVacantRoomRoutes({ vacantRoomStore }) {
         day = DAY_ORDER.includes(weekday) ? weekday : "monday";
 
         const minutesSinceMidnight = ist.getHours() * 60 + ist.getMinutes();
-        const startsAt = [540, 600, 660, 720, 780, 840, 900, 960]; // 09:00..16:00
-        const endsAt = [590, 650, 710, 770, 830, 890, 950, 1050]; // :50 ends, lab until 17:30
+        const startsAt = [540, 600, 660, 720, 780, 840, 900, 960]; // 9:00 am .. 4:00 pm
+        const endsAt = [590, 650, 710, 770, 830, 890, 950, 1050]; // :50 ends, lab until 5:30 pm
         slotIndex = startsAt.findIndex((start, i) => minutesSinceMidnight >= start && minutesSinceMidnight <= endsAt[i]);
         if (slotIndex === -1) slotIndex = minutesSinceMidnight < startsAt[0] ? 0 : 7;
       }
