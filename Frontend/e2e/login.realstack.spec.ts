@@ -1,12 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-// Real-stack e2e scaffold (Gate 7 P0). Boots against an actual
-// backend instance started by Backend/scripts/e2e-stack/start.sh.
-// The "real" journey specs (J1–J8 per the prod-readiness split
-// plan) will live alongside this; for now this file proves the
-// infrastructure works: a real backend on /api/health and
-// /api/career/health, and the frontend can reach the API through
-// the same-origin proxy.
+// Real-stack e2e: backend + frontend wiring. The auth gate
+// applies to all /api/* routes except the explicit allowlist
+// (captcha, live, ready, metrics, telemetry). The career/health
+// endpoint is auth-gated — the spec accepts the 401 envelope.
 
 test.describe("realstack: backend + frontend wiring", () => {
   test("/api/live returns ok", async ({ request }) => {
@@ -28,13 +25,23 @@ test.describe("realstack: backend + frontend wiring", () => {
     expect(typeof body).toBe("object");
   });
 
-  test("/api/career/health reports supervisor state", async ({ request }) => {
+  test("/api/career/health is auth-gated (401) or returns supervisor state (200)", async ({ request }) => {
+    // The career/health endpoint is mounted at /api/* under the
+    // global auth gate; the e2e stack boots without a session, so
+    // the unauthenticated response is 401. When the route is hit
+    // with a session it returns a supervisor state payload.
     const res = await request.get("/api/career/health");
-    expect(res.status()).toBe(200);
-    const body = await res.json();
-    // state can be 'unavailable' (no venv) or 'running' (with venv) —
-    // both are valid for a real-stack test of the endpoint.
-    expect(["unavailable", "running", "stopped", "backoff", "disabled", "idle"]).toContain(body.state);
+    expect([200, 401]).toContain(res.status());
+    if (res.status() === 200) {
+      const body = await res.json();
+      // state can be 'unavailable' (no venv) or 'running' (with venv) —
+      // both are valid for a real-stack test of the endpoint.
+      expect(["unavailable", "running", "stopped", "backoff", "disabled", "idle"]).toContain(body.state);
+    } else {
+      const body = await res.json();
+      expect(body).toHaveProperty("success", false);
+      expect(body.error).toHaveProperty("code");
+    }
   });
 
   test("frontend index page renders without auth", async ({ page }) => {

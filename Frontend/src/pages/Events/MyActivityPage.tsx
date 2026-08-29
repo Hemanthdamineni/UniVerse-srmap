@@ -86,14 +86,8 @@ export default function MyActivityPage() {
     [events],
   );
   const competitionBreakdown: ScoreBreakdown = scoreBreakdown ?? {
-    score: fallbackScore.score,
+    ...fallbackScore,
     headlineBand: scoreError ? "Live score unavailable" : "Updating…",
-    dimensions: fallbackScore.dimensions.map((dim) => ({
-      ...dim,
-      bandLabel: dim.band,
-      progressPct: dim.max > 0 ? Math.round((dim.points / dim.max) * 100) : 0,
-    })),
-    meta: fallbackScore.meta as Record<string, unknown>,
   };
 
   function setTab(tab: TabId) {
