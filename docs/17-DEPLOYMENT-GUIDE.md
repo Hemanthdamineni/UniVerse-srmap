@@ -156,6 +156,24 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
    - **Run a low-cost background job that uses some CPU/network/memory continuously.** A `cron` that pings `/api/live` every 5 minutes counts as network activity; a periodic `sqlite3 .integrity_check` counts as CPU+disk activity. The §12.a logrotate and §12½.b PRAGMA cron together are enough to keep the VM above 20% utilization on quiet days.
    - **Don't stop the VM.** If you stop/start the VM, the 7-day window resets, but the VM also loses its public IP (unless reserved) and the §8.5 cert renewal may fail. Better to keep it running and let the cron work.
 
+   **Alert when utilization approaches the reclamation threshold.** The 7-day window is silent — Oracle doesn't email saying "your VM will be reclaimed in 3 days." Add a daily cron that alerts you when 24-hour CPU/network/memory averages drop below 25% (5% headroom):
+
+   ```bash
+   # /opt/erp-platform/vm-idle-check.sh
+   #!/bin/bash
+   set -euo pipefail
+   CPU=$(oci monitoring metric get --namespace oci_computeagent --name CpuUtilization \
+     --compartment-id "$COMPARTMENT_OCID" --instance-id "$INSTANCE_ID" \
+     --start-time "$(date -u -d '24 hours ago' +%FT%TZ)" --end-time "$(date -u +%FT%TZ)" \
+     --resolution 1h --query 'data[0].aggregatedDatapoints[0].value // 100' 2>/dev/null || echo 100)
+   if (( $(echo "$CPU < 25" | bc -l) )); then
+     curl -fsS -m 10 "https://hc-ping.com/${HC_RECLAMATION_URL##*/}/fail" \
+       -d "VM 24h CPU avg: ${CPU}% (Oracle reclaims at <20% sustained 7d)" || true
+   fi
+   ```
+
+   Add `HC_RECLAMATION_URL=https://hc-ping.com/REPLACE-WITH-RECLAMATION-UUID` to `.env` alongside the other `HC_*` URLs. **Without this alert, the reclamation is silent.** With it, you get a 5-6 day warning.
+
    **Other Always Free services you can claim on the same tenancy (won't affect the ARM VM budget):**
    - **2× AMD E2.1.Micro** (x86, 1/8 OCPU / 1 GB each) — too small for the backend. Useful for a §1B standby in a different region/AD if you want true cross-region failover within Oracle, or for the §30 separate scraper VM.
    - **2× Oracle Autonomous AI Database** (20 GB each) — managed Postgres-compatible, useful for the §17.c Postgres migration target without needing a second VM
@@ -220,6 +238,33 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
    # In /etc/ssh/sshd_config: PasswordAuthentication no, PermitRootLogin no
    sudo systemctl restart ssh
    ```
+
+   **6a. Install fail2ban.** Even with `PasswordAuthentication no`, fail2ban rate-limits per-source-IP connection attempts. This catches stolen-key probes, keeps `auth.log` clean, and provides a second line of defense in case `PasswordAuthentication no` is ever accidentally turned off.
+
+   ```bash
+   sudo apt-get install -y fail2ban
+   sudo tee /etc/fail2ban/jail.local <<'EOF'
+   [sshd]
+   enabled  = true
+   port = ssh
+   maxretry = 3
+   findtime = 600
+   bantime  = 3600
+   EOF
+   sudo systemctl enable --now fail2ban
+   ```
+
+   If you've adopted §39 (Tailscale) and ufw is restricted to the Tailscale interface, fail2ban is belt-and-braces — keep it anyway, it costs nothing.
+
+   **6b. Use a dedicated operator SSH key — NOT the Oracle console key, and NOT the same key as the §10 deploy key.** Generate a fresh ed25519 per device you SSH from (laptop, phone, teammate's laptop). Don't copy private keys between devices.
+
+   ```bash
+   # On the operator's laptop, not the VM:
+   ssh-keygen -t ed25519 -C "operator-laptop@$(hostname)" -f ~/.ssh/oracle_operator -N ""
+   ssh-copy-id -i ~/.ssh/oracle_operator.pub ubuntu@<vm-tailscale-ip>
+   ```
+
+   The §10 deploy key (`github_deploy`, on the VM only, used by the §14 self-hosted runner) is a **separate** key. Different purpose, different key, different host. **Rotate the operator key yearly** by removing the old public key from `~/.ssh/authorized_keys` on the VM and adding the new one.
 7. **Verify time sync.** A wrong system clock invalidates cookies, certs, captcha TTL, and Playwright session windows — silently:
    ```bash
    timedatectl show
@@ -365,9 +410,11 @@ services:
     tmpfs:
       - /tmp:size=200M,mode=1777    # bounded tmpfs, prevents disk-full from /tmp abuse
     healthcheck:
-      # The repo's existing root compose uses `wget --spider ...` — but `wget` is NOT in
-      # the `node:22-bookworm-slim` base image, so that healthcheck fails silently and
-      # Caddy never starts. Use the node-based check below.
+      # The repo's existing root compose uses `wget --spider ...`. The project's
+      # Backend/Dockerfile installs `wget` via apt-get, so the wget-based check
+      # would work — but the node-based check below is portable to any upstream
+      # image (e.g., a custom distroless image that doesn't ship wget) and is
+      # the safer choice. Keep the node-based check.
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/live', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
@@ -503,6 +550,20 @@ srmaperp.duckdns.org {
     header X-Content-Type-Options "nosniff"
     header Referrer-Policy "strict-origin-when-cross-origin"
     header X-Frame-Options "DENY"
+
+    # v15: Content-Security-Policy. Vite-built frontend has no inline scripts,
+    # so a strict policy is achievable. If you later add an analytics snippet
+    # that needs 'unsafe-inline', revise this. The Sentry domains in
+    # connect-src allow Sentry's error-reporting tunnel.
+    header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://sentry.io https://*.ingest.sentry.io; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+    # v15: Permissions-Policy — turn off browser features the app doesn't use.
+    header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+
+    # v15: HSTS preload is a one-way commitment. Only enable on a stable,
+    # owned domain (not trycloudflare.com). On yourdomain.com, change the
+    # HSTS line above to: max-age=31536000; includeSubDomains; preload
+    # Then submit at https://hstspreload.org/
 
     # Force the PWA's index.html to never be served from a stale cache
     # by a service worker or browser cache. This is the cheap fix for
@@ -744,6 +805,19 @@ LOKI_PASSWORD=REPLACE-WITH-API-KEY
 # Sentry (for §13.b error tracking)
 SENTRY_DSN_BACKEND=https://REPLACE-WITH-KEY@REPLACE-WITH-ORG.ingest.sentry.io/REPLACE-WITH-PROJECT
 SENTRY_DSN_FRONTEND=https://REPLACE-WITH-KEY@REPLACE-WITH-ORG.ingest.sentry.io/REPLACE-WITH-PROJECT
+
+# R2 + rclone crypt (for §12 encrypted backups)
+# Generate with: openssl rand -base64 32
+# Save both to your password manager. Losing them = total backup loss.
+R2_ACCESS_KEY_ID=REPLACE-WITH-R2-ACCESS-KEY
+R2_SECRET_ACCESS_KEY=REPLACE-WITH-R2-SECRET-KEY
+R2_ACCOUNT_ID=REPLACE-WITH-CLOUDFLARE-ACCOUNT-ID
+RCLONE_CRYPT_PASSWORD=REPLACE-WITH-32-BYTE-BASE64
+RCLONE_CRYPT_PASSWORD2=REPLACE-WITH-DIFFERENT-32-BYTE-BASE64
+
+# OCI for §12½.e VM snapshot and §3 reclamation-rule alert
+COMPARTMENT_OCID=ocid1.tenancy.oc1..REPLACE
+INSTANCE_ID=ocid1.instance.oc1..REPLACE
 ```
 
 ### 9½. Frontend `.env.production` (separate file, baked at build time)
@@ -853,7 +927,11 @@ cat ~/.ssh/github_deploy.pub
 #    Repo → Settings → Deploy keys → Add deploy key
 #    Title: "oracle-free-arm-deploy"
 #    Key: <paste from step 2>
-#    ☑ Allow write access  (only if §14 self-hosted runner pushes to main)
+#    ☐ Allow write access  (LEAVE UNCHECKED — the §14 deploy workflow
+#       uses `actions/checkout@v4` for `git pull` and never pushes
+#       back. A write-capable deploy key on a self-hosted runner is
+#       one compromised runner away from arbitrary code in your repo.
+#       Principle of least privilege: read-only is the default.)
 #    Click "Add key"
 
 # 4. Configure SSH to use this key for github.com
@@ -1016,14 +1094,12 @@ Everything else in this guide is well-trodden. These two are not — verify both
 
 Playwright supports Linux ARM64, but confirm it actually works on this specific image before relying on it.
 
-**First, install Playwright in the backend image** (the base `node:22-bookworm-slim` does not include it):
+**First, verify Playwright is installed in the backend image.** The repo's `Backend/Dockerfile` already runs `npx playwright install --with-deps chromium` at build time, and `playwright` is in `Backend/package.json` (production dependency). The v6 doc recommended a manual `npm install` step inside the container, but the image already has it. **Skip the manual install; just run the launch test directly.**
+
+If for some reason Playwright is missing (e.g., you built a custom image without that Dockerfile step):
 
 ```bash
-# Option A: add to the Dockerfile (preferred for repeatability)
-# In Backend/Dockerfile, add before the final CMD:
-#   RUN npm install --no-save playwright@1.49.0 && npx playwright install --with-deps chromium
-
-# Option B: install at runtime (faster for one-off testing)
+# One-time fix inside the container
 docker compose exec backend npm install --no-save playwright@1.49.0
 docker compose exec backend npx playwright install --with-deps chromium
 ```
@@ -1113,9 +1189,26 @@ Caddy is unaffected (it doesn't talk to the ERP). The `NO_PROXY` list keeps intr
 # One-time: rclone is already installed via §5 (apt). Configure the R2
 # remote non-interactively by writing the config file directly (the
 # interactive `rclone config` doesn't work in scripts/agents).
+#
+# v15 fix: rclone crypt layer between the local tarball and R2. Without
+# this, the plaintext tarball (with student PII, submissions, captcha
+# bypass data) is uploaded to R2. If the R2 API token leaks, the
+# attacker reads every backup. rclone crypt encrypts the file locally
+# before upload; the R2 server only sees ciphertext.
+#
+# Generate the two passwords with: openssl rand -base64 32
+# Save both to your password manager (label "rclone crypt salt" and
+# "rclone crypt password2"). If you lose them, all encrypted backups
+# are unreadable — total data loss.
 mkdir -p /opt/erp-platform/infra
 cat > /opt/erp-platform/infra/rclone.conf <<EOF
-[r2]
+[encrypted-r2]
+type = crypt
+remote = r2-plain:your-bucket-name
+password = ${RCLONE_CRYPT_PASSWORD}
+password2 = ${RCLONE_CRYPT_PASSWORD2}
+
+[r2-plain]
 type = s3
 provider = Cloudflare
 access_key_id = ${R2_ACCESS_KEY_ID}
@@ -1124,8 +1217,10 @@ endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
 no_check_bucket = true
 EOF
 chmod 600 /opt/erp-platform/infra/rclone.conf
-# Always invoke rclone with --config /opt/erp-platform/infra/rclone.conf
-# OR export RCLONE_CONFIG=/opt/erp-platform/infra/rclone.conf in the script.
+# Add to .env:
+#   RCLONE_CRYPT_PASSWORD=<base64>
+#   RCLONE_CRYPT_PASSWORD2=<base64>
+# Every rclone command below uses the [encrypted-r2] remote, NOT [r2-plain].
 
 # /opt/erp-platform/backup.sh
 #!/bin/bash
@@ -1157,12 +1252,21 @@ done
 
 # v14 fix: tar the entire /app/data dir (one tarball, not two) so the
 # uploads/events/submissions/certificates dirs are included.
-tar -czf "$BACKUP_DIR/../backup-$TS.tar.gz" -C /opt/erp-platform data
-rclone copy "$BACKUP_DIR/../backup-$TS.tar.gz" r2:your-bucket-name/backups/
+# Exclude .backup-staging so the tarball doesn't include the in-progress
+# .backup files (which would defeat the purpose of using sqlite3 .backup
+# over a raw tar — the staging dir is meant to be ephemeral).
+tar -czf "$BACKUP_DIR/../backup-$TS.tar.gz" \
+  -C /opt/erp-platform \
+  --exclude='data/.backup-staging' \
+  data
+# Upload to the encrypted-r2 remote (NOT r2-plain). The remote is
+# rclone crypt wrapping r2-plain, so the .tar.gz is encrypted locally
+# before being PUT to R2. R2 only sees ciphertext.
+rclone copy "$BACKUP_DIR/../backup-$TS.tar.gz" encrypted-r2:backups/
 rm -rf "$BACKUP_DIR" "$BACKUP_DIR/../backup-$TS.tar.gz"
 
 # Success ping (Healthchecks.io); the URL is in .env
-curl -fsS -m 10 --retry 5 "${ALERT_WEBHOOK_URL:-https://hc-ping.com/INVALID}" >/dev/null 2>&1 || true
+curl -fsS -m 10 --retry 5 "${HC_BACKUP_URL:-https://hc-ping.com/INVALID}" >/dev/null 2>&1 || true
 ```
 
 ```bash
@@ -1188,14 +1292,19 @@ sudo tee /etc/logrotate.d/erp-backend <<'EOF'
     # USER node to the Dockerfile, but until that's applied, the log
     # file is owned by root). Adjust if you've customized the Dockerfile.
     create 0640 root root
-    sharedscripts
-    postrotate
-        # The /app/data path is INSIDE the container; from the host we
-        # need the bind-mount path. USR1 tells the logger to re-open
-        # the file descriptor so it doesn't keep writing to the rotated
-        # (truncated) file.
-        docker compose -f /opt/erp-platform/docker-compose.yml kill -s USR1 backend
-    endscript
+    # copytruncate is safer than the v6 postrotate USR1 signal: it copies
+    # the file then truncates the original, so the backend's open file
+    # descriptor keeps writing to the same inode (no need for a signal
+    # handler in the backend, which the current logger doesn't implement).
+    # Trade-off: a brief gap of zero bytes can occur between copy and
+    # truncate — acceptable for a Node.js log file.
+    copytruncate
+    # If you confirm the backend's logger handles SIGHUP or SIGUSR1 to
+    # re-open the file, switch to:
+    #   postrotate
+    #       docker compose -f /opt/erp-platform/docker-compose.yml kill -s USR1 backend
+    #   endscript
+    # But for an unofficial site, copytruncate is the path of least surprise.
 }
 EOF
 ```
@@ -1354,10 +1463,12 @@ BUCKET=r2:your-bucket/backups
 WORK=/tmp/restore-test
 rm -rf "$WORK" && mkdir -p "$WORK"
 
-# rclone lsf --format "tp" outputs one line per file:
-#   2026-08-29 03:00:00 backup-2026-08-29.tar.gz
-# Three columns: date, time, path. The path is column 3.
-LATEST=$(rclone lsf --format "tp" "$BUCKET" 2>/dev/null | sort -k1,2 | tail -1 | awk '{print $3}')
+# rclone lsf --format "p" outputs one line per object, just the path.
+# This is safer than "--format tp" (timestamp + path) because the timestamp
+# contains a space, which makes column-counting fragile across rclone versions.
+# BUCKET points at the encrypted-r2 remote so the listing is over plaintext
+# filenames (rclone crypt transparently decrypts for directory listing).
+LATEST=$(rclone lsf --format "p" --sort-by name encrypted-r2:backups/ 2>/dev/null | tail -1)
 if [ -z "$LATEST" ]; then
   echo "RESTORE TEST FAILED: no backups found in $BUCKET" >&2
   curl -X POST "$ALERT_WEBHOOK_URL" -d "{\"text\":\"Restore test: no backups found in $BUCKET\"}" || true
@@ -1491,7 +1602,43 @@ The v3 doc's monitoring was "UptimeRobot + Oracle console." That tells you when 
 
 For each: sign up with your GitHub account, link the repo where applicable, save the API tokens to your password manager. **Do this in one sitting, before configuring anything** — if you skip a service, you'll discover you need it during an incident and have to context-switch.
 
+**Enable 2FA (TOTP, not SMS) on every account in this table before doing anything else.** SMS-based 2FA is bypassable via SIM swap; TOTP-based 2FA in an authenticator app is the floor. Use a separate TOTP secret per service. A phishing-resistant authenticator app (Aegis, Raivo, 1Password's built-in TOTP) stores them encrypted at rest. **The single most important 2FA is on the Cloudflare account** — anyone with Cloudflare account access can rotate your API token and lock you out, or point the domain at their own server.
+
 The §13.b through §13.g sections below assume these accounts exist. If you're following the guide, set aside 30 minutes at the start of §13 to do the account creation.
+
+### 13.0. Alert routing matrix (which service fires for which failure)
+
+The five monitoring services each fire under different conditions. Knowing **which alert comes from which service** is what lets you triage in under a minute instead of opening five dashboards.
+
+| Failure mode | Alerting service | Channel | What the alert says |
+|---|---|---|---|
+| VM unreachable /5xx from Caddy | **UptimeRobot** | email (free tier) | "Monitor down: app.yourdomain.com/api/live" |
+| `/api/career/health` failing or SRM AP ERP unreachable | **Better Stack** | email + status page auto-update | "Monitor down: career-health" or "SRM AP ERP HEAD failed" |
+| Backend cron didn't run (backup, integrity, restore-test, cert-expiry, logrotate, R2-size) | **Healthchecks.io** | email + Slack/webhook if configured | "Check 'backup' is DOWN — last ping was >24h ago" |
+| Unhandled exception in backend or frontend code | **Sentry** | email (only if you configure Sentry's alert rules — see §13.b) | "Sentry: 50 new errors in backend in the last hour" |
+| Metric threshold breach (p95 latency, 5xx rate, disk %, memory %, CPU %) | **Grafana Cloud** | email + Slack/webhook via Alerting | "Grafana Alert: backend p95 latency > 2s for 10m" |
+
+**Default routing for a 1-person deploy:** wire all five to the same email address (your personal Gmail). When you get paged, the **sender** tells you the failure class. When you add a second contributor (§35.e), split into per-failure-mode Slack channels (`#alerts-server-down`, `#alerts-data-integrity`, `#alerts-app-errors`) so the right person can mute what isn't theirs.
+
+**Why this matters:** without this matrix, the operator opens Grafana when UptimeRobot fires (wasting 10 minutes before checking the obvious), or opens Sentry when Healthchecks fires (and finds no application error, just a cron that didn't run). Routing is the cheap part; identifying which alert is which is the win.
+
+### 13.0-baseline. What "normal" looks like at 1k concurrent users
+
+Every alert threshold is a guess without a baseline. These numbers are steady-state for a healthy deploy; deviations from these are what you alert on.
+
+| Metric | Normal range at 1k concurrent | Alert threshold | Rationale |
+|---|---|---|---|
+| Backend p95 latency (per route, excluding captcha) | 80–250 ms | > 2 s sustained 10 min | §17.a "revisit now" trigger |
+| Captcha login flow latency | 2–6 s | > 15 s sustained 10 min | `ERP_LIVE_TIMEOUT_MS` ceiling |
+| Backend 5xx error rate | < 0.5% | > 1% sustained 5 min | Sentry should also fire |
+| Memory used (Node process) | 350–600 MB | > 1.5 GB sustained 5 min | OOM at 11.5 GB; §13.i-memory |
+| `/app/data` disk used | 2–8 GB (post-logrotate) | > 70% of 100 GB | §17.a "revisit now" trigger |
+| VM 95th-percentile CPU | 5–25% (varies by traffic) | > 80% sustained 1 hr | Inverse of reclamation threshold |
+| Captcha login failure rate | < 10% | > 30% sustained 1 hr | §11b IP reputation regression |
+| Backup cron ping | Once per night at 03:00 | Missed by 04:00 next day | §12 backup failure |
+| Cert days remaining | 6 days (Let's Encrypt) | < 2 days | §13.h, after §25 threshold drop |
+
+Set Grafana Cloud alert thresholds against the third column. If you never see an alert fire for a week, the threshold is too loose; if you see one fire daily, it's too tight.
 
 ### 13.a. Synthetic uptime (UptimeRobot, free)
 
@@ -1507,6 +1654,17 @@ Sentry's free Developer tier gives 5,000 errors/month and 10,000 events/month. M
 
 What this gives you: when a student reports "the dashboard is broken," you look at Sentry, see the exact stack trace and the 50 other students who hit it in the last hour, and fix it. Without Sentry, you're SSHing in and grepping `backend.log` blind.
 
+**⚠ Configure Sentry's alert rules in the UI** — capturing errors is not the same as being notified about them. Sentry's free tier silently logs errors in the dashboard by default. To get emails:
+
+1. Sentry UI → Settings → Alerts → New Alert Rule.
+2. Condition: "Number of errors" > 10 in 5 minutes (avoids alerting on one-off client-side JS errors).
+3. Action: "Send a notification to" → your email (free tier).
+4. Scope: set to your backend project.
+
+For the frontend, set a separate rule with a higher threshold (50 errors in 5 minutes) — frontend errors are noisier due to flaky networks and PWA service-worker quirks.
+
+**Verify it's working:** trigger a test error from the backend (`curl http://localhost:5000/api/__throw__` after adding a route that always throws) and confirm you receive an email within 5 minutes. **Without this step, Sentry captures errors but you don't know until you SSH in and grep logs.** This is the single most common misconfiguration in Sentry setups.
+
 ### 13.c. Status page (Betterstack or Hyperping, free)
 
 Students will assume the app is down when the SRM AP ERP is down (because the captcha login is part of your UX). A status page makes that visible:
@@ -1519,6 +1677,13 @@ Students will assume the app is down when the SRM AP ERP is down (because the ca
 - Embed a link in your app's footer so students can check before opening a ticket.
 
 This is the single biggest "feels professional" addition you can make. Students have seen status pages on every other service they use; not having one signals "this is a class project."
+
+**Make the page public and add subscribers — a status page nobody visits isn't a status page.**
+
+1. **Public access:** Better Stack UI → Status pages → your page → Settings → "Allow public access" → ON. Without this, only logged-in users see the page.
+2. **Add email subscribers:** Settings → Subscribers → "Add subscriber" → your team's email list. Free tier allows unlimited subscribers but emails are rate-limited to ~100/day.
+3. **Slack webhook (optional):** Better Stack supports Slack on the free tier. Wire to `#status-page` channel.
+4. **Embed the link** in your app's footer so students can check before opening a ticket. **Without subscribers, the status page exists at a URL nobody knows about and updates silently.**
 
 ### 13.d. Log aggregation (Grafana Cloud free tier)
 
@@ -2036,10 +2201,12 @@ fi
 # Use the rclone.conf from infra/, not the user's interactive config.
 export RCLONE_CONFIG=/opt/erp-platform/infra/rclone.conf
 
-# Sanity-check rclone can talk to R2 (catches expired tokens before going further)
-if ! rclone lsd r2:your-bucket-name/ >/dev/null 2>&1; then
-  echo "FATAL: rclone cannot list r2:your-bucket-name/. Token may be expired." >&2
+# Sanity-check rclone can talk to R2 via the encrypted-r2 remote
+# (catches expired tokens AND wrong crypt passwords before going further)
+if ! rclone lsd encrypted-r2: 2>/dev/null; then
+  echo "FATAL: rclone cannot list encrypted-r2:/. Token may be expired or crypt password wrong." >&2
   echo "  Generate a new read-only R2 token in Cloudflare dashboard and update rclone.conf." >&2
+  echo "  Or regenerate RCLONE_CRYPT_PASSWORD if the crypt password is wrong." >&2
   exit 1
 fi
 
@@ -2077,15 +2244,21 @@ echo ">>> EDIT /opt/erp-platform/.env NOW with your password manager values, the
 # pre-baked secret manager.)
 
 echo "=== 4. Restore data (15-30 min depending on size) ==="
-# rclone lsf --format "tp" returns: "2026-08-29 03:00:00 backup-2026-08-29.tar.gz"
-# Three columns: date, time, path. Filename is column 3.
-LATEST=$(rclone lsf --format "tp" r2:your-bucket-name/backups/ 2>/dev/null | sort -k1,2 | tail -1 | awk '{print $3}')
+# rclone lsf --format "p" returns just the path per object, one per line.
+# Sort by name (which for backup-YYYY-MM-DD.tar.gz is also chronological)
+# and take the last (most recent) line. This is safer than --format "tp"
+# which produces "date time path" with a space-containing timestamp.
+# encrypted-r2:backups/ lists the plaintext filenames (rclone crypt
+# transparently decrypts for directory listing, not the ciphertext names).
+LATEST=$(rclone lsf --format "p" --sort-by name encrypted-r2:backups/ 2>/dev/null | tail -1)
 if [ -z "$LATEST" ]; then
-  echo "FATAL: no backups found in r2:your-bucket-name/backups/" >&2
+  echo "FATAL: no backups found in encrypted-r2:backups/" >&2
   exit 2
 fi
 echo "Restoring $LATEST..."
-rclone copyto "r2:your-bucket-name/backups/$LATEST" /tmp/restore/latest.tar.gz
+# rclone copyto through the encrypted-r2 remote: rclone reads ciphertext
+# from R2, decrypts locally, writes the plaintext .tar.gz to the destination.
+rclone copyto "encrypted-r2:backups/$LATEST" /tmp/restore/latest.tar.gz
 mkdir -p /tmp/restore && cd /tmp/restore && tar -xzf latest.tar.gz
 cp -a /tmp/restore/. /opt/erp-platform/data/ 2>/dev/null || true
 cd /opt/erp-platform
@@ -3292,6 +3465,20 @@ sudo tailscale ip -4  # gives you the Tailscale IP, e.g., 100.x.y.z
 ```
 
 **Free tier:** 100 devices, 1 user (you). For a personal project, this is plenty. For a multi-contributor setup, the §35.e onboarding step adds teammates to the Tailscale network.
+
+**Lock the tailnet down with an ACL** (the default is "every device can reach every other device on every port" — fine for you alone, problematic once you add a teammate). In the Tailscale admin console → Access Controls, replace the default with:
+
+```json
+{
+  "acls": [
+    { "action": "accept", "src": ["autogroup:admin"], "dst": ["tag:server:*"] },
+    { "action": "accept", "src": ["autogroup:admin"], "dst": ["autogroup:admin:*"] },
+    { "action": "deny",   "src": ["*"],            "dst": ["tag:server:*"] }
+  ]
+}
+```
+
+Then in the Tailscale admin → Machines view, click the VM → "Edit machine" → add the `server` tag. New teammates added to the tailnet via §35.e go into `autogroup:member` by default, which the ACL above does NOT include in the `src` list — they get tailnet access but no SSH to the VM. Add them to `autogroup:admin` only when you trust them with the VM.
 
 **The `oracle@` username in the example:** the Oracle Ubuntu 24.04 image creates a user named `ubuntu` (or whatever you specified at launch) — *not* `oracle`. The `oracle@` in the SSH example above assumes you created an `oracle` user per §3, or that you renamed `ubuntu` to `oracle`. If you didn't, replace `oracle@` with `ubuntu@` (or whatever your actual SSH user is). Use `whoami` to check after you SSH in.
 
