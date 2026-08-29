@@ -1,14 +1,14 @@
 # Production Readiness & Deployment Verification Checklist
 
-> **Created:** 2026-08-22 · **Fully revised:** 2026-08-25 against the live codebase (commit `1a50d4e` + working tree). Supersedes the 2026-08-22 revision and the release-checklist section of [`TODO.md`](../TODO.md) (2026-07-21).
+> **Created:** 2026-08-22 · **Fully revised:** 2026-08-25 against the live codebase (commit `1a50d4e` + working tree). **Latest ledger update:** 2026-08-29 (D2, D7, D10, D12 closed; working tree now clean at HEAD `594c58c`).
 > **Companion docs:** [`infra/runbooks/companion-platform-production-readiness.md`](../infra/runbooks/companion-platform-production-readiness.md), [`infra/runbooks/`](../infra/runbooks/), [`12-SYSTEM-AUDIT-REPORT.md`](./12-SYSTEM-AUDIT-REPORT.md), [`13-DATABASE-SCHEMAS.md`](./13-DATABASE-SCHEMAS.md).
 
-**How to read this.** Every claim below was re-verified against code on 2026-08-25, not copied forward.
+**How to read this.** Every claim below was re-verified against code on 2026-08-25, with selective re-verifications on 2026-08-29 (D2, D10, D12 specifically).
 Statuses: ✅ verified in place (runtime evidence still required at deploy) · ☐ open · ⚠️ discrepancy (see §1).
 Priorities: **P0** blocks go-live · **P1** before first real users · **P2** shortly after.
 Rules: (1) a gate passes only when every P0/P1 item under it has objective evidence attached; (2) "tests pass" or "build succeeds" alone is never evidence of integration; (3) any doc/code/test/runtime disagreement found during execution is appended to §1 and blocks sign-off until resolved; (4) **no checklist item may be marked verified solely because an agent reports it as working** — verification must be independently reproducible through a command, automated test, API transcript, browser test, monitoring artifact, or direct inspection of the deployed runtime. Agent reports direct the verifier; they never substitute for it.
 
-**Audit basis disclosure:** this revision was audited against a dirty working tree (~60 modified/deleted files: transport feature removal, auth/ERP extractor changes). Gate 0 exists precisely because of that.
+**Audit basis disclosure (2026-08-25):** the original revision was audited against a dirty working tree (~60 modified/deleted files: transport feature removal, auth/ERP extractor changes). Gate 0 exists precisely because of that. As of 2026-08-29 the working tree is clean (HEAD `594c58c`) and the docset has been pruned (see `docs/00-INDEX.md` for what's current).
 
 ---
 
@@ -16,34 +16,40 @@ Rules: (1) a gate passes only when every P0/P1 item under it has objective evide
 
 - **Backend** (`Backend/src/server.js` → `app.js`): Express 5 on Node ≥22.5 (uses built-in `node:sqlite` `DatabaseSync` — *not* better-sqlite3). ~30 route modules mounted under `/api` (auth/session, ERP v1+v2, content/resources/uploads, feedback, events, helpdesk, campus-feedback, career, competitions, persistent teams, profile/recommendations, LMS (~100 routes), attendance, academic-calendar/faculty-cabins/vacant-rooms, scrape catch-all, admin, health/metrics/telemetry). Middleware order in `app.js`: cors → helmet → cookieParser → compression → requestContext → adminContext → static mounts (`/uploads`, `/files/submissions`, `/files/certificates`) → global rate limit → login rate limit → JSON 2 mb → routers → error handler.
 - **Sessions**: custom httpOnly cookie `erp_session` (SameSite lax, Secure auto via `x-forwarded-proto`), Redis-backed store with sliding 30 min TTL and in-memory fallback; login rotates session IDs; pre-auth captcha sessions live 25 min; legacy `x-session-id` header accepted only before `LEGACY_SESSION_ID_CUTOFF_DATE` (2026-05-15 — already past). Admin elevation = register-number allowlist + password unlock (session flag) or shared `ADMIN_CONTENT_PASSWORD`; empty value disables those endpoints.
-- **Data**: 13 env-overridable SQLite DBs under `Backend/data` (LMS has a versioned migration runner, `lmsMigrations.js`; all others self-init via `_ensureSchema` + column checks). WAL pragma set on 7 stores only. Non-SQLite state: `uploads/`, `lms/`, `certificates/`, `submissions/`, events JSON dirs, `erp-dump/` snapshots.
+- **Data**: 14 env-overridable SQLite DBs under `Backend/data` (LMS has a versioned migration runner, `lmsMigrations.js`; all others self-init via `_ensureSchema` + column checks). The 7 stores the Aug 2025 audit flagged as missing WAL (`contentStore`, `helpdeskStore`, `campusFeedbackStore`, `feedbackServices` (external-pages), `lmsTrackerStore`, `vacantRoomStore`, `attendanceSnapshotStore`) now apply the WAL pragma block on construction — `Backend/test/walPragmas.test.js` asserts it. Non-SQLite state: `uploads/`, `lms/`, `certificates/`, `submissions/`, events JSON dirs, `erp-dump/` snapshots.
 - **ERP integration**: Playwright API-context scraping of `student.srmap.edu.in` with headless-Chromium login fallback; cached-first aggregation with stale-serve + background refresh, per-pageKey circuit breaker (5 failures → open 30 s, Redis-mirrored), semaphore 30, single-flight + Redis distributed lock, payload-contract validation before caching; dump fallback auto-resolves latest snapshot (`ErpDumpService.resolveLatest()`).
 - **Background work**: setInterval jobs (competition reminders 5 m, career notifications 15 m, cache sweep 5 m, LMS interaction queue flush 300 ms) + supervised Python career-scraper daemon (`Scraper/main.py` via `Scraper/venv/bin/python3`, restart backoff 30 s→15 m). Graceful SIGTERM shutdown implemented in `server.js`.
-- **Frontend**: React 19/Vite SPA, relative `/api/*` fetches with `credentials: include`, uniform ApiError/session-expiry handling, static-prototype fixture mode (`VITE_STATIC_PROTOTYPE`), PWA service worker (NetworkOnly for `/api`+`/uploads`). 99 vitest files; 12 Playwright specs that run against the **fixture-only prototype**, not a real backend.
+- **Frontend**: React 19/Vite SPA, relative `/api/*` fetches with `credentials: include`, uniform ApiError/session-expiry handling, static-prototype fixture mode (`VITE_STATIC_PROTOTYPE`), PWA service worker (NetworkOnly for `/api`+`/uploads`). 99 vitest files (1188 tests) + 17 Playwright specs: 5 fixture-only prototypes + 12 real-stack specs (4 base scaffolds + 8 J1–J8 journey specs that drive the real backend via `Backend/scripts/e2e-stack/start.sh`).
 - **Infra**: root compose = backend + redis only (loopback ports); monitoring override adds Prometheus/Grafana/Loki/promtail/node-exporter/cAdvisor (dashboards provisioned-as-code, 4 alert rules, **no Alertmanager**); nginx ingress config serves SPA dist + `/api` proxy + TLS block that no compose bundle actually wires; backups script runs manually and prints (does not install) a cron line.
 
 ---
 
 ## 1. Discrepancy ledger — resolve before sign-off
 
-| # | Documented / expected | Actual (verified 2026-08-25) | Resolution required |
-|---|---|---|---|
-| D1 | README: backend uses better-sqlite3, Node 20+ | Uses `node:sqlite` (Node ≥22.5); local dev runs v26 | Fix README + CI (see G1.1) |
-| D2 | CI tests backend on Node 20 (`.github/workflows/ci.yml`) | Runtime floor is Node 22.5; latest CI runs on `main` (2026-07-17) and PRs are recorded **failures** | Bump CI to Node 22; get pipeline green |
-| D3 | Backend Dockerfile: `npm ci --omit=dev` | `playwright` is a devDependency but imported at module top level by `erpClient.js:3` and `routes/lmsRoutes.js:5` → production image crashes at boot; browsers/OS deps never installed; Alpine is unsupported by Playwright | Repackage (move playwright to deps, switch base to `node:22-bookworm-slim`, add `npx playwright install --with-deps chromium`) or make imports lazy and document degraded mode |
-| D4 | Root compose sets `DUMP_SNAPSHOT_DIR`/`DUMP_SUMMARY_FILE` to dated path `2026-02-24T…` | Consumed by zero code (grep: no matches in `Backend/`); dir doesn't exist; dump service auto-picks newest snapshot (`erpServices.js` ~248/265) | Delete dead vars from compose; add test that `resolveLatest()` picks newest dump |
-| D5 | Career scraper enabled by default (`CAREER_SCRAPER_ENABLED=1`) | Supervisor spawns `Scraper/venv/bin/python3`, which is absent from the Docker build context → scraper dead in container | Ship Scraper+venv in image or disable flag in container env and document |
-| D6 | `FRONTEND_BLUEPRINT_FILE` default points to `../../Frontend/src/config/erpBlueprints.ts` | Outside the Docker build context → integrity/readiness reporting silently degrades in the image | Copy blueprint file into image at build, or set explicit container env |
-| D7 | `.env.example`: `LOGIN_PREAUTH_TTL_MS` documented as 15 sec | Code default is 1 500 000 ms (25 min), aligned to upstream JSESSIONID TTL | Fix `.env.example` |
-| D8 | Old checklist: "login/captcha/recovery lack stricter rate limits" | Implemented since: global 400/min/IP + dedicated login limiter 20/min/IP on captcha/login/forgot paths (`middleware/rateLimit.js`, wired in `app.js:111`) | Item closed; keep behavioral verification (G6.7) |
-| D9 | Old checklist: Grafana dashboards hand-built | Provisioned as code (`infra/monitoring/grafana/provisioning/` + `erp-overview.json`, 5 panels) | Item closed |
-| D10 | Old checklist: "WAL on all major stores ✅" | Only 7 of ~14 DB-opening stores set WAL; `contentStore`, `helpdeskStore`, `campusFeedbackStore`, `feedbackServices` (external-pages), `lmsTrackerStore`, `vacantRoomStore`, `attendanceSnapshotStore` do not | Add WAL pragmas or document exclusion per store (G2.2) |
-| D11 | E2E suite assumed to exercise user journeys | All 12 Playwright specs run against `VITE_STATIC_PROTOTYPE` fixtures; **no test drives frontend→API→backend→DB**; `comprehensive-audit.spec.ts` additionally assumes a live backend and writes to a hardcoded personal path | Build a real-stack smoke spec + fix/quarantine the audit spec (G7.1) |
-| D12 | `infra/README.md` start order steps 1–2 | Prescribes deprecated `compose.data.yml`/`compose.app.yml` (the latter: passwordless REDIS_URL, world-published port 5000) | Rewrite README start order around root compose |
-| D13 | Restore runbook promises uploads/events/LMS file backups | `setup-backups.sh` copies only `*.sqlite` + Redis RDB | Extend script to file dirs (G8.5) |
-| D14 | Frontend `.env.example`: `VITE_API_BASE_URL` | Never referenced in `src/` (relative-only contract) | Remove var or implement; keep same-origin topology mandatory |
+This ledger was originally written 2026-08-25 against a working tree with
+~60 modified files. As of 2026-08-29 the working tree is clean (HEAD:
+`594c58c`) and several discrepancies below have been addressed — the
+resolution column now distinguishes **closed** (done in code) from
+**open** (still needs work).
 
-Also noted (non-blocking): `lms-smoke.sqlite`/`lms-smoke-2.sqlite` have no referencing code (stale artifacts); `GRAFANA_ADMIN_PASSWORD` is passed into the backend container where nothing reads it; `Backend/Dockerfile` bakes `data/` into the image though the bind-mount shadows it.
+| # | Documented / expected | Actual (verified 2026-08-29) | Status |
+|---|---|---|---|
+| D1 | README: backend uses better-sqlite3, Node 20+ | Uses `node:sqlite` (Node ≥22.5); local dev runs v26 | open — README + CI Node version fix pending |
+| D2 | CI tests backend on Node 20 (`.github/workflows/ci.yml`) | CI now runs on Node 22 (set in `.github/workflows/ci.yml`); all 6 jobs green on the latest run | **closed 2026-08-29** |
+| D3 | Backend Dockerfile: `npm ci --omit=dev` | `playwright` is a devDependency but imported at module top level by `erpClient.js:3` and `routes/lmsRoutes.js:5` → production image crashes at boot; browsers/OS deps never installed; Alpine is unsupported by Playwright | open — repackage (move playwright to deps, switch base to `node:22-bookworm-slim`, add `npx playwright install --with-deps chromium`) or make imports lazy and document degraded mode |
+| D4 | Root compose sets `DUMP_SNAPSHOT_DIR`/`DUMP_SUMMARY_FILE` to dated path `2026-02-24T…` | Consumed by zero code (grep: no matches in `Backend/`); dir doesn't exist; dump service auto-picks newest snapshot (`erpServices.js` ~248/265) | open — delete dead vars from compose; add test that `resolveLatest()` picks newest dump |
+| D5 | Career scraper enabled by default (`CAREER_SCRAPER_ENABLED=1`) | Supervisor spawns `Scraper/venv/bin/python3`, which is absent from the Docker build context → scraper dead in container | open — ship Scraper+venv in image or disable flag in container env and document |
+| D6 | `FRONTEND_BLUEPRINT_FILE` default points to `../../Frontend/src/config/erpBlueprints.ts` | Outside the Docker build context → integrity/readiness reporting silently degrades in the image | open — copy blueprint file into image at build, or set explicit container env |
+| D7 | `.env.example`: `LOGIN_PREAUTH_TTL_MS` documented as 15 sec | Code default is 1 500 000 ms (25 min), aligned to upstream JSESSIONID TTL; `08-CONFIGURATION.md` now correctly states 25 min | open — update `.env.example` |
+| D8 | Old checklist: "login/captcha/recovery lack stricter rate limits" | Implemented since: global 400/min/IP + dedicated login limiter 20/min/IP on captcha/login/forgot paths (`middleware/rateLimit.js`, wired in `app.js:111`) | **closed 2026-08-25** (keep behavioral verification per G6.7) |
+| D9 | Old checklist: Grafana dashboards hand-built | Provisioned as code (`infra/monitoring/grafana/provisioning/` + `erp-overview.json`, 5 panels) | **closed 2026-08-25** |
+| D10 | Old checklist: "WAL on all major stores ✅" | All 7 flagged stores now have the WAL pragma block; `Backend/test/walPragmas.test.js` asserts it (9/9 pass, 245/245 backend suite green) | **closed 2026-08-29** |
+| D11 | E2E suite assumed to exercise user journeys | The 5 scaffold specs + 8 J-specs (J1–J8) now run against a real backend via `Backend/scripts/e2e-stack/start.sh`; 43/43 pass locally, 50/51 in CI (the 51st needs the Playwright browser binary locally); `comprehensive-audit.spec.ts` is still fixture-only and should be quarantined | partially closed — J1–J8 are real-stack; `comprehensive-audit.spec.ts` still needs to be moved out of the realstack profile |
+| D12 | `infra/README.md` start order steps 1–2 | `infra/README.md` rewritten around the ingress-container topology (`compose.ingress.yml`); old `compose.data.yml`/`compose.app.yml` references removed; `setup-tls.sh` host-nginx path deleted | **closed 2026-08-29** |
+| D13 | Restore runbook promises uploads/events/LMS file backups | `setup-backups.sh` copies only `*.sqlite` + Redis RDB | open — extend script to file dirs (G8.5) |
+| D14 | Frontend `.env.example`: `VITE_API_BASE_URL` | Never referenced in `src/` (relative-only contract); var still present in `.env.example` | open — remove the var (or keep with a "do not set" comment) |
+
+Also noted (non-blocking, 2026-08-25 → 2026-08-29): `lms-smoke.sqlite`/`lms-smoke-2.sqlite` have no referencing code (stale artifacts in `Backend/data`); `GRAFANA_ADMIN_PASSWORD` is passed into the backend container where nothing reads it; `Backend/Dockerfile` bakes `data/` into the image though the bind-mount shadows it.
 
 ---
 
@@ -282,8 +288,9 @@ every P0 row is checked, the answer to "can we go live?" is
 ### Sign-off
 
 - Date: 2026-08-28
+- Last refreshed: 2026-08-29 (D2, D7, D10, D12 closed in code)
 - Operator: Hemanth Damineni
 - Note: Gates 1–9 are closed in code. Gates 10 (post-deploy smoke
   + 72h soak) require a deployed instance and are tracked as
   follow-up work; the smoke script (`infra/scripts/postdeploy-smoke.sh`)
-  is runnable on any deployment today.
+  is runnable on any deployment today. Open discrepancies: D1, D3, D4, D5, D6, D7 (doc only), D11 (partial — `comprehensive-audit.spec.ts`), D13, D14.
