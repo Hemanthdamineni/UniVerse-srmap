@@ -242,6 +242,10 @@ jobs:
         run: |
           bash Backend/scripts/e2e-stack/start.sh up
 
+      - name: Install frontend deps
+        working-directory: Frontend
+        run: NODE_ENV=development npm ci --include=dev
+
       - name: Start frontend dev server (real-stack profile)
         working-directory: Frontend
         run: |
