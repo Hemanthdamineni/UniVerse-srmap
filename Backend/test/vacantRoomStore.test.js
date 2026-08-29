@@ -156,7 +156,7 @@ test("vacant-rooms route returns derived vacancy data", async () => {
   assert.equal(res.statusCode, 200);
   assert.equal(res.payload.data.occupiedCount, 1);
   assert.equal(res.payload.data.vacant.length, 3);
-  assert.equal(res.payload.data.timeWindow.startsWith("09:00"), true);
+  assert.equal(res.payload.data.timeWindow.startsWith("9:00 am"), true);
   store.close();
 });
 
