@@ -93,6 +93,8 @@ const UNIFIED_PROFILE_DB_PATH =
   process.env.UNIFIED_PROFILE_DB_PATH || path.join(__dirname, "../../data/unified-profile.sqlite");
 const COMPANION_ANALYTICS_DB_PATH =
   process.env.COMPANION_ANALYTICS_DB_PATH || path.join(__dirname, "../../data/companion-analytics.sqlite");
+const HOSTEL_BUDDY_DB_PATH =
+  process.env.HOSTEL_BUDDY_DB_PATH || path.join(__dirname, "../../data/hostel-buddy.sqlite");
 /** WARNING: ADMIN_CONTENT_PASSWORD MUST be configured via the environment variable.
  *  There is no safe fallback -- leaving it empty disables admin content access. */
 const ADMIN_CONTENT_PASSWORD =
@@ -221,6 +223,7 @@ module.exports = {
   LMS_TRACKER_DB_PATH,
   UNIFIED_PROFILE_DB_PATH,
   COMPANION_ANALYTICS_DB_PATH,
+  HOSTEL_BUDDY_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,

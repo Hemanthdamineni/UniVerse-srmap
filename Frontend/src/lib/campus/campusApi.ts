@@ -1124,3 +1124,167 @@ export async function moderateCampusFeedback(
     body: JSON.stringify(payload),
   });
 }
+
+// ── hostelBuddyApi ──────────────────────────────────────────
+
+export type HostelBuddyBlock = {
+  id: string;
+  label: string;
+  active: boolean;
+};
+
+export type HostelBuddyEntry = {
+  id?: string;
+  userId: string;
+  name: string;
+  email?: string;
+  department?: string;
+  roomNo: string;
+  blockId: string;
+  blockLabel: string;
+  hasContact: boolean;
+  updatedAt: string;
+  createdAt?: string;
+  contactInfo?: string | null;
+  isSelf?: boolean;
+};
+
+export type HostelBuddyGovernance = {
+  label: string;
+  owner: string;
+  routeNamespace: string;
+  retentionPolicy: string;
+};
+
+const STATIC_HOSTEL_BUDDY_BLOCKS: HostelBuddyBlock[] = [
+  { id: "block-a", label: "Block A", active: true },
+  { id: "block-b", label: "Block B", active: true },
+  { id: "block-c", label: "Block C", active: true },
+];
+
+const STATIC_HOSTEL_BUDDY_ENTRIES: HostelBuddyEntry[] = [];
+
+function findStaticBlock(blockId: string): HostelBuddyBlock | undefined {
+  return STATIC_HOSTEL_BUDDY_BLOCKS.find((block) => block.id === blockId);
+}
+
+function buildStaticHostelBuddyResponse() {
+  return {
+    items: STATIC_HOSTEL_BUDDY_BLOCKS,
+    governance: {
+      label: "Hostel Buddy Finder",
+      owner: "Student roommate discovery (campus community)",
+      routeNamespace: "/api/hostel-buddy",
+      retentionPolicy:
+        "Entries are retained until the student removes them or until the end of the academic session. Contact info is shared only with students in the same room and block.",
+    } satisfies HostelBuddyGovernance,
+  };
+}
+
+export async function getHostelBuddyGovernance(): Promise<HostelBuddyGovernance> {
+  if (isStaticPrototype()) {
+    return buildStaticHostelBuddyResponse().governance;
+  }
+  const data = await requestData<{ governance: HostelBuddyGovernance }>(
+    "/api/hostel-buddy/governance"
+  );
+  return data.governance;
+}
+
+export async function listHostelBuddyBlocks(): Promise<HostelBuddyBlock[]> {
+  if (isStaticPrototype()) return STATIC_HOSTEL_BUDDY_BLOCKS;
+  const data = await requestData<{ items: HostelBuddyBlock[] }>(
+    "/api/hostel-buddy/blocks"
+  );
+  return data.items;
+}
+
+export async function getMyHostelBuddy(): Promise<HostelBuddyEntry | null> {
+  if (isStaticPrototype()) {
+    return STATIC_HOSTEL_BUDDY_ENTRIES.find((entry) => entry.isSelf) || null;
+  }
+  const data = await requestData<{ entry: HostelBuddyEntry | null }>(
+    "/api/hostel-buddy/me"
+  );
+  return data.entry;
+}
+
+export async function submitHostelBuddy(payload: {
+  roomNo: string;
+  blockId: string;
+  contactInfo: string;
+}): Promise<HostelBuddyEntry> {
+  if (isStaticPrototype()) {
+    const block = findStaticBlock(payload.blockId);
+    const now = new Date().toISOString();
+    const entry: HostelBuddyEntry = {
+      userId: "prototype-student",
+      name: "You",
+      roomNo: payload.roomNo.trim().toUpperCase(),
+      blockId: payload.blockId,
+      blockLabel: block?.label || payload.blockId,
+      hasContact: Boolean(payload.contactInfo.trim()),
+      updatedAt: now,
+      createdAt: now,
+      contactInfo: payload.contactInfo.trim(),
+      isSelf: true,
+    };
+    const existingIndex = STATIC_HOSTEL_BUDDY_ENTRIES.findIndex(
+      (item) => item.isSelf
+    );
+    if (existingIndex >= 0) {
+      STATIC_HOSTEL_BUDDY_ENTRIES[existingIndex] = entry;
+    } else {
+      STATIC_HOSTEL_BUDDY_ENTRIES.push(entry);
+    }
+    return entry;
+  }
+  const data = await requestData<{ entry: HostelBuddyEntry }>(
+    "/api/hostel-buddy/me",
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }
+  );
+  return data.entry;
+}
+
+export async function removeHostelBuddy(): Promise<{ removed: boolean }> {
+  if (isStaticPrototype()) {
+    const existingIndex = STATIC_HOSTEL_BUDDY_ENTRIES.findIndex(
+      (item) => item.isSelf
+    );
+    if (existingIndex >= 0) {
+      STATIC_HOSTEL_BUDDY_ENTRIES.splice(existingIndex, 1);
+    }
+    return { removed: existingIndex >= 0 };
+  }
+  return requestData<{ removed: boolean }>("/api/hostel-buddy/me", {
+    method: "DELETE",
+  });
+}
+
+export async function listHostelBuddyMatches(): Promise<{
+  items: HostelBuddyEntry[];
+  governance: HostelBuddyGovernance;
+}> {
+  if (isStaticPrototype()) {
+    const self = STATIC_HOSTEL_BUDDY_ENTRIES.find((entry) => entry.isSelf);
+    const items = self
+      ? STATIC_HOSTEL_BUDDY_ENTRIES.filter(
+          (entry) =>
+            !entry.isSelf &&
+            entry.roomNo === self.roomNo &&
+            entry.blockId === self.blockId
+        )
+      : [];
+    return {
+      items,
+      governance: buildStaticHostelBuddyResponse().governance,
+    };
+  }
+  return requestData<{
+    items: HostelBuddyEntry[];
+    governance: HostelBuddyGovernance;
+  }>("/api/hostel-buddy/matches");
+}
