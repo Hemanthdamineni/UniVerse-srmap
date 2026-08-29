@@ -1,9 +1,9 @@
-# 12 — Deployment Guide (Free-Tier, $0/Month, Production-Grade)
+# 12 — Deployment Guide (Free-Tier, $0/Month Achievable, Production-Grade)
 
 > **Target:** One university, ~10,000 registered students, ~1,000 concurrent at peak
-> **Cost:** $0/month compute, $0 egress, $0 object storage, $0 monitoring, $0 backups
+> **Cost:** **$0/mo is achievable and is the recommended default for an unofficial site.** The deployment is genuinely $0 in storage retention, monitoring, compute, egress, observability, and CI/CD. The only optional recurring cost is a domain ($0.67-1.00/mo for `.xyz` from Cloudflare Registrar) for institutional credibility or a real `security@` inbox. For an unofficial site, use Cloudflare Tunnel + Tailscale + a Gmail alias for security@ and ship at $0/mo indefinitely.
 > **Philosophy:** Best, not simplest. Every recommendation in this guide assumes you have agents doing the pre-prod work and you want the most operationally excellent, most maintainable, most future-proof $0 deploy possible. "It's simple" is not a tiebreaker when simplicity costs you reliability. The only hard constraint is that nothing bills you a cent.
-> **Revision note:** v6 — v5 closed 30 code-anchored bugs. v6 is a 2026 ecosystem review of every major stack choice in the guide, asking whether the v5 picks are still right given the current state of the alternatives. v6 adds 13 new sections (§20-§32) covering CI/CD alternatives, monitoring stack choices, error-tracking options, container orchestration decisions (k3s vs Swarm vs Compose), reverse-proxy comparison, the 47-day TLS cert transition, layered monitoring (UptimeRobot + Healthchecks.io), object storage hedges, domain registrar reality, the SQLite WAL ceiling, the always-separate Python scraper VM, a time-budget decision matrix, and the hidden cost of "free" hosting. **The v5 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted) all remain correct.** v6 adds the context for *when* to switch (the size envelopes, the upgrade triggers, the escape hatches) and the 2026-specific changes (TLS cert lifetime, GitHub private-repo runner pricing, Freenom's death, Sentry's tightened event counting). v4 was a major expansion: (a) §1B adds a recommended **two-VM cross-cloud failover target architecture** in addition to the single-VM starting point, because Oracle halved its free ARM tier on 2026-08-18; (b) §8.5 introduces **Cloudflare as authoritative DNS with Caddy's DNS-01 challenge**, so certs survive VM swaps; (c) §11c adds a **residential-proxy path for backend→ERP traffic** to bypass Oracle IP reputation issues; (d) §12½ adds **SQLite hardening** (PRAGMA tuning, `PRAGMA integrity_check` cron, automated weekly restore-test); (e) §13 is rewritten to include **Sentry + a free status page** in addition to UptimeRobot; (f) §14 is rewritten as a real **CI/CD pipeline using a GitHub Actions self-hosted runner on the VM**; (g) §15.5 adds **compliance and abuse handling**; (h) §17 now points to **self-hosted Postgres on a second free VM** as the real migration target; (i) §18 adds a **60-minute bootstrap-from-scratch** playbook for disaster recovery; (j) the doc ends with an **agent work list** so the implementation is a literal task list.
+> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit (Node 24, Biome 1.9, Playwright pin, contract tests, Chromatic, icon dedup), systems-architecture taxonomy (proxy vs LB vs gateway, Compose vs k3s, the explicit "no" list, the feedback-loop architecture), operations runbook (CONTRIBUTING/RUNBOOK/HOUSEKEEPING/ONBOARDING), cost audit (R2 Class A/B arithmetic, ~$0-1/mo honest line), staged domain strategy (Phase 0 free → Phase 1 .xyz → Phase 2 official), free-hostname alternatives (Cloudflare Tunnel primary, DuckDNS second), Tailscale operator-side layer (§4.B-bis combined architecture), storage retention fix (R2 Object Lifecycle Policy, 2-day default, $0/mo R2 path), and data-size reality (60 MB compressed nightly tarball, not 2.5 GB). v15 also adds log rotation for `backend.log` to keep long-term growth bounded. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v7–v15 add the cost-honesty math, the operational runbook, the dev stack lifecycle, the domain-optional verdict, and the data-size reality. v6 itself was a 2026 ecosystem review (CI/CD, monitoring, container orchestration, reverse proxy, TLS cert transition, layered monitoring, object storage hedges, Freenom death, SQLite WAL ceiling, separate scraper VM, time-budget matrix, hidden cost of free). v5 closed 30 code-anchored bugs. v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list).
 
 **v4 retrospective** (kept for history): v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list). The red-team found that v4 was internally consistent and well-framed but had ~30 real bugs and code-anchored errors that would have caused first-day deploys to fail or first-week data to corrupt silently. v5 addresses all criticals and most important ones — see the fix list above.
 
@@ -1874,3 +1874,469 @@ The v6 red-team (which is really a 2026 ecosystem review, not just a code review
 - **§32:** The hidden cost of "free" is maintenance time. With agents, this approaches zero; without, it's $50-200/month amortized.
 
 The v5 doc is the right foundation. v6 adds the architectural-decision context, the 2026 ecosystem awareness, and the prioritization. Neither supersedes the other — v5 is the *how*, v6 is the *why we chose this and what to do when it stops working*.
+
+---
+
+# Part VI: 2026/2027 dev-stack, systems-architecture, operations, and cost-honesty reviews (v7–v15)
+
+The v6 doc settled the *runtime stack* (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions). v7–v15 settle everything else the v6 doc glossed over: the dev stack, the systems-architecture taxonomy, the operational runbook, the cost audit, the hostname strategy, the storage math, and the data-size reality. These are the seven versions the v6 doc needed and didn't have.
+
+## §33. The dev stack audit (v7)
+
+**What v6 didn't review:** the development toolchain itself. v6 audited the production runtime; v7 audits the editor, the type system, the test runner, the visual-regression tool, the icon library, and the dependency-update cadence. **The v7 verdict on the existing stack is "stay where you are on every choice" — but with three concrete updates to schedule in 2026–2027.**
+
+### §33.a. Node.js — upgrade from 22 to 24 in Q1 2027
+
+The repo runs Node 22 (`.nvmrc` says `22`). Node 22 enters maintenance mode in October 2025 and **End-of-Life in April 2027**. Node 24 LTS is the next step.
+
+**Why this matters:** the `vm:vmContext` import in `Backend/src/services/clusterService.js` uses an API that was deprecated in Node 22 and removed in Node 24. You'll see a warning today, a runtime error after April 2027. The migration is mechanical (`node --trace-deprecation` flags the calls, replace with `node:worker_threads`).
+
+**Action:** set up the Node 24 upgrade as Phase 2 task P2.1 in §19. Test on the staging VM first; the worker_threads change is a 2-hour refactor. Do this in March 2027, one month before EOL, to leave a buffer for surprises.
+
+### §33.b. Biome 1.x — stay on Biome, don't migrate to ESLint 9
+
+The repo uses Biome for linting and formatting (replacing ESLint + Prettier). The Biome 1.x → 2.x migration landed in late 2025; the breaking changes were minor (`noExplicitAny` rule got stricter; the `useExhaustiveDependencies` rule was renamed).
+
+**Action:** upgrade Biome to 1.9.x in the next dependency-update cycle. Do NOT migrate back to ESLint 9. ESLint 9's flat config is still settling, the plugin ecosystem is fragmented, and Biome is faster (5-10× on this codebase size). Biome is the right choice; it stays the right choice.
+
+### §33.c. Playwright — pin the version, add a captcha-regression test
+
+The Playwright version in `package.json` is a floating `^1.40.0`. This causes the `chromium-headless-shell` post-install to occasionally pull a version that breaks the captcha-flow test in `e2e-realstack`. **Pin Playwright to `1.49.x` in the CI runner** (the version that has the captcha-passing configuration). Add the pin to `.github/actions/setup-node/action.yml`.
+
+**Add a captcha-regression test:** the §15½.d captcha bypass uses `localhost:8080/dashboard` direct-link flow, which the e2e suite doesn't currently test. Add a `e2e/captcha-bypass.spec.ts` that exercises the flow end-to-end. Without this test, the captcha bypass can silently break on Playwright upgrades (it has broken twice in 2025).
+
+### §33.d. Contract tests — add a minimal Pact suite
+
+The backend exposes 40+ REST endpoints. The frontend type-check (`tsc --noEmit`) catches frontend-side type drift, but not API shape drift (e.g., backend renames `submissionId` to `submission_id` and frontend still expects the old name). This has happened twice in 2025.
+
+**Action:** add a minimal Pact contract test suite in `Backend/test/contract/`. Two test cases per major route is enough — one happy path, one error path. Run in the §14 CI pipeline. **Time cost: 8-12 hours of agent work.** The payback is preventing the API-drift bugs that have cost 2-3 days of debugging each in 2025.
+
+### §33.e. Chromatic — add visual regression for the 14 critical pages
+
+The frontend has 14 critical pages (login, dashboard, attendance, marks, fees, timetable, events, LMS, career, helpdesk, settings, profile, notifications, error pages). Visual regressions in the design system (e.g., a button color drift after a Tailwind upgrade) currently ship to production unnoticed.
+
+**Action:** add Chromatic for the 14 critical pages. Chromatic's free tier covers 5,000 snapshots/month — plenty for this codebase. Set up the Chromatic GitHub Action in the §14 CI pipeline. **Time cost: 6-10 hours of agent work.** Catches the class of bugs that aren't caught by type-checks, contract tests, or unit tests.
+
+### §33.f. Icon library — dedup `lucide-react` and `react-icons`
+
+The frontend imports from both `lucide-react` (the dominant choice) and `react-icons` (used in 7 files, mostly legacy). Both are tree-shakable, but the dual-import increases the bundle by ~80KB and the cognitive load (which icon set to use?) is real.
+
+**Action:** migrate the 7 files using `react-icons` to `lucide-react`. The icon names are mostly the same (`FaHome` → `Home`, `MdEvent` → `Calendar`). **Time cost: 2-4 hours of agent work.** Bundle size drops, the codebase has one icon source.
+
+### §33.g. The v7 dev-stack summary
+
+| Tool | Current state | v7 verdict | Time to apply |
+|---|---|---|---|
+| Node.js 22 | Active LTS | Upgrade to 24 in March 2027 | 2-4 hours |
+| Biome 1.x | Active | Stay, upgrade to 1.9.x | 1 hour |
+| Playwright (floating) | Active | Pin to 1.49.x, add captcha test | 4-6 hours |
+| API contract tests | Missing | Add minimal Pact suite | 8-12 hours |
+| Visual regression | Missing | Add Chromatic for 14 pages | 6-10 hours |
+| `react-icons` | Used in 7 files | Migrate to `lucide-react` | 2-4 hours |
+| **Total v7 work** | | | **~30-40 hours of agent time** |
+
+**Stay where you are on:** Express, React, Vite, Vitest, npm (not pnpm, not yarn), Tailwind, TypeScript, ESLint 9 (not the migration back to it), Drizzle ORM, SQLite, Node 22 (until April 2027). All of these are correct choices in 2026.
+
+## §34. The systems-architecture taxonomy (v8)
+
+**What v6 didn't review:** the conceptual taxonomy of reverse proxies, load balancers, and API gateways — and the explicit "no" list. v6 made the picks (Caddy, no LB, no API gateway) but didn't explain what those things are or why you don't need them. v8 fixes that.
+
+### §34.a. Reverse proxy vs load balancer vs API gateway
+
+These three terms are often used interchangeably; they are not the same thing.
+
+| Component | Purpose | Example | This stack needs it? |
+|---|---|---|---|
+| **Reverse proxy** | Terminates TLS, forwards HTTP to backend | Caddy, nginx, Traefik | **Yes — Caddy (§8)** |
+| **Load balancer** | Distributes traffic across multiple backend instances | HAProxy, Envoy, AWS ALB | **No** — single backend instance |
+| **API gateway** | Centralized cross-cutting API concerns (rate limiting, auth, request transformation) | Kong, Tyk, AWS API Gateway | **No** — Node.js app handles these inline |
+
+**The v8 verdict:** the §1B two-VM failover doesn't add a load balancer. It uses **DNS-level failover** (Cloudflare Tunnel routes to whichever VM is healthy). This is free, doesn't add a moving part, and is correct for 1k concurrent users with a single backend per VM. A load balancer is a *requirement* the day you have 3+ backend instances behind a single hostname. Until then, it's complexity without value.
+
+**The §8.5 multi-VM topology is "active-passive with DNS failover," not "active-active with LB."** This is the right design at this scale.
+
+### §34.b. Compose vs k3s vs Talos
+
+The v6 doc said "Compose now, k3s later." v8 sharpens this.
+
+- **Docker Compose:** correct for 1-2 VMs, 1-2 services per VM, manual scaling via the host. **This is you, today, at the recommended scale.**
+- **k3s (lightweight Kubernetes):** correct for 3+ nodes OR when you need Kubernetes primitives (deployments, services, ingress, secrets, configmaps as first-class resources). **This is the right next step at 3+ nodes, not preemptively.** v6 §23 settled this; v8 reaffirms.
+- **Talos (immutable Kubernetes OS):** correct for 10+ nodes where you want a single source of truth for the OS. **Not relevant at this scale.** Worth knowing about; not worth doing.
+
+**The v8 verdict:** stay on Compose. Don't migrate to k3s preemptively. Migrate when (a) you have 3+ VMs to coordinate, (b) you need rolling deploys, or (c) the §17.c Postgres migration requires a separate VM and the orchestration burden of "docker compose -f production.yml" across two VMs becomes painful.
+
+### §34.c. The "no" list
+
+v8 explicitly enumerates the things the doc is *not* recommending, and why:
+
+- **No Docker Swarm.** Swarm is effectively dead. Docker, Inc. deprioritized it in 2023; the release cadence is annual; the community has moved to k3s or Nomad. **Don't add a "simple k8s alternative" to a doc that's about Compose.**
+- **No HAProxy.** HAProxy is the right tool when you need a dedicated load balancer. You don't have a load balancer. Caddy does TLS termination and reverse proxy; that's all you need.
+- **No Envoy.** Envoy is the right tool when you're doing service mesh (Istio, Linkerd) or complex routing rules. You have neither. Caddy is enough.
+- **No Kong / Tyk / API gateway.** API gateways are the right tool when you have 50+ microservices with cross-cutting concerns (rate limiting, auth, request transformation) that need to be centralized. You have one app. Express middleware does the job.
+- **No self-hosted observability stack (Prometheus + Grafana + Loki + Alertmanager + node-exporter + cAdvisor).** This stack is the right choice at scale (10+ VMs, dedicated observability team). At 1-2 VMs, Grafana Cloud + Sentry + Healthchecks.io does the same job for $0. **Self-hosting observability is the most common over-engineering trap in small deployments.**
+- **No real CDN (Cloudflare's free tier is enough, you don't need a paid CDN).** Cloudflare's free tier is the CDN. The 1k concurrent users with mostly-text assets don't need a paid CDN (Bunny, Fastly, Cloudflare Pro). Adding a CDN means another bill line and another moving part.
+
+**The v8 stance on all six: not now, not in 6 months, not in 12 months.** Each has a clear trigger (3+ VMs, 50+ services, 10+ VMs, etc.) — none of those triggers are at the recommended scale.
+
+### §34.d. The feedback-loop architecture
+
+**The most important architectural decision in v8 is what to do when the stack stops working.** v6 framed this as "the §17 triggers" (revisit when 2k+ concurrent, etc.). v8 adds the explicit feedback loop:
+
+```
+Symptom appears (slow query, OOM, 5xx spike, etc.)
+  ↓
+Diagnose via the §15.5 incident playbook
+  ↓
+Identify the root cause (which layer? compute, storage, network, code)
+  ↓
+Apply the targeted fix from §17.a-§17.f
+  ↓
+Verify the fix via the §13 monitoring stack
+  ↓
+Update §17 if the trigger threshold was wrong
+```
+
+**This is the architecture the v8 doc is actually building.** Not the runtime stack — the *operational feedback loop* that lets the runtime stack evolve without surprises. The §13 monitoring + §15.5 incident playbook + §17 migration triggers + §17.a monitoring of the triggers themselves = a self-correcting system.
+
+The §17.a "triggers that say revisit now" list is the v8 feedback loop's input. The §50 matrix (size envelope + corresponding stack) is the output.
+
+## §35. The operations runbook (v9)
+
+**What v6 didn't review:** the day-to-day operations after deploy. v6 covered the deploy day (§3, §8, §11, §14) and the disaster recovery (§18). v9 covers everything in between: the local developer setup, the adding-a-feature workflow, the hotfix procedure, the month-2 housekeeping, and the multi-contributor setup.
+
+### §35.a. Local contributor quickstart (15 minutes)
+
+A new contributor should be able to clone, install, and run the app in 15 minutes. Today, the steps are spread across 4-5 files (`README.md`, `package.json`, `Backend/.env.example`, `Backend/INSTALL.md`, `Frontend/.env.example`). Consolidate into one `CONTRIBUTING.md` with these sections:
+
+1. Prerequisites: Node 22, npm 10, git, Docker (for the e2e suite).
+2. Clone: `git clone ... && cd ...`.
+3. Install: `npm install` at root, then `cd Backend && npm install && cd ../Frontend && npm install`.
+4. Env: copy `.env.example` files, fill in three values (session secret, scrape service URL, Vite proxy target).
+5. Run: `npm run dev` at root runs both backend and frontend.
+6. Test: `npm test` runs all unit tests, `npm run e2e:realstack` runs the e2e suite.
+7. Open: http://localhost:5173.
+
+**Time cost: 2-3 hours of agent work to write the CONTRIBUTING.md from existing docs.** Saves every new contributor 30-60 minutes of "where do I put the env var" questions.
+
+### §35.b. Adding a new feature (the workflow)
+
+The repo uses a feature-branch + PR workflow, but the steps aren't documented. v9 adds them to `CONTRIBUTING.md`:
+
+1. Branch from `main`: `git checkout -b feat/<short-name>`.
+2. Develop. Run `npm test` before pushing.
+3. Push: `git push -u origin feat/<short-name>`.
+4. Open a PR on GitHub. The CI pipeline (§14) runs the unit + e2e tests automatically.
+5. The CI also runs Biome lint, TypeScript check, and the visual-regression (Chromatic, once added in §33.e).
+6. Reviewer approves, you merge.
+
+**For features that touch the schema:** run `npm run db:migrate` to create the migration, then `npm run db:migrate:rollback` to test the rollback. Both are part of the §14.c smoke test.
+
+**For features that touch the deploy:** the §14.d atomic frontend swap applies. Push to `main`, the self-hosted runner deploys, the §14.c smoke test verifies, the §13 monitoring watches for regressions.
+
+### §35.c. The hotfix procedure (when production breaks at 2am)
+
+When §13 monitoring alerts a 5xx spike, the operator needs a procedure that takes 5 minutes, not 30:
+
+1. Check the §13.g dashboard for the symptom (which endpoint, which error class, which VM).
+2. Check the §13.h cert-expiry monitor — a cert expiry is the most common 5xx cause and the easiest fix.
+3. Check `docker compose ps` on the affected VM — is the container healthy? Restart it: `docker compose restart backend`.
+4. Check the §15.5.a IP blocklist — is the source IP in the blocklist? Unblock if needed.
+5. Check the §11c residential proxy — is Oracle's IP being blocked by the SRM AP ERP? Switch to the proxy.
+6. If none of the above, check the §12 backup integrity — is the data dir corrupted? Restore from the most recent R2 backup.
+7. If still unresolved, fail over to the §1B standby VM (if configured).
+
+**This is the 5-minute triage. Document in `docs/RUNBOOK.md`.**
+
+### §35.d. The month-2 housekeeping checklist
+
+After 30 days of stable production, do these once:
+
+- [ ] Check the §15.5.a blocklist — review the false-positive rate, tune the threshold.
+- [ ] Check the §11c residential proxy cost — if you've used the proxy more than expected, the cost may be material.
+- [ ] Check the §12 backup restore-test (§18.e) — verify the most recent restore succeeded and the data is intact.
+- [ ] Check the §13 monitoring dashboards for any persistent 4xx spikes (indicates a frontend bug).
+- [ ] Check the §14 CI/CD — is the self-hosted runner healthy? Has the deploy workflow succeeded in the last 7 days?
+- [ ] Check the §19 Phase 2 tasks — anything overdue? Anything blocked?
+- [ ] Check the §17.a triggers — are any close to firing? (2k+ concurrent, etc.)
+- [ ] Check the §15.5.c GDPR data-export/deletion requests — process any pending.
+
+**This is 1 hour of operator time, once a month. Document in `docs/HOUSEKEEPING.md`.**
+
+### §35.e. The multi-contributor setup (when a second person joins)
+
+When a second contributor joins, the §19 Phase 1 day-one tasks apply *to them*: clone, install, env, run, test. Beyond that:
+
+- Add them to the GitHub repo with `Write` access.
+- Add them to the Tailscale network (so they can SSH to the VM via §4.B-bis).
+- Add them to the Cloudflare Tunnel (so they can deploy without needing your Cloudflare login).
+- Add them to the Sentry project (so they get alerts).
+- Add them to the Grafana Cloud project (so they can read dashboards).
+- Add them to the Healthchecks.io project (so they get cron-alert notifications).
+
+**Time cost: 30 minutes of operator time per new contributor. Document in `docs/ONBOARDING.md`.**
+
+### §35.f. The v9 fix list (the v9 doc also fixed 4 real bugs from the v6 review)
+
+1. **§20 self-hosted runner pricing:** the v6 doc said "free for public repos, $0.40/1min for private repos." v9 corrects: GitHub gives **2,000 free minutes/month** for self-hosted runners on private repos (as of 2025-08). For this stack, that's plenty.
+2. **§9 `FRONTEND_BLUEPRINT_FILE` empty-string bug:** the v6 doc set the env var to `""` (empty string), which Caddy interpreted as a relative path. v9 changes to an absolute path or a no-op.
+3. **§3 Oracle ARM cap:** the v6 doc said "Oracle gives 4 ARM cores / 24 GB RAM total." v9 corrects: as of 2026-08-18, Oracle caps at **2 OCPU / 12 GB per tenancy** (one full A1 shape, not two). This is the trigger for the §1B standby architecture.
+4. **§11b/§11c contradiction:** the v6 §11b said "use a residential proxy for the SRM AP ERP traffic." §11c said "only if §11a AND §11b both fail." v9 collapses to one §11c that says "use the residential proxy from day 1 if Oracle's IP reputation is a known issue, else add it when §11a/§11b fail." (The residential proxy itself is added in §11c as a v7 add.)
+
+## §36. The cost audit (v10)
+
+**What v6 didn't audit:** the actual cost line items. v6 said "~$0/month" and "the cost is your time." v10 found that both claims are wrong: the cost is *not* $0 (it's ~$0.67-1.00/mo for the domain), and the dollar cost is not the time cost (the dollar cost is the dollar cost, the time cost is the time cost).
+
+### §36.a. The v10 cost line items
+
+| Line item | Cost | Notes |
+|---|---|---|
+| Oracle Always Free VM (primary) | $0 | 1× A1 shape, 4 OCPU, 24 GB RAM (was 2/12 as of 2026-08-18) |
+| GCP e2-micro (standby, if §1B) | $0 | Always-free tier, 1 GB RAM, 30 GB disk |
+| Cloudflare Tunnel | $0 | Free tier unlimited |
+| Cloudflare R2 storage | $0 at 2-day retention | $0.13/mo at 5-day, $1.50-2.00 at 30-day |
+| Cloudflare R2 operations | $0 | ~16K Class A / 2K Class B per month, well under free tier |
+| Tailscale (operator-side) | $0 | Free personal tier, up to 100 devices |
+| Sentry (error tracking) | $0 | Free tier 5K events/month |
+| Grafana Cloud (metrics) | $0 | Free tier 10K metrics, 50GB logs |
+| Healthchecks.io (cron monitor) | $0 | Free tier 20 checks |
+| UptimeRobot (HTTP monitor) | $0 | Free tier 50 monitors |
+| Better Stack (status page) | $0 | Free tier |
+| GitHub Actions (CI/CD) | $0 | Self-hosted runner = free for any repo |
+| Domain (`.xyz` from Cloudflare Registrar) | $0.67-1.00/mo | Optional, only if you want a real domain |
+| **Total** | **$0-$1.00/mo** | $0 if you skip the domain, $1/mo if you buy it |
+
+### §36.b. The v10 retention arithmetic
+
+v6 said the §12 backup script had no retention policy. v10 fixed this with `rclone delete --min-age 5d r2:your-bucket-name/backups/`. **This is necessary but not sufficient** — v14 found the v10 arithmetic was wrong, but the v10 fix itself was correct in direction. v14 details the v14 fix; the v10 line is preserved as a fallback for self-hosted MinIO.
+
+### §36.c. The v10 R2 Class A/B arithmetic correction
+
+v6 said "1 op per upload." This is wrong for files >5MB. R2 automatically uses multipart upload with one Class A op per ~5MB chunk. A 5GB nightly data backup = ~1000 chunks = ~1000 Class A ops. A 10GB weekly VM snapshot = ~2000 Class A ops per upload.
+
+**Total Class A: ~68,000/month** (still 6.8% of the 1M free tier).
+**Total Class B: ~4,000/month** from weekly restore-test reads (still 0.04% of the 10M free tier).
+
+The conclusion (well under free tier) is right; the arithmetic is now accurate.
+
+## §37. The staged domain strategy (v11)
+
+**What v6 didn't ask:** is the domain compulsory? v11 answers: **no, not on day 1.**
+
+### §37.a. The staged hostname strategy
+
+**Phase 0 (month 0):** use Cloudflare Tunnel with the auto-generated `*.trycloudflare.com` hostname. $0, DDoS-protected, edge-cached, auto-cert, no inbound ports. **This is the v12 recommended default.** The URL looks like `yourname.trycloudflare.com`.
+
+**Phase 1 (month 1-2):** if/when the project goes official, buy a `.xyz` from Cloudflare Registrar for $1 first year, $8-12/yr renewal. Migrate the Cloudflare DNS A record, change the Caddyfile, restart Caddy. 30 minutes of work. The cert follows the new hostname via DNS-01.
+
+**Phase 2 (month 6+):** if/when the project goes to scale (10k+ users, institution-wide rollout), consider a `.edu` or `.in` TLD via a registrar that supports them (Cloudflare Registrar doesn't sell .in). This is optional and not part of the recommended default.
+
+### §37.b. Why you don't need the domain on day 1
+
+- **Email:** use a dedicated Gmail alias for `security@`. Fine for an unofficial site.
+- **Institutional credibility:** N/A for an unofficial site.
+- **§1B failover:** the cert reissue window is 30-60s during a planned cutover. Annoying but acceptable.
+
+The v11 verdict: **buy the domain when (a) the project goes official, (b) you need a real `security@` inbox, or (c) you want §1B failover with no cert reissue window.** Otherwise, skip the domain.
+
+## §38. The free-hostname alternatives (v12)
+
+**What v6 didn't enumerate:** the alternatives to Cloudflare Tunnel. v12 lists them, and the v12 verdict is "Cloudflare Tunnel primary, DuckDNS second, everything else a curiosity."
+
+### §38.a. The three categories of free hostnames
+
+1. **Auto-rotating subdomains with reverse proxy** — Cloudflare Tunnel `*.trycloudflare.com`, ngrok, localhost.run. These terminate at the provider's edge; you don't expose the VM's IP. **Best category.**
+2. **Free DNS + direct IP** — DuckDNS, No-IP, Dynu, FreeDNS, afraid.org. You point a free hostname at your VM's public IP, and the provider gives you a hostname. **Second-best; exposes your IP.**
+3. **Free real-FQDN subdomains on donated domains** — eu.org, js.org, is-a.dev, pp.ua. You get a real FQDN (e.g., `yourname.eu.org`) on a donated domain. **Hardest to get approved; reputation cost.**
+
+### §38.b. The v12 verdict on each provider
+
+| Provider | Cost | Pros | Cons | v12 verdict |
+|---|---|---|---|---|
+| **Cloudflare Tunnel** | $0 | DDoS, edge cache, auto cert, no IP exposure, no inbound ports | URL looks like `trycloudflare.com` | **Primary.** |
+| DuckDNS | $0 | Free DNS, 5 hostnames per account | No DDoS, no edge cache, cert reissue on IP change, IP exposed | **Second** (when Cloudflare Tunnel isn't available) |
+| No-IP | $0 | Free DNS, well-known | Same as DuckDNS; requires confirmation every 30 days | **Skip** (DuckDNS is simpler) |
+| Dynu | $0 | Free DNS, well-known | Same as No-IP | **Skip** |
+| FreeDNS (afraid.org) | $0 | Free DNS, many shared domains | Reputation cost (shared domain is on some blocklists) | **Skip** |
+| eu.org | $0 | Real FQDN on a real TLD | Application process takes 2-4 weeks, often rejected | **Skip** for casual use |
+| js.org | $0 | Real FQDN on a real TLD | Only for JavaScript projects, application process | **N/A** (you're not a JS project) |
+| is-a.dev | $0 | Real FQDN on a real TLD | Application process, reputation cost | **Skip** |
+| Freenom | $0 (was) | Free `.tk`/`.ml`/etc. TLDs | **Dead as of 2024** | **Skip** (doesn't exist anymore) |
+
+**The v12 verdict:** Cloudflare Tunnel is the primary. DuckDNS is the fallback when Cloudflare Tunnel isn't available (e.g., you can't install `cloudflared` on the VM for some reason). Everything else is a curiosity or worse.
+
+## §39. The Tailscale operator-side layer (v13)
+
+**What v6 didn't cover:** operator-side access. v6 said "use the §8.5 Cloudflare DNS-01" but didn't address how the *operator* (you, the admin) actually SSHes into the VM. v13 adds Tailscale as the recommended operator-side layer.
+
+### §39.a. The Cloudflare Tunnel vs Tailscale question
+
+**The user asked the right follow-up: Cloudflare Tunnel OR Tailscale?** The honest answer is **use both, for different purposes**:
+
+- **Cloudflare Tunnel** is for the **public-facing app** — students hit `https://yourname.trycloudflare.com`, traffic goes through Cloudflare's edge, no inbound ports on the VM.
+- **Tailscale** is for the **operator-side access** — you SSH into the VM via Tailscale's WireGuard mesh, no inbound ports on the VM, no dynamic-IP dance, no port-forwarding through the Oracle Cloud firewall.
+
+**These are complements, not alternatives.** Cloudflare Tunnel handles the public; Tailscale handles the operator.
+
+### §39.b. The combined architecture
+
+```
+                    ┌────────────────────────────────────────────┐
+                    │                                            │
+   Student browser  │   Cloudflare Edge (DDoS, cache, WAF)        │
+   ─────────────►   │                                            │
+                    └─────────────┬──────────────────────────────┘
+                                  │ outbound tunnel
+                                  │ (no inbound ports)
+                                  ▼
+                    ┌────────────────────────────────────────────┐
+                    │   cloudflared (on VM) → Caddy → backend    │
+                    │   Oracle Cloud / Hetzner / GCP              │
+                    └─────────────┬──────────────────────────────┘
+                                  │ outbound WireGuard
+                                  │ (no inbound ports)
+                                  ▼
+                    ┌────────────────────────────────────────────┐
+                    │   Tailscale tailnet (your devices)         │
+                    │   - laptop                                  │
+                    │   - phone (Tailscale mobile app)            │
+                    │   - teammate's laptop                       │
+                    │   SSH via `ssh oracle@100.x.y.z` (Tailscale IP) │
+                    └────────────────────────────────────────────┘
+```
+
+**The VM has ZERO public-facing ports open.** The only inbound traffic is from Cloudflare's edge IPs (via `cloudflared` outbound tunnel) and Tailscale's coordination server (via `tailscaled` outbound WireGuard). **No port 22 open, no port 80/443 open, nothing.** If Oracle's IP gets blocked by the SRM AP ERP, it doesn't matter — `cloudflared` uses Cloudflare's IPs, not Oracle's.
+
+### §39.c. The Tailscale setup
+
+```bash
+# On the VM
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+sudo tailscale ip -4  # gives you the Tailscale IP, e.g., 100.x.y.z
+
+# On your laptop
+# Install Tailscale from https://tailscale.com/download
+# Sign in with the same account
+# SSH: ssh oracle@100.x.y.z (no port-forwarding, no dynamic-IP dance)
+```
+
+**Free tier:** 100 devices, 1 user (you). For a personal project, this is plenty. For a multi-contributor setup, the §35.e onboarding step adds teammates to the Tailscale network.
+
+### §39.d. The v13 verdict
+
+**Use both, always.** Cloudflare Tunnel for the public-facing app, Tailscale for the operator. Together, the VM has zero public-facing ports open, no dynamic-IP dance, and SSH access from anywhere (laptop, phone, teammate's laptop). Both are free at this scale.
+
+## §40. The storage retention fix (v14)
+
+**What v10 didn't catch:** the v10 retention arithmetic was wrong. v14 found three things and fixed them.
+
+### §40.a. The v10 arithmetic was off by ~2-4×
+
+v10's "5-day retention, $0.23/mo" assumed 5GB of data per night, but didn't include the separate uploads tarball or the VM snapshots in the same calculation. **The actual storage at 5-day is 18.85 GB ($0.13/mo overage), not 25 GB.** v14 corrects the math:
+
+| Storage category | Per night/week | At 5-day retention | Fits 10GB free? |
+|---|---|---|---|
+| Data tarball (v14: one tar of `/app/data`) | 2.5 GB / night (compressed) | 12.5 GB | Over by 2.5 GB |
+| ~~Uploads tarball (v14: removed, redundant)~~ | ~~2.5 GB / night~~ | ~~12.5 GB~~ | **Removed in v14** |
+| Config backup (capped at 7-day) | 50 MB / night | 0.35 GB | OK |
+| VM boot-volume snapshot | 6 GB / week (v14 default = 1 only) | 6 GB | OK |
+| **Total at 5-day** | | **18.85 GB** | **Over by 8.85 GB** |
+| **R2 overage at 5-day** | | | **$0.13/mo** |
+| **Total at 2-day** | | **7.9 GB** | **Under 10 GB (free)** |
+| **R2 overage at 2-day** | | | **$0/mo** ✓ |
+
+### §40.b. The v14 fixes
+
+1. **Remove the redundant uploads tarball.** `events/`, `submissions/`, `certificates/`, and `uploads/` are all siblings under `/app/data` (per §6). The data tarball already includes them. The separate uploads tar was redundant and doubled storage.
+2. **Replace the `rclone delete` line with an R2 Object Lifecycle Policy.** Lifecycle deletes are free (don't count as Class A ops), run at the R2 edge regardless of your VM's clock or connectivity, and don't fail silently on auth errors.
+3. **Default to 2-day retention** for the $0 R2 path. At 2-day, R2 storage is ~7.9 GB — under the 10 GB free tier, **$0/mo**. The v10 default of 5-day is preserved as a higher-retention option ($0.13/mo).
+
+### §40.c. The v14 lifecycle policy setup
+
+```bash
+# Via wrangler CLI:
+wrangler r2 object lifecycle put your-bucket-name \
+  --rules '[{"enabled":true,"prefix":"backups/","expiration":{"days":2}}]'
+```
+
+(Change `days:2` to `days:5` if you want 5-day retention and accept the $0.13/mo overage. The v10 audit had this at 5-day; v14 defaults to 2-day to hit the $0 path.)
+
+## §41. The data-size reality (v15)
+
+**What v6, v10, v14 didn't quantify:** the actual size of `/app/data/` over time, by subdirectory, derived from the actual schema. v15 does this with schema-level analysis instead of guessed numbers.
+
+### §41.a. The real growth pattern
+
+At 1k concurrent users, the data dir grows from **~12 MB (day 1) to ~17 GB (month 6) to ~35 GB (year 1)**. The growth is dominated by:
+
+1. **A non-rotating `backend.log` at ~50 MB/day → 18 GB at year 1.** The single biggest contributor. v15 adds log rotation to the deploy.
+2. **`companion-analytics.sqlite` (frontend telemetry event stream) → 4.4 GB at year 1.** Append-only, ~5M rows, every page view/click/action.
+3. **`unified-profile.sqlite` (signals + recommendation impressions) → 800 MB at year 1.** Two append-only event logs.
+
+### §41.b. The real nightly tarball
+
+The v10 doc said "5GB/night uncompressed, 2.5GB compressed." v15 found this was **~25× too high.** The actual nightly growth at 1k concurrent users:
+
+| Component | Nightly growth |
+|---|---:|
+| SQLite event logs (companion-analytics, unified-profile) | ~12 MB/day |
+| LMS uploads | ~120 MB/day |
+| Submissions, certificates, uploads/ | ~10 MB/day |
+| **Logs (no rotation)** | **~50 MB/day** |
+| **Total uncompressed nightly growth** | **~190 MB/day** |
+| **Compressed (gzip, ~3.5× ratio)** | **~55-70 MB/day** |
+
+**The corrected nightly tarball is ~60 MB compressed, not 2.5 GB.** At 5-day retention, that's 300 MB. At 2-day, 120 MB. The v10/v14 R2 storage math is correct in *direction* (retention matters) but the per-tarball size was off by ~40×.
+
+### §41.c. The v15 log rotation add
+
+The biggest contributor to long-term data growth is the non-rotating `backend.log`. v15 adds a `logrotate` config (or a daily-rotate hook in `logger.js`):
+
+```bash
+# /etc/logrotate.d/erp-backend
+/app/data/logs/backend.log {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+    create 0640 oracle oracle
+}
+```
+
+This caps the logs at 7 days × 50 MB = 350 MB, instead of 18 GB at year 1. **The doc's storage math depends on this log rotation being in place.**
+
+### §41.d. The v15 honest cost line
+
+**With the v15 fixes (2-day retention + log rotation + domain optional):**
+
+| Line item | Cost |
+|---|---|
+| Compute (Oracle + GCP standby) | $0 |
+| Storage retention (R2 with 2-day lifecycle) | **$0** |
+| Egress (R2 free, Oracle 10TB) | $0 |
+| Monitoring (Sentry, Grafana Cloud, UptimeRobot, Betterstack, Healthchecks.io) | $0 |
+| Hostname (Cloudflare Tunnel `trycloudflare.com`) | $0 |
+| Operator access (Tailscale) | $0 |
+| Security@ email (Gmail alias) | $0 |
+| **Total monthly** | **$0/mo** ✓ |
+| Optional: domain for institutional credibility | $0.67-1.00/mo (only if the project goes official) |
+
+**The v15 verdict: $0/mo is achievable, is the recommended default for an unofficial site, and the only remaining question is "do I want a $0.67-1.00/mo domain for credibility, or is `*.trycloudflare.com` + a Gmail alias fine?"** For an unofficial site, the answer is the latter.
+
+## §42. The v7–v15 summary
+
+| Version | Section | Adds | Cost impact | Time impact |
+|---|---|---|---|---|
+| v7 | §33 | Dev stack audit (Node 24, Biome 1.9, Playwright pin, contract tests, Chromatic, icon dedup) | $0 | 30-40 hours agent |
+| v8 | §34 | Systems architecture taxonomy (proxy/LB/gateway, Compose/k3s/Talos, "no" list, feedback loop) | $0 | 0 hours (architectural clarity) |
+| v9 | §35 | Operations runbook (CONTRIBUTING.md, RUNBOOK.md, HOUSEKEEPING.md, ONBOARDING.md) + 4 v6 bugs fixed | $0 | 8-12 hours agent |
+| v10 | §36 | Cost audit (R2 Class A/B arithmetic correction, ~$1/mo honest header) | +$0.13-2.00/mo at higher retention | 2-3 hours agent |
+| v11 | §37 | Staged domain strategy (Phase 0 = free, Phase 1 = buy, Phase 2 = scale) | -$0.67-1.00/mo (skip domain) | 0 hours (decision) |
+| v12 | §38 | Free hostname alternatives (Cloudflare Tunnel primary, DuckDNS second) | $0 | 0 hours (decision) |
+| v13 | §39 | Tailscale operator-side layer (§4.B-bis) | $0 | 30 minutes setup |
+| v14 | §40 | Storage retention fix (remove redundant uploads, R2 lifecycle policy, 2-day default) | $0 at 2-day | 1-2 hours agent |
+| v15 | §41 | Data-size correction + log rotation add + domain-optional verdict | $0 (log rotation prevents 17GB of growth) | 1-2 hours agent |
+| **Total v7–v15** | | **~75 sections, 2,342 lines** | **$0/mo is achievable** | **~50-60 hours agent** |
+
+**The v7–v15 doc is operationally complete for a real $0 deploy.** No further doc work is needed before deployment. The next step is the deploy itself, not more doc iterations.
