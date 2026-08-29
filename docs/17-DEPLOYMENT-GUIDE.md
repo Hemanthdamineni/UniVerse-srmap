@@ -3,7 +3,7 @@
 > **Target:** One university, ~10,000 registered students, ~1,000 concurrent at peak
 > **Cost:** **$0/mo is achievable and is the recommended default for an unofficial site.** The deployment is genuinely $0 in storage retention, monitoring, compute, egress, observability, and CI/CD. The only optional recurring cost is a domain ($0.67-1.00/mo for `.xyz` from Cloudflare Registrar) for institutional credibility or a real `security@` inbox. For an unofficial site, use Cloudflare Tunnel + Tailscale + a Gmail alias for security@ and ship at $0/mo indefinitely.
 > **Philosophy:** Best, not simplest. Every recommendation in this guide assumes you have agents doing the pre-prod work and you want the most operationally excellent, most maintainable, most future-proof $0 deploy possible. "It's simple" is not a tiebreaker when simplicity costs you reliability. The only hard constraint is that nothing bills you a cent.
-> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy, and a first-time deployer can follow it end-to-end without guesswork.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit, systems-architecture taxonomy, operations runbook, cost audit, staged domain strategy, free-hostname alternatives, Tailscale operator-side layer, storage retention fix, and data-size reality. **This v15 polish pass (across 4 commits)** added: (1) five deploy-readiness fixes (firewall contradiction in §3, system tools in §5, post-deploy health check in §10½, GitHub runner UI walkthrough in §14.a, headless bootstrap in §18, day-1 timeline in §19.0); (2) the 20-gap close-out round (WAL files in §6, compose hardening in §7, append-only event PRAGMAs in §9¾, SSH deploy key + wait-for-healthy in §10, Playwright install + correct import path in §11a, init-pragmas.sh location in §12½.a, account-creation pre-reqs in §13, growpart in §3, success checklist in §10⅔, .env.example in §9, T1.13/T1.14 cross-references in §19); (3) **factual corrections from the parallel review** — fixed the wrong claim that GitHub began charging for self-hosted runner minutes on private repos (it never has, self-hosted is always free regardless of repo visibility), updated Biome to 2.x, replaced the "Webshare has a free tier" claim (killed in 2024), corrected the Oracle "halved on 2026-08-18" claim (unverified — treat as possibility not fact, the official tier as of January 2026 is 4 OCPU / 24 GB), updated version pins (sqlite3.48, rclone 1.68, compose 2.30), corrected UptimeRobot to 1-min interval, fixed Grafana Cloud log/traces/profile numbers, updated TLS cert lifetime story (Let's Encrypt now issues 6-day certs by default since 2025, not 90-day or 47-day), and reconciled all Oracle allocation references to a consistent 4 OCPU / 24 GB. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v15 also adds log rotation for `backend.log` to keep long-term growth bounded. v6 was a 2026 ecosystem review. v5 closed 30 code-anchored bugs. v4 added §1B, §8.5, §11c, §12½, §13, §14, §15½, §17, §18, §19.
+> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy, and a first-time deployer can follow it end-to-end without guesswork.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit, systems-architecture taxonomy, operations runbook, cost audit, staged domain strategy, free-hostname alternatives, Tailscale operator-side layer, storage retention fix, and data-size reality. **This v15 polish pass (across 5 commits)** added: (1) five deploy-readiness fixes (firewall contradiction in §3, system tools in §5, post-deploy health check in §10½, GitHub runner UI walkthrough in §14.a, headless bootstrap in §18, day-1 timeline in §19.0); (2) the 20-gap close-out round (WAL files in §6, compose hardening in §7, append-only event PRAGMAs in §9¾, SSH deploy key + wait-for-healthy in §10, Playwright install + correct import path in §11a, init-pragmas.sh location in §12½.a, account-creation pre-reqs in §13, growpart in §3, success checklist in §10⅔, .env.example in §9, T1.13/T1.14 cross-references in §19); (3) **factual corrections from the parallel review** (self-hosted runner billing, Biome 2.x, Webshare killed, version pins, UptimeRobot 1-min, Grafana logs/traces, TLS 6-day certs); (4) **round 4: Oracle Always Free tier corrections per the official Oracle docs** — the ARM A1 pool is **1,500 OCPU-hours + 9,000 GB-hours/month, equivalent to 2 OCPUs / 12 GB**, not 4/24 as the doc had been saying (both v6 and the v15 round 3 fix got this wrong). The correct shape for a single VM is **2 OCPU / 12 GB** (1,440/1,500 OCPU-hours, 8,640/9,000 GB-hours). **4 OCPU / 24 GB is not allowed on a single VM under the Always Free tier** even though the A1.Flex shape supports it (it would consume 2,880 OCPU-hours, almost double the 1,500 budget). Also added: the **VM reclamation rule** (Oracle reclaims idle Always Free VMs after 7 days of <20% CPU/network/memory at 95th percentile — keep the §12 cron and §12½.b PRAGMA cron running, don't stop/start the VM). Also added: **Oracle Bastion as a third operator-side SSH option** alongside Tailscale and Cloudflare Tunnel (Bastion is free for all accounts, but the OCI CLI requirement on every device is friction; Tailscale remains the recommended default). §1B standby now defaults to a second Oracle VM (1 OCPU / 6 GB) in a different region/AD, but with the caveat that running both primary + standby 24/7 exceeds the OCPU-hour budget; warm-standby (start on demand) is the working model. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v15 also adds log rotation for `backend.log` to keep long-term growth bounded. v6 was a 2026 ecosystem review. v5 closed 30 code-anchored bugs. v4 added §1B, §8.5, §11c, §12½, §13, §14, §15½, §17, §18, §19.
 
 **v4 retrospective** (kept for history): v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list). The red-team found that v4 was internally consistent and well-framed but had ~30 real bugs and code-anchored errors that would have caused first-day deploys to fail or first-week data to corrupt silently. v5 addresses all criticals and most important ones — see the fix list above.
 
@@ -13,7 +13,7 @@
 
 | Layer | Choice | Why |
 |---|---|---|
-| Compute | Oracle Cloud **Always Free** Ampere A1 VM — 4 OCPU / 24 GB RAM / 200 GB block storage (shared pool — see §3) | Only major provider still offering a genuinely free, persistent, real VM at this scale. Render's free tier has no persistent disk; Fly.io killed free accounts in Oct 2024. **The 4/24 allotment is the official Oracle Always Free tier as of January 2026.** Oracle has adjusted the tier in the past (the 2022 reshuffle changed per-VM vs per-tenancy semantics); if a future cut happens, the §1B standby architecture is the hedge. |
+| Compute | Oracle Cloud **Always Free** Ampere A1 VM — 2 OCPUs and 12 GB RAM, budgeted as **1,500 OCPU-hours + 9,000 GB-hours/month** (see §3) | Only major provider still offering a genuinely free, persistent, real VM at this scale. Render's free tier has no persistent disk; Fly.io killed free accounts in Oct 2024. **The ARM A1 pool is 1,500 OCPU-hours + 9,000 GB-hours per month** (per Oracle's official Always Free page). At 2 OCPU × 720h = 1,440 OCPU-hours and 12 GB × 720h = 8,640 GB-hours, a single 2-OCPU/12-GB VM running 24/7 fits with 60 OCPU-hours and 360 GB-hours of headroom for restarts. **Idle Always Free compute instances are reclaimed by Oracle if 95th-percentile CPU < 20% AND network < 20% AND memory < 20% for 7 days** — the deploy must keep the VM busy enough to stay above this threshold. The 2× AMD E2.1.Micro (x86) instances are also free but limited to 1/8 OCPU / 1 GB each. |
 | Hostname | **Cloudflare as authoritative DNS** (recommended in §8.5) — DuckDNS as a quick-start fallback for the first hour | Cloudflare gives you DNS-01 ACME challenges that survive VM IP changes, free DDoS protection, and a stable point to anchor failover. DuckDNS works for day-1 but locks certs to one IP. |
 | TLS + reverse proxy + static hosting | **Caddy** with Cloudflare DNS-01 challenge (or HTTP-01 if you stay on DuckDNS) | One file, automatic cert issuance/renewal, serves the built frontend AND proxies `/api` + `/files`. |
 | Backend | Existing Node/Express container, built for **arm64** | Two unverified risks live here — see §11. |
@@ -41,10 +41,11 @@ The single-VM-on-Oracle setup in §1 is the right **starting point** for the fir
               ▼                              ▼
     ┌────────────────────┐         ┌────────────────────┐
     │ PRIMARY            │         │ STANDBY            │
-    │ Oracle Free ARM    │         │ GCP e2-micro (us-   │
-    │ 4 OCPU / 24GB      │  ◀──┐   │ west1, always-free) │
-    │ fsn1 / yyz         │     │   │ 0.25 vCPU / 1GB    │
+    │ Oracle Free ARM    │         │ Oracle Free ARM    │
+    │ 2 OCPU / 12GB      │  ◀──┐   │ 1 OCPU / 6GB       │
+    │ fsn1 / yyz         │     │   │ different region/AD│
     │ full backend + DB  │     │   │ nightly R2 restore │
+    │ 1,440h of 1,500h   │     │   │ ~720h of 1,500h    │
     └────────┬───────────┘     │   └────────┬───────────┘
              │                 │            │
              │  every 1h:      │            │
@@ -56,9 +57,7 @@ The single-VM-on-Oracle setup in §1 is the right **starting point** for the fir
 ```
 
 - **Primary** is the Oracle VM in §1. Same compose file, same env, same data dir.
-- **Standby** is a GCP `e2-micro` (always-free, US regions only) running a *read-only* `docker compose up` of the same services, with the data dir restored nightly from R2. The standby uses `CAREER_SCRAPER_ENABLED=0` (not a made-up `STANDALONE=true` flag — there is no such flag in the backend) so the scraper supervisor doesn't try to start on a VM that doesn't have the Python runtime.
-- Standby does **not** serve traffic by default. It exists to (a) catch broken deploys when you push to `main`, and (b) be the failover target if the primary dies.
-- On a planned cutover, you flip the Cloudflare A record to the standby's public IP, watch error rates for 10 minutes, and you're done.
+- **Standby** is a second Oracle VM in the same Always Free pool (1 OCPU / 6 GB in a different region/AD — Frankfurt or Mumbai are good picks if the primary is in Ashburn) running a *read-only* `docker compose up` of the same services, with the data dir restored nightly from R2. The standby uses `CAREER_SCRAPER_ENABLED=0` (not a made-up `STANDALONE=true` flag — there is no such flag in the backend) so the scraper supervisor doesn't try to start on a VM that doesn't have the Python runtime. **The standby uses 720 OCPU-hours + 4,320 GB-hours of the shared 1,500/9,000 budget**, so primary + standby together consume 1,440 + 720 = 2,160 OCPU-hours — over the 1,500 limit. **You cannot run both VMs 24/7 under the Always Free tier.** Run the standby as a "warm" standby that's stopped most of the time and started only when needed (e.g., during a primary maintenance window or after a primary failure). Boot the standby on-demand; it pulls the data from R2, starts the stack, and is ready in ~10 minutes. If you want true 24/7 standby, use the GCP e2-micro (1 GB RAM, US regions) as the §1B-second standby; the trade-off is that data is restored from R2 (not synced live) and you're on a smaller VM.
 
 ### Realistic cutover: 5-10 minutes, not 60 seconds
 
@@ -99,7 +98,8 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
                  ┌─────────────────────────────┐
                  │   Oracle Cloud "Always Free"  │
                  │   VM.Standard.A1.Flex          │
-                 │   4 OCPU / 24GB RAM / 200GB    │
+                 │   2 OCPU / 12GB RAM / 100GB    │
+                 │   (1,440h of 1,500h OCPU-h)   │
                  │   Ubuntu 24.04 ARM64            │
                  │                                │
                  │  ┌──────────────────────────┐  │
@@ -139,9 +139,44 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
 2. **Create a VCN (Virtual Cloud Network) if you don't have one.** Networking → Virtual Cloud Networks → Start VCN Wizard → "Create VCN with Internet Connectivity". Use the default CIDR (10.0.0.0/16) and default subnet (10.0.0.0/24). **The default security list is dangerously permissive — it allows all ports inbound from `0.0.0.0/0`, not just SSH.** We'll restrict it in step 5.
 3. Create a Compute Instance in the VCN's subnet:
    - Shape: **VM.Standard.A1.Flex**
-   - OCPUs: 4, Memory: 24GB (the full Always Free allotment as of January 2026; the per-tenancy pool is 4 OCPU / 24 GB)
+   - OCPUs: 2, Memory: 12GB (the **full** Always Free ARM A1 pool for a single VM)
    - Image: **Ubuntu 24.04 (ARM64/Ampere)**
-   - Boot volume: **100GB** (the default is 47GB; expand to 100GB at creation time — data growth from §41 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
+   - Boot volume: **100GB** (the minimum is 50GB; expand to 100GB at creation time — data growth from §41 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
+
+   **The 1,500 OCPU-hour / 9,000 GB-hour monthly budget** (per Oracle's official Always Free page, the AMP A1 pool is 1,500 OCPU-hours + 9,000 GB-hours/month, not "claim 4 OCPUs in one shape"). At 2 OCPU × 720h/month = 1,440 OCPU-hours, and 12 GB × 720h = 8,640 GB-hours, the recommended 2-OCPU/12-GB shape fits with 60 OCPU-hours and 360 GB-hours of headroom for restarts. **Alternatives if you want a different shape:**
+   - **1 OCPU / 6 GB × 2 VMs** (one primary, one §1B standby in a different region/AD) — same 1,440 OCPU-hours and 8,640 GB-hours total, but the standby gets half the resources and you need to be careful about which VM is "the one running" if Oracle flags either as idle
+   - **4 OCPU / 24 GB × 1 VM** — exceeds the OCPU-hour budget (2,880h > 1,500h) and the GB-hour budget (17,280h > 9,000h). **Not allowed on a single VM under the Always Free tier**, even though the shape supports it. The previous version of this doc incorrectly recommended 4/24; the correct shape for a single-VM deployment is 2/12.
+   - **2 OCPU / 12 GB × 1 VM + 1 OCPU / 6 GB standby** — 1,440 + 720 = 2,160 OCPU-hours (over the 1,500 budget) and 8,640 + 4,320 = 12,960 GB-hours (over the 9,000 budget). **Also not allowed.** Use the 1+1 shape from above.
+
+   **Always Free VM reclamation rule (CRITICAL):** Oracle reclaims Always Free compute instances that are deemed idle for a 7-day period. An instance is idle if **all three** of these are true:
+   - 95th-percentile CPU utilization < 20%
+   - Network utilization < 20%
+   - Memory utilization < 20% (A1 shapes only)
+   Your production VM will easily exceed 20% CPU/network/memory once real students are using it. During development and low-traffic periods (weekends, semester break), you may approach the threshold. **Two ways to keep the VM above the threshold:**
+   - **Run a low-cost background job that uses some CPU/network/memory continuously.** A `cron` that pings `/api/live` every 5 minutes counts as network activity; a periodic `sqlite3 .integrity_check` counts as CPU+disk activity. The §12.a logrotate and §12½.b PRAGMA cron together are enough to keep the VM above 20% utilization on quiet days.
+   - **Don't stop the VM.** If you stop/start the VM, the 7-day window resets, but the VM also loses its public IP (unless reserved) and the §8.5 cert renewal may fail. Better to keep it running and let the cron work.
+
+   **Other Always Free services you can claim on the same tenancy (won't affect the ARM VM budget):**
+   - **2× AMD E2.1.Micro** (x86, 1/8 OCPU / 1 GB each) — too small for the backend. Useful for a §1B standby in a different region/AD if you want true cross-region failover within Oracle, or for the §30 separate scraper VM.
+   - **2× Oracle Autonomous AI Database** (20 GB each) — managed Postgres-compatible, useful for the §17.c Postgres migration target without needing a second VM
+   - **1× MySQL HeatWave** (50 GB storage) — not used; this stack is SQLite
+   - **Oracle NoSQL** (133M reads/month, 133M writes/month, 3 tables × 25 GB) — not used
+   - **20 GB Object Storage** (10 GB Standard + 10 GB Infrequent) — not used; this stack uses R2
+   - **3,000 outbound emails/month** via Email Delivery — not used (port 25 outbound is blocked by default; need a service limit exemption request). This stack uses a Gmail alias for `security@`.
+   - **10 TB outbound data transfer/month** — applies to Oracle egress; plenty for the §11 captcha + ERP-fetch traffic
+   - **1 Always Free Flexible Load Balancer** (10 Mbps) — not used (Caddy + Cloudflare Tunnel handles the public traffic; a LB is for multi-VM setups)
+   - **1 Network Load Balancer** — not used
+   - **2 VCNs per region** (in the home region) — one for primary, one for §1B standby
+   - **5 CAs + 150 certificates** — Oracle-managed PKI; not used (Caddy uses Let's Encrypt via Cloudflare DNS-01)
+   - **Bastion service** — *free for both free and paid accounts* (per Oracle's docs). This is a real alternative to Tailscale for operator-side SSH if you don't want to add another tool. See §4.B-bis for the comparison.
+   - **2 Always Free Connectors** (Connector Hub) — not used
+   - **100 console dashboards** — not used
+   - **1M HTTPS notifications + 1000 email notifications/month** — not used (we use Healthchecks.io + Sentry)
+   - **500M monitoring data points + 1B retrieval/month** — not used (we use Grafana Cloud)
+   - **50 IPSec Site-to-Site VPN connections** — not used (we use Cloudflare Tunnel + Tailscale/Bastion)
+   - **VCN Flow Logs: 10 GB/month** — not used (we have Grafana Cloud for logs)
+
+   These are all *available* on the same tenancy without affecting the ARM VM budget. The doc doesn't claim most of them; you can ignore them unless you have a specific use case.
 
    **After the VM boots, expand the root partition to use the full 100GB** (Oracle creates the partition at the original 47GB size and the rest is unallocated):
 
@@ -2993,7 +3028,7 @@ When a second contributor joins, the §19 Phase 1 day-one tasks apply *to them*:
 
 1. **§20 self-hosted runner pricing:** the v6 doc said "GitHub began charging for self-hosted runner minutes on private repos in early 2026." This was wrong. v15 corrects: **self-hosted runners have always been free, regardless of repo visibility** — the runner software runs on your hardware, so GitHub has nothing to bill. The 2,000 min/month free allowance applies only to GitHub-hosted runners. v9's earlier claim of "$0.40/1min for private repos" was also wrong for the same reason.
 2. **§9 `FRONTEND_BLUEPRINT_FILE` empty-string bug:** the v6 doc set the env var to `""` (empty string), which Caddy interpreted as a relative path. v9 changes to an absolute path or a no-op.
-3. **§3 Oracle ARM cap:** the v6 doc said "Oracle gives 4 ARM cores / 24 GB RAM total." As of January 2026 (when this v15 review ran), the official Oracle Always Free tier is **4 OCPU / 24 GB RAM per tenancy** (the original 2022 allotment). Oracle has historically adjusted the tier; the §1B standby architecture is the right hedge if a future cut happens. The v6 doc's claim of a 2026-08-18 cut to 2/12 is not corroborated by Oracle's published terms; treat it as a possibility, not a fact.
+3. **§3 Oracle ARM cap:** the v6 doc said "Oracle gives 4 ARM cores / 24 GB RAM total" and earlier v15 polish said "4/24 is the official January 2026 allotment." **Both were wrong.** Per Oracle's official Always Free page, the AMP A1 pool is **1,500 OCPU-hours + 9,000 GB-hours per month**, which is equivalent to **2 OCPUs and 12 GB of memory** for a single VM running 24/7. v15 round 4 corrects this across §1, §2, §1B, §3, and §36. The 4 OCPU/24 GB shape is *technically* what the A1.Flex shape supports, but it exceeds the Always Free budget (2,880 OCPU-hours > 1,500). Do not run 4/24 on a single VM under the Always Free tier.
 4. **§11b/§11c contradiction:** the v6 §11b said "use a residential proxy for the SRM AP ERP traffic." §11c said "only if §11a AND §11b both fail." v9 collapses to one §11c that says "use the residential proxy from day 1 if Oracle's IP reputation is a known issue, else add it when §11a/§11b fail." (The residential proxy itself is added in §11c as a v7 add.)
 
 ## §36. The cost audit (v10)
@@ -3004,8 +3039,8 @@ When a second contributor joins, the §19 Phase 1 day-one tasks apply *to them*:
 
 | Line item | Cost | Notes |
 |---|---|---|
-| Oracle Always Free VM (primary) | $0 | 1× A1 shape, 4 OCPU / 24 GB RAM (the official Always Free allotment as of January 2026; future cuts are possible, see §1B for the standby hedge) |
-| GCP e2-micro (standby, if §1B) | $0 | Always-free tier, 1 GB RAM, 30 GB disk |
+| Oracle Always Free VM (primary) | $0 | 1× A1 shape, **2 OCPU / 12 GB** RAM (the official Always Free allotment per Oracle's docs: 1,500 OCPU-hours + 9,000 GB-hours/month). A single 2/12 VM uses 1,440/1,500 OCPU-hours and 8,640/9,000 GB-hours. Don't try to claim 4/24 on a single VM — it exceeds the budget. |
+| GCP e2-micro (standby, if §1B cross-cloud path) | $0 | Always-free tier, 1 GB RAM, 30 GB disk; US regions only; daily cold-start from R2 means up to 24h of data loss on cutover |
 | Cloudflare Tunnel | $0 | Free tier unlimited |
 | Cloudflare R2 storage | $0 at 2-day retention | $0.13/mo at 5-day, $1.50-2.00 at 30-day |
 | Cloudflare R2 operations | $0 | ~16K Class A / 2K Class B per month, well under free tier |
@@ -3139,6 +3174,35 @@ sudo tailscale ip -4  # gives you the Tailscale IP, e.g., 100.x.y.z
 ### §39.d. The v13 verdict
 
 **Use both, always.** Cloudflare Tunnel for the public-facing app, Tailscale for the operator. Together, the VM has zero public-facing ports open, no dynamic-IP dance, and SSH access from anywhere (laptop, phone, teammate's laptop). Both are free at this scale.
+
+### §4.B-bis (Tailscale vs Oracle Bastion vs Cloudflare Tunnel — operator-side SSH only)
+
+The original §39 only compared Tailscale and Cloudflare Tunnel. v15 round 4 adds the **third option: Oracle's Bastion service** (free for both free and paid accounts per Oracle's docs). The three operator-side SSH options:
+
+| Option | How it works | Inbound ports | Free? | Mobile access | Multi-contributor |
+|---|---|---|---|---|---|
+| **Tailscale** | WireGuard mesh between your devices and the VM. SSH via `100.x.y.z` (Tailscale IP). | 0 (outbound only) | $0, 100 devices, 1 user (Personal) | Yes (Tailscale mobile app) | Yes (invite to tailnet) |
+| **Oracle Bastion** | Managed SSH bastion in Oracle Cloud. SSH via `bastion-host ssh ...` from any OCI-aware client. | 0 (outbound only, requires OCI CLI) | $0, free for all accounts | No (OCI console only) | Yes (add to bastion session) |
+| **Cloudflare Tunnel** (for SSH) | `cloudflared` exposes a single SSH connection through the tunnel. Requires Cloudflare Access for auth. | 0 (outbound only) | $0, but Cloudflare Access is $0 only for up to 50 users (paid beyond) | No (browser-based) | Yes (Cloudflare Access policies) |
+
+**The v15 verdict:** Tailscale is the right default for an unofficial site. It works on any cloud (not Oracle-specific), has a real mobile app, and the multi-contributor model is the simplest. Oracle Bastion is a good choice if you're already deep in the OCI ecosystem and don't want to add another tool — but it requires the OCI CLI on every device you SSH from, which is friction. Cloudflare Tunnel-for-SSH is the most complex of the three and only worth it if you have strict "no third-party VPN" requirements.
+
+**Operator-side architecture decision tree:**
+
+```
+Are you SSHing from a phone/tablet regularly?
+├── Yes → Tailscale (mobile app is real, Bastion is console-only)
+└── No →
+    Are all your operator devices on the same cloud (Oracle)?
+    ├── Yes, and you don't want a third-party VPN → Oracle Bastion
+    ├── Yes, but you want a generic tool → Tailscale
+    └── No (multi-cloud) → Tailscale (works anywhere)
+```
+
+The doc's recommended default is **Tailscale**. If you want to use Oracle Bastion instead, the setup is:
+1. Create a Bastion in the Oracle console (Identity & Security → Bastion).
+2. Create a session targeting the VM.
+3. SSH via `oci bastion session start --session-id <id>` from a machine with the OCI CLI configured.
 
 ## §40. The storage retention fix (v14)
 
