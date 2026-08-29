@@ -25,6 +25,7 @@ const {
   ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
   VACANT_ROOMS_DB_PATH,
   PERSISTENT_TEAMS_DB_PATH,
+  HOSTEL_BUDDY_DB_PATH,
   FEEDBACK_AUTOMATION_ENABLED,
   UPLOADS_DIR,
   LMS_FILES_DIR,
@@ -58,6 +59,7 @@ const { createCompetitionStore } = require("./services/events/competitionStore")
 const { createPersistentTeamStore } = require("./services/events/persistentTeamStore");
 const { HelpdeskStore } = require("./services/campus/helpdeskStore");
 const { CampusFeedbackStore } = require("./services/campus/campusFeedbackStore");
+const { HostelBuddyStore } = require("./services/campus/hostelBuddyStore");
 const { CareerStore } = require("./services/career/careerStore");
 const {
   createCareerScraperSupervisor,
@@ -182,6 +184,9 @@ async function startServer() {
   const campusFeedbackStore = new CampusFeedbackStore({
     dbPath: CAMPUS_FEEDBACK_DB_PATH,
   });
+  const hostelBuddyStore = new HostelBuddyStore({
+    dbPath: HOSTEL_BUDDY_DB_PATH,
+  });
   const careerStore = new CareerStore({
     dbPath: CAREER_DB_PATH,
   });
@@ -261,6 +266,7 @@ async function startServer() {
     eventsStore,
     helpdeskStore,
     campusFeedbackStore,
+    hostelBuddyStore,
     careerStore,
     scraperSupervisorStatus: () => careerScraperSupervisor.getStatus(),
     scraperTriggerOnce: () => careerScraperSupervisor.triggerOnce(),

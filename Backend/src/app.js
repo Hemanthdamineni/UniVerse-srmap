@@ -31,6 +31,7 @@ const { createFacultyCabinRoutes } = require("./routes/facultyCabinRoutes");
 const { createVacantRoomRoutes } = require("./routes/vacantRoomRoutes");
 const { createPersistentTeamRoutes } = require("./routes/persistentTeamRoutes");
 const { createScoresRoutes } = require("./routes/scoresRoutes");
+const { createHostelBuddyRoutes } = require("./routes/hostelBuddyRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createRequestContextMiddleware } = require("./middleware/requestContext");
 const { createAdminContextMiddleware } = require("./middleware/adminContext");
@@ -75,6 +76,7 @@ function createApp({
   vacantRoomStore,
   attendanceSnapshotStore,
   erpDataSink,
+  hostelBuddyStore,
 }) {
   const app = express();
 
@@ -156,6 +158,16 @@ function createApp({
   );
   app.use("/api", createMetricsRoutes());
   app.use("/api", createTelemetryRoutes());
+  if (hostelBuddyStore) {
+    // Mount EARLY so other routes' catchalls (e.g. scrapeRoutes'
+    // /:pageKey) can't shadow /api/hostel-buddy/*.
+    app.use(
+      "/api",
+      createHostelBuddyRoutes({
+        hostelBuddyStore,
+      })
+    );
+  }
   if (companionAnalyticsStore) {
     app.use(
       "/api",
@@ -265,6 +277,8 @@ function createApp({
       })
     );
   }
+  // (hostelBuddyStore is mounted earlier — see above — so the
+  // scrape catchall /:pageKey can't shadow /api/hostel-buddy/*)
   if (unifiedProfileStore) {
     app.use(
       "/api",
