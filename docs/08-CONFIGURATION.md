@@ -42,7 +42,7 @@ Derived:
 | `SESSION_COOKIE_SECURE` | `auto` | Secure flag: `true`, `false`, or `auto` (detects HTTPS) |
 | `SESSION_COOKIE_SAME_SITE` | `lax` | SameSite: `strict`, `lax`, `none` |
 | `SESSION_STORE_DRIVER` | `auto` | Session backend: `redis`, `memory`, `auto` |
-| `LOGIN_PREAUTH_TTL_MS` | `15000` (15 sec) | Captcha validity window |
+| `LOGIN_PREAUTH_TTL_MS` | `1500000` (25 min) | Captcha validity window (aligned to the upstream ERP's JSESSIONID TTL) |
 | `LEGACY_SESSION_ID_CUTOFF_DATE` | `2026-05-15T00:00:00.000Z` | After this date, only cookie-based sessions accepted |
 
 ### Redis
@@ -155,12 +155,13 @@ This file controls whether each ERP page uses **cached-first** or **live-first**
 
 **Cached-First** (serve stale data while refreshing):
 - `dashboard`, `academic/attendance-details`, `academic/time-table`
+- `academic/timetable`, `academic/student-attendance`
 - `examination/current-semester-results`, `examination/earlier-internal-marks`
-- `examination/exam-mark-details`, `finance/fee-due-details`
-- `academic/student-attendance`
+- `examination/exam-mark-details`
+- `finance/fee-dues`, `finance/fee-due-details`
 
 **Live-First** (fetch from ERP first):
-- `finance/fee-paid-details`, `finance/fee-paid`
+- `finance/fee-paid`, `finance/fee-paid-details`
 - `finance/payment-acknowledgment`, `finance/online-payment-verification`
 - `examination/exam-registration`, `examination/exam-registration-details`
 - `academic/course-registration`, `academic/course-registration-cancellation`
