@@ -238,6 +238,7 @@ jobs:
         run: NODE_ENV=development npm ci --include=dev
 
       - name: Start real-stack backend
+        working-directory: .
         run: |
           bash Backend/scripts/e2e-stack/start.sh up
 
@@ -264,6 +265,7 @@ jobs:
 
       - name: Tear down backend
         if: always()
+        working-directory: .
         run: bash Backend/scripts/e2e-stack/start.sh down
 
       - name: Upload test artifacts on failure
