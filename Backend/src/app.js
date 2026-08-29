@@ -117,6 +117,13 @@ function createApp({
   }
   if (uploadsDir) {
     fs.mkdirSync(uploadsDir, { recursive: true });
+    // Gate /uploads behind session. userContextMiddleware is already
+    // mounted on the app above; we layer the file-serving-specific
+    // check on top of it so that the gate only fires for /uploads
+    // (the /files/* paths are deliberately not gated — see
+    // middleware/fileServing.js for the policy).
+    const { ensureAuthenticatedForUploads } = require("./middleware/fileServing");
+    app.use("/uploads", ensureAuthenticatedForUploads);
     app.use("/uploads", express.static(uploadsDir, { maxAge: "1h" }));
   }
   app.use("/api", createGlobalRateLimitMiddleware({ redisClient }));

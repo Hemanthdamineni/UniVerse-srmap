@@ -72,6 +72,13 @@ probe POST   "/api/helpdesk/tickets/test-ticket/replies"             401 "helpde
 probe POST   "/api/career/scraper-trigger"                           401 "career.scraper-trigger (anonymous)"
 probe POST   "/api/content/admin/verify"                             401 "content.admin.verify (anonymous)"
 
+# File-serving gate (Gate 5 P1). /uploads is now gated by
+# ensureAuthenticatedForUploads; /files/* paths remain public-by-URL
+# per the file-serving policy. Verify the gate fires for /uploads
+# but NOT for /files/*.
+probe GET    "/uploads/sample.bin"                                   401 "uploads.read (anonymous)"
+probe GET    "/files/submissions/sample.pdf"                          200 "files.submissions (public)"
+
 # 6. Admin-only read
 probe GET    "/api/content/admin/workflow"                           401 "content.admin.workflow (anonymous)"
 
