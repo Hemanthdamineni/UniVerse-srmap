@@ -734,17 +734,43 @@ async function fetchProfileViaApi(api, options = {}) {
 }
 
 // The student photo is not part of any JSP fragment (the Profile report
-// HTML has no <img>); it only appears in the post-login shell's top
-// navbar as e.g. src="resources/photos/<...>.jpg". "img.jpg" is the
-// ERP's broken default avatar and must be skipped.
+// HTML has no <img>); it appears in the post-login shell's top navbar as
+// an <img> with a path under the app's base. The SRM ERP has historically
+// used "resources/photos/<regno>.jpg" but the path has changed over time
+// (e.g. "images/profile/..."); a few forms also render the photo as an
+// inline data URL or a "/getphoto?id=..." servlet. Accept anything that
+// looks like a student photo, with conservative fallbacks.
+// "img.jpg" is the ERP's broken default avatar and must be skipped.
+const STUDENT_PHOTO_HINTS = [
+  /photos\//i,
+  /\/photo(s)?\//i,
+  /studentphoto/i,
+  /\/profile([\/_-]|$)/i,
+  /getphoto/i,
+  /\/pic(ture)?\//i,
+];
+const STUDENT_PHOTO_BLACKLIST = [
+  /img\.jpg$/i,
+  /\/default[-_]?(avatar|user|profile)/i,
+  /\/placeholder/i,
+  /\/no[-_]?image/i,
+  /\blogo\b/i,
+];
+
+function looksLikeStudentPhotoSrc(src) {
+  if (!src) return false;
+  if (/^(data|blob):/i.test(src)) return false; // inline data URLs in the navbar are almost always UI icons
+  if (STUDENT_PHOTO_BLACKLIST.some((rx) => rx.test(src))) return false;
+  return STUDENT_PHOTO_HINTS.some((rx) => rx.test(src));
+}
+
 function extractStudentPhotoSrc(html) {
   const $ = cheerio.load(String(html || ""));
   const candidates = [];
   $("img").each((_idx, el) => {
     const src = String($(el).attr("src") || "").trim();
-    if (!src || /^(data|blob):/i.test(src)) return;
-    if (/img\.jpg$/i.test(src)) return;
-    if (/photos\//i.test(src)) candidates.push(src);
+    if (!src) return;
+    if (looksLikeStudentPhotoSrc(src)) candidates.push(src);
   });
   return candidates[0] || "";
 }
@@ -752,9 +778,12 @@ function extractStudentPhotoSrc(html) {
 async function fetchStudentPhoto(api) {
   const shellBase = `${BASE_ORIGIN}${BASE_PATH.replace(/\/+$/, "")}/`;
 
+  // The live ERP's post-login shell is `/HRDSystem` (capital S). The case
+  // matters on case-sensitive filesystems behind Tomcat — a lowercase `s`
+  // returns 404 even with valid session cookies.
   let shellResponse;
   try {
-    shellResponse = await api.get("HRDsystem");
+    shellResponse = await api.get("HRDSystem");
   } catch {
     return null;
   }
@@ -811,7 +840,7 @@ async function submitAttendanceCodeViaApi(api, payload) {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
       Accept: "application/json, text/javascript, */*; q=0.01",
       "X-Requested-With": "XMLHttpRequest",
-      Referer: `${BASE_ORIGIN}${BASE_PATH}/HRDsystem`,
+      Referer: `${BASE_ORIGIN}${BASE_PATH}/HRDSystem`,
     },
     data: form.toString(),
   });
@@ -1503,7 +1532,7 @@ function buildLoginPayload({ username, password, captcha, loginBootstrap }) {
 }
 
 // --- apiContext.js ---
-const AUTHENTICATED_REFERER = `${BASE_ORIGIN}${BASE_PATH}/HRDsystem`;
+const AUTHENTICATED_REFERER = `${BASE_ORIGIN}${BASE_PATH}/HRDSystem`;
 
 async function createApiContext(storageState = null, options = {}) {
   const baseURL = `${BASE_ORIGIN}${BASE_PATH.replace(/\/+$/, "")}/`;

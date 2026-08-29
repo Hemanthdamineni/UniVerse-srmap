@@ -8,6 +8,7 @@ const {
   createApiContext,
   fetchProfileViaApi,
   fetchStudentPhoto,
+  extractStudentPhotoSrc,
   isUsableProfileData,
   buildFallbackProfileData,
   verifyAuthenticatedShellFromStorageState,
@@ -484,6 +485,95 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
 
   router.get("/profile/photo", handleProfilePhoto);
   router.get("/auth/profile/photo", handleProfilePhoto);
+
+  // Diagnostic route — never returns image bytes, never disturbs the session.
+  // Returns the raw upstream HTML from the post-login shell and the candidate
+  // photo URLs the extractor would pick, so a real-login user can see exactly
+  // why the photo proxy is 404'ing.
+  async function handleProfilePhotoDebug(req, res) {
+    const sessionId = resolveSessionId(req);
+    let session = null;
+    try {
+      session = await sessionStore.getOrThrow(sessionId);
+    } catch (err) {
+      sendApiSuccess(res, req, {
+        ok: false,
+        reason: "no_app_session",
+        message: err && err.message ? err.message : "Session not found",
+      });
+      return;
+    }
+
+    const storageState = session && session.storageState;
+    const cookies = Array.isArray(storageState?.cookies) ? storageState.cookies : [];
+    const hasErpCookies = cookies.some((c) => {
+      const name = String(c?.name || "").toLowerCase();
+      return name.includes("jsession") || name.includes("erp") || name.includes("srm");
+    });
+
+    if (!cookies.length || !hasErpCookies) {
+      sendApiSuccess(res, req, {
+        ok: false,
+        reason: "no_erp_cookies",
+        message:
+          "The current app session has no ERP cookies. The dev login shortcut does not capture a real ERP session, so the photo proxy has nothing to fetch. Sign in via the real login page (captcha + password) to obtain an ERP session.",
+        cookieCount: cookies.length,
+        cookieNames: cookies.map((c) => c.name),
+      });
+      return;
+    }
+
+    let api;
+    try {
+      api = await createApiContext(storageState);
+      let shellResponse;
+      try {
+        shellResponse = await api.get("HRDSystem");
+      } catch (err) {
+        sendApiSuccess(res, req, {
+          ok: false,
+          reason: "upstream_threw",
+          message: err && err.message ? err.message : "HRDSystem request threw",
+        });
+        return;
+      }
+      const status = shellResponse.status();
+      const finalUrl = typeof shellResponse.url === "function" ? shellResponse.url() : null;
+      const html = await shellResponse.text();
+      const candidate = extractStudentPhotoSrc(html);
+
+      // Dump every <img> src so the user can see what the real shell looks like.
+      const imgSrcs = [];
+      const imgRegex = /<img\b[^>]*?\bsrc\s*=\s*["']([^"']+)["'][^>]*>/gi;
+      let m;
+      while ((m = imgRegex.exec(html)) !== null) {
+        imgSrcs.push(m[1]);
+      }
+
+      sendApiSuccess(res, req, {
+        ok: shellResponse.ok(),
+        status,
+        finalUrl,
+        htmlLength: html.length,
+        candidate,
+        imgSrcCount: imgSrcs.length,
+        imgSrcs: imgSrcs.slice(0, 30),
+      });
+    } catch (err) {
+      sendApiSuccess(res, req, {
+        ok: false,
+        reason: "diagnostic_error",
+        message: err && err.message ? err.message : "Unknown error",
+      });
+    } finally {
+      if (api) {
+        try { await api.dispose(); } catch { /* ignore */ }
+      }
+    }
+  }
+
+  router.get("/profile/photo/debug", handleProfilePhotoDebug);
+  router.get("/auth/profile/photo/debug", handleProfilePhotoDebug);
 
   return router;
 }

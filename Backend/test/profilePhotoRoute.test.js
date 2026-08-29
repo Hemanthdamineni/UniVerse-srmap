@@ -106,6 +106,30 @@ test("extractStudentPhotoSrc picks the navbar photo and skips the img.jpg placeh
   assert.equal(extractStudentPhotoSrc(""), "");
 });
 
+test("extractStudentPhotoSrc accepts common photo URL patterns the SRM ERP has used", async () => {
+  const { extractStudentPhotoSrc } = require("../src/services/erp/erpClient");
+
+  // Path variants the ERP has used over time
+  assert.equal(
+    extractStudentPhotoSrc('<img src="images/profile/AP23110010419.jpg">'),
+    "images/profile/AP23110010419.jpg"
+  );
+  assert.equal(
+    extractStudentPhotoSrc('<img src="/srmapstudentcorner/getphoto?id=AP23110010419">'),
+    "/srmapstudentcorner/getphoto?id=AP23110010419"
+  );
+  assert.equal(
+    extractStudentPhotoSrc('<img src="studentphoto.do?regno=AP23110010419">'),
+    "studentphoto.do?regno=AP23110010419"
+  );
+
+  // Always rejected: default avatar, logo, placeholder
+  assert.equal(
+    extractStudentPhotoSrc('<img src="images/img.jpg"><img src="/logo.png">'),
+    ""
+  );
+});
+
 test("profile photo route streams the ERP photo with image headers", async () => {
   const buffer = Buffer.from("fake-jpeg-bytes");
   const loader = loadRouterWithPatches({
