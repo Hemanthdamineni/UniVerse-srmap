@@ -1,7 +1,21 @@
 # Production Readiness & Deployment Verification Checklist
 
-> **Created:** 2026-08-22 · **Fully revised:** 2026-08-25 against the live codebase (commit `1a50d4e` + working tree). **Latest ledger update:** 2026-08-29 (D2, D7, D10, D12 closed; working tree now clean at HEAD `594c58c`).
-> **Companion docs:** [`infra/runbooks/companion-platform-production-readiness.md`](../infra/runbooks/companion-platform-production-readiness.md), [`infra/runbooks/`](../infra/runbooks/), [`12-SYSTEM-AUDIT-REPORT.md`](./12-SYSTEM-AUDIT-REPORT.md), [`13-DATABASE-SCHEMAS.md`](./13-DATABASE-SCHEMAS.md).
+> **Created:** 2026-08-22 · **Fully revised:** 2026-08-25 against the live codebase (commit `1a50d4e` + working tree). **Latest ledger update:** 2026-08-30 (D2, D7, D10, D12 closed; 10-doc set rewritten for open-source release; all 6 CI jobs green on HEAD).
+> **Companion docs (open-source release, 2026-08-30):**
+> - **[00-INDEX](./00-INDEX.md)** — table of contents for the doc set
+> - **[01-OVERVIEW](./01-OVERVIEW.md)** — vision, users, feature list
+> - **[02-ARCHITECTURE](./02-ARCHITECTURE.md)** — system shape, data flow, sequence diagrams
+> - **[03-BACKEND](./03-BACKEND.md)** — per-module deep-dive
+> - **[04-FRONTEND](./04-FRONTEND.md)** — per-page reference
+> - **[05-DATA](./05-DATA.md)** — every SQLite schema, Redis namespace
+> - **[06-ERP-INTEGRATION](./06-ERP-INTEGRATION.md)** — Playwright pipeline, extractors
+> - **[07-API-REFERENCE](./07-API-REFERENCE.md)** — every endpoint
+> - **[08-CONFIGURATION](./08-CONFIGURATION.md)** — every env var
+> - **[09-INFRASTRUCTURE](./09-INFRASTRUCTURE.md)** — Compose, Dockerfile, Nginx
+> - **[10-DEVELOPMENT](./10-DEVELOPMENT.md)** — local setup, debugging
+> - **[11-TESTING](./11-TESTING.md)** — test strategy
+> - **[12-CONTRIBUTING](./12-CONTRIBUTING.md)** — PR flow, code style
+> - **[infra/runbooks/companion-platform-production-readiness.md](../infra/runbooks/companion-platform-production-readiness.md)** — operational readiness runbook
 
 **How to read this.** Every claim below was re-verified against code on 2026-08-25, with selective re-verifications on 2026-08-29 (D2, D10, D12 specifically).
 Statuses: ✅ verified in place (runtime evidence still required at deploy) · ☐ open · ⚠️ discrepancy (see §1).
