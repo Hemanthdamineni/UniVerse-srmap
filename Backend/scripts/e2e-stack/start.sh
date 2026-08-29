@@ -46,6 +46,13 @@ start() {
   export ADMIN_CONTENT_PASSWORD=e2e-admin
   export LOG_DIR="$DATA/logs"
   export ERP_DUMP_BASE_DIR="$DATA/dump"
+  # The frontend dev server's vite proxy reads
+  # VITE_API_PROXY_TARGET to know where to forward /api/* requests.
+  # We export it on the host so the CI "Start frontend dev server"
+  # step can pick it up. The default in vite.config.ts is
+  # http://localhost:5000, but we run the backend on E2E_BACKEND_PORT
+  # (default 5500) so we need to override.
+  export VITE_API_PROXY_TARGET="http://localhost:${PORT}"
   mkdir -p "$LOG_DIR" "$ERP_DUMP_BASE_DIR"
 
   cd "$(dirname "$0")/../../.."
