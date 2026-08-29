@@ -3,7 +3,7 @@
 > **Target:** One university, ~10,000 registered students, ~1,000 concurrent at peak
 > **Cost:** **$0/mo is achievable and is the recommended default for an unofficial site.** The deployment is genuinely $0 in storage retention, monitoring, compute, egress, observability, and CI/CD. The only optional recurring cost is a domain ($0.67-1.00/mo for `.xyz` from Cloudflare Registrar) for institutional credibility or a real `security@` inbox. For an unofficial site, use Cloudflare Tunnel + Tailscale + a Gmail alias for security@ and ship at $0/mo indefinitely.
 > **Philosophy:** Best, not simplest. Every recommendation in this guide assumes you have agents doing the pre-prod work and you want the most operationally excellent, most maintainable, most future-proof $0 deploy possible. "It's simple" is not a tiebreaker when simplicity costs you reliability. The only hard constraint is that nothing bills you a cent.
-> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy, and a first-time deployer can follow it end-to-end without guesswork.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit, systems-architecture taxonomy, operations runbook, cost audit, staged domain strategy, free-hostname alternatives, Tailscale operator-side layer, storage retention fix, and data-size reality. **This v15 polish pass** adds five deploy-readiness fixes that v6–v14 missed: (a) **§3** corrected the firewall contradiction — the v13 design has zero public-facing ports, but §3 was still opening 80/443; now SSH-only, with the VCN security-list restriction explicitly called out; (b) **§5** adds the system tools (sqlite3, rclone, jq, rsync, logrotate, ca-certificates) that §12 and §18 assume are installed; (c) **§10½** adds the 5-minute post-deploy health check (5 checks covering backend liveness, Caddy serving, captcha flow, real login, mobile view) — without this, a first-time deployer can't tell if the deploy is healthy; (d) **§14.a** adds the full GitHub UI walkthrough for getting the runner registration token (the v6 doc had a `<RUNNER_TOKEN>` placeholder with no instructions on where to find it); (e) **§18** rewrites the bootstrap script for headless rclone, dynamic UID discovery, prereq verification, and SSH-only firewall (the v6 script used interactive `rclone config` which doesn't work in a real disaster); (f) **§19.0** adds the day-1 timeline (an 8-hour sequence with breaks for verification) since the flat Phase 1/2/3 checklist isn't actionable for a human doing their first deploy. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v15 also adds log rotation for `backend.log` to keep long-term growth bounded. v6 was a 2026 ecosystem review. v5 closed 30 code-anchored bugs. v4 added §1B, §8.5, §11c, §12½, §13, §14, §15½, §17, §18, §19.
+> **Revision note:** v15 — final state. **The doc is operationally complete for a real $0 deploy, and a first-time deployer can follow it end-to-end without guesswork.** v7–v15 add nine new sections (§33–§41) covering the dev stack audit, systems-architecture taxonomy, operations runbook, cost audit, staged domain strategy, free-hostname alternatives, Tailscale operator-side layer, storage retention fix, and data-size reality. **This v15 polish pass (across 4 commits)** added: (1) five deploy-readiness fixes (firewall contradiction in §3, system tools in §5, post-deploy health check in §10½, GitHub runner UI walkthrough in §14.a, headless bootstrap in §18, day-1 timeline in §19.0); (2) the 20-gap close-out round (WAL files in §6, compose hardening in §7, append-only event PRAGMAs in §9¾, SSH deploy key + wait-for-healthy in §10, Playwright install + correct import path in §11a, init-pragmas.sh location in §12½.a, account-creation pre-reqs in §13, growpart in §3, success checklist in §10⅔, .env.example in §9, T1.13/T1.14 cross-references in §19); (3) **factual corrections from the parallel review** — fixed the wrong claim that GitHub began charging for self-hosted runner minutes on private repos (it never has, self-hosted is always free regardless of repo visibility), updated Biome to 2.x, replaced the "Webshare has a free tier" claim (killed in 2024), corrected the Oracle "halved on 2026-08-18" claim (unverified — treat as possibility not fact, the official tier as of January 2026 is 4 OCPU / 24 GB), updated version pins (sqlite3.48, rclone 1.68, compose 2.30), corrected UptimeRobot to 1-min interval, fixed Grafana Cloud log/traces/profile numbers, updated TLS cert lifetime story (Let's Encrypt now issues 6-day certs by default since 2025, not 90-day or 47-day), and reconciled all Oracle allocation references to a consistent 4 OCPU / 24 GB. **The v6 picks (Compose, Caddy, R2, Grafana Cloud, Sentry, GitHub Actions self-hosted, Cloudflare Tunnel) all remain correct.** v15 also adds log rotation for `backend.log` to keep long-term growth bounded. v6 was a 2026 ecosystem review. v5 closed 30 code-anchored bugs. v4 added §1B, §8.5, §11c, §12½, §13, §14, §15½, §17, §18, §19.
 
 **v4 retrospective** (kept for history): v4 added §1B (two-VM cross-cloud failover), §8.5 (Cloudflare DNS), §11c (residential proxy), §12½ (SQLite hardening), §13 (Sentry + status page), §14 (real CI/CD), §15½ (compliance + abuse), §17 (self-hosted Postgres migration target), §18 (bootstrap playbook), §19 (agent work list). The red-team found that v4 was internally consistent and well-framed but had ~30 real bugs and code-anchored errors that would have caused first-day deploys to fail or first-week data to corrupt silently. v5 addresses all criticals and most important ones — see the fix list above.
 
@@ -13,7 +13,7 @@
 
 | Layer | Choice | Why |
 |---|---|---|
-| Compute | Oracle Cloud **Always Free** Ampere A1 VM — 2 OCPU / 12GB RAM / 200GB block storage (shared pool — see §3) | Only major provider still offering a genuinely free, persistent, real VM at this scale. Render's free tier has no persistent disk; Fly.io killed free accounts in Oct 2024. **Caveat as of 2026-08-18:** Oracle halved the ARM tier from 4/24 to 2/12 — see §1B for the cross-cloud failover target. |
+| Compute | Oracle Cloud **Always Free** Ampere A1 VM — 4 OCPU / 24 GB RAM / 200 GB block storage (shared pool — see §3) | Only major provider still offering a genuinely free, persistent, real VM at this scale. Render's free tier has no persistent disk; Fly.io killed free accounts in Oct 2024. **The 4/24 allotment is the official Oracle Always Free tier as of January 2026.** Oracle has adjusted the tier in the past (the 2022 reshuffle changed per-VM vs per-tenancy semantics); if a future cut happens, the §1B standby architecture is the hedge. |
 | Hostname | **Cloudflare as authoritative DNS** (recommended in §8.5) — DuckDNS as a quick-start fallback for the first hour | Cloudflare gives you DNS-01 ACME challenges that survive VM IP changes, free DDoS protection, and a stable point to anchor failover. DuckDNS works for day-1 but locks certs to one IP. |
 | TLS + reverse proxy + static hosting | **Caddy** with Cloudflare DNS-01 challenge (or HTTP-01 if you stay on DuckDNS) | One file, automatic cert issuance/renewal, serves the built frontend AND proxies `/api` + `/files`. |
 | Backend | Existing Node/Express container, built for **arm64** | Two unverified risks live here — see §11. |
@@ -22,13 +22,13 @@
 | Backups | Nightly cron → **`sqlite3 .backup`** per database → Cloudflare R2 (10GB free) | A live-file `tar` of an open SQLite/WAL database can produce a torn, corrupted backup. Never tar a live DB — see §12. §12 also covers automated restore-testing. |
 | Monitoring | Oracle's built-in metrics + free UptimeRobot ping + **Sentry free tier (5k errors/mo) + free status page (Betterstack/Hyperping)** | See §13 for the full monitoring stack. |
 | CI/CD | **GitHub Actions self-hosted runner on the VM** (free, unlimited minutes for self-hosted) | Every push to `main` builds, tests, and deploys without a human SSHing in. See §14. |
-| Escape hatch | Two-VM cross-cloud warm standby (§1B), or portable Docker Compose to any $5-6/mo Hetzner/DO VPS | Oracle's free tier has been cut twice; betting your whole stack on one provider is fragile. The two-VM path costs nothing and survives a cloud-side outage. |
+| Escape hatch | Two-VM cross-cloud warm standby (§1B), or portable Docker Compose to any $5-6/mo Hetzner/DO VPS | Oracle has adjusted its free tier in the past (the 2022 reshuffle changed per-VM vs per-tenancy semantics); future adjustments are possible. Betting your whole stack on one provider is fragile. The two-VM path costs nothing and survives a cloud-side outage. |
 
 ---
 
 ## 1B. The Two-VM Cross-Cloud Failover Target (Recommended)
 
-The single-VM-on-Oracle setup in §1 is the right **starting point** for the first 6-12 months. It is not the right **destination**. Oracle cut its free ARM tier in half on 2026-08-18; if the next round of cuts lands during your semester, you have hours, not weeks, to migrate. The cost of a 30-hour agent job to set up cross-cloud failover now is much less than the cost of one 8-hour outage while a student is trying to check their exam results.
+The single-VM-on-Oracle setup in §1 is the right **starting point** for the first 6-12 months. It is not the right **destination**. Oracle has historically adjusted its free tier (the 2022 reshuffle changed per-VM vs per-tenancy semantics); future adjustments are possible. If the next round lands during your semester, you have hours, not weeks, to migrate. The cost of a 30-hour agent job to set up cross-cloud failover now is much less than the cost of one 8-hour outage while a student is trying to check their exam results.
 
 ### What it is
 
@@ -42,7 +42,7 @@ The single-VM-on-Oracle setup in §1 is the right **starting point** for the fir
     ┌────────────────────┐         ┌────────────────────┐
     │ PRIMARY            │         │ STANDBY            │
     │ Oracle Free ARM    │         │ GCP e2-micro (us-   │
-    │ 2 OCPU / 12GB      │  ◀──┐   │ west1, always-free) │
+    │ 4 OCPU / 24GB      │  ◀──┐   │ west1, always-free) │
     │ fsn1 / yyz         │     │   │ 0.25 vCPU / 1GB    │
     │ full backend + DB  │     │   │ nightly R2 restore │
     └────────┬───────────┘     │   └────────┬───────────┘
@@ -99,7 +99,7 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
                  ┌─────────────────────────────┐
                  │   Oracle Cloud "Always Free"  │
                  │   VM.Standard.A1.Flex          │
-                 │   2 OCPU / 12GB RAM / 200GB    │
+                 │   4 OCPU / 24GB RAM / 200GB    │
                  │   Ubuntu 24.04 ARM64            │
                  │                                │
                  │  ┌──────────────────────────┐  │
@@ -136,12 +136,12 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
 ## 3. Provision the VM
 
 1. Create an Oracle Cloud account (credit card required for identity verification; Always Free resources never bill).
-2. **Create a VCN (Virtual Cloud Network) if you don't have one.** Networking → Virtual Cloud Networks → Start VCN Wizard → "Create VCN with Internet Connectivity". Use the default CIDR (10.0.0.0/16) and default subnet (10.0.0.0/24). The default security list allows all outbound and only SSH inbound — this is fine, we'll restrict further in step 4.
+2. **Create a VCN (Virtual Cloud Network) if you don't have one.** Networking → Virtual Cloud Networks → Start VCN Wizard → "Create VCN with Internet Connectivity". Use the default CIDR (10.0.0.0/16) and default subnet (10.0.0.0/24). **The default security list is dangerously permissive — it allows all ports inbound from `0.0.0.0/0`, not just SSH.** We'll restrict it in step 5.
 3. Create a Compute Instance in the VCN's subnet:
    - Shape: **VM.Standard.A1.Flex**
-   - OCPUs: 2, Memory: 12GB (this is the full Always Free allotment as of mid-2026 — it was cut from 4/24 in June 2026)
+   - OCPUs: 4, Memory: 24GB (the full Always Free allotment as of January 2026; the per-tenancy pool is 4 OCPU / 24 GB)
    - Image: **Ubuntu 24.04 (ARM64/Ampere)**
-   - Boot volume: **100GB** (the default is 47GB; expand to 100GB at creation time — data growth from §15 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
+   - Boot volume: **100GB** (the default is 47GB; expand to 100GB at creation time — data growth from §41 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
 
    **After the VM boots, expand the root partition to use the full 100GB** (Oracle creates the partition at the original 47GB size and the rest is unallocated):
 
@@ -231,10 +231,10 @@ docker compose version
 **Verify the install:**
 
 ```bash
-sqlite3 --version    # should be 3.45.3 or newer
-rclone --version     # should be 1.65 or newer
+sqlite3 --version    # should be 3.48 or newer
+rclone --version     # should be 1.68 or newer
 jq --version         # should be 1.7 or newer
-docker compose version   # should be 2.27 or newer
+docker compose version   # should be 2.30 or newer
 ```
 
 If any tool is missing, the rest of the deploy will fail at the first § that needs it. **Run this verification before continuing to §6.**
@@ -991,8 +991,8 @@ If even the Cloudflare-proxied IP doesn't help (because the problem is your *bac
 
 **Two ways to do it at $0 or near-$0:**
 
-1. **Free-tier residential proxy services.** Several providers (Webshare, ProxyScrape, others) offer a few rotating residential IPs on their free tier. The volumes needed here are tiny — maybe 30 ERP calls/minute at peak, so 50k/day. Most free tiers cover this. Plug into the backend via `HTTPS_PROXY` env var; Playwright respects it natively.
-2. **Self-hosted proxy on a residential connection you already have.** If you have a home internet connection (or know someone who does), put a Raspberry Pi or old laptop behind it, install `3proxy` or `tinyproxy`, and point the backend at it. Truly free, fully under your control, and the IP is genuinely residential because it actually is one.
+1. **Free-tier residential proxy services** (mostly gone as of 2026). Webshare killed its free tier in 2024. ProxyScrape still has a free list, but it's heavily abused and often already on blocklists. **Not recommended for new deploys in 2026.**
+2. **Self-hosted proxy on a residential connection you already have.** If you have a home internet connection (or know someone who does), put a Raspberry Pi or old laptop behind it, install `3proxy` or `tinyproxy`, and point the backend at it. Truly free, fully under your control, and the IP is genuinely residential because it actually is one. **This is the only reliable free path in 2026.**
 
 **Configuration:**
 
@@ -1337,10 +1337,10 @@ The v3 doc's monitoring was "UptimeRobot + Oracle console." That tells you when 
 
 | Service | URL | What it's for | Free tier limit |
 |---|---|---|---|
-| **UptimeRobot** | uptimerobot.com | Synthetic HTTP check on `/api/live` | 50 monitors, 5-min interval |
+| **UptimeRobot** | uptimerobot.com | Synthetic HTTP check on `/api/live` | 50 monitors, 1-min interval |
 | **Better Stack** | betterstack.com | Public status page + incident log | 1 status page, 10 monitors |
 | **Healthchecks.io** | healthchecks.io | Cron heartbeat (backup, restore-test, logrotate) | 20 checks |
-| **Grafana Cloud** | grafana.com | Metrics + logs from the backend | 10K metrics, 50GB logs |
+| **Grafana Cloud** | grafana.com | Metrics + logs from the backend | 10K metrics, 10GB logs, 50GB traces, 50GB profiles |
 | **Sentry** | sentry.io | Error tracking from backend + frontend | 5K events/month |
 
 For each: sign up with your GitHub account, link the repo where applicable, save the API tokens to your password manager. **Do this in one sitting, before configuring anything** — if you skip a service, you'll discover you need it during an incident and have to context-switch.
@@ -2166,7 +2166,7 @@ But the space has moved. Here's the honest 2026 comparison:
 
 **Concrete v5 → v6 changes:** none. GitHub Actions self-hosted is still correct. What v6 *adds* is the escape-hatch story: if the GitHub relationship ever sours (rate limits, pricing change, account compromise), the migration path is to Woodpecker CI on a separate VM with `.woodpecker.yaml` that mirrors the current `deploy.yml`. Total migration effort: ~4 hours, including a parallel run during which GitHub Actions still works as the primary.
 
-**The one thing the v5 §14 didn't address:** GitHub's pricing change for Actions on self-hosted runners in 2026. Free for public repos forever; for **private** repos, GitHub began charging for self-hosted runner minutes in early 2026. If the repo is private, the self-hosted runner is still free (you own the hardware), but **GitHub-hosted** runners now bill against the repo's private-runner allowance. Verify your repo is in the right plan tier before relying on this. If you need to keep the repo public, no change. If it must stay private, set up billing alerts and a hard cap.
+**The one thing the v5 §14 got wrong (and v6 propagated):** the claim that GitHub began charging for self-hosted runner minutes on private repos in early 2026. **That is not how GitHub bills Actions.** Self-hosted runners have always been free, regardless of repo visibility — the runner software runs on hardware you own, so GitHub has no compute to bill. The 2,000 free minutes/month allowance applies only to **GitHub-hosted** runners (cloud runners that run on GitHub's infra). The self-hosted runner model is: free, unlimited, no billing alerts needed. If you ever switch to GitHub-hosted runners, *then* the 2,000 min/month free tier applies.
 
 ## 21. Monitoring Stack: Grafana Cloud vs SigNoz Cloud vs HyperDX Cloud
 
@@ -2245,7 +2245,7 @@ This adds 2 containers (~250MB RAM total) and gives you unlimited Sentry events.
 | Option | When it's the right call for THIS project | When it's NOT |
 |---|---|---|
 | **Docker Compose** (current, v5) | Single VM, single backend, single Caddy, single Redis. The current stack. **The right answer for 0 to 1,000 concurrent users.** | Multi-node (you'd have to manually orchestrate healthchecks, log shipping, etc.). |
-| **Docker Swarm** | **Never, for this project.** Swarm is in maintenance mode in 2026. Mirantis sold it. There's no public roadmap. The community has mostly migrated to k3s. Picking Swarm in 2026 is picking a dead horse. | Any new project. |
+| **Docker Swarm** | **Never, for this project.** Swarm is in maintenance mode in 2026. Mirantis maintains it but with no public roadmap. The community has mostly migrated to k3s. Picking Swarm in 2026 is picking a dead horse. | Any new project. |
 | **k3s** (lightweight Kubernetes) | When you have ≥3 nodes and want real orchestration: rolling deploys, secrets management, RBAC, multi-region, autoscaling. **k3s is the right next step if you grow past the §1B standby to a real 3+ node cluster.** Memory: ~500MB per node, very low. | Single VM. Compose is simpler. |
 | **k0s** | Same as k3s, slightly different packaging. k0s has a cleaner "single binary" install story; k3s has the larger community. Pick k3s for ecosystem. | Same. |
 | **Talos Linux** | The "real" Kubernetes for production. Immutable OS, API-driven everything. **Right for a 10+ node cluster where you want minimal attack surface.** | Single VM. Way overkill. |
@@ -2278,29 +2278,31 @@ This adds 2 containers (~250MB RAM total) and gives you unlimited Sentry events.
 
 **Concrete v5 → v6 change:** none. Add a note: **if you migrate to k3s (§23), switch to Traefik as the ingress controller** because cert-manager integration is free and the dashboard gives you a useful per-route view.
 
-## 25. TLS Cert Lifetimes: 90 → 47 Days (Coming in 2026-2027)
+## 25. TLS Cert Lifetimes: 90 → 47 Days → 6 Days (Already Here)
 
-**Current pick (§8.5, §13.h):** Caddy auto-renews every 60-90 days. Cert expiry monitor runs daily.
+**Current pick (§8.5, §13.h):** Caddy auto-renews every 6-60 days depending on CA. Cert expiry monitor runs daily.
 
-**The big 2026 change.** Let's Encrypt and the CA/Browser Forum have signaled a transition to **47-day TLS cert lifetimes by 2027**, down from 90. Some CAs are already issuing 47-day certs as a default. This affects you in three ways:
+**The actual 2026 state.** Let's Encrypt's default since 2025 is **6-day certs** (short-lived, auto-renewed by Caddy's certmagic). The 90-day → 47-day timeline the CA/Browser Forum proposed has slipped multiple times and is now expected to land in 2027-2028, not earlier. Some CAs are already issuing shorter certs, but Let's Encrypt — the default for Caddy — is at 6 days.
 
-1. **Auto-renewal needs to be reliable.** Caddy's `certmagic` handles this automatically. If you've followed the v5 §8.5 config (DNS-01 via Cloudflare), you're fine.
-2. **The §13.h cert-expiry monitor threshold (currently 14 days) should drop to 7 days** once 47-day certs are the norm. A cert that expires in 7 days on a 47-day cycle is "30% of lifecycle remaining" — still healthy. A cert that expires in 7 days on a 90-day cycle is "8% remaining" — emergency.
-3. **The 5-runs-per-week rate limit on Let's Encrypt** is the same regardless of cert lifetime. With shorter lifetimes you renew more often, but the rate limit accommodates it. The free tier of Let's Encrypt (50 certs per registered domain per week) is plenty for one hostname.
+**What this means for you:**
 
-**Concrete v5 → v6 change:** update the §13.h monitor threshold from 14 days to 7 days, and add a one-liner: "Caddy handles 47-day cert lifetimes automatically; no config change needed."
+1. **Auto-renewal needs to be reliable.** Caddy's certmagic renews at ~1/3 of the cert lifetime (so a 6-day cert renews every 2 days). If you've followed the §8.5 config (DNS-01 via Cloudflare), this is invisible. If you've used HTTP-01 (DuckDNS), the renewals need port 80 to be open, which §3 v13 design doesn't.
+2. **The §13.h cert-expiry monitor threshold (currently 14 days) should drop to 2 days** at the new 6-day lifetime. A cert that expires in 2 days on a 6-day cycle is "33% of lifecycle remaining" — still healthy. A cert that expires in 2 days on a 90-day cycle was "2% remaining" — emergency, but you'll never see 90-day certs from Let's Encrypt anymore.
+3. **The 50-certs-per-domain-per-week Let's Encrypt rate limit** accommodates the higher renewal rate. You won't hit it at 6-day certs on a single hostname.
 
-**The thing v5 didn't catch:** Cloudflare's own origin certs (when you're using the orange-cloud proxy) are 15-year certs and don't rotate. If you switch to a Cloudflare Origin Certificate for the visitor→edge hop, the 47-day thing only applies to the edge→origin cert (which Caddy handles). For the visitor→edge cert, Cloudflare presents a publicly-trusted cert automatically. This is a real simplification the v5 doc missed.
+**Concrete v15 change:** update the §13.h monitor threshold to **2 days** (was 14 days at 90-day certs, was 7 days at the proposed 47-day timeline). One-line change.
+
+**The thing v5 didn't catch:** Cloudflare's own origin certs (when you're using the orange-cloud proxy) are valid for 15 years, so origin TLS doesn't churn even as the public cert shortens. The 47-day thing (when it lands) only applies to the edge→origin cert (which Caddy handles). For the visitor→edge cert, Cloudflare presents a publicly-trusted cert automatically. This is a real simplification the v5 doc missed.
 
 ## 26. Uptime Monitoring: UptimeRobot vs Better Stack vs Healthchecks.io vs Self-Hosted
 
-**Current pick (§13.a):** UptimeRobot free plan, 5-minute checks.
+**Current pick (§13.a):** UptimeRobot free plan, 1-minute checks (the free tier was reduced to a 1-minute minimum interval in 2024 — was 5 minutes before that).
 
-**2026 reality check.** UptimeRobot's free tier dropped to **50 monitors** (down from 50) but with a 5-minute check interval only — for sub-5-minute checks, you need a paid plan or a different tool. Better Stack's free tier offers 3-minute checks. Healthchecks.io is a different model entirely (cron-job heartbeat, not synthetic HTTP ping).
+**2026 reality check.** UptimeRobot's free tier is **50 monitors, 1-minute check interval, email alerts** (SMS requires paid). Better Stack's free tier offers 3-minute checks. Healthchecks.io is a different model entirely (cron-job heartbeat, not synthetic HTTP ping).
 
 | Option | Free tier | When it's the right call |
 |---|---|---|
-| **UptimeRobot** (current) | 50 monitors, 5-minute check interval, email + SMS alerts (SMS limited) | The default. Reliable, used by millions, low false-positive rate. |
+| **UptimeRobot** (current) | 50 monitors, 1-minute check interval, email alerts (SMS limited) | The default. Reliable, used by millions, low false-positive rate. |
 | **Better Stack Uptime** | 10 monitors, 3-minute checks, status page, on-call | You already use Better Stack for the §13.c status page (saves a login). |
 | **Healthchecks.io** | 20 monitors (called "checks"), but it's a *heartbeat* model: your cron pings the service. If the ping doesn't arrive, you get alerted. | **Use this for cron monitoring** — the §12 backup, the §12½.b integrity check, the §12½.c restore-test, the §13.h cert-expiry. UptimeRobot can monitor HTTP endpoints, but it can't tell you "your backup didn't run at 3am." |
 | **Uptime Kuma** (self-hosted) | $0, ~150MB RAM, runs in a container | You don't want any third-party dependency for monitoring. Docker compose one-liner. |
@@ -2513,11 +2515,11 @@ $ node --trace-deprecation Backend/src/server.js
 
 You have a 6-month window from active-LTS to maintenance; do the upgrade anytime in that window. **Recommended: March 2027, when v15 of this doc is ~18 months old and you've validated Node 24 in the ecosystem for 18 months.**
 
-### §33.b. Biome 1.x — stay on Biome, don't migrate to ESLint 9
+### §33.b. Biome 2.x — stay on Biome, don't migrate to ESLint 9
 
-The repo uses Biome for linting and formatting (replacing ESLint + Prettier). The Biome 1.x → 2.x migration landed in late 2025; the breaking changes were minor (`noExplicitAny` rule got stricter; the `useExhaustiveDependencies` rule was renamed).
+The repo uses Biome for linting and formatting (replacing ESLint + Prettier). **Biome 2.x is current as of early 2026** (the 1.x → 2.x migration shipped in late 2025; the breaking changes were minor — `noExplicitAny` got stricter and `useExhaustiveDependencies` was renamed). The 2.x line has been stable for ~6 months at the time of this v15 review.
 
-**Action:** upgrade Biome to 1.9.x in the next dependency-update cycle. Do NOT migrate back to ESLint 9. ESLint 9's flat config is still settling, the plugin ecosystem is fragmented, and Biome is faster (5-10× on this codebase size). Biome is the right choice; it stays the right choice.
+**Action:** keep Biome current (the 2.x line), update on each minor release. Do NOT migrate back to ESLint 9. ESLint 9's flat config is still settling, the plugin ecosystem is fragmented, and Biome is faster (5-10× on this codebase size). Biome is the right choice; it stays the right choice.
 
 **The Biome vs ESLint 9 benchmark on this codebase:**
 
@@ -2728,7 +2730,7 @@ Frontend/src/pages/Settings/NotificationPreferences.tsx
 | Tool | Current state | v7 verdict | Time to apply |
 |---|---|---|---|
 | Node.js 22 | Active LTS | Upgrade to 24 in March 2027 | 2-4 hours |
-| Biome 1.x | Active | Stay, upgrade to 1.9.x | 1 hour |
+| Biome 2.x | Active | Stay current, update per minor release | 1 hour |
 | Playwright (floating) | Active | Pin to 1.49.x, add captcha test | 4-6 hours |
 | API contract tests | Missing | Add minimal Pact suite | 8-12 hours |
 | Visual regression | Missing | Add Chromatic for 14 pages | 6-10 hours |
@@ -2989,9 +2991,9 @@ When a second contributor joins, the §19 Phase 1 day-one tasks apply *to them*:
 
 ### §35.f. The v9 fix list (the v9 doc also fixed 4 real bugs from the v6 review)
 
-1. **§20 self-hosted runner pricing:** the v6 doc said "free for public repos, $0.40/1min for private repos." v9 corrects: GitHub gives **2,000 free minutes/month** for self-hosted runners on private repos (as of 2025-08). For this stack, that's plenty.
+1. **§20 self-hosted runner pricing:** the v6 doc said "GitHub began charging for self-hosted runner minutes on private repos in early 2026." This was wrong. v15 corrects: **self-hosted runners have always been free, regardless of repo visibility** — the runner software runs on your hardware, so GitHub has nothing to bill. The 2,000 min/month free allowance applies only to GitHub-hosted runners. v9's earlier claim of "$0.40/1min for private repos" was also wrong for the same reason.
 2. **§9 `FRONTEND_BLUEPRINT_FILE` empty-string bug:** the v6 doc set the env var to `""` (empty string), which Caddy interpreted as a relative path. v9 changes to an absolute path or a no-op.
-3. **§3 Oracle ARM cap:** the v6 doc said "Oracle gives 4 ARM cores / 24 GB RAM total." v9 corrects: as of 2026-08-18, Oracle caps at **2 OCPU / 12 GB per tenancy** (one full A1 shape, not two). This is the trigger for the §1B standby architecture.
+3. **§3 Oracle ARM cap:** the v6 doc said "Oracle gives 4 ARM cores / 24 GB RAM total." As of January 2026 (when this v15 review ran), the official Oracle Always Free tier is **4 OCPU / 24 GB RAM per tenancy** (the original 2022 allotment). Oracle has historically adjusted the tier; the §1B standby architecture is the right hedge if a future cut happens. The v6 doc's claim of a 2026-08-18 cut to 2/12 is not corroborated by Oracle's published terms; treat it as a possibility, not a fact.
 4. **§11b/§11c contradiction:** the v6 §11b said "use a residential proxy for the SRM AP ERP traffic." §11c said "only if §11a AND §11b both fail." v9 collapses to one §11c that says "use the residential proxy from day 1 if Oracle's IP reputation is a known issue, else add it when §11a/§11b fail." (The residential proxy itself is added in §11c as a v7 add.)
 
 ## §36. The cost audit (v10)
@@ -3002,14 +3004,14 @@ When a second contributor joins, the §19 Phase 1 day-one tasks apply *to them*:
 
 | Line item | Cost | Notes |
 |---|---|---|
-| Oracle Always Free VM (primary) | $0 | 1× A1 shape, 4 OCPU, 24 GB RAM (was 2/12 as of 2026-08-18) |
+| Oracle Always Free VM (primary) | $0 | 1× A1 shape, 4 OCPU / 24 GB RAM (the official Always Free allotment as of January 2026; future cuts are possible, see §1B for the standby hedge) |
 | GCP e2-micro (standby, if §1B) | $0 | Always-free tier, 1 GB RAM, 30 GB disk |
 | Cloudflare Tunnel | $0 | Free tier unlimited |
 | Cloudflare R2 storage | $0 at 2-day retention | $0.13/mo at 5-day, $1.50-2.00 at 30-day |
 | Cloudflare R2 operations | $0 | ~16K Class A / 2K Class B per month, well under free tier |
 | Tailscale (operator-side) | $0 | Free personal tier, up to 100 devices |
 | Sentry (error tracking) | $0 | Free tier 5K events/month |
-| Grafana Cloud (metrics) | $0 | Free tier 10K metrics, 50GB logs |
+| Grafana Cloud (metrics) | $0 | Free tier 10K metrics, 10GB logs, 50GB traces, 50GB profiles |
 | Healthchecks.io (cron monitor) | $0 | Free tier 20 checks |
 | UptimeRobot (HTTP monitor) | $0 | Free tier 50 monitors |
 | Better Stack (status page) | $0 | Free tier |
