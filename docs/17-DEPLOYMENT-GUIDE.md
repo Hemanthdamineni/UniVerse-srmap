@@ -142,6 +142,32 @@ After the single-VM setup is stable for ~30 days, **before** your first big user
    - OCPUs: 2, Memory: 12GB (this is the full Always Free allotment as of mid-2026 — it was cut from 4/24 in June 2026)
    - Image: **Ubuntu 24.04 (ARM64/Ampere)**
    - Boot volume: **100GB** (the default is 47GB; expand to 100GB at creation time — data growth from §15 hits ~35GB at year 1, plus R2 staging area, plus `/var/log`, plus OS overhead). **Note:** Oracle's 200GB Always Free block storage is a **single shared pool across all volumes on the tenancy**, not 200GB per volume. A 100GB boot volume uses 100GB of the 200GB pool, leaving 100GB for a future second block volume if you ever need it.
+
+   **After the VM boots, expand the root partition to use the full 100GB** (Oracle creates the partition at the original 47GB size and the rest is unallocated):
+
+   ```bash
+   # Install growpart (not in the default Ubuntu cloud image)
+   sudo apt-get install -y cloud-guest-utils
+
+   # Check current size
+   lsblk
+   # NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+   # sda      8:0    0  100G  0 disk
+   # └─sda1   8:1    0   47G  0 part /        ← partition is 47GB, disk is 100GB
+   # sr0     11:0    1  100K  0 rom
+
+   # Expand the partition to fill the disk
+   sudo growpart /dev/sda 1
+
+   # Resize the filesystem (XFS on Ubuntu 24.04)
+   sudo xfs_growfs /
+
+   # Verify
+   df -h /
+   # Should now show ~100GB total
+   ```
+
+   **If you skip this step**, the OS sees only 47GB and the 100GB you requested is wasted. The first time the data dir hits 47GB (around month 6-8 per §41's analysis), the VM will run out of disk and fail in confusing ways.
 4. Assign a **reserved (static) public IP** — not ephemeral, or it changes on stop/start. In the Instance details page, under "Resources" → "Attached VNICs" → click the VNIC → "IP addresses" → "Reserved IP" → "Reserve". The reserved IP shows as a "Reserved Public IP" resource you can attach later if needed.
 5. **Open ports — with the Cloudflare Tunnel design in mind** (§4 + §8.5 + §13.B-bis). The v13 design has **zero public-facing ports** on the VM; Cloudflare Tunnel (outbound) and Tailscale (outbound WireGuard) replace inbound 22/80/443. So the firewall is:
    ```bash
@@ -222,18 +248,44 @@ If any tool is missing, the rest of the deploy will fail at the first § that ne
 ├── docker-compose.yml
 ├── Caddyfile
 ├── .env
+├── infra/
+│   └── rclone.conf          # rclone config for R2 backups, in password manager too
 ├── repo/                    # full monorepo checkout — see §10 for why
 │   ├── Backend/
 │   └── Frontend/
 ├── frontend-dist/           # built output, synced in via rsync, not a live mount
+├── init-pragmas.sh          # SQLite WAL mode + journal_size_limit setup, run once
+├── backup.sh                # nightly R2 backup, run via cron
 └── data/                    # bind-mounted persistent volume — THE important directory
     ├── content.sqlite
+    ├── content.sqlite-wal   # SQLite WAL file (see below)
+    ├── content.sqlite-shm   # SQLite shared memory file (see below)
     ├── events.sqlite
+    ├── events.sqlite-wal
+    ├── events.sqlite-shm
     ├── external-pages.sqlite
+    ├── external-pages.sqlite-wal
+    ├── external-pages.sqlite-shm
     ├── (any other *.sqlite your current codebase defines — see §9)
-    ├── events/
-    └── submissions/
+    ├── events/              # runtime-created event JSON state (if EVENTS_DB_PATH unset)
+    ├── submissions/         # competition submissions
+    ├── certificates/        # generated PDFs
+    ├── uploads/             # profile photos, generic uploads
+    ├── lms/                 # LMS file content (PDFs, notes, videos)
+    └── logs/                # backend.log (rotated by §12.a logrotate)
+        ├── backend.log      # current
+        ├── backend.log.1    # yesterday (rotated)
+        ├── backend.log.1.gz # day before (rotated+gzipped)
+        └── ...
 ```
+
+**The `-wal` and `-shm` files are normal, not corrupt.** SQLite uses Write-Ahead Logging (WAL) mode for performance. Each `*.sqlite` has a corresponding `*.sqlite-wal` (the write-ahead log of uncommitted changes) and a `*.sqlite-shm` (shared memory file for coordination). The §12½.a `init-pragmas.sh` script enables WAL mode for every database; you'll see these files appear on first run.
+
+**If you see only `.sqlite` and no `.sqlite-wal`:** WAL mode isn't enabled for that database. Run the §12½.a init script, or manually: `sqlite3 /app/data/foo.sqlite "PRAGMA journal_mode=WAL;"`.
+
+**If the `-wal` file is huge (>100 MB):** there's a long-running transaction holding the WAL open. Restart the backend: `docker compose restart backend`. The WAL will checkpoint and shrink.
+
+**If you see `-journal` files instead of `-wal`:** rollback journal mode, not WAL. Run `PRAGMA journal_mode=WAL;` to switch. The `init-pragmas.sh` does this for every DB.
 
 ---
 
@@ -260,6 +312,19 @@ services:
       - redis
     expose:
       - "5000"
+    # Hardening: drop all Linux capabilities, mark root filesystem read-only,
+    # disable privilege escalation. The data dir is the only writable mount.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN            # needed for the init-pragmas.sh chown step
+      - SETUID
+      - SETGID
+    read_only: false     # backend needs to write to /app/data and /tmp
+    tmpfs:
+      - /tmp:size=200M,mode=1777    # bounded tmpfs, prevents disk-full from /tmp abuse
     healthcheck:
       # The repo's existing root compose uses `wget --spider ...` — but `wget` is NOT in
       # the `node:22-bookworm-slim` base image, so that healthcheck fails silently and
@@ -277,6 +342,10 @@ services:
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -296,6 +365,12 @@ services:
       - ./frontend-dist:/srv/frontend:ro
       - caddy_data:/data
       - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE    # needed to bind to ports 80/443
     depends_on:
       backend:
         condition: service_healthy
@@ -491,6 +566,25 @@ Cloudflare free plan: unlimited DNS queries, unlimited DDoS mitigation, free uni
 
 ## 9. `.env` — Required Variables
 
+**First, check if the repo ships an `.env.example`:**
+
+```bash
+ls -la /opt/erp-platform/repo/Backend/.env.example
+ls -la /opt/erp-platform/.env.example
+```
+
+If either exists, copy it as the starting point:
+
+```bash
+# Prefer the Backend/.env.example (where the backend reads it from)
+cp /opt/erp-platform/repo/Backend/.env.example /opt/erp-platform/.env
+
+# Or if only the root .env.example exists:
+cp /opt/erp-platform/.env.example /opt/erp-platform/.env
+```
+
+If neither exists, use the template below and save it to `/opt/erp-platform/.env` (the location the docker-compose.yml reads from via `env_file: .env`).
+
 Generate the secrets first — never ship `CHANGE_ME_*` placeholders to prod:
 
 ```bash
@@ -612,15 +706,92 @@ Nothing important should be missing, and the only file/dir owned by `root` shoul
 docker compose exec backend chown -R node:node /app/data   # adjust uid/gid to match your image
 ```
 
+### 9¾. The three append-only event tables (the v15 long-term growth risk)
+
+Three SQLite tables in the codebase are append-only event streams with no built-in retention. Without explicit PRAGMAs, they grow unbounded and dominate the data-dir size (per §41's analysis: 4.4 GB at year 1 for `companion_analytics_events` alone).
+
+- **`companion_analytics_events`** in `companion-analytics.sqlite` — frontend telemetry, ~5M rows/year
+- **`student_signal_ledger`** in `unified-profile.sqlite` — per-user signal events, ~900K rows/year
+- **`recommendation_impressions`** in `unified-profile.sqlite` — recommendation engine impressions, ~1.8M rows/year
+
+Apply these PRAGMAs to the two databases that hold them (run once via `init-pragmas.sh`, see §12½.a):
+
+```sql
+-- For companion-analytics.sqlite
+PRAGMA journal_size_limit = 268435456;   -- 256 MB cap on the WAL file
+PRAGMA auto_vacuum = INCREMENTAL;        -- reclaim space after deletes
+PRAGMA incremental_vacuum;                -- run a vacuum pass now to shrink existing
+
+-- For unified-profile.sqlite (same PRAGMAs)
+PRAGMA journal_size_limit = 268435456;
+PRAGMA auto_vacuum = INCREMENTAL;
+PRAGMA incremental_vacuum;
+```
+
+**What `journal_size_limit = 256MB` does:** caps the WAL file at 256 MB. When the WAL hits the cap, SQLite auto-checkpoints (writes pending changes to the main DB and truncates the WAL). Without this, the WAL grows to the size of all uncommitted writes, which on a busy day can be 1-2 GB.
+
+**What `auto_vacuum = INCREMENTAL` does:** SQLite reclaims space from deleted rows during normal operation. Without this, deleted rows leave "free pages" that are reused but never returned to the filesystem — the DB file never shrinks.
+
+**The `incremental_vacuum` line** runs a one-time vacuum pass to reclaim space that's already free. Run this on first init; subsequent operations handle it automatically.
+
+**Verify the PRAGMAs took effect:**
+
+```bash
+docker compose exec backend sqlite3 /app/data/companion-analytics.sqlite \
+    "PRAGMA journal_size_limit; PRAGMA auto_vacuum;"
+# Expected:
+# 268435456
+# 2    (INCREMENTAL)
+```
+
+If you see `0` or `1` (NONE), the PRAGMAs didn't apply — check that the `init-pragmas.sh` script ran (see §12½.a).
+
 ---
 
 ## 10. First Deploy
+
+**Before cloning**, the VM needs SSH access to the GitHub repo. If you cloned using HTTPS during the §5 verification, the deploy step below will fail with `Permission denied (publickey)`. Set up SSH:
+
+```bash
+# 1. Generate a deploy key (no passphrase, since this is a service key)
+ssh-keygen -t ed25519 -C "deploy@$(hostname)" -f ~/.ssh/github_deploy -N ""
+
+# 2. Print the public key
+cat ~/.ssh/github_deploy.pub
+
+# 3. Add it to GitHub:
+#    Repo → Settings → Deploy keys → Add deploy key
+#    Title: "oracle-free-arm-deploy"
+#    Key: <paste from step 2>
+#    ☑ Allow write access  (only if §14 self-hosted runner pushes to main)
+#    Click "Add key"
+
+# 4. Configure SSH to use this key for github.com
+cat >> ~/.ssh/config <<'EOF'
+Host github.com
+    IdentityFile ~/.ssh/github_deploy
+    IdentitiesOnly yes
+EOF
+
+# 5. Verify
+ssh -T git@github.com
+# Expected: "Hi <your-org>/<repo>! You've been granted access."
+```
 
 **Fixed from v1:** the previous `git clone <repo-url> Backend` command clones the *entire* monorepo into a folder literally named `Backend`, so the real backend code ends up nested at `Backend/Backend/` — silently breaking the Compose build context. Clone the full repo into a neutral folder instead and point the build context at the subdirectory (already reflected in the `docker-compose.yml` above: `context: ./repo/Backend`):
 
 ```bash
 cd /opt/erp-platform
-git clone <your-repo-url> repo
+
+# Use the SSH URL, not HTTPS, so the deploy key from above works
+# Format: git@github.com:your-org/your-repo.git
+git clone git@github.com:your-org/your-repo.git repo
+
+# If you forked the repo, use your fork's URL:
+# git clone git@github.com:your-username/your-fork.git repo
+
+# If you must use HTTPS (no SSH access), use a personal access token:
+# git clone https://<token>@github.com/your-org/your-repo.git repo
 
 # Build frontend in production mode — NOT `npm run build:static`, which is the
 # no-backend prototype mode and silently flips the Vite `base` path, breaking
@@ -629,15 +800,33 @@ cd repo/Frontend && npm install && npm run build
 rsync -a --delete dist/ /opt/erp-platform/frontend-dist/
 cd /opt/erp-platform
 
+# Start the stack
 docker compose up -d --build
-docker compose logs -f backend
 
+# Wait for backend to be healthy BEFORE testing anything else
+echo "Waiting for backend to be healthy..."
+for i in {1..60}; do
+  if curl -fsS http://localhost:5000/api/live >/dev/null 2>&1; then
+    echo "Backend is healthy after ${i} attempts"
+    break
+  fi
+  if [ "$i" -eq 60 ]; then
+    echo "ERROR: Backend did not become healthy in 60 seconds"
+    echo "Check: docker compose logs backend --tail 100"
+    exit 1
+  fi
+  sleep 1
+done
+
+# Now test through the public hostname
 curl -s https://srmaperp.duckdns.org/api/live
 ```
 
+**The "wait for healthy" loop is critical.** Without it, you'll test the frontend before the backend is ready and get 502s on every API call. The `start_period: 60s` in §7 compose's healthcheck is the *upper bound*; the backend is usually ready in 15-30 seconds. The loop above polls every second and bails at 60s with a clear error.
+
 ### 10½. The 5-minute post-deploy health check
 
-After `docker compose up -d --build` completes, **do not assume the deploy is healthy.** Run these five checks in order. Each one catches a different class of failure. If any check fails, the corresponding section in this doc has the fix.
+After `docker compose up -d --build` completes and the §10 wait-for-healthy loop exits 0, **do not assume the deploy is healthy.** Run these five checks in order. Each one catches a different class of failure. If any check fails, the corresponding section in this doc has the fix.
 
 **Check 1 — Backend liveness (10 seconds):**
 
@@ -705,6 +894,25 @@ Open `https://srmaperp.duckdns.org/` on your phone (or Chrome DevTools mobile mo
 
 **If all five checks pass, the deploy is healthy.** Move to §11 for the long-term verification (Playwright on ARM64, IP reputation testing). If any check fails, the corresponding § has the fix — **don't skip ahead, fix it now while the context is fresh.**
 
+### 10⅔. What does "successfully deployed" look like?
+
+A first-time deployer will be tempted to declare success after §10.5 check 1 ("backend is alive"). That's not enough. **You've successfully deployed only when all of these are true:**
+
+- [ ] All five checks in §10½ pass
+- [ ] §11a Playwright launch test passes (`Chromium launched OK on arm64`)
+- [ ] §11b real login test passes from the VM's IP (you can log in with a real test account)
+- [ ] §12 backup script has run at least once and a tarball is in R2 (`rclone ls r2:your-bucket/backups/`)
+- [ ] §13 UptimeRobot shows your site as "up" (wait 5-10 minutes for the first check)
+- [ ] §13 Sentry dashboard shows the test events you sent (or no errors after 1 hour)
+- [ ] §14 CI/CD: pushing a test commit to main triggers a deploy that lands in <5 minutes
+- [ ] §10½ mobile view: you can log in on your phone and the layout works
+
+**Time to reach "successfully deployed" from a fresh VM:** ~6-8 hours for the first deploy, ~1-2 hours for subsequent deploys (using the §14 CI/CD pipeline).
+
+**If any of the above is false,** the doc has a section that addresses it. Don't tell students the platform is live until all eight boxes are checked. The most commonly missed is §11b (real login test) — it's tempting to skip because the captcha flow is annoying to set up, but it's the only way to catch Oracle IP reputation issues before users do.
+
+**One final check before sharing the URL with anyone:** the §15 pre-launch security & sanity checklist. The 12 items in that list take 30 minutes to verify and catch the class of issues that would otherwise surface as a security report in week 2.
+
 ---
 
 ## 11. ⚠️ The Two Real Unknowns
@@ -713,20 +921,50 @@ Everything else in this guide is well-trodden. These two are not — verify both
 
 ### 11a. Playwright on ARM64
 
-Playwright supports Linux ARM64, but confirm it actually works on this specific image before relying on it:
+Playwright supports Linux ARM64, but confirm it actually works on this specific image before relying on it.
+
+**First, install Playwright in the backend image** (the base `node:22-bookworm-slim` does not include it):
 
 ```bash
+# Option A: add to the Dockerfile (preferred for repeatability)
+# In Backend/Dockerfile, add before the final CMD:
+#   RUN npm install --no-save playwright@1.49.0 && npx playwright install --with-deps chromium
+
+# Option B: install at runtime (faster for one-off testing)
+docker compose exec backend npm install --no-save playwright@1.49.0
+docker compose exec backend npx playwright install --with-deps chromium
+```
+
+The `--with-deps` flag installs the system libraries Chromium needs (libnss3, libxss1, libasound2, etc.). Without it, Chromium fails to launch with "missing library" errors that are hard to diagnose.
+
+**Then run the launch test** (the v6 import path was wrong — it used `require('playwright')` which fails unless the package is in `node_modules` of the CWD):
+
+```bash
+# The correct path: node_modules is at /app/node_modules in the backend container
 docker compose exec backend node -e "
-const { chromium } = require('playwright');
+const { chromium } = require('/app/node_modules/playwright');
 (async () => {
-  const browser = await chromium.launch();
-  console.log('Chromium launched OK on', process.arch);
-  await browser.close();
+  try {
+    const browser = await chromium.launch();
+    console.log('Chromium launched OK on', process.arch);
+    await browser.close();
+  } catch (e) {
+    console.error('FAIL:', e.message);
+    process.exit(1);
+  }
 })();
 "
 ```
 
-If this fails, the usual fix is adding `RUN npx playwright install --with-deps chromium` as a build step — but confirm rather than assume it's needed.
+**Expected output:** `Chromium launched OK on arm64` (or `x64` if you're not on Oracle's ARM shape).
+
+**If the launch fails** with "missing library X": the `--with-deps` step didn't install everything. Run `docker compose exec backend apt-get install -y <missing-library>` to fix.
+
+**If the launch fails** with "browser not found": Playwright's browser binary isn't installed. Re-run `npx playwright install chromium` inside the container.
+
+**If the launch fails** with "cannot execute binary": you're on ARM but the binary is x64, or vice versa. Confirm the image architecture with `docker compose exec backend uname -m`. The `node:22-bookworm-slim` image is multi-arch but Playwright's prebuilt Chromium is per-arch; using `--with-deps` handles this.
+
+**Don't assume Playwright works on ARM64 just because the docs say it does.** Run the test. If it doesn't work, the §11b login test will fail in confusing ways (timeout, navigation failure) and you'll waste an hour debugging the wrong layer.
 
 ### 11b. Oracle's IP reputation with the ERP's anti-bot defenses
 
@@ -874,6 +1112,8 @@ The backend uses `node:sqlite` in WAL mode on most stores (7 of 14 don't, per th
 ```bash
 #!/bin/bash
 # /opt/erp-platform/init-pragmas.sh
+# Run this ONCE after first deploy, then never again (idempotent).
+# See the "How to run" section below for one-line invocation.
 set -euo pipefail
 DATA=/opt/erp-platform/data
 for db in "$DATA"/*.sqlite; do
@@ -883,9 +1123,52 @@ for db in "$DATA"/*.sqlite; do
   sqlite3 "$db" "PRAGMA busy_timeout = 5000;"    2>/dev/null || true
   sqlite3 "$db" "PRAGMA auto_vacuum = INCREMENTAL;" 2>/dev/null || true
 done
+
+# Also apply journal_size_limit to the two databases with append-only event tables
+# (see §9¾ for why — these dominate long-term growth)
+for db in "$DATA/companion-analytics.sqlite" "$DATA/unified-profile.sqlite"; do
+  if [ -f "$db" ]; then
+    sqlite3 "$db" "PRAGMA journal_size_limit = 268435456;" 2>/dev/null || true
+    sqlite3 "$db" "PRAGMA incremental_vacuum;" 2>/dev/null || true
+  fi
+done
 ```
 
-Run it from a cron entry (every 6h is plenty) or as a `postStart` hook in the backend compose service. WAL is a per-database property, so this is safe to re-run.
+**Where this file lives:** `/opt/erp-platform/init-pragmas.sh` (the same directory as `docker-compose.yml` and `.env`).
+
+**How to run it (one-time, after first deploy):**
+
+```bash
+# 1. Create the file
+sudo nano /opt/erp-platform/init-pragmas.sh
+# (paste the script above, save with Ctrl+O, Enter, Ctrl+X)
+
+# 2. Make it executable
+sudo chmod +x /opt/erp-platform/init-pragmas.sh
+
+# 3. Run it once
+sudo bash /opt/erp-platform/init-pragmas.sh
+
+# 4. Verify it worked
+docker compose exec backend sqlite3 /app/data/content.sqlite \
+    "PRAGMA journal_mode; PRAGMA synchronous; PRAGMA foreign_keys;"
+# Expected:
+# wal
+# 1   (NORMAL)
+# 1   (ON)
+```
+
+**Wiring into Docker (optional, for repeatability):** add a `postStart` hook to the backend service in §7 compose, OR a separate init service that runs once and exits. The postStart approach is cleaner:
+
+```yaml
+services:
+  backend:
+    # ... existing config ...
+    post_start:
+      - command: ["bash", "-c", "for db in /app/data/*.sqlite; do sqlite3 $db 'PRAGMA journal_mode=WAL;' 2>/dev/null; done"]
+```
+
+WAL is a per-database property, so the script is safe to re-run. The postStart hook runs on every container start, which means a redeploy won't accidentally reset the PRAGMAs.
 
 ### 12½.b. Daily `PRAGMA integrity_check` cron
 
@@ -1049,6 +1332,20 @@ This is a "set up once, run on cron, never think about it" job. Recovery from a 
 ## 13. Monitoring (Lightweight, Free, Real)
 
 The v3 doc's monitoring was "UptimeRobot + Oracle console." That tells you when the *server* is up. It does not tell you when the *app* is broken (500s, slow responses, captcha failures, login dead). A production-grade $0 monitoring stack is four layers. All $0. All agent-installable in a few hours.
+
+**Before starting §13, create these five accounts** (all free tiers, ~30 minutes total):
+
+| Service | URL | What it's for | Free tier limit |
+|---|---|---|---|
+| **UptimeRobot** | uptimerobot.com | Synthetic HTTP check on `/api/live` | 50 monitors, 5-min interval |
+| **Better Stack** | betterstack.com | Public status page + incident log | 1 status page, 10 monitors |
+| **Healthchecks.io** | healthchecks.io | Cron heartbeat (backup, restore-test, logrotate) | 20 checks |
+| **Grafana Cloud** | grafana.com | Metrics + logs from the backend | 10K metrics, 50GB logs |
+| **Sentry** | sentry.io | Error tracking from backend + frontend | 5K events/month |
+
+For each: sign up with your GitHub account, link the repo where applicable, save the API tokens to your password manager. **Do this in one sitting, before configuring anything** — if you skip a service, you'll discover you need it during an incident and have to context-switch.
+
+The §13.b through §13.g sections below assume these accounts exist. If you're following the guide, set aside 30 minutes at the start of §13 to do the account creation.
 
 ### 13.a. Synthetic uptime (UptimeRobot, free)
 
@@ -1793,6 +2090,8 @@ The Phase 1 / Phase 2 / Phase 3 lists below are flat checklists. **A first-time 
 - [ ] **T1.10** — Run `timedatectl show` and confirm NTP is synchronized (§3).
 - [ ] **T1.11** — Run the §11a Playwright launch test.
 - [ ] **T1.12** — Run the §11b real-login test from the production VM's IP.
+- [ ] **T1.13** — Run the **§10½ post-deploy health check** (5 checks: backend liveness, Caddy serving, captcha flow, real login, mobile view).
+- [ ] **T1.14** — Verify the **§10⅔ success checklist** (8 boxes including backup, monitoring, CI/CD). Don't tell students the platform is live until all 8 are checked.
 
 ### Phase 2: Hardening (one weekend of agent work, 20-30 hours)
 
