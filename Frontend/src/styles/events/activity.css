@@ -229,3 +229,168 @@
   color: var(--text-secondary);
   font-size: 0.84rem;
 }
+
+/* ─── Score card (real, per-dimension breakdown) ─────────────────────────── */
+
+.score-card {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.score-card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.score-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--surface) 70%, var(--background) 30%);
+  color: var(--text-primary);
+}
+
+.score-card-head-text {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.score-card-head-text h2 {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.score-card-band {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.score-card-headline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+  color: var(--text-primary);
+}
+
+.score-card-headline strong {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-card-headline span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.score-card-bar {
+  height: 8px;
+  width: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 65%, var(--background) 35%);
+  overflow: hidden;
+}
+
+.score-card-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.score-card-blurb {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.score-card-dimensions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-md);
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  padding-top: var(--space-md);
+}
+
+.score-dimension {
+  display: grid;
+  gap: 6px;
+}
+
+.score-dimension-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.score-dimension-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.score-dimension-points {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-dimension-points strong {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+.score-dimension-max {
+  opacity: 0.7;
+}
+
+.score-dimension-bar {
+  height: 5px;
+  width: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 65%, var(--background) 35%);
+  overflow: hidden;
+}
+
+.score-dimension-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.score-dimension-summary {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.score-card-cta {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--comp-accent) 10%, transparent);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+}

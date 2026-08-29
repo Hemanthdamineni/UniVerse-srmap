@@ -66,6 +66,9 @@ import { listEvents, type EventSummary as CampusEventSummary } from "../../lib/c
 import { getCurrentRegNo } from "../../lib/core/identity";
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
+import { computeTeamScore } from "../../lib/events/scoring";
+import { getMyScores, type ScoreBreakdown } from "../../lib/events/competitionsApi";
+import ScoreCard from "../../components/competition/ScoreCard";
 
 function PageStack({ children }: { children: React.ReactNode }) {
   return (
@@ -1348,6 +1351,8 @@ export function MyTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingAvailable, setLoadingAvailable] = useState(true);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(null);
+  const [scoreError, setScoreError] = useState("");
   const [loadingPersistentTeams, setLoadingPersistentTeams] = useState(true);
   const [loadingPersistentInvitations, setLoadingPersistentInvitations] = useState(true);
   const [error, setError] = useState("");
@@ -1441,6 +1446,11 @@ export function MyTeamsPage() {
     loadAvailableEvents();
     loadPersistentTeams();
     loadPersistentInvitations();
+    getMyScores()
+      .then((data) => setScoreBreakdown(data.team))
+      .catch((err: unknown) =>
+        setScoreError(err instanceof Error ? err.message : "Failed to load team score.")
+      );
   }, [loadTeamsAndInvitations, loadAvailableEvents, loadPersistentTeams, loadPersistentInvitations]);
 
   const activeTeams = useMemo(
@@ -1452,6 +1462,20 @@ export function MyTeamsPage() {
     [items],
   );
   const upcomingDeadlines = activeTeams.filter(({ event }) => event.startAt || event.startDate).slice(0, 3);
+  const fallbackTeamScore = useMemo(
+    () => computeTeamScore({ activeTeams, persistentTeams, currentRegNo }),
+    [activeTeams, persistentTeams, currentRegNo],
+  );
+  const teamBreakdown: ScoreBreakdown = scoreBreakdown ?? {
+    score: fallbackTeamScore.score,
+    headlineBand: scoreError ? "Live score unavailable" : "Updating…",
+    dimensions: fallbackTeamScore.dimensions.map((dim) => ({
+      ...dim,
+      bandLabel: dim.band,
+      progressPct: dim.max > 0 ? Math.round((dim.points / dim.max) * 100) : 0,
+    })),
+    meta: fallbackTeamScore.meta as Record<string, unknown>,
+  };
 
   function setTab(tab: TabId) {
     setParams((prev) => {
@@ -1663,12 +1687,16 @@ export function MyTeamsPage() {
         </div>
 
         <aside className="activity-side-column">
-          <CompetitionCard className="activity-score-card">
-            <Award size={28} />
-            <h2>Team Score</h2>
-            <p className="summary-stat"><strong>{Math.min(100, 50 + activeTeams.length * 10)}</strong> <span>/ 100</span></p>
-            <p>Based on active teams, leadership roles, and participation.</p>
-          </CompetitionCard>
+          <ScoreCard
+            title="Team Score"
+            icon={<Award size={28} />}
+            breakdown={teamBreakdown}
+            blurb={
+              scoreError
+                ? "Live score unavailable — showing estimate from this page's data."
+                : "Based on leadership roles, roster health, and engagement across event and persistent teams."
+            }
+          />
           <CompetitionCard className="activity-deadline-card">
             <h2>Upcoming Deadlines</h2>
             {upcomingDeadlines.length ? upcomingDeadlines.map(({ event, team }) => (

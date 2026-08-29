@@ -30,6 +30,7 @@ const { createAcademicCalendarRoutes } = require("./routes/academicCalendarRoute
 const { createFacultyCabinRoutes } = require("./routes/facultyCabinRoutes");
 const { createVacantRoomRoutes } = require("./routes/vacantRoomRoutes");
 const { createPersistentTeamRoutes } = require("./routes/persistentTeamRoutes");
+const { createScoresRoutes } = require("./routes/scoresRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createRequestContextMiddleware } = require("./middleware/requestContext");
 const { createAdminContextMiddleware } = require("./middleware/adminContext");
@@ -249,6 +250,18 @@ function createApp({
       createPersistentTeamRoutes({
         persistentTeamStore,
         sessionStore,
+      })
+    );
+  }
+  if (competitionStore) {
+    app.use(
+      "/api",
+      createScoresRoutes({
+        competitionStore,
+        eventsStore,
+        persistentTeamStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
       })
     );
   }

@@ -211,6 +211,38 @@ export interface TeamMatchCandidate {
   reasons: string[];
 }
 
+// ─── Scores ───────────────────────────────────────────────────────────────────
+
+export type ScoreBand = 'excellent' | 'strong' | 'building' | 'starting' | 'none';
+
+export interface ScoreDimension {
+  id: string;
+  label: string;
+  points: number;
+  max: number;
+  band: ScoreBand;
+  bandLabel: string;
+  progressPct: number;
+  summary: string;
+}
+
+export interface ScoreMeta {
+  [key: string]: unknown;
+}
+
+export interface ScoreBreakdown {
+  score: number;
+  headlineBand: string;
+  dimensions: ScoreDimension[];
+  meta: ScoreMeta;
+}
+
+export interface MyScores {
+  user: { id: string; name: string | null };
+  competition: ScoreBreakdown;
+  team: ScoreBreakdown;
+}
+
 // ─── Submissions ──────────────────────────────────────────────────────────────
 
 export interface Submission {
@@ -824,6 +856,29 @@ export async function getMyPersistentTeamInvitations(): Promise<PersistentTeamIn
   return safeFetch(() =>
     requestData<PersistentTeamInvitation[]>(`/api/teams/persistent/invitations`)
   );
+}
+
+// ─── Scores ───────────────────────────────────────────────────────────────────
+
+function emptyScoreBreakdown(label: string): ScoreBreakdown {
+  return {
+    score: 0,
+    headlineBand: 'No activity yet',
+    dimensions: [],
+    meta: {},
+  };
+}
+
+export async function getMyScores(): Promise<MyScores> {
+  if (isStaticPrototype()) {
+    // In prototype mode the backend is bypassed; return a friendly zero state.
+    return {
+      user: { id: getCurrentRegNo() || 'STATIC-STUDENT', name: null },
+      competition: emptyScoreBreakdown('competition'),
+      team: emptyScoreBreakdown('team'),
+    };
+  }
+  return safeFetch(() => requestData<MyScores>('/api/scores/me'));
 }
 
 export async function respondToPersistentTeamInvitation(

@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Award, CalendarClock, FileCheck2, Trophy } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
+import ScoreCard from "../../components/competition/ScoreCard";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
 import { SkeletonCard } from "../../components/ui/Skeletons";
 import { StatusBadge } from "../../components/ui/Badges";
 import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
+import { computeCompetitionScore } from "../../lib/events/scoring";
+import { getMyScores, type ScoreBreakdown } from "../../lib/events/competitionsApi";
 
 const tabs = [
   { id: "registered", label: "Registered Events" },
@@ -44,6 +47,8 @@ export default function MyActivityPage() {
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdown | null>(null);
+  const [scoreError, setScoreError] = useState("");
 
   const loadEvents = useCallback(() => {
     setLoading(true);
@@ -54,9 +59,18 @@ export default function MyActivityPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const loadScores = useCallback(() => {
+    getMyScores()
+      .then((data) => setScoreBreakdown(data.competition))
+      .catch((err: unknown) =>
+        setScoreError(err instanceof Error ? err.message : "Failed to load competition score.")
+      );
+  }, []);
+
   useEffect(() => {
     loadEvents();
-  }, [loadEvents]);
+    loadScores();
+  }, [loadEvents, loadScores]);
 
   const activeEvents = useMemo(
     () => events.filter((event) => !["completed", "archived"].includes(event.status)),
@@ -67,6 +81,20 @@ export default function MyActivityPage() {
     [events],
   );
   const deadlines = activeEvents.filter((event) => event.startAt || event.startDate).slice(0, 3);
+  const fallbackScore = useMemo(
+    () => computeCompetitionScore({ events }),
+    [events],
+  );
+  const competitionBreakdown: ScoreBreakdown = scoreBreakdown ?? {
+    score: fallbackScore.score,
+    headlineBand: scoreError ? "Live score unavailable" : "Updating…",
+    dimensions: fallbackScore.dimensions.map((dim) => ({
+      ...dim,
+      bandLabel: dim.band,
+      progressPct: dim.max > 0 ? Math.round((dim.points / dim.max) * 100) : 0,
+    })),
+    meta: fallbackScore.meta as Record<string, unknown>,
+  };
 
   function setTab(tab: TabId) {
     setParams((prev) => {
@@ -140,12 +168,16 @@ export default function MyActivityPage() {
         </div>
 
         <aside className="activity-side-column">
-          <CompetitionCard className="activity-score-card">
-            <Award size={28} />
-            <h2>Competition Score</h2>
-            <p className="summary-stat"><strong>{Math.min(100, 70 + activeEvents.length * 7)}</strong> <span>/ 100</span></p>
-            <p>Based on participation, submission progress, and recent activity.</p>
-          </CompetitionCard>
+          <ScoreCard
+            title="Competition Score"
+            icon={<Award size={28} />}
+            breakdown={competitionBreakdown}
+            blurb={
+              scoreError
+                ? "Live score unavailable — showing estimate from this page's data."
+                : "Based on participation, submission progress, evaluation results, and recent activity."
+            }
+          />
           <CompetitionCard className="activity-deadline-card">
             <h2>Upcoming Deadlines</h2>
             {deadlines.length ? deadlines.map((event) => (
