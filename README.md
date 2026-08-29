@@ -192,21 +192,25 @@ University-ERP/
 
 ## Documentation
 
-Detailed documentation is available in the `docs/` directory:
+Detailed documentation is available in the `docs/` directory. Start
+with **[00-INDEX.md](docs/00-INDEX.md)** for the full table of contents.
 
 | Document | Description |
 |----------|-------------|
-| [00-INDEX.md](docs/00-INDEX.md) | Full documentation index |
-| [01-OVERVIEW.md](docs/01-OVERVIEW.md) | Project overview |
-| [02-ARCHITECTURE.md](docs/02-ARCHITECTURE.md) | System architecture deep dive |
-| [03-BACKEND-DEEP-DIVE.md](docs/03-BACKEND-DEEP-DIVE.md) | Backend internals |
-| [04-FRONTEND-DEEP-DIVE.md](docs/04-FRONTEND-DEEP-DIVE.md) | Frontend architecture |
-| [05-ERP-INTEGRATION.md](docs/05-ERP-INTEGRATION.md) | ERP scraping & aggregation |
-| [06-DATA-PIPELINE.md](docs/06-DATA-PIPELINE.md) | Data flow and pipeline |
-| [07-API-REFERENCE.md](docs/07-API-REFERENCE.md) | Complete API reference |
-| [08-CONFIGURATION.md](docs/08-CONFIGURATION.md) | Environment and page policy config |
-| [09-INFRASTRUCTURE.md](docs/09-INFRASTRUCTURE.md) | Deployment and infrastructure |
-| [10-DEVELOPMENT-GUIDE.md](docs/10-DEVELOPMENT-GUIDE.md) | Development workflow |
-| [11-EXTENDING-THE-SYSTEM.md](docs/11-EXTENDING-THE-SYSTEM.md) | How to add features |
-| [12-SYSTEM-AUDIT-REPORT.md](docs/12-SYSTEM-AUDIT-REPORT.md) | System audit findings |
-| [13-DATABASE-SCHEMAS.md](docs/13-DATABASE-SCHEMAS.md) | SQLite schema reference |
+| [00-INDEX.md](docs/00-INDEX.md) | Full documentation index — start here |
+| [01-OVERVIEW.md](docs/01-OVERVIEW.md) | Project overview, users, feature list, tech stack |
+| [02-ARCHITECTURE.md](docs/02-ARCHITECTURE.md) | System shape, data flow, sequence diagrams |
+| [03-BACKEND.md](docs/03-BACKEND.md) | Per-module deep-dive of every router, service, store, util |
+| [04-FRONTEND.md](docs/04-FRONTEND.md) | Per-page reference for all 80+ pages, design system |
+| [05-DATA.md](docs/05-DATA.md) | Every SQLite schema, Redis namespace, file layout, backup |
+| [06-ERP-INTEGRATION.md](docs/06-ERP-INTEGRATION.md) | Playwright scrape pipeline, extractors, cache strategy |
+| [07-API-REFERENCE.md](docs/07-API-REFERENCE.md) | Every HTTP endpoint (auto-generated from routes/) |
+| [08-CONFIGURATION.md](docs/08-CONFIGURATION.md) | Every env var, feature flag, page policy |
+| [09-INFRASTRUCTURE.md](docs/09-INFRASTRUCTURE.md) | Compose, Dockerfile, Nginx, Redis, monitoring |
+| [10-DEVELOPMENT.md](docs/10-DEVELOPMENT.md) | Local setup, debugging, adding features, adding ERP pages |
+| [11-TESTING.md](docs/11-TESTING.md) | Test strategy, the three layers, how to write tests |
+| [12-CONTRIBUTING.md](docs/12-CONTRIBUTING.md) | PR flow, code style, commit hygiene, design system |
+| [14-PROD-READINESS-CHECKLIST.md](docs/14-PROD-READINESS-CHECKLIST.md) | The 10 production-readiness gates (P0/P1/P2) |
+| [15-DEBUGGING-NOTES.md](docs/15-DEBUGGING-NOTES.md) | Recurring failure modes + 30-second checks |
+| [16-CONTRIBUTOR-CLEANUP.md](docs/16-CONTRIBUTOR-CLEANUP.md) | The contributor-rewriting rewrite history |
+| [17-DEPLOYMENT-GUIDE.md](docs/17-DEPLOYMENT-GUIDE.md) | Free-tier single-VM deployment walkthrough |
