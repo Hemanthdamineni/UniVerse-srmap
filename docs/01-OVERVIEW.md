@@ -65,15 +65,16 @@ Students authenticate once and see all ERP data (attendance, timetable, marks, f
 ### Backend
 | Technology | Purpose | Version |
 |------------|---------|---------|
-| **Node.js** | Runtime | — |
+| **Node.js** | Runtime | ≥22.5 (built-in `node:sqlite` requires it) |
 | **Express 5** | HTTP framework | `^5.1.0` |
-| **Playwright** | ERP HTTP request client (session/cookie management) | `^1.55.0` |
+| **Playwright** | ERP HTTP request client (session/cookie management) | `^1.61.1` |
 | **Cheerio** | Server-side HTML parsing (ERP response extraction) | `^1.1.2` |
 | **Redis** | Session store, ERP cache, rate limiting, circuit breaker, distributed locks | `^5.8.2` |
-| **SQLite** (built-in `node:sqlite`/better-sqlite3) | Application data — content, events, external pages | embedded |
+| **SQLite** (built-in `node:sqlite` `DatabaseSync`) | Application data — content, events, external pages | embedded |
 | **prom-client** | Prometheus metrics | `^15.1.3` |
 | **helmet** | Security headers | `^8.1.0` |
-| **express-rate-limit** | Rate limiting (fallback) | `^8.1.0` |
+| **rate-limiter-flexible** | Rate limiting (global 400/min/IP + dedicated login 20/min/IP) | `^5.x` |
+| **multer** | File upload multipart parser | `^2.1.1` |
 
 ### Frontend
 | Technology | Purpose | Version |
@@ -81,14 +82,16 @@ Students authenticate once and see all ERP data (attendance, timetable, marks, f
 | **React 19** | UI framework | `^19.1.0` |
 | **Vite 7** | Build tool / dev server | `^7.0.4` |
 | **TypeScript** | Type safety | `~5.8.3` |
-| **TailwindCSS 4** | Utility-first CSS | `^4.1.11` |
+| **TailwindCSS 4** | Utility-first CSS | `^4.1.11` (via `@tailwindcss/vite`) |
 | **React Router 7** | Client-side routing | `^7.7.0` |
+| **TanStack React Query 5** | Server state, cache, refetch | `^5.85.0` |
 | **Recharts** | Charts / visualizations | `^2.15.4` |
-| **Radix UI** | Headless primitives (Dialog, Popover) | various |
-| **shadcn/ui** | Pre-built components (Button, Card, Calendar, Command) | `^2.9.3` |
+| **Radix UI** | Headless primitives (Dialog, Popover, Slot) | various |
+| **cmdk (shadcn command)** | Command palette (the press-`/` overlay) | `^1.1.1` |
 | **Lucide React** | Icon library | `^0.542.0` |
-| **date-fns** | Date utilities | `^4.1.0` |
-| **Axios** | HTTP client (legacy; `fetch` used for ERP API calls) | `^1.10.0` |
+| **CodeMirror 6** | LMS code-editor / markdown editor | `^6.x` |
+| **Katex** | LaTeX rendering for academic content | `^0.16.x` |
+| **Axios** | HTTP client (legacy; new code uses `fetch`) | `^1.10.0` |
 
 ### Infrastructure
 | Technology | Purpose |
