@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import srmLogo from "../../assets/FullSrmlogo.png";
+import horizontalLogo from "../../assets/Icons/horizontal_logo.png";
 
 const HIGHLIGHTS = [
   { label: "Secure session-based login", sub: "Credentials verified directly against the university backend." },
@@ -38,7 +38,7 @@ export default function LoginIdentityPanel() {
       <div className="login-identity-content" style={{ padding: "var(--space-xl) var(--space-lg)", justifyContent: "space-between" }}>
         <div>
           <div className="login-identity-enter login-id-d0">
-            <img src={srmLogo} alt="SRM AP University" style={{ height: "40px", width: "auto", objectFit: "contain", display: "block", filter: "brightness(0) invert(1)", marginBottom: "var(--space-lg)" }} />
+            <img src={horizontalLogo} alt="SRM AP University" style={{ height: "40px", width: "auto", objectFit: "contain", display: "block", filter: "brightness(0) invert(1)", marginBottom: "var(--space-lg)" }} />
           </div>
           <div className="login-identity-enter login-id-d1">
             <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "var(--panel-fg)", lineHeight: 1.25, margin: 0, letterSpacing: "-0.02em" }}>

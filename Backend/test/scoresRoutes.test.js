@@ -105,13 +105,13 @@ test("GET /api/scores/me returns real competition + team breakdown", async (t) =
     {
       title: "Comp",
       description: "comp",
-      startAt: "2026-08-01T09:00:00.000Z",
-      endAt: "2026-08-30T11:00:00.000Z",
+      startAt: "2099-08-01T09:00:00.000Z",
+      endAt: "2099-08-30T11:00:00.000Z",
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-08-29T23:59:59.000Z",
+      registrationDeadline: "2099-08-29T23:59:59.000Z",
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({

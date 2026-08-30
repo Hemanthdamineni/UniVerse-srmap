@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import WeekCalendar from "./WeekCalendar";
 
@@ -7,7 +7,16 @@ function renderCalendar(onDateSelect?: (date: Date) => void) {
 }
 
 describe("WeekCalendar", () => {
+  // Pin the wall clock so the test is deterministic regardless of when
+  // it's run. Without this, tests that depend on the rendered month
+  // (e.g. "midweek is in August" → "midweek is in September" on the
+  // last day of August) would flake at month boundaries.
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-15T12:00:00.000Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 

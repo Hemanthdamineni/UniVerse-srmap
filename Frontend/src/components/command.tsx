@@ -1,7 +1,8 @@
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
-import { SearchIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react";
+import SearchIconPng from "@/assets/Icons/SearchIcon.png";
 
 import { cn } from "../lib/core/utils"
 import { Dialog, DialogContent, DialogTitle } from "./dialog"
@@ -41,7 +42,12 @@ const CommandInput = React.forwardRef<
     data-slot="command-input-wrapper"
     className="flex items-center gap-2 border-b border-[var(--border)] px-3 py-2"
   >
-    <SearchIcon className="size-4 shrink-0 text-[var(--text-secondary)]" />
+    <img
+      src={SearchIconPng}
+      alt=""
+      aria-hidden="true"
+      className="size-4 shrink-0 text-[var(--text-secondary)]"
+    />
     <CommandPrimitive.Input
       ref={ref}
       data-slot="command-input"

@@ -180,7 +180,7 @@ test("campus feedback imports legacy browser-local entries without using moderat
           targetLabel: "Route 7",
           ratings: { Safety: 5 },
           comment: "Legacy entry from local storage",
-          submittedAt: "2026-05-20T08:00:00.000Z",
+          submittedAt: "2099-05-20T08:00:00.000Z",
         },
       ],
     },

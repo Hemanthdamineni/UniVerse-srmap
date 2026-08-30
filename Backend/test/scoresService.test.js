@@ -12,6 +12,15 @@ const {
   bandLabel,
 } = require("../src/services/events/scoresService");
 
+// All test event dates are anchored to a fixed future reference (2099),
+// so the suite is deterministic regardless of when it's run and
+// doesn't depend on the wall clock. The "now" used for the recency
+// calculations is the same future reference, so the math is
+// independent of real time.
+const TEST_NOW = new Date("2099-06-15T12:00:00.000Z");
+const ISO = (d) => new Date(d).toISOString();
+const FUTURE = (offsetDays) => ISO(TEST_NOW.getTime() + offsetDays * 86400000);
+
 function makeStores() {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "scores-test-"));
   const eventsDbPath = path.join(tempDir, "events.sqlite");
@@ -38,13 +47,13 @@ function createIndividualCompetitionEvent(eventsStore, creator = makeUser({ user
     {
       title: "Solo Comp",
       description: "solo",
-      startAt: "2026-08-01T09:00:00.000Z",
-      endAt: "2026-08-30T11:00:00.000Z",
+      startAt: FUTURE(-30),
+      endAt: FUTURE(30),
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-08-29T23:59:59.000Z",
+      registrationDeadline: FUTURE(7),
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({
@@ -82,13 +91,13 @@ function createTeamCompetitionEvent(eventsStore, creator = makeUser({ userId: "o
     {
       title: "Team Comp",
       description: "team",
-      startAt: "2026-08-01T09:00:00.000Z",
-      endAt: "2026-08-30T11:00:00.000Z",
+      startAt: FUTURE(-30),
+      endAt: FUTURE(30),
       location: { physical: "Hall" },
       organizer: "Club",
       department: "CSE",
       maxCapacity: 100,
-      registrationDeadline: "2026-08-29T23:59:59.000Z",
+      registrationDeadline: FUTURE(7),
       visibility: "public",
       status: "published",
       competitionConfig: JSON.stringify({
@@ -119,7 +128,7 @@ test("competition score is zero for a user with no registrations", () => {
     competitionStore,
     eventsStore,
     userId: "s_new",
-    now: new Date("2026-08-30T00:00:00.000Z"),
+    now: TEST_NOW,
   });
   assert.equal(out.score, 0);
   assert.equal(out.dimensions.find((d) => d.id === "participation").points, 0);
@@ -131,6 +140,12 @@ test("competition score rewards participation, submission progress, and recency"
   const event = createIndividualCompetitionEvent(eventsStore);
   const student = makeUser({ userId: "s1" });
   eventsStore.register(event.id, {}, { user: student });
+  // Override the registration timestamp to be ~1 day before TEST_NOW
+  // so the recency bucket lands in "this-week" (20 points). The
+  // events store sets the real wall-clock time during register(); we
+  // patch the in-memory map to anchor the recency math to TEST_NOW.
+  const reg = eventsStore.registrationsByUser.get(student.userId)[0];
+  reg.registeredAt = ISO(TEST_NOW.getTime() - 1 * 24 * 60 * 60 * 1000);
   competitionStore.createSubmission(event.id, "r1", student.userId, {
     type: "link",
     linkUrl: "https://example.com/work",
@@ -139,7 +154,7 @@ test("competition score rewards participation, submission progress, and recency"
     competitionStore,
     eventsStore,
     userId: student.userId,
-    now: new Date("2026-08-30T00:00:00.000Z"),
+    now: TEST_NOW,
   });
   const participation = out.dimensions.find((d) => d.id === "participation");
   assert.equal(participation.points, 5);
@@ -175,7 +190,7 @@ test("competition score gives full marks for shortlist + published results", () 
     competitionStore,
     eventsStore,
     userId: student.userId,
-    now: new Date(),
+    now: TEST_NOW,
   });
   const evaluation = out.dimensions.find((d) => d.id === "evaluation");
   assert.equal(evaluation.points, 30);
@@ -255,9 +270,12 @@ test("competition recency decays by recency bucket", () => {
   const event = createIndividualCompetitionEvent(eventsStore);
   eventsStore.register(event.id, {}, { user: student });
   const reg = eventsStore.registrationsByUser.get(student.userId)[0];
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-  reg.registeredAt = fourteenDaysAgo;
-  const out = computeCompetitionScore({ competitionStore, eventsStore, userId: student.userId });
+  // "now" is anchored 14 days after the registration so the recency
+  // bucket always lands in "this month", regardless of when the test
+  // is run.
+  const fourteenDaysAfterRegistration = ISO(TEST_NOW.getTime() - 14 * 24 * 60 * 60 * 1000);
+  reg.registeredAt = fourteenDaysAfterRegistration;
+  const out = computeCompetitionScore({ competitionStore, eventsStore, userId: student.userId, now: TEST_NOW });
   const recency = out.dimensions.find((d) => d.id === "recency");
   assert.equal(recency.points, 12);
   assert.match(recency.summary, /this month/i);

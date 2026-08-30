@@ -24,16 +24,16 @@ const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, classNa
     display = 'Expired';
     colorClass = 'text-[var(--comp-text-muted)] bg-[var(--comp-surface-hover)] border-[var(--comp-border)]';
   } else if (diffDays === 0) {
-    display = 'Today, closes tonight';
+    display = 'Today';
     colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-[color-mix(in_srgb,var(--error)_30%,transparent)] font-bold';
   } else if (diffDays < 3) {
     display = `${diffDays} day${diffDays > 1 ? 's' : ''} left`;
     colorClass = 'text-[var(--error)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] border-[color-mix(in_srgb,var(--error)_24%,transparent)] font-bold';
   } else if (diffDays < 7) {
-    display = `Deadline in ${diffDays} days`;
+    display = `in ${diffDays} days`;
     colorClass = 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] border-[color-mix(in_srgb,var(--warning)_24%,transparent)]';
   } else if (diffDays < 14) {
-    display = `Deadline in ${diffDays} days`;
+    display = `in ${diffDays} days`;
     colorClass = 'text-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_8%,transparent)] border-[color-mix(in_srgb,var(--warning)_20%,transparent)]';
   } else {
     display = `Deadline: ${deadlineDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
