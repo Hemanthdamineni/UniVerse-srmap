@@ -11,9 +11,9 @@ function createStore() {
     title: "Campus Hackathon",
     description: "Build useful campus tools.",
     tags: ["React", "Node.js"],
-    startAt: "2026-07-01T09:00:00.000Z",
-    endAt: "2026-07-01T18:00:00.000Z",
-    registrationDeadline: "2026-06-28T18:00:00.000Z",
+    startAt: "2099-07-01T09:00:00.000Z",
+    endAt: "2099-07-01T18:00:00.000Z",
+    registrationDeadline: "2099-06-28T18:00:00.000Z",
     category: "Technical",
     department: "Computer Science",
     competitionConfig: { rounds: [{ roundId: "r1", title: "Prototype Round" }] },
@@ -26,9 +26,9 @@ function createStore() {
     title: "Open Mic Evening",
     description: "A relaxed cultural evening for music and poetry.",
     tags: ["music", "poetry"],
-    startAt: "2026-07-04T17:00:00.000Z",
-    endAt: "2026-07-04T20:00:00.000Z",
-    registrationDeadline: "2026-07-03T18:00:00.000Z",
+    startAt: "2099-07-04T17:00:00.000Z",
+    endAt: "2099-07-04T20:00:00.000Z",
+    registrationDeadline: "2099-07-03T18:00:00.000Z",
     category: "Cultural",
     department: "Student Union",
     competitionConfig: null,
@@ -47,7 +47,7 @@ function createStore() {
             eventId: "event-1",
             userId: "AP23110010001",
             status: "registered",
-            registeredAt: "2026-06-20T10:00:00.000Z",
+            registeredAt: "2099-06-20T10:00:00.000Z",
           },
         ],
       ],
@@ -98,7 +98,7 @@ function createStore() {
           id: "opp-1",
           title: "Frontend Intern",
           skills: ["React", "Node.js"],
-          deadline: "2026-07-15",
+          deadline: "2099-07-15",
         },
       ];
     },
@@ -139,8 +139,8 @@ function createStore() {
                 totalScore: 18,
                 decision: "selected",
                 shortlisted: 1,
-                evaluatedAt: "2026-07-03T10:00:00.000Z",
-                submittedAt: "2026-07-02T10:00:00.000Z",
+                evaluatedAt: "2099-07-03T10:00:00.000Z",
+                submittedAt: "2099-07-02T10:00:00.000Z",
                 roundTitle: "Prototype Round",
               },
             ];
@@ -260,7 +260,7 @@ test("UnifiedProfileStore builds privacy-filtered public career profile projecti
     sourceRefId: "project-1",
     skills: ["React"],
     visibility: "public",
-    achievedAt: "2026-06-01T00:00:00.000Z",
+    achievedAt: "2099-06-01T00:00:00.000Z",
   });
   store.upsertAchievement({
     userId: user.userId,
@@ -270,7 +270,7 @@ test("UnifiedProfileStore builds privacy-filtered public career profile projecti
     sourceRefId: "private-1",
     skills: ["Communication"],
     visibility: "private",
-    achievedAt: "2026-06-02T00:00:00.000Z",
+    achievedAt: "2099-06-02T00:00:00.000Z",
   });
 
   const publicProfile = store.getPublicCareerProfile(user.userId);

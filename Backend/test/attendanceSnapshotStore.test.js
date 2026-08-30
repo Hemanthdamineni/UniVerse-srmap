@@ -24,8 +24,8 @@ test.afterEach(() => {
 
 test("record stores and history returns parsed snapshots oldest-first", () => {
   const store = new AttendanceSnapshotStore({ dbPath: tempDbPath() });
-  const day1 = new Date("2026-08-20T06:00:00Z");
-  const day2 = new Date("2026-08-21T06:00:00Z");
+  const day1 = new Date("2099-08-20T06:00:00Z");
+  const day2 = new Date("2099-08-21T06:00:00Z");
 
   assert.equal(store.record({ userKey: "ap231100101", pageKey: "academic/attendance-details", records: RECORDS, now: day1 }), "stored");
   const updated = [
@@ -42,7 +42,7 @@ test("record stores and history returns parsed snapshots oldest-first", () => {
 
 test("record is idempotent for identical same-day data", () => {
   const store = new AttendanceSnapshotStore({ dbPath: tempDbPath() });
-  const now = new Date("2026-08-21T06:00:00Z");
+  const now = new Date("2099-08-21T06:00:00Z");
   assert.equal(store.record({ userKey: "u1", pageKey: "p", records: RECORDS, now }), "stored");
   assert.equal(store.record({ userKey: "u1", pageKey: "p", records: RECORDS, now }), "unchanged");
   assert.equal(store.history("u1").length, 1);
@@ -72,6 +72,8 @@ test("history prunes to the retention window", () => {
     });
   }
   assert.equal(store.history("u1").length, 30);
+  // 35 days added (Jul 1 → Aug 4 IST); retention keeps newest 30.
+  // Oldest in history is day 35 - 30 + 1 = day 6 → Jul 6 IST.
   assert.equal(store.history("u1")[0].date, "2026-07-06");
   store.close();
 });

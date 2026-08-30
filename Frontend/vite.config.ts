@@ -41,6 +41,18 @@ export default defineConfig({
             workbox: {
               navigateFallback: '/index.html',
               globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
+              // Exclude the icon-collection master file and the brand
+              // badges from precache — they aren't part of the PWA shell,
+              // they're loaded on-demand by React components, and
+              // Icons.png alone is > 2 MiB which breaks the default
+              // workbox maximumFileSizeToCacheInBytes.
+              globIgnores: [
+                '**/icons/Icons.png',
+                '**/icons/badges.jpeg',
+                '**/icons/dark_mode_*.{png,jpeg}',
+                '**/icons/light_mode_*.{png,jpeg}',
+                '**/icons/horizontal_logo.png',
+              ],
               navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
               runtimeCaching: [
                 {
