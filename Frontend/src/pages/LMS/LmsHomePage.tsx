@@ -115,7 +115,6 @@ export function LmsHomePage() {
   const requests = useAsyncPage(() => listLmsRequests({ status: "open", limit: 5 }), []);
   const leaderboard = useAsyncPage(() => getWeeklyLeaderboard(), []);
   const streak = useAsyncPage(() => getLmsStreak(), []);
-  const academic = useAsyncPage(() => getLmsProgressOverview(), []);
 
   useEffect(() => {
     if (!examPrep.data?.length) return;
@@ -153,21 +152,6 @@ export function LmsHomePage() {
           <StatCard label="Exam feedback pending" value={String(pendingExam.data?.length || 0)} />
         </div>
       </SectionCard>
-
-      {academic.data ? (
-        <SectionCard title="Academic pulse">
-          <div className="grid gap-4 md:grid-cols-3">
-            <StatCard label="CGPA" value={String(academic.data.currentCgpa)} />
-            <StatCard label="Attendance" value={`${academic.data.attendancePct}%`} />
-            <StatCard label="Subjects at risk" value={String(academic.data.subjectsAtRisk ?? 0)} />
-          </div>
-          <div className="mt-3">
-            <Link to="/academic-tracker/academic-insights" className="lms-btn lms-btn-ghost no-underline">
-              Open Academic Hub
-            </Link>
-          </div>
-        </SectionCard>
-      ) : null}
 
       {continueLearning.data ? (
         <SectionCard title="Continue Learning">
