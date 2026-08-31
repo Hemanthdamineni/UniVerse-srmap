@@ -224,7 +224,8 @@ export default function Sidebar() {
           <img
             src={horizontalLogo}
             alt="UniVerse — SRMAP Edition"
-            className="h-7 w-auto max-w-[80%] object-contain"
+            className="h-8 w-auto max-w-full object-contain"
+            style={{ maxHeight: "32px" }}
           />
         ) : null}
         <button
