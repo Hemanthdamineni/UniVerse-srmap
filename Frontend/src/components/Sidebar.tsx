@@ -219,7 +219,7 @@ export default function Sidebar() {
           boxShadow: "var(--sidebar-shadow)",
         }}
       >
-      <div className="flex items-center gap-3 border-b p-4" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center gap-2 border-b py-3 pl-3 pr-2" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
           <img
             src={horizontalLogo}
