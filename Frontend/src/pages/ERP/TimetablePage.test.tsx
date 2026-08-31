@@ -231,6 +231,41 @@ describe("TimetablePage", () => {
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
+  it("splits code and room into separate visual lines per entry", async () => {
+    const model: TimetableModel = {
+      timeSlots: ["09:00-09:50", "10:00-10:50"],
+      days: [
+        {
+          day: "Monday",
+          slots: [
+            { time: "09:00-09:50", classDetails: "MCE 244(C 705)" },
+            { time: "10:00-10:50", classDetails: "CSE 306(V 403) — Software Engineering and Project Management" },
+          ],
+        },
+        { day: "Tuesday", slots: [{ time: "09:00-09:50", classDetails: "" }, { time: "10:00-10:50", classDetails: "CSE 304" }] },
+      ],
+      subjects: [],
+    };
+    setupBatchResponse();
+    executePipeline.mockReturnValue({ isValid: true, data: model, errors: [] });
+    renderPage();
+
+    // Codes
+    expect(await screen.findByText("MCE 244")).toBeInTheDocument();
+    expect(screen.getByText("CSE 306")).toBeInTheDocument();
+    expect(screen.getByText("CSE 304")).toBeInTheDocument();
+
+    // Rooms rendered as separate muted lines
+    expect(screen.getByText("C 705")).toBeInTheDocument();
+    expect(screen.getByText("V 403")).toBeInTheDocument();
+
+    // The suffix title text is dropped (it lives in the legend section, not the cell)
+    expect(screen.queryByText(/Software Engineering/)).not.toBeInTheDocument();
+
+    // Empty cell still shows the placeholder em dash with the no-class label
+    expect(screen.getByLabelText("No class scheduled")).toBeInTheDocument();
+  });
+
   it("renders the subject legend with code, name, credits, faculty, and room", async () => {
     const model: TimetableModel = {
       timeSlots: ["08:00-08:50"],

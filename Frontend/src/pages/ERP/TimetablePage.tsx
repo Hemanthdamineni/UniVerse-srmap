@@ -16,6 +16,36 @@ interface TimetablePageProps {
   blueprint: PageBlueprint;
 }
 
+/**
+ * Parse the raw ERP cell text into a subject code + optional room.
+ *
+ * The ERP hands back strings like:
+ *   "MCE 244(C 705)"
+ *   "CSE 304"
+ *   "MCE 244(C 705) — Some long title from the title attribute"
+ *
+ * The trailing em-dash suffix (when the cell has a `title` attribute on the
+ * server) is discarded — the actual subject title lives in the legend below.
+ */
+function parseTimetableEntry(raw: string): { code: string; room: string } | null {
+  const trimmed = raw.replace(/\s+/g, " ").trim();
+  if (!trimmed) return null;
+
+  // Strip any "code — extra title" suffix the extractor appends.
+  const withoutSuffix = trimmed.split(/\s+[—–-]\s+/)[0].trim();
+  if (!withoutSuffix) return null;
+
+  const match = withoutSuffix.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (!match) {
+    return { code: withoutSuffix, room: "" };
+  }
+
+  return {
+    code: match[1].trim(),
+    room: match[2].trim(),
+  };
+}
+
 export default function TimetablePage({ blueprint }: TimetablePageProps) {
   const [model, setModel] = useState<TimetableModel | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -118,18 +148,24 @@ export default function TimetablePage({ blueprint }: TimetablePageProps) {
                 ) : (
                   days.map((dayRow) => (
                     <tr key={dayRow.day} className="erp-table-row">
-                      <td className="erp-table-cell erp-table-cell-strong">{dayRow.day}</td>
-                      {dayRow.slots.map((slot, i) => (
-                        <td key={i} className="erp-table-cell erp-table-align-center">
-                          {slot.classDetails ? (
-                            <span className="inline-block rounded px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--comp-accent-light)', color: 'var(--comp-text-primary)' }}>
-                              {slot.classDetails}
-                            </span>
-                          ) : (
-                            <span style={{ color: 'var(--comp-text-muted)' }}>—</span>
-                          )}
-                        </td>
-                      ))}
+                      <td className="erp-table-cell erp-table-cell-strong timetable-cell">{dayRow.day}</td>
+                      {dayRow.slots.map((slot, i) => {
+                        const entry = slot.classDetails ? parseTimetableEntry(slot.classDetails) : null;
+                        return (
+                          <td key={i} className="erp-table-cell erp-table-align-center timetable-cell">
+                            {entry ? (
+                              <span className="timetable-entry">
+                                <span className="timetable-entry-code">{entry.code}</span>
+                                {entry.room ? <span className="timetable-entry-room">{entry.room}</span> : null}
+                              </span>
+                            ) : (
+                              <span className="timetable-cell-empty" aria-label="No class scheduled">
+                                —
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))
                 )}
