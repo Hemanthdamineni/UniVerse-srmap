@@ -219,13 +219,13 @@ export default function Sidebar() {
           boxShadow: "var(--sidebar-shadow)",
         }}
       >
-      <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center gap-3 border-b p-4" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
           <img
             src={horizontalLogo}
             alt="UniVerse — SRMAP Edition"
-            className="h-8 w-auto max-w-full object-contain"
-            style={{ maxHeight: "32px" }}
+            className="h-9 w-full flex-1 object-contain"
+            style={{ maxHeight: "36px" }}
           />
         ) : null}
         <button
