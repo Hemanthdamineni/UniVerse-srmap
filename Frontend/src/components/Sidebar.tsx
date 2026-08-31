@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import { SidebarNavIcon } from "./SidebarNavIcons";
+import horizontalLogo from "../assets/Icons/horizontal_logo.png";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { isStaticPrototype } from "../lib/core/prototype";
 import { sessionKeys } from "../lib/core/queryKeys";
@@ -220,9 +221,11 @@ export default function Sidebar() {
       >
       <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
-          <div className="text-[1.15rem] font-bold tracking-[0.01em]">
-            <SidebarContrastText text="UniVerse, SRMAP Edition" className="sidebar-item" />
-          </div>
+          <img
+            src={horizontalLogo}
+            alt="UniVerse — SRMAP Edition"
+            className="h-7 w-auto max-w-[80%] object-contain"
+          />
         ) : null}
         <button
           type="button"
