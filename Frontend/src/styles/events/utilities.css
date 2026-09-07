@@ -118,6 +118,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* 44px floor: these are page-level actions, never table-dense controls. */
+  min-height: 44px;
   padding: var(--space-sm) var(--space-md);
   background: var(--comp-accent);
   color: #ffffff;
@@ -143,6 +145,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
   padding: var(--space-sm) var(--space-md);
   background: transparent;
   color: var(--comp-text-secondary);

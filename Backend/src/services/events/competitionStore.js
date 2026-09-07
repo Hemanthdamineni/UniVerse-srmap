@@ -147,6 +147,11 @@ const accessMethods = {
     return role;
   },
 
+  assertEventPermission(eventId, user, permission) {
+    const event = this._getEventOrThrow(eventId);
+    return this._ensurePermission(user, event, permission);
+  },
+
   _ensureRegistered(eventId, userId) {
     const registration = (this.eventsStore.registrationsByEvent.get(eventId) || []).find(
       (item) => item.userId === userId && item.status === "registered"
@@ -182,14 +187,18 @@ const accessMethods = {
 const certificateMethods = {
   getCertificateTemplate(eventId, user, roundId = "") {
     const event = this._getEventOrThrow(eventId);
-    void event;
+    this._ensurePermission(user, event, "canEdit");
     const row = this.db.prepare("SELECT * FROM certificate_templates WHERE eventId = ?").get(eventId);
     if (!row) return null;
+    const legacyFileName = path.basename(String(row.templateImagePath || ""));
+    const templateImagePath = String(row.templateImagePath || "").startsWith("/api/")
+      ? row.templateImagePath
+      : `/api/competitions/${encodeURIComponent(eventId)}/certificate-template/image/${encodeURIComponent(legacyFileName)}`;
     return {
       id: row.eventId,
       eventId: row.eventId,
       roundId: row.roundId || roundId || null,
-      templateImagePath: row.templateImagePath,
+      templateImagePath,
       fields: safeJsonParse(row.fields, []),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -371,6 +380,51 @@ const evaluationMethods = {
         memberCount: Array.isArray(members) ? members.length : 0,
       };
     });
+  },
+
+  getSubmissionDownload(eventId, roundId, submissionId, user) {
+    const { event } = this._getRoundOrThrow(eventId, roundId);
+    const row = this.db
+      .prepare("SELECT * FROM submissions WHERE id = ? AND eventId = ? AND roundId = ?")
+      .get(submissionId, eventId, roundId);
+    if (!row) {
+      const error = new Error("Submission not found");
+      error.status = 404;
+      throw error;
+    }
+    if (row.type !== "file" || !row.filePath) {
+      const error = new Error("This submission has no downloadable file");
+      error.status = 404;
+      throw error;
+    }
+
+    let canViewAll = false;
+    try {
+      this._ensurePermission(user, event, "canViewAllSubmissions");
+      canViewAll = true;
+    } catch (error) {
+      if (Number(error.status) !== 403) throw error;
+    }
+    const userId = String(user?.userId || "").trim();
+    const isSubmitter = String(row.submittedBy || "") === userId;
+    const isTeamMember = row.teamId
+      && safeJsonParse(this.db.prepare("SELECT members FROM teams WHERE id = ?").get(row.teamId)?.members, [])
+        .some((member) => String(member) === userId);
+    if (!canViewAll && !isSubmitter && !isTeamMember) {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    }
+
+    const root = path.resolve(this.submissionsDir);
+    const filePath = path.resolve(root, String(row.filePath));
+    const relative = path.relative(root, filePath);
+    if (relative.startsWith("..") || path.isAbsolute(relative) || !fs.existsSync(filePath)) {
+      const error = new Error("Submission file not found");
+      error.status = 404;
+      throw error;
+    }
+    return { filePath, fileName: path.basename(filePath) };
   },
 
   evaluateSubmission(submissionId, user, payload) {
@@ -1125,6 +1179,32 @@ const schemaMethods = {
 // --- submissionIntake.js ---
 
 const submissionIntakeMethods = {
+  assertCanSubmit(eventId, roundId, userId) {
+    const { event, round } = this._getRoundOrThrow(eventId, roundId);
+    this.checkRoundAccess(eventId, roundId, userId);
+    const deadline = new Date(round.submissionDeadline).getTime();
+    if (Number.isFinite(deadline) && Date.now() > deadline) {
+      const error = new Error("Submission deadline has passed.");
+      error.status = 403;
+      throw error;
+    }
+    if (!round.submissionTypes.includes("file")) {
+      const error = new Error("File submissions are not allowed for this round");
+      error.status = 403;
+      throw error;
+    }
+    if (this._getSubmissionScope(event) === "team") {
+      const team = this.getMyTeam(eventId, userId);
+      if (!team || team.leaderId !== userId) {
+        const error = new Error("Only the team leader can submit on behalf of the team");
+        error.status = 403;
+        throw error;
+      }
+    }
+    this.checkResubmissionLimit(eventId, roundId, userId);
+    return true;
+  },
+
   checkRoundAccess(eventId, roundId, userId) {
     const { event, round } = this._getRoundOrThrow(eventId, roundId);
     this._ensureRegistered(eventId, userId);

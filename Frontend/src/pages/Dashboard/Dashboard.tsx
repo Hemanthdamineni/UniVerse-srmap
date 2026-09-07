@@ -170,7 +170,10 @@ function Dashboard() {
           </SectionCard>
         </div>
 
-        <SectionCard interactive title="Basic Info" className="overflow-hidden p-4">
+        {/* Identity data the student already knows, so it sinks to the bottom on
+            phones (order-7) where vertical space is the scarce resource. On md+
+            the order utilities go inert and it keeps its original slot. */}
+        <SectionCard interactive title="Basic Info" className="overflow-hidden p-4 max-md:order-7">
           <BasicInfo profileData={profileData} />
         </SectionCard>
 
@@ -182,16 +185,23 @@ function Dashboard() {
             the row group sorts after the rail pair (max-md:order-2) and
             within it Attendance leads (primary daily check) — desktop cells
             unchanged. */}
-        <div className="grid min-h-0 grid-cols-1 items-stretch gap-4 max-md:order-2 md:grid-cols-2 xl:grid-cols-3 xl:min-h-[calc((100vh-var(--dash-chrome))*0.35)]">
-          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-2">
+        {/* This row also dissolves below md so its three cards can be ordered
+            against the rail cards individually, rather than moving as a block.
+            Mobile reading order across the whole page becomes:
+            Welcome → Attendance → Schedule → Week Calendar → Student Tasks →
+            To-Do → Campus Hub → Basic Info. */}
+        <div className="grid min-h-0 grid-cols-1 items-stretch gap-4 max-md:contents md:grid-cols-2 xl:grid-cols-3 xl:min-h-[calc((100vh-var(--dash-chrome))*0.35)]">
+          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-4">
             <QuickLinks feedbackPendingCount={feedbackPendingCount} />
           </SectionCard>
 
-          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-3">
+          <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 xl:min-h-0 max-md:order-6">
             <CampusHubWidget />
           </SectionCard>
 
-          {/* Attendance width reduced from 5 to 3 columns (equal thirds) */}
+          {/* Attendance width reduced from 5 to 3 columns (equal thirds).
+              First card after the greeting on phones — it is the single most
+              common reason a student opens the app. */}
           <SectionCard interactive fill className="min-h-[280px] overflow-hidden p-0 md:col-span-2 xl:col-span-1 xl:min-h-0 max-md:order-1">
             <Suspense fallback={<SkeletonCard className="h-full w-full" />}>
               <Attendance attendanceData={data} />
@@ -199,7 +209,7 @@ function Dashboard() {
           </SectionCard>
         </div>
 
-        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-2 xl:min-h-[calc((100vh-var(--dash-chrome))*0.28)]">
+        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-5 xl:min-h-[calc((100vh-var(--dash-chrome))*0.28)]">
           <ToDo selectedDate={selectedDate} profileData={profileData} />
         </SectionCard>
       </div>
@@ -212,11 +222,12 @@ function Dashboard() {
           overlay — the column reads calendar → schedule (full-height card
           with blank footer) → overlay on top of that blank footer. */}
       <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 pb-6 max-md:contents md:col-span-3">
-        <SectionCard interactive className="overflow-hidden p-4 max-md:order-1">
+        <SectionCard interactive className="overflow-hidden p-4 max-md:order-3">
           <WeekCalendar onDateSelect={setSelectedDate} />
         </SectionCard>
 
-        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-1">
+        {/* "What's my next class" — second only to attendance on phones. */}
+        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-2">
           <Schedule scheduleData={data} selectedDate={selectedDate} />
         </SectionCard>
       </div>

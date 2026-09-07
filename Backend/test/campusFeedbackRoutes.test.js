@@ -3,11 +3,14 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
+process.env.ADMIN_REGISTER_NUMBERS = "AP23110010419";
+
 const { CampusFeedbackStore } = require("../src/services/campus/campusFeedbackStore");
 
 function createSession(profileData) {
   return {
     loggedIn: true,
+    adminElevated: profileData.userId === "AP23110010419",
     profileData: {
       TableContent: {
         "Register No.": profileData.userId,

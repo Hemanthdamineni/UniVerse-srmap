@@ -19,13 +19,6 @@ export const EMPTY_MATERIAL_FORM = {
   tags: "",
 };
 
-export const EMPTY_RECOMMENDATION_FORM = {
-  title: "",
-  description: "",
-  url: "",
-  kind: "link",
-  resourceGroup: "links",
-};
 
 export function canPreviewResource(url: string, kind: string) {
   const normalizedUrl = String(url || "").toLowerCase();

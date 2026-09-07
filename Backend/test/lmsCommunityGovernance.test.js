@@ -3,6 +3,8 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
+process.env.ADMIN_REGISTER_NUMBERS = "AP23110010419";
+
 const { LmsStore } = require("../src/services/lms/lmsStore");
 const { LmsModerationService } = require("../src/services/lms/lmsServices");
 const { LmsRevisionScheduler } = require("../src/services/lms/lmsServices");
@@ -39,6 +41,7 @@ function createResourcePayload(overrides = {}) {
 function createSession(profileData) {
   return {
     loggedIn: true,
+    adminElevated: profileData.userId === "AP23110010419",
     profileData: {
       TableContent: {
         "Register No.": profileData.userId,

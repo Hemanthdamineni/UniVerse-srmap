@@ -16,7 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import type { LmsCollection, LmsResource } from "./_shared/LmsPageShared";
 
-export function CollectionsPage() {
+function CollectionsPage() {
   const { data, setData, loading, error } = useAsyncPage(() => listLmsCollections(), []);
   const [actionError, setActionError] = useState("");
   const [openId, setOpenId] = useState("");

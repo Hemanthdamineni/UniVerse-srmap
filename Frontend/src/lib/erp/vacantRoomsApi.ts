@@ -11,9 +11,6 @@ export interface VacantRoomsResult {
   knownRooms: number;
 }
 
-export interface VacantSlotsMeta {
-  slots: string[];
-}
 
 export const VACANT_DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
 

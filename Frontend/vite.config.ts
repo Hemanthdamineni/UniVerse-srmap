@@ -41,17 +41,17 @@ export default defineConfig({
             workbox: {
               navigateFallback: '/index.html',
               globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
-              // Exclude the icon-collection master file and the brand
-              // badges from precache — they aren't part of the PWA shell,
-              // they're loaded on-demand by React components, and
-              // Icons.png alone is > 2 MiB which breaks the default
-              // workbox maximumFileSizeToCacheInBytes.
+              // Web Push handlers (push / notificationclick). Batch B8.
+              importScripts: ['/sw-push.js'],
+              // Keep the on-demand badge sprites out of the PWA shell precache —
+              // they aren't part of the app shell and are loaded lazily by
+              // React components. (The multi-MB Icons.png / *_mode_icon.png /
+              // horizontal_logo.png collection was deleted 2026-09-04 — the
+              // brand mark is now the inline `UniVerseWordmark` SVG.)
               globIgnores: [
-                '**/icons/Icons.png',
                 '**/icons/badges.jpeg',
-                '**/icons/dark_mode_*.{png,jpeg}',
-                '**/icons/light_mode_*.{png,jpeg}',
-                '**/icons/horizontal_logo.png',
+                '**/icons/dark_mode_badge.jpeg',
+                '**/icons/light_mode_badge.jpeg',
               ],
               navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
               runtimeCaching: [

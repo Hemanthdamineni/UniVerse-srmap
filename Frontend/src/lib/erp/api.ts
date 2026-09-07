@@ -32,101 +32,14 @@ export type ErpPageResponse = {
   document?: ErpDocument;
 };
 
-export type ErpSectionRef = {
-  sourcePageKey?: string;
-  key?: string;
-  dropdown?: string;
-  subitem?: string;
-};
 
-export type ErpAction = {
-  id: string;
-  label: string;
-  kind: string;
-  enabled?: boolean;
-  disabledReason?: string;
-  formRef?: string;
-  tableRowIndex?: number;
-  payloadDefaults?: Record<string, unknown>;
-  controlRef?: {
-    functionName?: string;
-    args?: Array<string | number>;
-  };
-  execution?: {
-    method?: string;
-    url?: string;
-    targetId?: number;
-    functionName?: string;
-    args?: Array<string | number>;
-  };
-};
 
-export type ErpFieldOption = {
-  value: string;
-  label: string;
-  selected?: boolean;
-};
 
-export type ErpFormField = {
-  id?: string;
-  name?: string;
-  label?: string;
-  type?: string;
-  required?: boolean;
-  disabled?: boolean;
-  readOnly?: boolean;
-  placeholder?: string;
-  helperText?: string;
-  value?: string;
-  options?: ErpFieldOption[];
-  maxLength?: number;
-};
 
-export type ErpForm = {
-  id?: string;
-  name?: string;
-  method?: string;
-  action?: string;
-  fields?: ErpFormField[];
-};
 
-export type ErpUiSection = {
-  sourcePageKey?: string;
-  key?: string;
-  dropdown?: string;
-  subitem?: string;
-  pageHeading?: string;
-  forms?: ErpForm[];
-  actions?: ErpAction[];
-};
 
-export type ErpUiHintsResponse = {
-  success?: boolean;
-  pageKey: string;
-  sections: ErpUiSection[];
-  warnings?: string[];
-};
 
-export type ErpSchemaBlock = {
-  id: string;
-  type: string;
-  sourcePageKey?: string;
-  title?: string;
-  showStatus?: boolean;
-  showDescription?: boolean;
-  showActions?: boolean;
-  visibleWhenEmpty?: boolean;
-  listKey?: string;
-  section?: ErpSectionRef;
-};
 
-export type ErpSchemaResponse = {
-  success?: boolean;
-  pageKey: string;
-  schemaVersion?: string;
-  blocks: ErpSchemaBlock[];
-  warnings?: string[];
-};
 
 export type ErpActionExecuteResponse = {
   success: boolean;
@@ -244,103 +157,6 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-export async function sendErpDocumentRequest(payload: {
-  url: string;
-  method?: string;
-  data?: Record<string, unknown>;
-}): Promise<unknown> {
-  if (isStaticPrototype()) {
-    return { success: true, message: "Static prototype: document request skipped." };
-  }
-
-  const method = String(payload.method || "GET").trim().toUpperCase() || "GET";
-  const baseUrl = String(payload.url || "").trim();
-  const data = payload.data && typeof payload.data === "object" ? payload.data : {};
-
-  let url = baseUrl;
-  const init: RequestInit = {
-    method,
-    credentials: "include",
-    headers: {},
-  };
-
-  if (method === "GET") {
-    const search = new URLSearchParams();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-      search.set(key, String(value));
-    });
-    const query = search.toString();
-    if (query) {
-      url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}${query}`;
-    }
-  } else if (url.startsWith("/api/")) {
-    init.headers = { "Content-Type": "application/json" };
-    init.body = JSON.stringify(data);
-  } else {
-    const form = new URLSearchParams();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-      form.set(key, String(value));
-    });
-    init.headers = { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" };
-    init.body = form.toString();
-  }
-
-  const response = await fetch(url, init);
-  const jsonPayload = await parseJsonSafe(response);
-
-  if (!response.ok) {
-    if (isSessionAuthFailure(response.status, jsonPayload)) {
-      handleSessionAuthFailure();
-    }
-
-    const parsed = parseApiErrorBody(jsonPayload);
-    throw new ApiError(
-      parsed?.message || `Request failed with status ${response.status}`,
-      response.status,
-      parsed?.code || "UNKNOWN",
-      parsed?.retryable || false
-    );
-  }
-
-  if (jsonPayload !== null) {
-    return jsonPayload;
-  }
-
-  return parseTextSafe(response);
-}
-
-export async function getErpPage(pageKey: string, fallbackSessionId?: string): Promise<ErpPageResponse> {
-  if (isStaticPrototype()) {
-    const batch = await resolveStaticErpBatch([pageKey]);
-    const hit = batch[pageKey];
-    if (hit && "data" in hit && hit.success !== false) {
-      return hit as ErpPageResponse;
-    }
-    return minimalStaticErpPageResponse(pageKey);
-  }
-
-  try {
-    const v2 = await requestJson<ErpPageResponse>(withPageKeyPath("/api/v2/erp/page", pageKey));
-    return v2;
-  } catch (error) {
-    const apiError = error as ApiError;
-    if (apiError.status !== 404 && apiError.status !== 400) {
-      throw apiError;
-    }
-
-    const query = fallbackSessionId ? `?sessionId=${encodeURIComponent(fallbackSessionId)}` : "";
-    const legacyPayload = await requestJson<unknown>(`/api/${pageKey}${query}`);
-    return {
-      pageKey,
-      source: "legacy",
-      data: legacyPayload,
-      warnings: ["Loaded via legacy ERP route. V2 schema may be partial."],
-    };
-  }
-}
-
 export async function getErpBatch(pageKeys: string[]): Promise<ErpBatchResponse> {
   const normalizedPageKeys = Array.from(
     new Set(
@@ -364,38 +180,6 @@ export async function getErpBatch(pageKeys: string[]): Promise<ErpBatchResponse>
   });
 
   return payload?.data || {};
-}
-
-export async function getErpUiHints(pageKey: string): Promise<ErpUiHintsResponse | null> {
-  if (isStaticPrototype()) {
-    const map = await loadStaticErpSupplementalJson<Record<string, ErpUiHintsResponse | null>>("erp-ui-hints.json");
-    if (map && pageKey in map) return map[pageKey] ?? null;
-    return null;
-  }
-
-  try {
-    return await requestJson<ErpUiHintsResponse>(withPageKeyPath("/api/v2/erp/ui", pageKey));
-  } catch (error) {
-    const apiError = error as ApiError;
-    if (apiError.status === 404 || apiError.status === 400) return null;
-    throw apiError;
-  }
-}
-
-export async function getErpSchema(pageKey: string): Promise<ErpSchemaResponse | null> {
-  if (isStaticPrototype()) {
-    const map = await loadStaticErpSupplementalJson<Record<string, ErpSchemaResponse | null>>("erp-schema.json");
-    if (map && pageKey in map) return map[pageKey] ?? null;
-    return null;
-  }
-
-  try {
-    return await requestJson<ErpSchemaResponse>(withPageKeyPath("/api/v2/erp/schema", pageKey));
-  } catch (error) {
-    const apiError = error as ApiError;
-    if (apiError.status === 404 || apiError.status === 400) return null;
-    throw apiError;
-  }
 }
 
 export async function executeErpAction(payload: {

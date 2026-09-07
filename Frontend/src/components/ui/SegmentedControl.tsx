@@ -52,7 +52,9 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-lg font-medium transition-all",
+              // min-h-11 only on touch: keeps the dense look with a mouse,
+              // gives a thumb a 44px target on a phone (WCAG 2.5.5).
+              "flex shrink-0 items-center justify-center rounded-lg font-medium transition-all [@media(pointer:coarse)]:min-h-11",
               size === "sm" ? "gap-2 px-3 py-2 text-xs font-semibold" : "gap-1.5 px-3 py-2 text-sm",
               fluid && "min-[480px]:flex-1",
               active

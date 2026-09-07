@@ -47,6 +47,15 @@ describe("AdminCompanionAnalyticsPage", () => {
         { eventName: "events_recommendation_clicked", count: 1 },
         { eventName: "resume_analyzed", count: 1 },
       ],
+      pageViews: {
+        totalViews: 42,
+        distinctRoutes: 3,
+        byRoute: [
+          { route: "/dashboard", views: 20, actors: 2 },
+          { route: "/events", views: 15, actors: 2 },
+          { route: "/career/opportunities", views: 7, actors: 1 },
+        ],
+      },
       recent: [
         {
           id: "evt-1",
@@ -75,7 +84,12 @@ describe("AdminCompanionAnalyticsPage", () => {
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getAllByText("Events Recommendation Clicked").length).toBeGreaterThan(0);
     expect(screen.getByText("Resume Analyzed")).toBeInTheDocument();
-    expect(screen.getByText("/events")).toBeInTheDocument();
+    // "/events" now appears in both the Top Pages table and Recent Signals.
+    expect(screen.getAllByText("/events").length).toBeGreaterThan(0);
     expect(screen.getByText("AP23110010001")).toBeInTheDocument();
+
+    // Top Pages section renders the page-view breakdown.
+    expect(screen.getByText("Top Pages")).toBeInTheDocument();
+    expect(screen.getByText("/career/opportunities")).toBeInTheDocument();
   });
 });

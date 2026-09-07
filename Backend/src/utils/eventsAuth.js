@@ -1,5 +1,4 @@
 const { resolveSessionId } = require("./cookies");
-const { hasAdminAccess } = require("./adminAccess");
 const { extractRegisterNoFromProfile, isPotentialAdminRegisterNo } = require("../config/adminUsers");
 
 function parseDepartmentFromProfile(profileData) {
@@ -65,7 +64,7 @@ async function resolveRoleAsync(req, sessionStore, adminPassword = "") {
 
     const profile = session.profileData || {};
     const registerNo = extractRegisterNoFromProfile(profile);
-    if (isPotentialAdminRegisterNo(registerNo)) return "admin";
+    if (isPotentialAdminRegisterNo(registerNo) && session.adminElevated) return "admin";
 
     const program = String(profile?.TableContent?.["Program / Section"] || "").toLowerCase();
 
@@ -76,7 +75,7 @@ async function resolveRoleAsync(req, sessionStore, adminPassword = "") {
   }
 }
 
-function createUserContextMiddleware({ sessionStore, adminPassword = "" }) {
+function createUserContextMiddleware({ sessionStore, adminPassword = "", userDirectory = null }) {
   return async function userContext(req, _res, next) {
     const role = await resolveRole(req, sessionStore, adminPassword);
     const sessionId = resolveSessionId(req);
@@ -102,6 +101,9 @@ function createUserContextMiddleware({ sessionStore, adminPassword = "" }) {
       year: parseYearFromProfile(profile),
       sessionId,
       isAuthenticated: Boolean(session && session.loggedIn),
+      // Some routers are exercised standalone, without app-level
+      // adminContext middleware. `role === admin` already requires both the
+      // configured allowlist and the server-side session elevation flag.
       hasAdminAccess: role === "admin",
     };
 
@@ -112,6 +114,17 @@ function createUserContextMiddleware({ sessionStore, adminPassword = "" }) {
       req.userContext.department = req.userContext.department || "General";
     } else if (role === "guest" && !req.userContext.userId) {
       req.userContext.userId = "guest-user";
+    }
+
+    // Remember this register-number → display-name so organizer surfaces
+    // (leaderboards, judge lists, audit trails) can show names, not IDs.
+    // Best-effort: never let a directory write break the request (B3 / T5.4.6).
+    if (userDirectory && req.userContext.isAuthenticated) {
+      try {
+        userDirectory.record(req.userContext.userId, req.userContext.name);
+      } catch {
+        /* nicety only */
+      }
     }
 
     return next();

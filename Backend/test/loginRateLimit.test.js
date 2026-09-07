@@ -77,7 +77,7 @@ test("login limiter tracks client IPs independently", async () => {
   assert.equal(otherIpRes.body, null);
 });
 
-test("login limiter prefers x-forwarded-for over socket ip", async () => {
+test("login limiter ignores a caller-controlled x-forwarded-for header", async () => {
   const seen = [];
   const limiter = createLoginRateLimitMiddleware({});
   const next = () => next.calls += 1;
@@ -86,7 +86,7 @@ test("login limiter prefers x-forwarded-for over socket ip", async () => {
   for (let i = 0; i < 21; i++) {
     const res = createMockResponse();
     await limiter(
-      createMockRequest({ ip: "10.0.0.1", forwardedFor: "203.0.113.99" }),
+      createMockRequest({ ip: "10.0.0.1", forwardedFor: `203.0.113.${i}` }),
       res,
       next
     );
@@ -133,7 +133,7 @@ test("login limiter enforces via redis when a client is provided", async () => {
   assert.ok(storedKeys.values().next().value.startsWith("ratelimit:login:"));
 });
 
-test("login limiter degrades to allow when redis errors", async () => {
+test("login limiter falls back to an in-memory budget when redis errors", async () => {
   const failingClient = {
     async incr() {
       throw new Error("redis down");
@@ -148,10 +148,13 @@ test("login limiter degrades to allow when redis errors", async () => {
   const next = () => next.calls += 1;
   next.calls = 0;
 
-  const res = createMockResponse();
-  await limiter(createMockRequest(), res, next);
+  let lastRes = null;
+  for (let i = 0; i < 21; i += 1) {
+    lastRes = createMockResponse();
+    await limiter(createMockRequest(), lastRes, next);
+  }
 
-  assert.equal(res.statusCode, 200, "availability wins over enforcement when redis fails");
-  assert.equal(res.body, null);
-  assert.equal(next.calls, 1);
+  assert.equal(lastRes.statusCode, 429);
+  assert.equal(lastRes.body?.error?.code, "RATE_LIMITED");
+  assert.equal(next.calls, 20);
 });

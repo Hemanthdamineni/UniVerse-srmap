@@ -1,4 +1,5 @@
 const cheerio = require("cheerio");
+const { loadHtml: loadErpHtml } = require("../erp/extractors/loadHtml");
 const { cleanText } = require("../../utils/text");
 const { log } = require("../../utils/logger");
 const fs = require("fs");
@@ -57,7 +58,9 @@ function resolveEndpoint(discoveryRepository) {
 }
 
 function parseFeedbackLandingPage(html = "") {
-  const $ = cheerio.load(String(html || ""));
+  // loadErpHtml strips <script>/<style> so their source can't satisfy the
+  // /already submitted|feedback completed/ test on $.root().text() below.
+  const $ = loadErpHtml(html);
   const pendingSubjects = [];
   const submittedSubjects = [];
 
@@ -689,11 +692,15 @@ function updateCacheHitRatio({ policy = "cached-first", result = "miss" }) {
 }
 
 function recordFrontendTelemetry(payload = {}) {
-  const route = normalizePath(payload.route || "unknown");
+  const routePrefixes = new Set(["dashboard", "attendance", "academics", "events", "lms", "career", "helpdesk", "feedback", "hostel", "profile"]);
+  const requestedPrefix = String(payload.route || "").replace(/^\/+/, "").split("/")[0].toLowerCase();
+  const route = routePrefixes.has(requestedPrefix) ? requestedPrefix : "other";
+  const kind = ["navigation", "route-change", "initial-load"].includes(String(payload.kind))
+    ? String(payload.kind)
+    : "navigation";
   const routeDurationMs = Number(payload.routeDurationMs || 0);
-  const kind = String(payload.kind || "navigation");
 
-  if (routeDurationMs > 0) {
+  if (Number.isFinite(routeDurationMs) && routeDurationMs > 0 && routeDurationMs <= 300_000) {
     frontendRouteTransitionSeconds.observe(
       { route, kind },
       routeDurationMs / 1000
@@ -701,10 +708,10 @@ function recordFrontendTelemetry(payload = {}) {
   }
 
   if (Array.isArray(payload.vitals)) {
-    for (const metric of payload.vitals) {
+    for (const metric of payload.vitals.slice(0, 5)) {
       const name = String(metric?.name || "").trim().toUpperCase();
       const value = Number(metric?.value);
-      if (!name || !Number.isFinite(value)) continue;
+      if (!["CLS", "FCP", "INP", "LCP", "TTFB"].includes(name) || !Number.isFinite(value) || value < 0 || value > 300_000) continue;
       frontendWebVitalValue.set({ name, route }, value);
     }
   }

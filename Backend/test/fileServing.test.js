@@ -6,115 +6,88 @@ const os = require("node:os");
 const path = require("node:path");
 const express = require("express");
 
-const { createRequestContextMiddleware } = require("../src/middleware/requestContext");
-const { createUserContextMiddleware } = require("../src/utils/eventsAuth");
-const { ensureAuthenticatedForUploads } = require("../src/middleware/fileServing");
-
-function tempDbPath() {
-  return path.join(os.tmpdir(), `fileserving-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sqlite`);
-}
-
-function makeApp() {
-  const { SessionStore } = require("../src/services/core/sessionServices");
-  const sessionStore = new SessionStore(60_000);
-
-  const uploadsDir = fs.mkdtempSync(path.join(os.tmpdir(), "uploads-"));
-  const app = express();
-  app.use(createRequestContextMiddleware());
-  app.use(createUserContextMiddleware({ sessionStore }));
-  app.use("/uploads", ensureAuthenticatedForUploads);
-  app.use("/uploads", express.static(uploadsDir));
-  fs.writeFileSync(path.join(uploadsDir, "sample.bin"), "hello");
-  return { app, sessionStore, uploadsDir };
-}
+const { SessionStore } = require("../src/services/core/sessionServices");
+const { createCompetitionRoutes } = require("../src/routes/competitionRoutes");
 
 function listen(app) {
   return new Promise((resolve) => {
-    const server = app.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      resolve({ server, port });
-    });
+    const server = app.listen(0, () => resolve({ server, port: server.address().port }));
   });
 }
 
-function fetch(port, path, cookie) {
+function request(port, options, body = "") {
   return new Promise((resolve, reject) => {
-    const req = http.get(
-      { host: "127.0.0.1", port, path, headers: cookie ? { Cookie: cookie } : {} },
-      (res) => {
-        let body = "";
-        res.on("data", (c) => (body += c));
-        res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body }));
-      }
-    );
+    const req = http.request({ host: "127.0.0.1", port, ...options }, (res) => {
+      let response = "";
+      res.on("data", (chunk) => { response += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, body: response }));
+    });
     req.on("error", reject);
+    req.end(body);
   });
 }
 
-test("file-serving: /uploads returns 401 when no session cookie is set", async () => {
-  const { app, sessionStore, uploadsDir } = await makeApp();
-  const { server, port } = await listen(app);
-  try {
-    const res = await fetch(port, "/uploads/sample.bin");
-    assert.equal(res.status, 401);
-    const body = JSON.parse(res.body);
-    assert.equal(body.success, false);
-    assert.equal(body.error.code, "RESOURCE_AUTH_REQUIRED");
-    assert.equal(typeof body.requestId, "string");
-  } finally {
-    server.close();
-    fs.rmSync(uploadsDir, { recursive: true, force: true });
-  }
-});
-
-test("file-serving: /uploads returns 200 when a logged-in session is set", async () => {
-  const { app, sessionStore, uploadsDir } = await makeApp();
-  const sessionId = await sessionStore.create({ loggedIn: false });
-  await sessionStore.update(sessionId, {
-    loggedIn: true,
-    username: "AP23110010001",
-    profileData: { userId: "AP23110010001", name: "Test User", role: "student" },
-  });
-  const { server, port } = await listen(app);
-  try {
-    const res = await fetch(port, "/uploads/sample.bin", `erp_session=${sessionId}`);
-    assert.equal(res.status, 200);
-    assert.equal(res.body, "hello");
-  } finally {
-    server.close();
-    fs.rmSync(uploadsDir, { recursive: true, force: true });
-  }
-});
-
-test("file-serving: /uploads returns 401 for an anonymous (loggedIn=false) session", async () => {
-  const { app, sessionStore, uploadsDir } = await makeApp();
-  const sessionId = await sessionStore.create({ loggedIn: false });
-  const { server, port } = await listen(app);
-  try {
-    const res = await fetch(port, "/uploads/sample.bin", `erp_session=${sessionId}`);
-    assert.equal(res.status, 401);
-  } finally {
-    server.close();
-    fs.rmSync(uploadsDir, { recursive: true, force: true });
-  }
-});
-
-test("file-serving: /uploads is not gated for /files/* paths (positive control)", async () => {
-  // The policy says /files/* stay public. Verify by mounting
-  // /files/submissions in the test app without the auth gate.
-  const filesDir = fs.mkdtempSync(path.join(os.tmpdir(), "files-"));
-  fs.writeFileSync(path.join(filesDir, "submission.pdf"), "shared-doc");
+function makeApp() {
+  const sessionStore = new SessionStore(60_000);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "competition-private-"));
+  const store = {
+    submissionsDir: path.join(root, "submissions"),
+    certificatesDir: path.join(root, "certificates"),
+    assertEventPermission() {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    },
+    assertCanSubmit() {
+      const error = new Error("Forbidden");
+      error.status = 403;
+      throw error;
+    },
+  };
+  fs.mkdirSync(store.submissionsDir, { recursive: true });
+  fs.mkdirSync(store.certificatesDir, { recursive: true });
+  fs.writeFileSync(path.join(store.submissionsDir, "private.txt"), "secret");
   const app = express();
-  app.use(createRequestContextMiddleware());
-  app.use(createUserContextMiddleware({ sessionStore: new (require("../src/services/core/sessionServices").SessionStore)(60_000) }));
-  app.use("/files/submissions", express.static(filesDir));
+  app.use("/api", createCompetitionRoutes({ competitionStore: store, sessionStore, submissionsDir: store.submissionsDir }));
+  return { app, root };
+}
+
+test("runtime files: anonymous requests cannot retrieve the former public /files namespace", async () => {
+  const { app, root } = makeApp();
   const { server, port } = await listen(app);
   try {
-    const res = await fetch(port, "/files/submissions/submission.pdf");
-    assert.equal(res.status, 200);
-    assert.equal(res.body, "shared-doc");
+    const response = await request(port, { path: "/files/submissions/private.txt", method: "GET" });
+    assert.equal(response.status, 404);
+    assert.doesNotMatch(response.body, /secret/);
   } finally {
     server.close();
-    fs.rmSync(filesDir, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("uploads: an anonymous multipart request is rejected before Multer writes a file", async () => {
+  const { app, root } = makeApp();
+  const { server, port } = await listen(app);
+  const boundary = "----erp-test-boundary";
+  const body = [
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="file"; filename="forbidden.png"',
+    "Content-Type: image/png",
+    "",
+    "not-an-image",
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+  try {
+    const response = await request(port, {
+      path: "/api/competitions/event-1/certificate-template/image",
+      method: "POST",
+      headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "content-length": Buffer.byteLength(body) },
+    }, body);
+    assert.equal(response.status, 401);
+    assert.equal(fs.readdirSync(path.join(root, "certificates", "templates")).length, 0);
+  } finally {
+    server.close();
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });

@@ -477,6 +477,12 @@ function sleep(ms) {
   });
 }
 
+function shouldTripCircuit(error) {
+  const status = Number(error?.status || 0);
+  if (status > 0 && status < 500) return false;
+  return !["UNAUTHORIZED", "INVALID_REQUEST", "VALIDATION_ERROR", "CIRCUIT_OPEN", "LOCK_TIMEOUT"].includes(error?.code);
+}
+
 // --- serviceBasics.js ---
 
 const serviceBasicsMethods = {
@@ -703,10 +709,10 @@ const circuitAndCacheMethods = {
   async releaseDistributedLock(lockKey, token) {
     if (!this.lockEnabled || !token) return;
     try {
-      const current = await this.redisClient.get(lockKey);
-      if (current === token) {
-        await this.redisClient.del(lockKey);
-      }
+      await this.redisClient.eval(
+        "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0",
+        { keys: [lockKey], arguments: [token] }
+      );
     } catch {
       // Best effort only.
     }
@@ -858,7 +864,9 @@ const fetcherMethods = {
         if (!error.code && error.status === 503) {
           error.code = "UPSTREAM_SATURATED";
         }
-        await this.markCircuitFailure(pageKey);
+        if (shouldTripCircuit(error)) {
+          await this.markCircuitFailure(pageKey);
+        }
         erpUpstreamFailuresTotal.inc({ reason: error.code || "live_error" });
         throw error;
       } finally {

@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const os = require("os");
 const path = require("path");
 const { performance } = require("perf_hooks");
@@ -7,21 +8,7 @@ const { performance } = require("perf_hooks");
 const { HelpdeskStore } = require("../src/services/campus/helpdeskStore");
 
 function createStore() {
-  // Prefer the per-test data dir (real disk) over /tmp (often tmpfs, can
-  // hit ENOSPC under load). Falls back to /tmp when data isn't writable.
-  const dataDir = path.resolve(__dirname, "..", "data");
-  const baseDir = (() => {
-    try {
-      require("node:fs").mkdirSync(dataDir, { recursive: true });
-      // probe: write+unlink to confirm the FS actually accepts writes
-      const probe = path.join(dataDir, `.probe-${process.pid}`);
-      require("node:fs").writeFileSync(probe, "ok");
-      require("node:fs").unlinkSync(probe);
-      return dataDir;
-    } catch {
-      return os.tmpdir();
-    }
-  })();
+  const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), "helpdesk-store-"));
   return new HelpdeskStore({
     dbPath: path.join(baseDir, `helpdesk-${process.pid}-${Date.now()}-${Math.random()}.sqlite`),
   });

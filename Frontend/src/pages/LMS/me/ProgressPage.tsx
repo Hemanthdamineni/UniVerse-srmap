@@ -100,7 +100,7 @@ import type {
 import { EmptyView } from "../../../components/ui/Feedback";
 import { TrendingUp } from "lucide-react";
 
-export function ProgressPage() {
+function ProgressPage() {
   const navigate = useNavigate();
   const progress = useAsyncPage(() => getLmsProgress(), []);
   const mastery = useAsyncPage(() => getLmsMastery(), []);

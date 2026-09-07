@@ -372,6 +372,23 @@ const catalogMethods = {
     }));
   },
 
+  /**
+   * Paged wrapper around getOpportunities.
+   *
+   * The catalogue holds tens of thousands of active rows, so the UI has to be
+   * able to page through it — returning a bare array capped at the default 20
+   * made the rest of the catalogue unreachable. `hasMore` is derived from a
+   * full page of results rather than a COUNT(*), which would mean a second scan
+   * of a large FTS-joined query on every keystroke.
+   */
+  getOpportunitiesPage(options) {
+    const limit = clampCareerPageLimit(options?.limit);
+    const page = clampCareerPage(options?.page);
+    const items = this.getOpportunities({ ...options, limit, page });
+
+    return { items, page, limit, hasMore: items.length === limit };
+  },
+
   getDeadlineSoonBookmarked(user, days = 3) {
     this._ensureAuthenticatedUser(user);
     const d = Number.parseInt(String(days), 10);

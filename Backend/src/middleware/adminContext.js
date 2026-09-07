@@ -17,7 +17,9 @@ function createAdminContextMiddleware({ sessionStore }) {
 
       const registerNo = extractRegisterNoFromProfile(session.profileData, session.username);
       const potentialAdmin = isPotentialAdminRegisterNo(registerNo);
-      const isElevated = Boolean(session.adminElevated);
+      // A stale or forged elevation flag cannot grant access after an account
+      // is removed from the configured allowlist.
+      const isElevated = potentialAdmin && Boolean(session.adminElevated);
 
       req.adminContext = {
         registerNo,

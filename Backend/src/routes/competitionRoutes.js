@@ -6,13 +6,91 @@ const multer = require("multer");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { isAllowedSubmissionMime } = require("../services/events/competitionStore");
 
-function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword = "", submissionsDir }) {
+function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword = "", submissionsDir, userDirectory = null }) {
   const router = express.Router();
-  const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
+  const userContext = createUserContextMiddleware({ sessionStore, adminPassword, userDirectory });
   router.use(userContext);
 
   const root = submissionsDir || competitionStore.submissionsDir;
   fs.mkdirSync(root, { recursive: true });
+  const submissionExtensions = {
+    "application/pdf": ".pdf",
+    "application/zip": ".zip",
+    "application/x-zip-compressed": ".zip",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+    "text/plain": ".txt",
+    "text/markdown": ".md",
+  };
+  const imageExtensions = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+  };
+  const uploadRateBuckets = new Map();
+  const UPLOAD_WINDOW_MS = 5 * 60 * 1000;
+  const UPLOAD_MAX_PER_WINDOW = 10;
+
+  function cleanupFile(file) {
+    if (file?.path) fs.rmSync(file.path, { force: true });
+  }
+
+  function validateFileMagic(file, allowedMimes) {
+    if (!file || !allowedMimes.has(file.mimetype)) return false;
+    const head = fs.readFileSync(file.path).subarray(0, 16);
+    if (file.mimetype === "application/pdf") return head.subarray(0, 5).toString("ascii") === "%PDF-";
+    if (["application/zip", "application/x-zip-compressed"].includes(file.mimetype)
+      || file.mimetype.includes("openxmlformats")) {
+      return head.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))
+        || head.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    }
+    if (file.mimetype === "image/png") return head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    if (file.mimetype === "image/jpeg") return head.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+    if (file.mimetype === "image/webp") return head.subarray(0, 4).toString("ascii") === "RIFF"
+      && head.subarray(8, 12).toString("ascii") === "WEBP";
+    return !head.includes(0);
+  }
+
+  function authenticatedUpload(middleware) {
+    return (req, res, next) => {
+      const key = String(req.userContext.userId || "unknown-user");
+      const now = Date.now();
+      const recent = (uploadRateBuckets.get(key) || []).filter((timestamp) => timestamp >= now - UPLOAD_WINDOW_MS);
+      if (recent.length >= UPLOAD_MAX_PER_WINDOW) {
+        return res.status(429).json({ success: false, error: "Upload quota exceeded. Please try again later." });
+      }
+      recent.push(now);
+      uploadRateBuckets.set(key, recent);
+      return middleware(req, res, (error) => {
+        if (error) {
+          return res.status(error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({
+            success: false,
+            error: error.code === "LIMIT_FILE_SIZE" ? "Uploaded file is too large" : error.message || "Upload rejected",
+          });
+        }
+        return next();
+      });
+    };
+  }
+
+  function requireAuthenticatedMiddleware(req, res, next) {
+    if (!req.userContext?.isAuthenticated) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    return next();
+  }
+
+  function requireUploadPermission(check) {
+    return (req, res, next) => {
+      try {
+        check(req);
+        return next();
+      } catch (error) {
+        return res.status(error.status || 500).json({ success: false, error: error.message || "Unknown error" });
+      }
+    };
+  }
+
   const upload = multer({
     storage: multer.diskStorage({
       destination: (req, _file, cb) => {
@@ -24,10 +102,10 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
         cb(null, dir);
       },
       filename: (_req, file, cb) => {
-        const ext = path.extname(String(file.originalname || "")).slice(0, 10);
-        cb(null, `submission_${Date.now()}_${crypto.randomUUID()}${ext}`);
+        cb(null, `submission_${Date.now()}_${crypto.randomUUID()}${submissionExtensions[file.mimetype] || ""}`);
       },
     }),
+    fileFilter: (_req, file, cb) => cb(null, isAllowedSubmissionMime(file.mimetype)),
     limits: { fileSize: 25 * 1024 * 1024 },
   });
   const templateRoot = path.join(competitionStore.certificatesDir, "templates");
@@ -35,11 +113,11 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
   const templateUpload = multer({
     storage: multer.diskStorage({
       destination: (_req, _file, cb) => cb(null, templateRoot),
-      filename: (req, file, cb) => {
-        const ext = path.extname(String(file.originalname || ".png")).slice(0, 10) || ".png";
-        cb(null, `${String(req.params.eventId || "event")}_${Date.now()}_${crypto.randomUUID()}${ext}`);
+      filename: (_req, file, cb) => {
+        cb(null, `template_${Date.now()}_${crypto.randomUUID()}${imageExtensions[file.mimetype] || ""}`);
       },
     }),
+    fileFilter: (_req, file, cb) => cb(null, Boolean(imageExtensions[file.mimetype])),
     limits: { fileSize: 10 * 1024 * 1024 },
   });
 
@@ -107,17 +185,47 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
 
   router.post(
     "/competitions/:eventId/certificate-template/image",
-    templateUpload.single("file"),
+    requireAuthenticatedMiddleware,
+    requireUploadPermission((req) => competitionStore.assertEventPermission(req.params.eventId, req.userContext, "canEdit")),
+    authenticatedUpload(templateUpload.single("file")),
     wrap((req) => {
-      ensureAuthenticated(req);
       if (!req.file) {
         const error = new Error("Template image file is required");
         error.status = 400;
         throw error;
       }
-      return { path: `/files/certificates/templates/${req.file.filename}` };
+      try {
+        if (!validateFileMagic(req.file, new Set(Object.keys(imageExtensions)))) {
+          const error = new Error("Template image content does not match its declared type");
+          error.status = 400;
+          throw error;
+        }
+        return {
+          path: `/api/competitions/${encodeURIComponent(req.params.eventId)}/certificate-template/image/${encodeURIComponent(req.file.filename)}`,
+        };
+      } catch (error) {
+        cleanupFile(req.file);
+        throw error;
+      }
     })
   );
+
+  router.get("/competitions/:eventId/certificate-template/image/:fileName", async (req, res) => {
+    try {
+      ensureAuthenticated(req);
+      competitionStore.assertEventPermission(req.params.eventId, req.userContext, "canEdit");
+      const fileName = path.basename(String(req.params.fileName || ""));
+      const filePath = path.resolve(templateRoot, fileName);
+      if (!fileName || path.dirname(filePath) !== path.resolve(templateRoot) || !fs.existsSync(filePath)) {
+        const error = new Error("Template image not found");
+        error.status = 404;
+        throw error;
+      }
+      return res.sendFile(filePath);
+    } catch (error) {
+      return res.status(error.status || 500).json({ success: false, error: error.message || "Unknown error" });
+    }
+  });
 
   router.get("/competitions/:eventId/analytics", wrap((req) => {
     ensureAuthenticated(req);
@@ -126,40 +234,46 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
 
   router.post(
     "/competitions/:eventId/rounds/:roundId/submit",
-    upload.single("file"),
+    requireAuthenticatedMiddleware,
+    requireUploadPermission((req) => competitionStore.assertCanSubmit(req.params.eventId, req.params.roundId, req.userContext.userId)),
+    authenticatedUpload(upload.single("file")),
     wrap((req) => {
-      ensureAuthenticated(req);
       const type = String(req.body?.type || (req.file ? "file" : "link")).toLowerCase();
 
-      if (type === "file") {
-        if (!req.file) {
-          const error = new Error("Submission file is required");
-          error.status = 400;
-          throw error;
+      try {
+        if (type === "file") {
+          if (!req.file) {
+            const error = new Error("Submission file is required");
+            error.status = 400;
+            throw error;
+          }
+          if (!validateFileMagic(req.file, new Set(Object.keys(submissionExtensions)))) {
+            const error = new Error("File content does not match its declared type");
+            error.status = 400;
+            throw error;
+          }
         }
-        if (!isAllowedSubmissionMime(req.file.mimetype)) {
-          const error = new Error("File type not allowed.");
-          error.status = 400;
-          throw error;
-        }
+
+        const relativePath = req.file
+          ? path.relative(root, req.file.path).split(path.sep).join("/")
+          : null;
+
+        return competitionStore.createSubmission(
+          req.params.eventId,
+          req.params.roundId,
+          req.userContext.userId,
+          {
+            type,
+            filePath: relativePath,
+            mimeType: req.file?.mimetype,
+            linkUrl: req.body?.linkUrl,
+            description: req.body?.description,
+          }
+        );
+      } catch (error) {
+        cleanupFile(req.file);
+        throw error;
       }
-
-      const relativePath = req.file
-        ? path.relative(root, req.file.path).split(path.sep).join("/")
-        : null;
-
-      return competitionStore.createSubmission(
-        req.params.eventId,
-        req.params.roundId,
-        req.userContext.userId,
-        {
-          type,
-          filePath: relativePath,
-          mimeType: req.file?.mimetype,
-          linkUrl: req.body?.linkUrl,
-          description: req.body?.description,
-        }
-      );
     })
   );
 
@@ -189,6 +303,21 @@ function createCompetitionRoutes({ competitionStore, sessionStore, adminPassword
       req.userContext
     );
   }));
+
+  router.get("/competitions/:eventId/rounds/:roundId/submissions/:id/download", async (req, res) => {
+    try {
+      ensureAuthenticated(req);
+      const submission = competitionStore.getSubmissionDownload(
+        req.params.eventId,
+        req.params.roundId,
+        req.params.id,
+        req.userContext
+      );
+      return res.download(submission.filePath, submission.fileName);
+    } catch (error) {
+      return res.status(error.status || 500).json({ success: false, error: error.message || "Unknown error" });
+    }
+  });
 
   router.put("/competitions/:eventId/rounds/:roundId/submissions/:id/evaluate", wrap((req) => {
     ensureAuthenticated(req);

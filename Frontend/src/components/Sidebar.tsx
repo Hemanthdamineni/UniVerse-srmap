@@ -5,7 +5,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import { SidebarNavIcon } from "./SidebarNavIcons";
-import horizontalLogo from "../assets/Icons/horizontal_logo.png";
+import UniVerseWordmark from "./brand/UniVerseWordmark";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { isStaticPrototype } from "../lib/core/prototype";
 import { sessionKeys } from "../lib/core/queryKeys";
@@ -37,7 +37,17 @@ function normalizeRoute(route: string) {
 
 const SHOW_MENU_MODE_TOGGLE = false;
 
-export default function Sidebar() {
+type SidebarProps = {
+  /**
+   * Mobile drawer state, owned by PageLayout so the bottom tab bar's "More" tab
+   * can open it. When omitted the sidebar falls back to its own collapse state,
+   * which is what the desktop rail uses.
+   */
+  mobileNavOpen?: boolean;
+  onMobileNavClose?: () => void;
+};
+
+export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProps = {}) {
   const admin = useAdminMode();
   const [sidebarClosed, setSidebarClosed] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 900 : false
@@ -195,7 +205,14 @@ export default function Sidebar() {
           ? profileData.registerNo
           : "";
 
-  const mobileDrawerOpen = isMobileViewport && !sidebarClosed;
+  // PageLayout drives the drawer on small screens; fall back to the local
+  // collapse state when the sidebar is rendered standalone (tests, storybook).
+  const controlled = typeof mobileNavOpen === "boolean";
+  const mobileDrawerOpen = controlled ? mobileNavOpen : isMobileViewport && !sidebarClosed;
+  const closeMobileDrawer = () => {
+    if (controlled) onMobileNavClose?.();
+    else setSidebarClosed(true);
+  };
 
   return (
     <>
@@ -203,16 +220,22 @@ export default function Sidebar() {
         <div
           aria-hidden="true"
           data-testid="sidebar-backdrop"
-          onClick={() => setSidebarClosed(true)}
+          onClick={closeMobileDrawer}
           className="fixed inset-0 z-20"
           style={{ backgroundColor: "rgba(10, 38, 42, 0.45)" }}
         />
       ) : null}
       <div
         ref={sidebarRef}
-        className={`sidebar flex h-full flex-col border-r transition-[width] duration-300 ${
+        className={`sidebar h-full flex-col border-r transition-[width] duration-300 ${
           sidebarClosed ? "w-16" : "w-64"
-        } ${mobileDrawerOpen ? "absolute inset-y-0 left-0 z-30 shadow-2xl" : "relative"}`}
+        } ${
+          mobileDrawerOpen
+            ? "fixed inset-y-0 left-0 z-30 flex w-64 shadow-2xl"
+            : // Below md the bottom tab bar is the navigation; the unlabelled
+              // icon rail would otherwise eat a third of a 390px viewport.
+              "hidden md:relative md:flex"
+        }`}
         style={{
           borderColor: "var(--border)",
           backgroundColor: "var(--sidebar-bg)",
@@ -221,12 +244,7 @@ export default function Sidebar() {
       >
       <div className="flex items-center gap-2 border-b py-0.5 pl-3 pr-2" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
-          <img
-            src={horizontalLogo}
-            alt="UniVerse — SRMAP Edition"
-            className="h-10 sm:h-12 w-full flex-1 object-contain"
-            style={{ maxHeight: "48px" }}
-          />
+          <UniVerseWordmark height={38} className="flex-1" titleId="sidebar-wordmark-title" />
         ) : null}
         <button
           type="button"

@@ -142,6 +142,24 @@ export function usePageContrast(
         const bgRect = bgContainer.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
 
+        // The wedge is a ::before pseudo-element that CSS suppresses below the
+        // mobile breakpoint (and could suppress elsewhere). When it is not
+        // painted there is nothing to contrast against — clear any stale
+        // `page-on-accent` and stop, rather than inferring the wedge from its
+        // geometry variables alone.
+        const wedgeBefore = getComputedStyle(bgContainer, "::before");
+        const wedgePainted =
+          wedgeBefore.display !== "none" &&
+          wedgeBefore.content !== "none" &&
+          wedgeBefore.content !== "" &&
+          wedgeBefore.visibility !== "hidden";
+        if (!wedgePainted) {
+          root
+            .querySelectorAll<HTMLElement>(targetSelector)
+            .forEach((el) => el.classList.remove("page-on-accent"));
+          return;
+        }
+
         const accentPolygon: Point[] = [
           { x: topStart, y: 0 },
           { x: 1, y: 0 },

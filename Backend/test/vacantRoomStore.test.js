@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const os = require("os");
 const path = require("path");
 
@@ -16,20 +17,7 @@ const {
 } = require("../src/services/erp/extractors");
 
 function tempDbPath() {
-  // Prefer the per-test data dir (real disk) over /tmp (often tmpfs, can
-  // hit ENOSPC under load). Falls back to /tmp when data isn't writable.
-  const dataDir = path.resolve(__dirname, "..", "data");
-  const baseDir = (() => {
-    try {
-      require("node:fs").mkdirSync(dataDir, { recursive: true });
-      const probe = path.join(dataDir, `.probe-${process.pid}`);
-      require("node:fs").writeFileSync(probe, "ok");
-      require("node:fs").unlinkSync(probe);
-      return dataDir;
-    } catch {
-      return os.tmpdir();
-    }
-  })();
+  const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), "vacant-room-store-"));
   return path.join(baseDir, `vacant-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sqlite`);
 }
 

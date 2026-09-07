@@ -1,0 +1,61 @@
+/**
+ * touch-targets.css — WCAG 2.5.5 minimum hit areas on touch devices.
+ *
+ * Scoped to `@media (pointer: coarse)` so desktop information density is
+ * untouched: a mouse can hit a 28px control fine, a thumb cannot. Enforced by
+ * `scripts/tap-target-audit.mjs` (npm run audit:tap-targets), which sweeps
+ * every route at 390px and fails on any interactive element under 44×44 that
+ * is not an inline prose link.
+ *
+ * Per-component Tailwind classes (min-h-11 etc.) remain the first choice for
+ * new UI; this file is the safety net for shared primitives and third-party
+ * or legacy markup we do not want to touch element-by-element.
+ */
+
+@media (pointer: coarse) {
+  /* Breadcrumb links — 13px text in a tight bar. Give the row a real height
+     and pad the tap zone without visually inflating the bar. */
+  nav[aria-label="Breadcrumb"] ol {
+    min-height: 44px;
+  }
+  nav[aria-label="Breadcrumb"] a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 2px;
+  }
+
+  /* Segmented / tab-pill controls: the wrapper is already 44 tall (h-11) but
+     each segment renders at h-8. Let the segment fill its track. */
+  [role="tablist"] > button,
+  [role="radiogroup"] > button,
+  .inline-grid[class*="h-11"] > button {
+    min-height: 44px;
+  }
+
+  /* Buttons/links explicitly sized to the h-10 (40px) or h-9 (36px) utility —
+     one short of the minimum. Covers calendar day cells, widget tab strips,
+     header back-links. */
+  button[class*="h-10"]:not([class*="min-h"]),
+  a[class*="h-10"]:not([class*="min-h"]),
+  button[class*=" h-9"]:not([class*="min-h"]),
+  a[class*=" h-9"]:not([class*="min-h"]) {
+    min-height: 44px;
+  }
+
+  /* Icon-only buttons commonly ship at h-8 w-8 / h-9 w-9 (32–36px). Any
+     button whose accessible name is short and which contains only an SVG is
+     an icon button — pad it out. Targeted narrowly to avoid touching text
+     buttons that happen to be small. */
+  button:not([class*="min-h"]):has(> svg:only-child),
+  a:not([class*="min-h"]):has(> svg:only-child) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Native selects/inputs sized with the h-10 (40px) utility. */
+  select[class*="h-10"],
+  input[class*="h-10"]:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 44px;
+  }
+}

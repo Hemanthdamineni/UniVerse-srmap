@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
 import SgpaCgpaPredictor from "../../ERP/components/SgpaCgpaPredictor";
+import { GradeTargetCalculator } from "./GradeTargetCalculator";
 import type { InsightsData, OverviewData, PlannerPrefill } from "./types";
 
 export function PlannerTab({
@@ -40,6 +41,10 @@ export function PlannerTab({
           />
         )}
       </SectionCard>
+
+      {!plannerLoading && (
+        <GradeTargetCalculator internalMarks={plannerPrefill?.currentResults?.internalMarks} />
+      )}
 
       {/* Target Calculator */}
       {overview && (

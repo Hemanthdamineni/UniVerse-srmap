@@ -18,7 +18,7 @@ import type {
   LmsRoadmap
 } from "../_shared/LmsPageShared";
 
-export function MyContributionsPage() {
+function MyContributionsPage() {
   const { data, setData, loading, error } = useAsyncPage(() => getMyContributions(), []);
   const [actionError, setActionError] = useState("");
   const [pendingDelete, setPendingDelete] = useState<LmsResource | null>(null);

@@ -306,21 +306,6 @@ export async function updateAchievementVisibility(achievementId: string, visibil
   });
 }
 
-export async function listProfileSkills() {
-  if (isStaticPrototype()) return { items: STATIC_PROFILE.skills };
-  return requestData<{ items: UnifiedProfileSkill[] }>("/api/profile/skills");
-}
-
-export async function updateSkillVisibility(skill: string, visibility: ProfileVisibility) {
-  if (isStaticPrototype()) {
-    return { items: STATIC_PROFILE.skills.filter((item) => item.skill === skill).map((item) => ({ ...item, visibility })) };
-  }
-  return requestData<{ items: UnifiedProfileSkill[] }>(`/api/profile/skills/${encodeURIComponent(skill)}/visibility`, {
-    method: "PATCH",
-    body: JSON.stringify({ visibility }),
-  });
-}
-
 export async function getProfilePrivacy() {
   if (isStaticPrototype()) return STATIC_PROFILE.privacy;
   return requestData<Record<string, ProfileVisibility>>("/api/profile/privacy");

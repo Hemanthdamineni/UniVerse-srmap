@@ -6,6 +6,7 @@ import { erpKeys } from "../../lib/erp/queryKeys";
 import { executePipeline, type FeePaidSectionRow, type FeesPaidModel } from "../../lib/erp/erpTransformers";
 import { ErpPageShell, TableCardHeader, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { useIsMobileViewport } from "../../hooks/useMediaQuery";
 
 // ERP-dependent base URL for receipt print endpoint — adjust if the ERP path changes
 const ERP_RECEIPT_PRINT_BASE = "/srmapstudentcorner/students/report/receiptgenerationprint.jsp";
@@ -22,6 +23,7 @@ type PrintTarget = {
 };
 
 export default function FeePaidPage({ blueprint }: Props) {
+  const isMobile = useIsMobileViewport();
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FeesPaidModel | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
@@ -189,6 +191,51 @@ export default function FeePaidPage({ blueprint }: Props) {
                     </span>
                   }
                 />
+                {/* Receipt rows carry a variable column set; on a phone they read
+                    as a label/value card per receipt instead of a wide scroller. */}
+                {isMobile ? (
+                <ul className="flex list-none flex-col gap-3 p-4">
+                  {section.rows.map((row, ri) => (
+                    <li
+                      key={row.stableKey || ri}
+                      className="rounded-xl border p-4"
+                      style={{ borderColor: 'var(--comp-border)', backgroundColor: 'var(--comp-surface)' }}
+                    >
+                      <dl className="flex flex-col gap-2">
+                        {dataCols.map((col) => (
+                          <div key={col.key} className="flex items-baseline justify-between gap-3">
+                            <dt className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{col.label}</dt>
+                            <dd className="m-0 text-sm font-medium tabular-nums" style={{ color: 'var(--comp-text-primary)' }}>
+                              {row.cells[col.key] || "\u2014"}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {hasPrintAction && row.printActionId && row.printReceiptId ? (
+                        <button
+                          onClick={() =>
+                            handlePrintReceipt({
+                              key: row.stableKey,
+                              pageKey: section.sourcePageKey,
+                              actionId: row.printActionId!,
+                              receiptId: row.printReceiptId!,
+                            })
+                          }
+                          disabled={printingId === row.stableKey}
+                          className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
+                          style={{
+                            borderColor: 'var(--comp-border)',
+                            backgroundColor: printingId === row.stableKey ? 'transparent' : 'var(--comp-surface-hover)',
+                            color: printingId === row.stableKey ? 'var(--comp-text-muted)' : 'var(--comp-text-primary)',
+                          }}
+                        >
+                          {printingId === row.stableKey ? 'Printing...' : 'Print receipt'}
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                ) : (
                 <div className="erp-table-shell rounded-none border-0 shadow-none overflow-x-auto">
                   <table className="erp-table w-full text-left">
                     <thead className="erp-table-head">
@@ -250,6 +297,7 @@ export default function FeePaidPage({ blueprint }: Props) {
                     </tbody>
                   </table>
                 </div>
+                )}
               </section>
             );
           })}

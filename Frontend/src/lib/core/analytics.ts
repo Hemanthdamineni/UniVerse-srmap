@@ -36,7 +36,8 @@ type TrackEvent =
   | 'events_recommendation_clicked'
   | 'public_career_profile_viewed'
   | 'public_career_profile_link_copied'
-  | 'public_career_profile_exported';
+  | 'public_career_profile_exported'
+  | 'route_view';               // automatic — one per distinct route a session lands on
 
 export function track(event: TrackEvent, properties?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;

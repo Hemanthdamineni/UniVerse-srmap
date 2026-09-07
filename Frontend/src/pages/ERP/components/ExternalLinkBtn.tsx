@@ -28,4 +28,3 @@ export function ExternalLinkBtn({ href, label }: { href: string; label: string }
   );
 }
 
-export default ExternalLinkBtn;

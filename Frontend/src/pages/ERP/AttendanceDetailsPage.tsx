@@ -10,6 +10,8 @@ import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, TableEmptyRow } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { calculateBunkCapacity } from "./components/BunkCalculator";
+import AttendanceSubjectCards from "./components/AttendanceSubjectCards";
+import { useIsMobileViewport } from "../../hooks/useMediaQuery";
 import { AttendanceTrendSection } from "./components/AttendanceTrendSection";
 
 interface AttendanceDetailsPageProps {
@@ -17,6 +19,7 @@ interface AttendanceDetailsPageProps {
 }
 
 export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPageProps) {
+  const isMobile = useIsMobileViewport();
   const [model, setModel] = useState<AttendanceModel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -77,7 +80,15 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
           {/* MAIN attendance summary table */}
           <section>
             <h2 className="label-text mb-3">Attendance Summary</h2>
-            <div className="erp-table-shell">
+            {/* Exactly one representation is mounted: twelve columns cannot be
+                read on a phone, and rendering both would duplicate every row in
+                the accessibility tree and strand the cards' links out of reach
+                of assistive tech. */}
+            {isMobile && model.records.length > 0 ? (
+              <AttendanceSubjectCards records={model.records} />
+            ) : null}
+
+            <div className={isMobile ? "hidden" : "erp-table-shell"}>
               <table className="erp-table">
                 <thead className="erp-table-head">
                   <tr>
@@ -338,7 +349,7 @@ function StudentAttendanceCard() {
                     inputMode="text"
                     spellCheck={false}
                     disabled={submitting}
-                    className={`h-11 min-w-0 flex-1 rounded-md border bg-[var(--background)] text-center font-mono text-base font-semibold uppercase text-[var(--comp-text-primary)] outline-none transition-[border-color,box-shadow] duration-150 focus:border-[var(--comp-accent)] focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50 sm:h-12 sm:w-10 sm:flex-none sm:text-lg ${
+                    className={`h-12 min-w-0 flex-1 rounded-md border bg-[var(--background)] text-center font-mono text-base font-semibold uppercase text-[var(--comp-text-primary)] outline-none transition-[border-color,box-shadow] duration-150 focus:border-[var(--comp-accent)] focus:ring-1 focus:ring-[var(--comp-accent)] disabled:opacity-50 sm:w-10 sm:flex-none sm:text-lg ${
                       formError
                         ? "border-[var(--error)]"
                         : char

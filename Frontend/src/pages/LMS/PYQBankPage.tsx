@@ -124,7 +124,7 @@ export function PYQBankSection({ code }: { code: string }) {
   );
 }
 
-export function PYQBankPage() {
+function PYQBankPage() {
   const { code = "" } = useParams();
 
   return (

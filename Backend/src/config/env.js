@@ -45,7 +45,10 @@ const SESSION_STORE_DRIVER = process.env.SESSION_STORE_DRIVER || "auto";
 const ERP_CACHE_DRIVER = process.env.ERP_CACHE_DRIVER || "auto";
 const ERP_CACHE_FRESH_TTL_MS = Number(process.env.ERP_CACHE_FRESH_TTL_MS || 60 * 1000);
 const ERP_CACHE_STALE_TTL_MS = Number(process.env.ERP_CACHE_STALE_TTL_MS || 10 * 60 * 1000);
-const ERP_DISTRIBUTED_LOCK_TTL_MS = Number(process.env.ERP_DISTRIBUTED_LOCK_TTL_MS || 12 * 1000);
+// Must outlive the maximum live ERP operation (15s by default), including
+// queueing and response validation, so another node cannot replace a lock
+// while its owner is still working.
+const ERP_DISTRIBUTED_LOCK_TTL_MS = Number(process.env.ERP_DISTRIBUTED_LOCK_TTL_MS || 30 * 1000);
 const ERP_CIRCUIT_REDIS_TTL_MS = Number(process.env.ERP_CIRCUIT_REDIS_TTL_MS || 5 * 60 * 1000);
 const ERP_CACHED_TIMEOUT_MS = Number(process.env.ERP_CACHED_TIMEOUT_MS || 6000);
 const ERP_LIVE_TIMEOUT_MS = Number(process.env.ERP_LIVE_TIMEOUT_MS || 15000);
@@ -95,6 +98,8 @@ const COMPANION_ANALYTICS_DB_PATH =
   process.env.COMPANION_ANALYTICS_DB_PATH || path.join(__dirname, "../../data/companion-analytics.sqlite");
 const HOSTEL_BUDDY_DB_PATH =
   process.env.HOSTEL_BUDDY_DB_PATH || path.join(__dirname, "../../data/hostel-buddy.sqlite");
+const USER_DIRECTORY_DB_PATH =
+  process.env.USER_DIRECTORY_DB_PATH || path.join(__dirname, "../../data/user-directory.sqlite");
 /** WARNING: ADMIN_CONTENT_PASSWORD MUST be configured via the environment variable.
  *  There is no safe fallback -- leaving it empty disables admin content access. */
 const ADMIN_CONTENT_PASSWORD =
@@ -122,6 +127,27 @@ const CAREER_DB_PATH =
 const ERP_ATTENDANCE_SNAPSHOTS_DB_PATH =
   process.env.ERP_ATTENDANCE_SNAPSHOTS_DB_PATH ||
   path.join(__dirname, "../../data/erp-attendance-snapshots.sqlite");
+const ERP_ACADEMIC_SNAPSHOTS_DB_PATH =
+  process.env.ERP_ACADEMIC_SNAPSHOTS_DB_PATH ||
+  path.join(__dirname, "../../data/erp-academic-snapshots.sqlite");
+
+// Batch B10 — Google Calendar sync. Inert without a client id/secret/redirect.
+const GOOGLE_TOKENS_DB_PATH =
+  process.env.GOOGLE_TOKENS_DB_PATH || path.join(__dirname, "../../data/google-tokens.sqlite");
+const APP_BASE_URL = process.env.APP_BASE_URL || "";
+
+// Batch B9 — transactional email (weekly digest + opt-in email notifications).
+// Fully inert without SMTP_HOST/PORT; EMAIL_DEV_JSON=1 logs the payload instead.
+const EMAIL_CONFIG = {
+  host: process.env.SMTP_HOST || "",
+  port: process.env.SMTP_PORT || "",
+  secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true",
+  user: process.env.SMTP_USER || "",
+  pass: process.env.SMTP_PASS || "",
+  from: process.env.EMAIL_FROM || "University ERP <notifications@university-erp.local>",
+  appBaseUrl: process.env.APP_BASE_URL || "",
+  devJson: String(process.env.EMAIL_DEV_JSON || "") === "1",
+};
 const VACANT_ROOMS_DB_PATH =
   process.env.VACANT_ROOMS_DB_PATH || path.join(__dirname, "../../data/vacant-rooms.sqlite");
 const PERSISTENT_TEAMS_DB_PATH =
@@ -224,6 +250,7 @@ module.exports = {
   UNIFIED_PROFILE_DB_PATH,
   COMPANION_ANALYTICS_DB_PATH,
   HOSTEL_BUDDY_DB_PATH,
+  USER_DIRECTORY_DB_PATH,
   ADMIN_CONTENT_PASSWORD,
   ERP_UI_MAP_FILE,
   ERP_ARTIFACT_MAX_AGE_DAYS,
@@ -234,6 +261,10 @@ module.exports = {
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
   ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
+  ERP_ACADEMIC_SNAPSHOTS_DB_PATH,
+  GOOGLE_TOKENS_DB_PATH,
+  APP_BASE_URL,
+  EMAIL_CONFIG,
   VACANT_ROOMS_DB_PATH,
   PERSISTENT_TEAMS_DB_PATH,
   CAREER_SUBMISSION_REVIEW_ROLES,

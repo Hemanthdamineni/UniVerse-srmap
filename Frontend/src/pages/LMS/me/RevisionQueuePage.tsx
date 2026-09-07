@@ -114,7 +114,7 @@ function formatDueDate(iso: string): string {
   return `in ${dayDiff} days`;
 }
 
-export function RevisionQueuePage() {
+function RevisionQueuePage() {
   const navigate = useNavigate();
   const { data, setData, loading, error } = useAsyncPage(() => getRevisionQueue(), []);
   const queue = data || [];
@@ -134,8 +134,17 @@ export function RevisionQueuePage() {
           {queue.map((entry) => (
             <div key={String(entry.resourceId)} className="dashboard-card flex items-center justify-between gap-4 p-4">
               <div>
-                <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{String(entry.title || "")}</h3>
-                <p className="text-sm text-[var(--text-secondary)]">Due {formatDueDate(String(entry.dueDate || ""))}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-semibold text-[var(--comp-text-primary)]">{String(entry.title || "")}</h3>
+                  {entry.atRisk ? (
+                    <span className="rounded-full bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--warning)]">
+                      Prioritised · attendance low
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  {entry.subjectName ? `${String(entry.subjectName)} · ` : ""}Due {formatDueDate(String(entry.dueDate || ""))}
+                </p>
               </div>
               <div className="flex gap-2">
                 <button className="lms-btn lms-btn-danger" onClick={async () => setData(await submitRevisionReview(String(entry.resourceId), 40))}>Again</button>

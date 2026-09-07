@@ -87,8 +87,11 @@ function RoadmapResultCard({ roadmap }: { roadmap: { id: string; title?: string;
 
 export default function DiscoverPage() {
   const [searchParams] = useSearchParams();
-  const [queryInput, setQueryInput] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  // Deep-linkable: /learn/discover?q=React pre-fills the search (used by the
+  // skill-gap "Learn" links, B7 / T4.3.1).
+  const initialQuery = searchParams.get("q") || searchParams.get("query") || "";
+  const [queryInput, setQueryInput] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [subjectInput, setSubjectInput] = useState(searchParams.get("subjectCode") || "");
   const [facet, setFacet] = useState<Facet>("all");
 

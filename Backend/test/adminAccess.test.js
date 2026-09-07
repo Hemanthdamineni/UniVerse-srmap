@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { assertAdminAccess, hasAdminAccess } = require("../src/utils/adminAccess");
+const { assertAdminAccess, hasAdminAccess, verifyAdminPassword } = require("../src/utils/adminAccess");
 
 test("admin access denies password auth when no admin password is configured", () => {
   const request = {
@@ -35,7 +35,7 @@ test("admin access still allows elevated platform admin sessions without passwor
   assert.doesNotThrow(() => assertAdminAccess(request, ""));
 });
 
-test("admin access enforces configured password", () => {
+test("only the unlock route may verify the configured password", () => {
   const request = {
     body: {},
     query: {},
@@ -44,6 +44,7 @@ test("admin access enforces configured password", () => {
     },
   };
 
-  assert.equal(hasAdminAccess(request, "secret"), true);
-  assert.equal(hasAdminAccess(request, "other"), false);
+  assert.equal(hasAdminAccess(request, "secret"), false);
+  assert.equal(verifyAdminPassword(request, "secret"), true);
+  assert.equal(verifyAdminPassword(request, "other"), false);
 });

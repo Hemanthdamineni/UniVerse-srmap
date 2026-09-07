@@ -1,16 +1,15 @@
 // Header bar uses --comp-accent instead of hardcoded hex for theme parity.
 import { Link, useLocation } from "react-router-dom";
 import { hasSessionAuth } from "../lib/core/session";
-import horizontalLogo from "../assets/Icons/horizontal_logo.png";
+import UniVerseWordmark from "./brand/UniVerseWordmark";
 
 function Logo() {
     return (
-        <Link to="/" className="inline-flex items-center">
-            <img
-                src={horizontalLogo}
-                alt="Logo of UniVerse — SRMAP Edition"
-                className="h-10 w-auto max-w-[45vw] object-contain sm:h-[52px]"
-            />
+        <Link to="/" className="inline-flex min-h-11 items-center" aria-label="UniVerse home">
+            {/* Header sits on the dark accent bar, so force a light tone. */}
+            <span className="text-white">
+                <UniVerseWordmark height={40} titleId="header-wordmark-title" />
+            </span>
         </Link>
     );
 }
@@ -23,8 +22,8 @@ function HeaderButton(props: { label: string; to: string; primary?: boolean }) {
             to={to}
             className={
                 primary
-                    ? "rounded-lg border border-white px-2.5 py-1.5 text-[13px] font-medium text-white no-underline transition hover:bg-white hover:text-[var(--comp-text-primary)] sm:px-3 sm:text-sm"
-                    : "hidden text-[13px] font-medium text-white/90 no-underline transition hover:text-white min-[420px]:inline-block sm:text-sm"
+                    ? "inline-flex items-center rounded-lg border border-white px-2.5 py-1.5 text-[13px] font-medium text-white no-underline transition hover:bg-white hover:text-[var(--comp-text-primary)] [@media(pointer:coarse)]:min-h-11 sm:px-3 sm:text-sm"
+                    : "hidden text-[13px] font-medium text-white/90 no-underline transition hover:text-white min-[420px]:inline-flex min-[420px]:items-center [@media(pointer:coarse)]:min-h-11 sm:text-sm"
             }
         >
             {label}

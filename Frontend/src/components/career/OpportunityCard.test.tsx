@@ -60,4 +60,27 @@ describe("OpportunityCard", () => {
     );
     expect(screen.getByText(/\+2 more/i)).toBeInTheDocument();
   });
+
+  it("shows the fit badge and a 'Why this' line when fit data is present (B7)", () => {
+    render(
+      <MemoryRouter>
+        <OpportunityCard
+          opportunity={{
+            ...base,
+            skills: ["Python", "SQL"],
+            fit: {
+              fitScore: 84,
+              eligible: true,
+              matchedSkills: ["Python"],
+              missingSkills: ["SQL"],
+              whyThis: ["Matches your goal: Data Scientist", "You have 1/2 of the listed skills"],
+            },
+          }}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByText(/84% fit/)).toBeInTheDocument();
+    expect(screen.getByText(/Why this:/)).toBeInTheDocument();
+    expect(screen.getByText(/Matches your goal: Data Scientist/)).toBeInTheDocument();
+  });
 });

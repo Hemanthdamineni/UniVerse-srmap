@@ -1,6 +1,18 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/main.tsx"],
+  "entry": [
+    "src/pages/LMS/index.ts",
+    "src/components/ui/index.ts",
+    "src/components/markdown/index.ts"
+  ],
   "project": ["src/**/*.{ts,tsx}"],
-  "ignoreDependencies": ["@testing-library/jest-dom"]
+  "ignoreDependencies": ["tailwindcss"],
+  "ignore": [
+    "src/components/chart.tsx",
+    "src/components/popover.tsx"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "duplicates": "off"
+  }
 }

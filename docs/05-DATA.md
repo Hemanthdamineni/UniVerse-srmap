@@ -144,7 +144,7 @@ is documented in `14-PROD-READINESS-CHECKLIST.md`.
 
 | Table | Purpose |
 |-------|---------|
-| `companion_analytics_events` | Clickstream / engagement events (sampled, not all) |
+| `companion_analytics_events` | Allowlisted clickstream / engagement events. Ingest is capped per actor and rows older than 90 days are pruned on write. |
 
 #### `erp-attendance-snapshots.sqlite` — `Backend/src/services/erp/attendanceSnapshotStore.js`
 

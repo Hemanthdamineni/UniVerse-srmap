@@ -4,6 +4,7 @@ import { CalendarDays, CheckCircle2, Eye, Info, UploadCloud } from "lucide-react
 import { CompetitionCard, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
 import { ErrorMessage } from "../../components/competition/ErrorMessage";
 import { Stepper } from "../../components/competition/Stepper";
+import { Select } from "../../components/select";
 import { createEvent } from "../../lib/campus/campusApi";
 import { track } from "../../lib/core/analytics";
 
@@ -182,21 +183,29 @@ const savedDraft: any = (() => {
                 <div className="create-form-grid">
                   <label>
                     <span className="competition-form-label">Category</span>
-                    <select className="competition-form-control" value={basic.category} onChange={(event) => setBasic((prev) => ({ ...prev, category: event.target.value }))}>
+                    <Select
+                      aria-label="Event category"
+                      value={basic.category}
+                      onChange={(event) => setBasic((prev) => ({ ...prev, category: event.target.value }))}
+                    >
                       <option>Academic Research</option>
                       <option>Hackathon</option>
                       <option>Cultural</option>
                       <option>Sports</option>
-                    </select>
+                    </Select>
                   </label>
                   <label>
                     <span className="competition-form-label">Department</span>
-                    <select className="competition-form-control" value={basic.department} onChange={(event) => setBasic((prev) => ({ ...prev, department: event.target.value }))}>
+                    <Select
+                      aria-label="Event department"
+                      value={basic.department}
+                      onChange={(event) => setBasic((prev) => ({ ...prev, department: event.target.value }))}
+                    >
                       <option>Computer Science</option>
                       <option>Business Management</option>
                       <option>Arts School</option>
                       <option>Student Union</option>
-                    </select>
+                    </Select>
                   </label>
                 </div>
                 <label className="competition-form-label">Description</label>

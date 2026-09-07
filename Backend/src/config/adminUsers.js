@@ -2,16 +2,14 @@
  * Admin register numbers.
  *
  * Read from the ADMIN_REGISTER_NUMBERS environment variable as a comma-separated
- * string (e.g. "AP23110010419,AP23110010420"). Falls back to a hardcoded list
- * when the env var is not set. Prefer configuring via env in production.
+ * string (e.g. "AP23110010419,AP23110010420"). Production has no fallback:
+ * an empty allowlist disables elevation until the operator configures it.
  */
-const FALLBACK_ADMIN_REGISTER_NUMBERS = ["AP23110010419"];
-
 const ENV_VAL = (process.env.ADMIN_REGISTER_NUMBERS || "").trim();
 const ADMIN_REGISTER_NUMBERS = new Set(
   ENV_VAL
     ? ENV_VAL.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
-    : FALLBACK_ADMIN_REGISTER_NUMBERS,
+    : [],
 );
 
 function normalizeRegisterNo(value) {

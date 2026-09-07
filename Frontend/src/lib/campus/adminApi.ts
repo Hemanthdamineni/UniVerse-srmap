@@ -1,8 +1,5 @@
 import { requestData } from "../core/apiClient";
 
-export type AdminAccessState = {
-  unlocked: boolean;
-};
 
 /**
  * Return admin headers for a single request.

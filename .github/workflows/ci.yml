@@ -132,10 +132,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Blocking (T8.2.3): JS gzip total, largest chunk, and the Workbox
+      # precache set each have a budget with ~10% headroom. A regression fails
+      # the build — bump the budget in the same PR that adds the weight.
+      - name: Bundle + precache budget
+        run: npm run audit:bundle -- --json bundle-budget.json
+
+      - name: Upload bundle-budget report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-budget-report
+          path: Frontend/bundle-budget.json
+          if-no-files-found: ignore
+
   knip:
     name: Knip dead-export check
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -154,18 +167,20 @@ jobs:
       - name: Install knip
         run: npm install --no-save knip@^6
 
+      # Blocking (T8.3.2): the export/type/file/dependency baseline is 0.
+      # A regression makes `knip` exit non-zero and fails the job.
       - name: Run knip
-        id: knip
+        working-directory: Frontend
         run: |
-          npx knip > knip-report.txt 2>&1 || echo "knip exited non-zero — see report"
-          echo "report=$(wc -l < knip-report.txt) lines"
+          set -o pipefail
+          npx knip | tee knip-report.txt
 
       - name: Upload knip report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
-          path: knip-report.txt
+          path: Frontend/knip-report.txt
           if-no-files-found: ignore
 
   responsive-audit:
@@ -189,6 +204,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Start static prototype server
         run: |
           VITE_STATIC_PROTOTYPE=true npm run dev -- --host 127.0.0.1 --port 5173 &
@@ -199,7 +217,14 @@ jobs:
           curl -sf http://127.0.0.1:5173/ > /dev/null
 
       - name: Run responsive audit
-        run: npm run audit:responsive -- --widths 320,768,1440 --out "$RUNNER_TEMP/responsive-audit"
+        # 390 is the reference mobile viewport; the audit fails the job on any
+        # horizontal overflow, clipped text, or accent-wedge leak below 768px.
+        run: npm run audit:responsive -- --widths 320,390,768,1440 --out "$RUNNER_TEMP/responsive-audit"
+
+      - name: Run tap-target audit
+        # Fails on any interactive element under 44×44 (minus a 2px sub-pixel
+        # tolerance) at a 390px phone viewport, bar the documented exceptions.
+        run: npm run audit:tap-targets -- --json "$RUNNER_TEMP/tap-targets.json"
 
       - name: Upload report on failure
         if: failure()

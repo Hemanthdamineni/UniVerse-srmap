@@ -1,6 +1,6 @@
 // Opportunities: PageHeader, FilterBar, SkeletonCard loading, EmptyState; listOpportunities unchanged.
 import React, { useState } from "react";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
 import { careerKeys } from "../../lib/career/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -12,18 +12,16 @@ import { FilterBar } from "../../components/ui/FilterBar";
 import { SkeletonCard } from "../../components/ui/Skeletons";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 
-interface OpportunitiesPageProps {
-  initialType?: string;
-}
-
 const TYPE_FILTERS = ["all", "job", "internship", "hackathon", "competition", "fellowship", "workshop"] as const;
 
-const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) => {
+const OpportunitiesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("query") || "");
-  const [type, setType] = useState(initialType || searchParams.get("type") || "");
-  const [sort, setSort] = useState(searchParams.get("sort") || "relevance");
+  const [type, setType] = useState(searchParams.get("type") || "");
+  // Default to graph-ranked fit (B7); the server falls back to relevance when
+  // the student graph isn't available.
+  const [sort, setSort] = useState(searchParams.get("sort") || "fit");
   // Keeps typing from firing a request per keystroke.
   const debouncedSearch = useDebouncedValue(searchTerm);
 
@@ -32,14 +30,19 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
   if (type) opportunityFilters.type = type;
   if (sort) opportunityFilters.sort = sort;
 
-  const opportunitiesQuery = useQuery({
+  // The catalogue runs to tens of thousands of active rows, so this pages rather
+  // than showing only the server's first page.
+  const opportunitiesQuery = useInfiniteQuery({
     queryKey: careerKeys.opportunities(opportunityFilters),
-    queryFn: () => listOpportunities(opportunityFilters),
+    queryFn: ({ pageParam }) =>
+      listOpportunities({ ...opportunityFilters, page: String(pageParam), limit: "24" }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
 
-  const opportunities = opportunitiesQuery.data?.items ?? [];
+  const opportunities = opportunitiesQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const loading = opportunitiesQuery.isPending || opportunitiesQuery.isPlaceholderData;
   const error = opportunitiesQuery.error
     ? opportunitiesQuery.error instanceof Error ? opportunitiesQuery.error.message : "Could not load opportunities."
@@ -139,6 +142,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
             >
+              <option value="fit">Best fit for you</option>
               <option value="relevance">Relevance</option>
               <option value="recent">Newest</option>
               <option value="deadline">Deadline</option>
@@ -167,11 +171,30 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ initialType }) =>
           ))}
         </div>
       ) : opportunities.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {opportunities.map((opp) => (
-            <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {opportunities.map((opp) => (
+              <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <p aria-live="polite" className="text-sm text-[var(--comp-text-muted)]">
+              Showing {opportunities.length}
+              {opportunitiesQuery.hasNextPage ? " so far" : " — that's everything matching"}
+            </p>
+            {opportunitiesQuery.hasNextPage && (
+              <button
+                type="button"
+                className="btn-secondary min-h-11 rounded-lg px-5 py-2 text-sm font-semibold"
+                onClick={() => void opportunitiesQuery.fetchNextPage()}
+                disabled={opportunitiesQuery.isFetchingNextPage}
+              >
+                {opportunitiesQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+              </button>
+            )}
+          </div>
+        </>
       ) : (
         <EmptyState
           title={searchTerm || type ? "No matching opportunities" : "No opportunities are open right now"}

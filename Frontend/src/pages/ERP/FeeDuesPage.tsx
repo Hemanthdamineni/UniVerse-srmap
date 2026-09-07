@@ -8,6 +8,8 @@ import type { PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { ClearanceCard } from "../../components/ui/ClearanceCard";
+import FeeRowCards from "./components/FeeRowCards";
+import { useIsMobileViewport } from "../../hooks/useMediaQuery";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -49,6 +51,7 @@ function FinanceClearanceCard({ notes }: { notes: string[] }) {
 }
 
 export default function FeeDuesPage({ blueprint }: Props) {
+  const isMobile = useIsMobileViewport();
   const [notes, setNotes] = useState<string[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -119,6 +122,23 @@ export default function FeeDuesPage({ blueprint }: Props) {
         <>
           <section className="dashboard-card overflow-hidden p-0">
             <TableCardHeader title="Fee Due Details" />
+            {isMobile ? (
+            <div className="px-4 pb-4">
+              <FeeRowCards
+                rows={data.records.map((r, i) => ({
+                  key: String(i),
+                  title: r.category,
+                  subtitle: r.head,
+                  isTotal: /total/i.test(r.category) && !r.head,
+                  fields: [
+                    { label: "Due (INR)", value: r.dueAmount },
+                    { label: "Collected (INR)", value: r.collectedAmount },
+                    { label: "To be paid (INR)", value: r.toBePaidAmount, lead: true },
+                  ],
+                }))}
+              />
+            </div>
+            ) : (
             <div className="erp-table-shell rounded-none border-0 shadow-none">
               <table className="erp-table text-left">
                 <thead className="erp-table-head">
@@ -151,6 +171,7 @@ export default function FeeDuesPage({ blueprint }: Props) {
                 </tbody>
               </table>
             </div>
+            )}
           </section>
 
           <section className="dashboard-card overflow-hidden p-0">

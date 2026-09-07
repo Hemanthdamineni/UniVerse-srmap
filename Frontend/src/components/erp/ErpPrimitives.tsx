@@ -15,6 +15,8 @@ export type PageSourceLabel =
   | "Dump Snapshot"
   | "External SQLite"
   | "Internal API"
+  /** Held in browser storage on this device only — never sent to the server. */
+  | "This device"
   | "Placeholder";
 
 export type StatusTone = "success" | "warning" | "info" | "error" | "locked";

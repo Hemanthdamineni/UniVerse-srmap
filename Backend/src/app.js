@@ -1,6 +1,4 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const compression = require("compression");
@@ -22,6 +20,10 @@ const { createCompetitionRoutes } = require("./routes/competitionRoutes");
 const { createLmsRoutes } = require("./routes/lmsRoutes");
 const { createProfileRoutes } = require("./routes/profileRoutes");
 const { createRecommendationRoutes } = require("./routes/recommendationRoutes");
+const { createStudentGraphRoutes } = require("./routes/studentGraphRoutes");
+const { createNotificationRoutes } = require("./routes/notificationRoutes");
+const { createGoogleCalendarRoutes } = require("./routes/googleCalendarRoutes");
+const { createDeadlineRoutes } = require("./routes/deadlineRoutes");
 const { createCompanionAnalyticsRoutes } = require("./routes/companionAnalyticsRoutes");
 const { createAttendanceRoutes } = require("./routes/attendanceRoutes");
 const { createMetricsRoutes } = require("./routes/metricsRoutes");
@@ -32,6 +34,7 @@ const { createVacantRoomRoutes } = require("./routes/vacantRoomRoutes");
 const { createPersistentTeamRoutes } = require("./routes/persistentTeamRoutes");
 const { createScoresRoutes } = require("./routes/scoresRoutes");
 const { createHostelBuddyRoutes } = require("./routes/hostelBuddyRoutes");
+const { createUserDirectoryRoutes } = require("./routes/userDirectoryRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createRequestContextMiddleware } = require("./middleware/requestContext");
 const { createAdminContextMiddleware } = require("./middleware/adminContext");
@@ -55,6 +58,16 @@ function createApp({
   competitionStore,
   persistentTeamStore,
   unifiedProfileStore,
+  studentGraphService,
+  studentIntentStore,
+  notificationStore,
+  notificationService,
+  vapid,
+  calendarSyncService,
+  classroomService,
+  unifiedDeadlineService,
+  erpAcademicSnapshotStore,
+  appBaseUrl = "",
   companionAnalyticsStore,
   lmsStore,
   lmsTrackerService,
@@ -77,8 +90,13 @@ function createApp({
   attendanceSnapshotStore,
   erpDataSink,
   hostelBuddyStore,
+  userDirectoryStore = null,
 }) {
   const app = express();
+  // The backend is only published through the single nginx ingress hop.
+  // `req.ip` therefore reflects nginx's rewritten forwarding header and is
+  // safe for rate-limiter keys.
+  app.set("trust proxy", 1);
 
   // Same-origin CORS lockdown (Gate 6 P1). The frontend and the API
   // are served from the same origin behind nginx, so a permissive
@@ -107,28 +125,9 @@ function createApp({
   app.use(compression());
   app.use(createRequestContextMiddleware());
   app.use(createAdminContextMiddleware({ sessionStore }));
-  if (eventsStore?.dataDir) {
-    const submissionsPath = path.join(eventsStore.dataDir, "../submissions");
-    const certificatesPath = path.join(eventsStore.dataDir, "../certificates");
-    fs.mkdirSync(submissionsPath, { recursive: true });
-    fs.mkdirSync(certificatesPath, { recursive: true });
-    // Uploaded artifacts are immutable once written; let browsers reuse them
-    // instead of revalidating on every render.
-    const uploadedFilesStatic = { maxAge: "7d" };
-    app.use("/files/submissions", express.static(submissionsPath, uploadedFilesStatic));
-    app.use("/files/certificates", express.static(certificatesPath, uploadedFilesStatic));
-  }
-  if (uploadsDir) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    // Gate /uploads behind session. userContextMiddleware is already
-    // mounted on the app above; we layer the file-serving-specific
-    // check on top of it so that the gate only fires for /uploads
-    // (the /files/* paths are deliberately not gated — see
-    // middleware/fileServing.js for the policy).
-    const { ensureAuthenticatedForUploads } = require("./middleware/fileServing");
-    app.use("/uploads", ensureAuthenticatedForUploads);
-    app.use("/uploads", express.static(uploadsDir, { maxAge: "1h" }));
-  }
+  // Runtime data is deliberately not exposed as a static URL namespace.
+  // Domain routes provide authenticated, authorization-aware downloads for
+  // artifacts that users are allowed to retrieve.
   app.use("/api", createGlobalRateLimitMiddleware({ redisClient }));
   app.use(
     [
@@ -157,7 +156,7 @@ function createApp({
     })
   );
   app.use("/api", createMetricsRoutes());
-  app.use("/api", createTelemetryRoutes());
+  app.use("/api", createTelemetryRoutes({ sessionStore, adminPassword: contentAdminPassword }));
   if (hostelBuddyStore) {
     // Mount EARLY so other routes' catchalls (e.g. scrapeRoutes'
     // /:pageKey) can't shadow /api/hostel-buddy/*.
@@ -202,12 +201,24 @@ function createApp({
   if (feedbackService) {
     app.use("/api", createFeedbackRoutes({ feedbackService }));
   }
+  if (userDirectoryStore) {
+    app.use(
+      "/api",
+      createUserDirectoryRoutes({
+        userDirectory: userDirectoryStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
   app.use(
     "/api",
     createEventsRoutes({
       eventsStore,
       sessionStore,
       competitionStore,
+      studentGraphService,
+      userDirectory: userDirectoryStore,
       adminPassword: contentAdminPassword,
     })
   );
@@ -239,6 +250,7 @@ function createApp({
         sessionStore,
         adminPassword: contentAdminPassword,
         lmsTrackerService,
+        studentGraphService,
         eventsStore,
         redisClient,
         scraperSupervisorStatus,
@@ -252,6 +264,7 @@ function createApp({
       createCompetitionRoutes({
         competitionStore,
         sessionStore,
+        userDirectory: userDirectoryStore,
         adminPassword: contentAdminPassword,
       })
     );
@@ -297,6 +310,49 @@ function createApp({
       })
     );
   }
+  if (studentGraphService) {
+    app.use(
+      "/api",
+      createStudentGraphRoutes({
+        studentGraphService,
+        studentIntentStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
+  if (notificationStore) {
+    app.use(
+      "/api",
+      createNotificationRoutes({
+        notificationStore,
+        notificationService,
+        vapid,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
+  if (calendarSyncService) {
+    app.use(
+      "/api",
+      createGoogleCalendarRoutes({
+        calendarSyncService,
+        classroomService,
+        erpAcademicSnapshotStore,
+        careerStore,
+        appBaseUrl,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+      })
+    );
+  }
+  if (unifiedDeadlineService) {
+    app.use(
+      "/api",
+      createDeadlineRoutes({ unifiedDeadlineService, sessionStore, adminPassword: contentAdminPassword })
+    );
+  }
   if (lmsStore) {
     app.use(
       "/api",
@@ -311,6 +367,7 @@ function createApp({
         duplicateDetector,
         readingTimeEstimator,
         featureFlagService,
+        studentGraphService,
       })
     );
   }

@@ -40,7 +40,17 @@ export default function ResourceGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    // A single item in a three-column track leaves two visible holes and reads as
+    // a loading failure. One item spans the row instead; two split it.
+    <div
+      className={
+        items.length === 1
+          ? "grid grid-cols-1 gap-4"
+          : items.length === 2
+          ? "grid grid-cols-1 gap-4 lg:grid-cols-2"
+          : "grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3"
+      }
+    >
       {items.map((item) => (
         <ResourceCard key={item.id} resource={item} />
       ))}

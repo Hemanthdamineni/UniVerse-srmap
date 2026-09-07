@@ -13,7 +13,7 @@ const {
 } = require("../../config/env");
 
 let sharedClient = null;
-let initFailed = false;
+let lastInitAttemptAt = 0;
 
 async function discoverMasterUrl(createClient, sentinels, masterName, password) {
   for (const sentinel of sentinels) {
@@ -59,8 +59,10 @@ async function discoverMasterUrl(createClient, sentinels, masterName, password) 
 
 async function getRedisClient() {
   const hasSentinel = Boolean(String(REDIS_SENTINEL_URLS || "").trim());
-  if ((!REDIS_URL && !hasSentinel) || initFailed) return null;
+  if (!REDIS_URL && !hasSentinel) return null;
   if (sharedClient) return sharedClient;
+  if (Date.now() - lastInitAttemptAt < 5_000) return null;
+  lastInitAttemptAt = Date.now();
 
   try {
     // Optional dependency: only required when REDIS_URL is configured.
@@ -124,10 +126,9 @@ async function getRedisClient() {
 
     return sharedClient;
   } catch (error) {
-    initFailed = true;
     log({
       level: "error",
-      msg: "Redis unavailable. Falling back to in-memory stores.",
+      msg: "Redis unavailable. Falling back to in-memory stores; connection will be retried.",
       error: error?.message || String(error),
     });
     return null;

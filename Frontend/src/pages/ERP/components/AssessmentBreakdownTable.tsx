@@ -56,4 +56,3 @@ export function AssessmentBreakdownTable({
   );
 }
 
-export default AssessmentBreakdownTable;

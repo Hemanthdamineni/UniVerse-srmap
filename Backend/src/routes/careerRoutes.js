@@ -3,8 +3,9 @@ const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { resolveSessionId } = require("../utils/cookies");
 const { createCareerCache } = require("../services/career/careerServices");
+const { rankOpportunities, studentSliceFromGraph } = require("../services/career/opportunityFit");
 
-function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, redisClient = null, scraperSupervisorStatus = null, scraperTriggerOnce = null }) {
+function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, studentGraphService = null, redisClient = null, scraperSupervisorStatus = null, scraperTriggerOnce = null }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
   // Redis-backed read-through cache for global career reads; degrades to a
@@ -200,25 +201,61 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     return stats;
   }));
 
-  router.get("/career/opportunities", wrap((req) => ({
-    items: careerStore
-      .getOpportunities({
-        user: req.userContext,
-        type: req.query.type,
-        skills: req.query.skills,
-        location: req.query.location,
-        mode: req.query.mode,
-        query: req.query.query,
-        sort: req.query.sort,
-        page: req.query.page,
-        limit: req.query.limit,
-        isFree: req.query.isFree,
-        hasStipend: req.query.hasStipend,
-        expiringWithinDays: req.query.expiringWithinDays,
-        bookmarkedOnly: req.query.bookmarkedOnly === "true",
-      })
-      .map(decorateOpportunity),
-  })));
+  router.get("/career/opportunities", wrap((req) => {
+    const baseOptions = {
+      user: req.userContext,
+      type: req.query.type,
+      skills: req.query.skills,
+      location: req.query.location,
+      mode: req.query.mode,
+      query: req.query.query,
+      isFree: req.query.isFree,
+      hasStipend: req.query.hasStipend,
+      expiringWithinDays: req.query.expiringWithinDays,
+      bookmarkedOnly: req.query.bookmarkedOnly === "true",
+    };
+
+    // sort=fit — rank against the student graph (B7 / T4.2.1–3). Falls back to
+    // the plain relevance sort when the graph service isn't wired.
+    if (req.query.sort === "fit" && studentGraphService) {
+      const page = Math.max(1, Number.parseInt(String(req.query.page || "1"), 10) || 1);
+      const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit || "24"), 10) || 24));
+      // Score a wide candidate window so the top of the ranked list is stable
+      // across pages without re-scoring the whole catalogue.
+      const CANDIDATE_WINDOW = 400;
+      const candidates = careerStore.getOpportunities({
+        ...baseOptions,
+        sort: "relevance",
+        page: 1,
+        limit: CANDIDATE_WINDOW,
+      });
+      let student;
+      try {
+        student = studentSliceFromGraph(studentGraphService.getGraph(req.userContext));
+      } catch {
+        student = {};
+      }
+      const ranked = rankOpportunities(candidates, student, { includeIneligible: false });
+      const start = (page - 1) * limit;
+      const slice = ranked.slice(start, start + limit);
+      return {
+        items: slice.map((o) => ({ ...decorateOpportunity(o), fit: o.fit })),
+        page,
+        limit,
+        hasMore: start + limit < ranked.length,
+        rankedTotal: ranked.length,
+      };
+    }
+
+    const { items, page, limit, hasMore } = careerStore.getOpportunitiesPage({
+      ...baseOptions,
+      sort: req.query.sort,
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+
+    return { items: items.map(decorateOpportunity), page, limit, hasMore };
+  }));
 
   router.post("/career/opportunities", wrap((req) => {
     const opportunity = decorateOpportunity(careerStore.createOpportunity(req.body || {}, req.userContext));

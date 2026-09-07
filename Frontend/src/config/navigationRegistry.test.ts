@@ -51,7 +51,7 @@ describe("navigationRegistry", () => {
   });
 
   it("builds breadcrumbs with domain for career paths", () => {
-    const crumbs = getBreadcrumbs("/career/jobs");
+    const crumbs = getBreadcrumbs("/career/opportunities");
     expect(crumbs[0].label).toBe("Dashboard");
     expect(crumbs.some((c) => c.label.toLowerCase().includes("career"))).toBe(true);
   });

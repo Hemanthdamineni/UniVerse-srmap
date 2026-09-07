@@ -28,6 +28,12 @@ test("content admin routes enforce password and expose lifecycle workflow", asyn
   const store = makeStore();
   const app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    if (req.headers.cookie === "erp_session=admin") {
+      req.adminContext = { isElevated: true, registerNo: "AP23110010419" };
+    }
+    next();
+  });
   app.use("/api", createContentRoutes({ contentStore: store, adminPassword: "secret" }));
   const { server, baseUrl } = await listen(app);
 
@@ -41,7 +47,7 @@ test("content admin routes enforce password and expose lifecycle workflow", asyn
 
     const created = await fetch(`${baseUrl}/api/content`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-password": "secret", "x-admin-actor": "admin-route" },
+      headers: { "content-type": "application/json", cookie: "erp_session=admin", "x-admin-actor": "admin-route" },
       body: JSON.stringify({ type: "announcement", title: "Launch Notice", lifecycleState: "draft" }),
     });
     assert.equal(created.status, 200);
@@ -49,7 +55,7 @@ test("content admin routes enforce password and expose lifecycle workflow", asyn
     assert.equal(createdBody.data.lifecycleState, "draft");
 
     const workflow = await fetch(`${baseUrl}/api/content/admin/workflow`, {
-      headers: { "x-admin-password": "secret" },
+      headers: { cookie: "erp_session=admin" },
     });
     assert.equal(workflow.status, 200);
     const workflowBody = await workflow.json();
@@ -57,7 +63,7 @@ test("content admin routes enforce password and expose lifecycle workflow", asyn
 
     const preview = await fetch(`${baseUrl}/api/content/bulk/preview`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-password": "secret" },
+      headers: { "content-type": "application/json", cookie: "erp_session=admin" },
       body: JSON.stringify({ ids: [createdBody.data.id], action: "publish" }),
     });
     assert.equal(preview.status, 200);
@@ -66,13 +72,13 @@ test("content admin routes enforce password and expose lifecycle workflow", asyn
 
     const executed = await fetch(`${baseUrl}/api/content/bulk/execute`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-password": "secret" },
+      headers: { "content-type": "application/json", cookie: "erp_session=admin" },
       body: JSON.stringify({ ids: [createdBody.data.id], action: "publish", reason: "Ready to publish" }),
     });
     assert.equal(executed.status, 200);
 
     const history = await fetch(`${baseUrl}/api/content/${createdBody.data.id}/history`, {
-      headers: { "x-admin-password": "secret" },
+      headers: { cookie: "erp_session=admin" },
     });
     assert.equal(history.status, 200);
     const historyBody = await history.json();

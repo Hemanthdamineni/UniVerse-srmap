@@ -3,12 +3,7 @@ const { recordHttpRequest } = require("../services/campus/feedbackServices");
 const { log } = require("../utils/logger");
 
 function getClientIp(req) {
-  const forwarded = String(req.header("x-forwarded-for") || "")
-    .split(",")
-    .map((item) => item.trim())
-    .find(Boolean);
-
-  return forwarded || req.socket?.remoteAddress || undefined;
+  return req.ip || req.socket?.remoteAddress || undefined;
 }
 
 function createRequestContextMiddleware() {

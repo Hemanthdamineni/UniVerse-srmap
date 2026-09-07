@@ -4,6 +4,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
+process.env.ADMIN_REGISTER_NUMBERS = "AP23110010419";
+
 const { CareerStore } = require("../src/services/career/careerStore");
 const { createCareerRoutes } = require("../src/routes/careerRoutes");
 
@@ -29,6 +31,7 @@ function makeUser(overrides = {}) {
 function createSession(profileData) {
   return {
     loggedIn: true,
+    adminElevated: profileData.userId === "AP23110010419",
     profileData: {
       TableContent: {
         "Register No.": profileData.userId,

@@ -17,6 +17,11 @@ function createCompanionAnalyticsRoutes({ analyticsStore, sessionStore, adminPas
 
   router.post("/analytics/events", (req, res) => {
     try {
+      if (!req.userContext?.isAuthenticated) {
+        const error = new Error("Authentication required");
+        error.status = 401;
+        throw error;
+      }
       const data = analyticsStore.recordEvent(req.body || {}, {
         userId: req.userContext?.isAuthenticated ? req.userContext.userId : null,
         role: req.userContext?.role || "guest",

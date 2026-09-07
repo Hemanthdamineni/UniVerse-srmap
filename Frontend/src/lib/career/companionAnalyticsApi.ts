@@ -31,6 +31,11 @@ export type CompanionAnalyticsReport = {
   byCategory: Array<{ category: string; count: number }>;
   topEvents: Array<{ eventName: string; category: string; count: number; actors: number }>;
   funnel: Array<{ eventName: string; count: number }>;
+  pageViews: {
+    totalViews: number;
+    distinctRoutes: number;
+    byRoute: Array<{ route: string; views: number; actors: number }>;
+  };
   recent: CompanionAnalyticsEvent[];
 };
 

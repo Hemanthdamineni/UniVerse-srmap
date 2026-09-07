@@ -20,19 +20,6 @@ function erp(
   } as PageBlueprint;
 }
 
-function placeholder(route: string, heading: string, reason: string): PageBlueprint {
-  return {
-    route,
-    heading,
-    fetchKeys: [],
-    domain: "campus",
-    integrationState: "placeholder",
-    renderer: "generic",
-    placeholderReason: reason,
-    status: "hidden",
-  } as PageBlueprint;
-}
-
 function campus(route: string, heading: string, fetchKeys: string[], loadingMessage: string): PageBlueprint {
   return {
     route,
@@ -72,23 +59,32 @@ export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   "/exams/earlier-semester-results": erp("/exams/earlier-semester-results", "Earlier Semester Results", [
     "examination/earlier-internal-marks", "examination/exam-mark-details",
   ], "results-earlier", "Loading earlier semester results..."),
-  "/exams/essentials": placeholder("/exams/essentials", "Exam Essentials", "Coming soon: this page is not yet available."),
-
   "/finance/fee-dues": erp("/finance/fee-dues", "Fees Dues", ["finance/fee-due-details"], "finance-dues", "Loading fee dues..."),
   "/finance/fee-paid": erp("/finance/fee-paid", "Fees Paid", ["finance/fee-paid-details", "finance/payment-acknowledgment", "finance/online-payment-verification"], "finance-paid", "Loading paid fees..."),
-  "/finance/bank-details": { ...erp("/finance/bank-details", "Bank Details", ["finance/bank-account-details"], "bank-details", "Loading bank details..."), status: "hidden" as PageBlueprint["status"] },
+  // B14 / T5.1.2 — Bank Details is a Finance page, now surfaced in the Finance
+  // nav group rather than orphaned.
+  "/finance/bank-details": erp("/finance/bank-details", "Bank Details", ["finance/bank-account-details"], "bank-details", "Loading bank details..."),
 
-  "/transport-hostel/routes": placeholder("/transport-hostel/routes", "Transport Routes", "No ERP endpoint available for transport routes."),
   "/transport-hostel/hostel-booking": campus("/transport-hostel/hostel-booking", "Hostel Booking", ["hostel/hostel-booking-for-full-year"], "Loading hostel info..."),
   "/transport-hostel/room-details": { ...erp("/transport-hostel/room-details", "Rooms Details", ["hostel/room-details"], "room-details", "Loading room details..."), domain: "campus" },
-  "/transport-hostel/route-details": placeholder("/transport-hostel/route-details", "Route Details", "No ERP endpoint available for route details."),
 
-  "/registration/course-registration": erp("/registration/course-registration", "Course Registration", ["academic/course-registration", "academic/course-registration-cancellation"], "document", "Loading course registration..."),
+  // B14 / T5.1.1 — one tabbed hub replaces the six per-flow entries. The
+  // per-flow blueprints below stay (the hub renders them, and they remain
+  // directly navigable / deep-linkable via `?tab=`).
+  "/registration": {
+    route: "/registration",
+    heading: "Registration",
+    fetchKeys: [],
+    domain: "erp",
+    sourceMode: "erp",
+    integrationState: "native",
+    renderer: "generic",
+    loadingMessage: "Loading registration...",
+  } as PageBlueprint,
+  "/registration/course-registration": { ...erp("/registration/course-registration", "Course Registration", ["academic/course-registration", "academic/course-registration-cancellation"], "document", "Loading course registration..."), status: "hidden" as PageBlueprint["status"] },
   "/registration/minor-oe-registration": { ...erp("/registration/minor-oe-registration", "Minor / OE Registration", ["academic/minor-program-registration"], "document", "Loading minor/OE registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/events-registration": placeholder("/registration/events-registration", "Events Registration", "Coming soon: event registration is available from each event's details page."),
   "/registration/exam-registration": { ...erp("/registration/exam-registration", "Exam Registration", ["examination/exam-registration", "examination/exam-registration-details"], "document", "Loading exam registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/hostel-registration": { ...erp("/registration/hostel-registration", "Hostel Registration", ["hostel/hostel-booking-for-full-year"], "document", "Loading hostel registration..."), domain: "campus" },
-  "/registration/transport-registration": { ...erp("/registration/transport-registration", "Transport Registration", ["transport/transport-registration", "transport/registration-acknowledgment"], "document", "Loading transport registration..."), domain: "campus" },
+  "/registration/hostel-registration": { ...erp("/registration/hostel-registration", "Hostel Registration", ["hostel/hostel-booking-for-full-year"], "document", "Loading hostel registration..."), domain: "campus", status: "hidden" as PageBlueprint["status"] },
+  "/registration/transport-registration": { ...erp("/registration/transport-registration", "Transport Registration", ["transport/transport-registration", "transport/registration-acknowledgment"], "document", "Loading transport registration..."), domain: "campus", status: "hidden" as PageBlueprint["status"] },
   "/registration/sap-registration": { ...erp("/registration/sap-registration", "SAP Registration", ["sap/sap-process"], "document", "Loading SAP registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/registration-tracker": placeholder("/registration/registration-tracker", "Registration Tracker", "Coming soon: this page is not yet available."),
 };

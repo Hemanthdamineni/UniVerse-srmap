@@ -4,18 +4,6 @@
 // the backend fresh window so cached reads never outlive it.
 export const ERP_FRESH_TTL_MS = 60_000;
 
-export const erpReadOptions = {
-  staleTime: ERP_FRESH_TTL_MS,
-} as const;
-
-export const listOptions = {
-  staleTime: 30_000,
-} as const;
-
-export const referenceDataOptions = {
-  staleTime: 10 * 60_000,
-} as const;
-
 export const adminQueueOptions = {
   staleTime: 15_000,
 } as const;

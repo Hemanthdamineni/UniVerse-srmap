@@ -91,11 +91,11 @@ const SkillGapPage: React.FC = () => {
                       View jobs
                     </Link>
                     <Link
-                      to="/learn/materials"
+                      to={`/learn/discover?q=${encodeURIComponent(gap.skill)}`}
                       className="btn-primary rounded-lg px-3 py-2 text-xs no-underline"
                     >
                       <BookOpen className="mr-1 inline h-3 w-3" />
-                      Learn
+                      Find resources
                     </Link>
                   </div>
                 </div>

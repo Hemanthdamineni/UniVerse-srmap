@@ -150,6 +150,3 @@ export function useBlueprintPageData(blueprint: PageBlueprint, reloadToken = 0):
   return state;
 }
 
-export function useRouteBlueprint(pathname: string) {
-  return useMemo(() => pathname, [pathname]);
-}

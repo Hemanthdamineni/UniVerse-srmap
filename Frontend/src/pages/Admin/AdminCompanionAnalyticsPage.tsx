@@ -191,6 +191,48 @@ export default function AdminCompanionAnalyticsPage() {
 
         <section className="space-y-4">
           <div>
+            <h2 className="text-lg font-semibold text-[var(--comp-text-primary)]">Top Pages</h2>
+            <p className="body-text text-sm">
+              {(report.pageViews?.totalViews ?? 0).toLocaleString("en-IN")} route views across{" "}
+              {report.pageViews?.distinctRoutes ?? 0} distinct routes in the selected window. Use this
+              to decide what to invest in — and what to retire.
+            </p>
+          </div>
+          {(report.pageViews?.byRoute ?? []).length ? (
+            <div className="overflow-hidden rounded-lg border border-[var(--comp-border)]">
+              <table className="w-full text-sm">
+                <thead className="bg-[var(--comp-surface)] text-left text-xs uppercase tracking-[0.12em] text-[var(--comp-text-muted)]">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Route</th>
+                    <th className="px-4 py-2 text-right font-medium">Views</th>
+                    <th className="px-4 py-2 text-right font-medium">Actors</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(report.pageViews?.byRoute ?? []).map((item) => (
+                    <tr key={item.route} className="border-t border-[var(--comp-border)]">
+                      <td className="px-4 py-2 font-mono text-[var(--comp-text-primary)]">{item.route}</td>
+                      <td className="px-4 py-2 text-right tabular-nums text-[var(--comp-text-primary)]">
+                        {item.views.toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-4 py-2 text-right tabular-nums text-[var(--comp-text-secondary)]">
+                        {item.actors.toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-[var(--comp-border)] p-4 text-sm text-[var(--comp-text-muted)]">
+              No route views recorded yet. They start flowing once the updated client ships and users
+              navigate the authenticated app.
+            </p>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div>
             <h2 className="text-lg font-semibold text-[var(--comp-text-primary)]">Recent Signals</h2>
             <p className="body-text text-sm">Latest events captured by the internal analytics sink.</p>
           </div>

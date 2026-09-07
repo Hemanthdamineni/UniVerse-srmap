@@ -85,7 +85,10 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
           {feedbackPendingCount} course feedback item{feedbackPendingCount === 1 ? "" : "s"} need attention.
         </div>
       ) : null}
-      <div className="grid flex-1 grid-cols-1 auto-rows-fr gap-2 sm:grid-cols-2">
+      {/* Always a single column: this card is ~1/3 of the desktop dashboard row and
+          full-width on mobile — a 2-up grid left ~90px for the label and forced
+          "Attendance" to truncate to "At…". */}
+      <div className="grid flex-1 grid-cols-1 auto-rows-fr gap-2">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -103,7 +106,7 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
               <Icon size={16} />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-[var(--comp-text-primary)]">{link.name}</span>
+              <span className="block text-sm font-semibold leading-tight text-[var(--comp-text-primary)]">{link.name}</span>
               <span className="block truncate text-xs text-[var(--comp-text-secondary)]">{link.description}</span>
             </span>
           </button>
@@ -120,7 +123,7 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
             <ClipboardCheck size={16} />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-[var(--comp-text-primary)]">Feedback</span>
+            <span className="block text-sm font-semibold leading-tight text-[var(--comp-text-primary)]">Feedback</span>
             <span className="block truncate text-xs text-[var(--comp-text-secondary)]">
               {feedbackPendingCount > 0 ? "Complete pending" : "Course feedback"}
             </span>

@@ -15,14 +15,19 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
  const {
  id, title, company, organizer, shortDescription, type, deadline,
  stipend, prize, isFree, mode, source, isBookmarked, skills,
- personalizedScore, skillMatch
+ personalizedScore, skillMatch, fit
  } = opportunity;
+
+ const matchScore = fit?.fitScore ?? personalizedScore;
+ const matchedSet = new Set(
+ (fit?.matchedSkills ?? skillMatch?.matched ?? []).map((s) => s.toLowerCase()),
+ );
 
  return (
  <Card className="h-full flex flex-col transition-shadow relative overflow-hidden">
- {personalizedScore !== undefined && personalizedScore >= 70 && (
+ {matchScore !== undefined && matchScore >= 70 && (
  <div className="absolute top-2 right-14 bg-[var(--comp-accent)] text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg flex items-center gap-1 z-10">
- <Zap className="h-3 w-3 fill-current" /> {personalizedScore}% Match
+ <Zap className="h-3 w-3 fill-current" /> {matchScore}% {fit ? "fit" : "Match"}
  </div>
  )}
 
@@ -32,7 +37,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
  <TypeBadge type={type} />
  <SourceBadge source={source} />
  </div>
- <Link to={`/career/opportunities/${id}`}>
+ <Link to={`/career/opportunities/${id}`} className="flex min-h-11 items-center">
  <CardTitle className="hover:text-[var(--comp-accent)] transition-colors line-clamp-2">
  {title}
  </CardTitle>
@@ -56,9 +61,16 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
  {shortDescription || 'No description provided.'}
  </p>
 
+ {fit?.whyThis && fit.whyThis.length > 0 && (
+ <p className="mb-3 flex items-start gap-1.5 text-xs text-[var(--comp-text-secondary)]">
+ <Zap className="mt-0.5 h-3 w-3 shrink-0 text-[var(--comp-accent)]" />
+ <span><span className="font-semibold text-[var(--comp-text-primary)]">Why this:</span> {fit.whyThis.join(' · ')}</span>
+ </p>
+ )}
+
  <div className="flex flex-wrap gap-2 mb-3">
  {skills.slice(0, 3).map(skill => {
- const isMatched = skillMatch?.matched.some(s => s.toLowerCase() === skill.toLowerCase());
+ const isMatched = matchedSet.has(skill.toLowerCase());
  return (
  <span
  key={skill}

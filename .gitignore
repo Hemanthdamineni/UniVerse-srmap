@@ -44,6 +44,10 @@ Backend/data/lms-smoke-files/
 Backend/data/lms-smoke-files-2/
 Backend/data/live-page-audit/
 Backend/data/erp-dump/
+Backend/data/vapid.json
+Backend/data/google-tokens.sqlite
+Backend/data/google-tokens.sqlite-shm
+Backend/data/google-tokens.sqlite-wal
 
 # ===========================
 # Logs & coverage
@@ -122,3 +126,8 @@ Thumbs.db
 .project-maintenance/
 /tmp/
 Backend/test-uimap.json
+
+# Capacitor native projects (regenerate with `npx cap add`) — Batch B13
+Frontend/android/
+Frontend/ios/
+Frontend/.capacitor/

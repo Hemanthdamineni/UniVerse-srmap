@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { SkeletonTable } from '../../components/ui/Skeletons';
 import type { LeaderboardRow } from '../../lib/campus/campusApi';
+import { useResolvedNames } from '../../hooks/useResolvedNames';
 import { track } from '../../lib/core/analytics';
 
 export default function LeaderboardPage() {
@@ -22,6 +23,7 @@ export default function LeaderboardPage() {
 
   const profile = readStoredProfileData();
   const userId = (profile?.registerNumber as string | undefined) ?? (profile?.id as string | undefined) ?? '';
+  const nameFor = useResolvedNames(rows.map((r) => r.submittedBy));
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +50,7 @@ export default function LeaderboardPage() {
 
   function displayName(row: LeaderboardRow): string {
     if (anonymize) return `Participant #${row.rank}`;
-    return row.teamName ?? row.submittedBy;
+    return row.teamName ?? nameFor(row.submittedBy);
   }
 
   return (

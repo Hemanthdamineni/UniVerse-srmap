@@ -302,11 +302,6 @@ export interface EventRoleAssignment {
 
 // ─── Backend Permissions (legacy compat) ──────────────────────────────────────
 
-export interface BackendPermissions {
-  canEdit: boolean;
-  canEvaluate: boolean;
-  canShortlist: boolean;
-}
 
 // ─── Safe fetch wrapper ───────────────────────────────────────────────────────
 

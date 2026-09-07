@@ -11,10 +11,15 @@ function getProvidedAdminPassword(req) {
 }
 
 function hasAdminAccess(req, adminPassword = "") {
-  if (req?.adminContext?.isElevated) return true;
+  void adminPassword;
+  return Boolean(req?.adminContext?.isElevated);
+}
+
+function verifyAdminPassword(req, adminPassword = "") {
   const requiredPassword = String(adminPassword || "").trim();
-  if (!requiredPassword) return false;
-  return getProvidedAdminPassword(req) === requiredPassword;
+  const providedPassword = getProvidedAdminPassword(req);
+  if (!requiredPassword || providedPassword.length !== requiredPassword.length) return false;
+  return timingSafeEqual(Buffer.from(providedPassword), Buffer.from(requiredPassword));
 }
 
 function assertAdminAccess(req, adminPassword = "") {
@@ -32,5 +37,7 @@ function assertAdminAccess(req, adminPassword = "") {
 module.exports = {
   getProvidedAdminPassword,
   hasAdminAccess,
+  verifyAdminPassword,
   assertAdminAccess,
 };
+const { timingSafeEqual } = require("crypto");

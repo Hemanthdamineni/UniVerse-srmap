@@ -159,10 +159,6 @@ export function getSidebarNav(options: NavViewOptions = {}): SidebarItem[] {
   return items;
 }
 
-export function getMergedMainNav(): SidebarItem[] {
-  return getSidebarNav();
-}
-
 export function getCommandPaletteGroupOrder(options: NavViewOptions = {}): string[] {
   return getSidebarNav(options).map((item) => item.label);
 }

@@ -61,13 +61,13 @@ async function invokeRoute(path) {
   return res;
 }
 
-test("health route includes integrity diagnostics", async () => {
+test("health route exposes only public liveness information", async () => {
   const response = await invokeRoute("/health");
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.ok, true);
-  assert.equal(response.payload.integrity.ok, false);
-  assert.ok(Array.isArray(response.payload.integrity.failures));
-  assert.deepEqual(response.payload.career, { enabled: false });
+  assert.equal(response.payload.status, "live");
+  assert.equal(response.payload.integrity, undefined);
+  assert.equal(response.payload.discovery, undefined);
 });
 
 test("ready route reports integrity status fields", async () => {

@@ -9,25 +9,40 @@ describe("calculateBunkCapacity", () => {
     expect(result.classesNeededToAttend).toBe(5);
   });
 
-  it("returns Safe when attendance has a small buffer above 75%", () => {
+  it("returns Caution when the buffer above 75% is thin", () => {
+    // 40 conducted, 31 present + 1 OD/ML => 2 spare classes: one bad week away
+    // from dropping below target.
     const result = calculateBunkCapacity(40, 31, 75, 1);
+    expect(result.status).toBe("caution");
+    expect(result.safeToSkip).toBe(2);
+    expect(result.classesNeededToAttend).toBe(0);
+  });
+
+  it("returns Safe when the buffer above 75% is comfortable", () => {
+    const result = calculateBunkCapacity(80, 70, 75, 5);
+    expect(result.status).toBe("safe");
+    expect(result.safeToSkip).toBeGreaterThanOrEqual(3);
+    expect(result.classesNeededToAttend).toBe(0);
+  });
+
+  it("returns Safe for 100% attendance", () => {
+    const result = calculateBunkCapacity(50, 50);
     expect(result.status).toBe("safe");
     expect(result.safeToSkip).toBeGreaterThan(0);
     expect(result.classesNeededToAttend).toBe(0);
   });
 
-  it("returns Caution when attendance has a large buffer above 75%", () => {
-    const result = calculateBunkCapacity(80, 70, 75, 5);
-    expect(result.status).toBe("caution");
-    expect(result.safeToSkip).toBeGreaterThanOrEqual(3);
-    expect(result.classesNeededToAttend).toBe(0);
-  });
-
-  it("returns Caution for 100% attendance (large buffer)", () => {
-    const result = calculateBunkCapacity(50, 50);
-    expect(result.status).toBe("caution");
-    expect(result.safeToSkip).toBeGreaterThan(0);
-    expect(result.classesNeededToAttend).toBe(0);
+  it("never reports a worse status as the buffer grows", () => {
+    // The original thresholds were inverted, so a student who could skip ten
+    // classes saw an amber "Caution" while one clinging to a single spare class
+    // saw green "Safe". Status must be monotonic in the size of the buffer.
+    const rank = { required: 0, caution: 1, safe: 2 } as const;
+    let previous = -1;
+    for (let present = 30; present <= 50; present += 1) {
+      const { status } = calculateBunkCapacity(50, present);
+      expect(rank[status]).toBeGreaterThanOrEqual(previous);
+      previous = rank[status];
+    }
   });
 
   it("returns Required for exactly 75% attendance with no buffer", () => {

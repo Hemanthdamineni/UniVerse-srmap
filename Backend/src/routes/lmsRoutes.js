@@ -115,6 +115,7 @@ function createLmsRoutes({
   duplicateDetector,
   readingTimeEstimator,
   featureFlagService,
+  studentGraphService = null,
 }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
@@ -201,6 +202,7 @@ function createLmsRoutes({
     featureFlagService,
     ensureAdmin,
     renderGuidePdf,
+    studentGraphService,
   });
   registerSearchRoutes(router, { createHandle, lmsStore });
 

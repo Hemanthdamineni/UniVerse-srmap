@@ -94,6 +94,69 @@ describe("EventsListingPage", () => {
     eventMocks.recordPlatformRecommendationFeedback.mockResolvedValue({ recorded: true, id: "fb-1" });
   });
 
+  it("prefers the graph fit-ranked rail with its stated reasons when available", async () => {
+    eventMocks.listEvents.mockImplementation((q?: Record<string, string>) => {
+      if (q?.sort === "fit") {
+        return Promise.resolve([
+          {
+            id: "event-2",
+            title: "Open Mic Evening",
+            description: "Campus cultural evening.",
+            startAt: "2030-07-03T17:00:00.000Z",
+            endAt: "2030-07-03T20:00:00.000Z",
+            category: "Cultural",
+            department: "Student Union",
+            status: "published",
+            visibility: "public",
+            tags: ["music"],
+            fit: { fitScore: 40, eligible: true, matchedSkills: [], missingSkills: [], whyThis: ["Upcoming cultural event"], breakdown: {} },
+          },
+          {
+            id: "event-1",
+            title: "Campus Hackathon",
+            description: "Build useful campus tools.",
+            startAt: "2030-07-01T09:00:00.000Z",
+            endAt: "2030-07-01T18:00:00.000Z",
+            category: "Technical",
+            department: "Computer Science",
+            status: "published",
+            visibility: "public",
+            tags: ["React"],
+            fit: {
+              fitScore: 82,
+              eligible: true,
+              matchedSkills: ["React"],
+              missingSkills: [],
+              whyThis: ["Matches your skills: React", "Hosted by your department"],
+              breakdown: {},
+            },
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    render(
+      <MemoryRouter>
+        <EventsListingPage />
+      </MemoryRouter>
+    );
+
+    const rail = await screen.findByLabelText("Recommended events");
+    // Highest fitScore first.
+    const links = within(rail).getAllByRole("link");
+    expect(links[0]).toHaveTextContent("Campus Hackathon");
+    expect(within(rail).getByText("Matches your skills: React")).toBeInTheDocument();
+    expect(within(rail).getByText("82%")).toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(eventMocks.track).toHaveBeenCalledWith("events_recommendations_viewed", {
+        count: 2,
+        topEventId: "event-1",
+      })
+    );
+  });
+
   it("renders personalized event recommendations and records recommendation clicks", async () => {
     const user = userEvent.setup();
     render(

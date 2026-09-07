@@ -20,6 +20,7 @@ import { AuditHistoryPanel } from '../../components/competition/CompetitionPanel
 import { ErrorMessage } from '../../components/competition/ErrorMessage';
 import { track } from '../../lib/core/analytics';
 import { useOptimistic } from '../../hooks/useOptimistic';
+import { useResolvedNames } from '../../hooks/useResolvedNames';
 import { Input } from "../../components/input";
 import { Textarea } from "../../components/textarea";
 import { Select } from "../../components/select";
@@ -44,12 +45,16 @@ export default function EvaluationPage() {
 
   const current = useMemo(() => rows.find((r) => r.id === submissionId) ?? null, [rows, submissionId]);
   const index = useMemo(() => rows.findIndex((r) => r.id === submissionId), [rows, submissionId]);
+
+  const nameFor = useResolvedNames([
+    String(current?.submittedBy ?? ''),
+    ...auditEvents.map((e) => e.actor),
+  ]);
   const prev = index > 0 ? rows[index - 1] : null;
   const next = index >= 0 && index + 1 < rows.length ? rows[index + 1] : null;
   const currentType = String(current?.type ?? '');
   const currentDescription = current?.description ? String(current.description) : '';
   const currentLinkUrl = current?.linkUrl ? String(current.linkUrl) : '';
-  const currentFilePath = current?.filePath ? String(current.filePath) : '';
 
   async function load() {
     setLoading(true);
@@ -191,7 +196,9 @@ export default function EvaluationPage() {
               <div className="space-y-2 text-sm">
                 <p className="m-0">
                   <span className="comp-label">Participant:</span>{' '}
-                  <strong className="text-[var(--text-primary)]">{String(current.submittedBy ?? '—')}</strong>
+                  <strong className="text-[var(--text-primary)]">
+                    {nameFor(String(current.submittedBy ?? '')) || '—'}
+                  </strong>
                 </p>
                 <p className="m-0">
                   <span className="comp-label">Submitted:</span>{' '}
@@ -208,8 +215,8 @@ export default function EvaluationPage() {
                     🔗 Open Submission Link
                   </a>
                 )}
-                {currentType === 'file' && currentFilePath && (
-                  <a href={`/files/submissions/${currentFilePath}`} target="_blank" rel="noreferrer" className="comp-btn-ghost w-fit">
+                {currentType === 'file' && Boolean(current?.id) && (
+                  <a href={`/api/competitions/${encodeURIComponent(eventId)}/rounds/${encodeURIComponent(roundId)}/submissions/${encodeURIComponent(String(current.id))}/download`} target="_blank" rel="noreferrer" className="comp-btn-ghost w-fit">
                     📁 Open Submission File
                   </a>
                 )}
@@ -295,7 +302,7 @@ export default function EvaluationPage() {
             {/* Audit history panel */}
             {auditEvents.length > 0 && (
               <SectionCard title="Panel Snapshot">
-                <AuditHistoryPanel events={auditEvents} />
+                <AuditHistoryPanel events={auditEvents} resolveActor={nameFor} />
               </SectionCard>
             )}
           </>

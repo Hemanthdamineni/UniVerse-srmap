@@ -887,8 +887,21 @@ const learningDiscoveryMethods = {
       .all(userId);
   },
 
-  generateLearningSession(userId, durationMinutes) {
-    const dueItems = this.getRevisionQueue(userId).slice(0, 2);
+  generateLearningSession(userId, durationMinutes, opts = {}) {
+    let queue = this.getRevisionQueue(userId);
+    const atRiskCodes = Array.isArray(opts.atRiskCodes)
+      ? opts.atRiskCodes.map((c) => toSafeString(c).toUpperCase())
+      : [];
+    if (atRiskCodes.length) {
+      // Float an at-risk subject's overdue/next item to the front of the session.
+      queue = [...queue].sort((a, b) => {
+        const aRisk = atRiskCodes.includes(toSafeString(a.subjectCode).toUpperCase());
+        const bRisk = atRiskCodes.includes(toSafeString(b.subjectCode).toUpperCase());
+        if (aRisk !== bRisk) return aRisk ? -1 : 1;
+        return (Date.parse(a.dueDate) || 0) - (Date.parse(b.dueDate) || 0);
+      });
+    }
+    const dueItems = queue.slice(0, 2);
     const recommendations = this.listRecommendationCandidates({ userId, limit: 10 });
     const resources = recommendations.slice(0, 2);
     return {
@@ -1039,17 +1052,33 @@ const learningProgressMethods = {
       .all(userId);
   },
 
-  updateRevisionSchedule(userId, resourceId, score) {
+  updateRevisionSchedule(userId, resourceId, score, opts = {}) {
     const current = this.db
       .prepare("SELECT * FROM lms_revision_queue WHERE userId = ? AND resourceId = ?")
       .get(userId, resourceId) || {
       interval: 1,
       repetition: 0,
     };
+
+    // Graph-supplied context (B7 / T4.5): tighten the loop when this resource's
+    // subject is on the student's at-risk list, and pull the review in front of
+    // the next real assessment.
+    let atRisk = false;
+    const atRiskCodes = Array.isArray(opts.atRiskCodes) ? opts.atRiskCodes : [];
+    if (atRiskCodes.length) {
+      const resource = this.db
+        .prepare("SELECT subjectCode FROM lms_resources WHERE id = ?")
+        .get(resourceId);
+      const code = toSafeString(resource?.subjectCode).toUpperCase();
+      atRisk = Boolean(code) && atRiskCodes.some((c) => toSafeString(c).toUpperCase() === code);
+    }
+
     const next = this.revisionScheduler.getNextRevision({
       previousInterval: current.interval,
       previousRepetition: current.repetition,
       score,
+      atRisk,
+      ...(Array.isArray(opts.examWindows) ? { examWindows: opts.examWindows } : {}),
     });
     this.db.prepare(
       `
@@ -1064,8 +1093,8 @@ const learningProgressMethods = {
     return this.getRevisionQueue(userId);
   },
 
-  submitRevisionReview(userId, resourceId, score) {
-    const queue = this.updateRevisionSchedule(userId, resourceId, score);
+  submitRevisionReview(userId, resourceId, score, opts = {}) {
+    const queue = this.updateRevisionSchedule(userId, resourceId, score, opts);
     const topics = this.getTopicsForResource(resourceId);
     for (const topic of topics) {
       this.updateTopicMastery(userId, topic.id, undefined, undefined, clamp(Number(score || 0) / 100, 0, 1));

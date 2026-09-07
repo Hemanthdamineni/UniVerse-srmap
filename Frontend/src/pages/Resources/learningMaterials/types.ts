@@ -1,5 +1,5 @@
 import type { ContentBulkPreview, ContentHistoryEntry, LearningResourceItem } from "../../../lib/lms/index";
-import type { EMPTY_MATERIAL_FORM, EMPTY_RECOMMENDATION_FORM } from "./constants";
+import type { EMPTY_MATERIAL_FORM } from "./constants";
 
 export type BannerState = {
   tone: "success" | "warning";
@@ -7,7 +7,6 @@ export type BannerState = {
 };
 
 export type MaterialFormState = typeof EMPTY_MATERIAL_FORM;
-export type RecommendationFormState = typeof EMPTY_RECOMMENDATION_FORM;
 
 export type AdminLearningResourceItem = LearningResourceItem & { createdAt?: string };
 

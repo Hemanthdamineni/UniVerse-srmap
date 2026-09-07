@@ -43,15 +43,29 @@ export async function parseJsonSafe(response: Response) {
   }
 }
 
+/** Let the offline banner (Batch B13) react to real network failures, not just navigator.onLine. */
+function signalConnectivity(kind: "online" | "offline") {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(`erp:network-${kind}`));
+}
+
 export async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    credentials: "include",
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      credentials: "include",
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers || {}),
+      },
+    });
+  } catch (error) {
+    // A fetch that rejects (vs. resolves with !ok) is a transport failure.
+    if (error instanceof TypeError) signalConnectivity("offline");
+    throw error;
+  }
+  signalConnectivity("online");
 
   const payload = await parseJsonSafe(response);
 

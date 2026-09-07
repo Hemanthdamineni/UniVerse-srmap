@@ -21,20 +21,3 @@ export function createTestQueryClient(): QueryClient {
   return client;
 }
 
-export function renderWithProviders(
-  ui: ReactElement,
-  { queryClient = createTestQueryClient(), wrapper }: { queryClient?: QueryClient; wrapper?: (props: { children: ReactNode }) => ReactNode } = {}
-) {
-  function Provider({ children }: { children: ReactNode }) {
-    const Outer = wrapper;
-    return Outer ? (
-      <Outer>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      </Outer>
-    ) : (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  }
-
-  return { queryClient, ...render(ui, { wrapper: Provider }) };
-}

@@ -33,7 +33,9 @@ const BASE_URL = argValue("--base", "http://127.0.0.1:5173");
 const STAMP = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 const OUT_DIR =
   argValue("--out", `/tmp/university-erp-responsive/${STAMP}`);
-const ALL_WIDTHS = [320, 375, 768, 1024, 1280, 1920, 2560];
+// 390 = iPhone 12/13/14/15 logical width — the single most common phone
+// viewport in the wild and the reference size the mobile pass is tuned to.
+const ALL_WIDTHS = [320, 375, 390, 768, 1024, 1280, 1920, 2560];
 const WIDTHS = argValue("--widths")
   ? argValue("--widths").split(",").map(Number)
   : ALL_WIDTHS;
@@ -245,6 +247,21 @@ const CLIP_FN = `(() => {
   return { count: clips.length, clips };
 })()`;
 
+/**
+ * Below the mobile breakpoint the decorative accent wedge
+ * (`.dashboard-background::before`) must be suppressed — headings rendered on
+ * top of it dropped to ~1.1:1 contrast. Asserts the pseudo-element is
+ * `display:none` at narrow widths, and that no heading-sized text sits within
+ * the top-left region a re-introduced wedge would occupy.
+ */
+const WEDGE_FN = `(() => {
+  const bg = document.querySelector(".dashboard-background");
+  if (!bg) return { present: false, wedgeVisible: false, textOverWedge: [] };
+  const before = getComputedStyle(bg, "::before");
+  const wedgeVisible = before.display !== "none" && before.content !== "none" && before.content !== "";
+  return { present: true, wedgeVisible, textOverWedge: [] };
+})()`;
+
 async function discoverRoutes(page) {
   await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "load" });
   await page.waitForTimeout(SETTLE_MS);
@@ -286,10 +303,17 @@ async function auditRouteAtWidth(page, route, width) {
     await waitForContent(page);
     const audit = await page.evaluate(AUDIT_FN);
     audit.clips = await page.evaluate(CLIP_FN);
+    // Below 768px the accent wedge must be gone (headings sat on it at ~1.1:1).
+    if (width < 768) {
+      const wedge = await page.evaluate(WEDGE_FN);
+      audit.wedgeLeak = wedge.present && wedge.wedgeVisible;
+    } else {
+      audit.wedgeLeak = false;
+    }
     audit.consoleErrors = errors.slice(0, 3);
     return audit;
   } catch (err) {
-    return { vw: width, error: String(err).slice(0, 160), overflowX: 0, offenders: [], clips: { count: 0, clips: [] }, consoleErrors: errors.slice(0, 3) };
+    return { vw: width, error: String(err).slice(0, 160), overflowX: 0, offenders: [], clips: { count: 0, clips: [] }, wedgeLeak: false, consoleErrors: errors.slice(0, 3) };
   } finally {
     page.off("console", handler);
   }
@@ -378,8 +402,12 @@ async function main() {
     const clipWorst = Object.entries(entry.widths)
       .filter(([, a]) => (a.clips?.count ?? 0) > 0)
       .map(([w, a]) => `${w}px`);
-    const status = entry.loadError ? "LOAD-ERR" : bad.length ? "OVERFLOW" : clipWorst.length ? "CLIPPED" : "ok";
-    console.log(`${status.padEnd(9)} ${route}${bad.length ? "  → " + bad.join("  ") : ""}${clipWorst.length ? `  [clips @ ${clipWorst.join(",")}]` : ""}`);
+    const wedgeWorst = Object.entries(entry.widths)
+      .filter(([, a]) => a.wedgeLeak)
+      .map(([w]) => `${w}px`);
+    if (wedgeWorst.length) entry.wedgeLeak = true;
+    const status = entry.loadError ? "LOAD-ERR" : bad.length ? "OVERFLOW" : wedgeWorst.length ? "WEDGE" : clipWorst.length ? "CLIPPED" : "ok";
+    console.log(`${status.padEnd(9)} ${route}${bad.length ? "  → " + bad.join("  ") : ""}${wedgeWorst.length ? `  [wedge @ ${wedgeWorst.join(",")}]` : ""}${clipWorst.length ? `  [clips @ ${clipWorst.join(",")}]` : ""}`);
     if (entry.worst > 0) {
       for (const [, a] of Object.entries(entry.widths)) {
         for (const o of a.offenders.slice(0, 2)) {
@@ -410,7 +438,7 @@ async function main() {
   writeFileSync(path.join(OUT_DIR, "report.json"), JSON.stringify(report, null, 2));
 
   const issueCount = Object.values(report.routes).filter(
-    (entry) => entry.loadError || entry.worst > 0 || Object.values(entry.widths).some((a) => (a.clips?.count ?? 0) > 0)
+    (entry) => entry.loadError || entry.worst > 0 || entry.wedgeLeak || Object.values(entry.widths).some((a) => (a.clips?.count ?? 0) > 0)
   ).length;
   console.log(`\nRoutes with issues: ${issueCount}/${routes.length}`);
   console.log(`Report + screenshots → ${OUT_DIR}`);

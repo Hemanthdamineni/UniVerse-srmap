@@ -117,7 +117,7 @@ describe("CampusHubWidget", () => {
     renderWidget();
 
     await waitFor(() => {
-      expect(listEvents).toHaveBeenCalledWith({ status: "published", type: "upcoming" });
+      expect(listEvents).toHaveBeenCalledWith({ status: "published", type: "upcoming", sort: "fit" });
       expect(mockListOpportunities).toHaveBeenCalled();
       expect(mockListApplications).toHaveBeenCalled();
     });
@@ -163,6 +163,44 @@ describe("CampusHubWidget", () => {
       expect(screen.getByText("Network error")).toBeInTheDocument();
     });
     expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+  });
+
+  it("orders events by graph fit and marks them 'For you' with a reason", async () => {
+    vi.mocked(listEvents).mockResolvedValue([
+      mockEvent({
+        id: "evt-low",
+        title: "Open Mic Evening",
+        category: "Cultural",
+        registrationDeadline: "2026-10-09T23:59:00.000Z",
+        fit: { fitScore: 32, eligible: true, matchedSkills: [], missingSkills: [], whyThis: ["Upcoming cultural event"], breakdown: {} },
+      }),
+      mockEvent({
+        id: "evt-high",
+        title: "AI Hackathon",
+        category: "Technical",
+        registrationDeadline: "2026-10-20T23:59:00.000Z",
+        fit: {
+          fitScore: 84,
+          eligible: true,
+          matchedSkills: ["Python"],
+          missingSkills: [],
+          whyThis: ["Matches your skills: Python"],
+          breakdown: {},
+        },
+      }),
+    ]);
+    mockListOpportunities.mockResolvedValue({ items: [] });
+    mockListApplications.mockResolvedValue({ items: [] });
+    renderWidget();
+
+    await waitFor(() => {
+      expect(screen.getByText("AI Hackathon")).toBeInTheDocument();
+    });
+    // Highest fit first, even though its deadline is later.
+    const titles = screen.getAllByText(/AI Hackathon|Open Mic Evening/).map((n) => n.textContent);
+    expect(titles[0]).toBe("AI Hackathon");
+    expect(screen.getAllByText("For you").length).toBeGreaterThan(0);
+    expect(screen.getByText("Matches your skills: Python")).toBeInTheDocument();
   });
 
   it("navigates to an event on click", async () => {

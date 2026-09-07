@@ -98,7 +98,7 @@ import type {
   ResourceFormState
 } from "../_shared/LmsPageShared";
 
-export function SavedResourcesPage() {
+function SavedResourcesPage() {
   const { data, loading, error } = useAsyncPage(() => getMyBookmarks(), []);
   return (
     <LmsFrame title="Saved Resources" loading={loading} error={error}>

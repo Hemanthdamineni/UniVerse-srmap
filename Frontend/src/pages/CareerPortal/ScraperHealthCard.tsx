@@ -142,4 +142,3 @@ export function ScraperHealthCard({ headers }: { headers: HeadersInit }) {
   );
 }
 
-export default ScraperHealthCard;

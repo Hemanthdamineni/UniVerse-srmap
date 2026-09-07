@@ -1,20 +1,21 @@
-name: university-erp-ingress
-
 services:
   ingress:
-    image: nginx:1.27-alpine
+    build:
+      context: ./infra
+      dockerfile: docker/ingress.Dockerfile
+    image: university-erp-ingress:local
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../nginx/conf.d:/etc/nginx/conf.d:ro
-      - ../../Frontend/dist:/usr/share/nginx/html:ro
-      - ../../Backend/data:/srv/university-erp-data:ro
+      # Compose resolves every relative bind against the first compose file
+      # (`docker-compose.yml` at the repository root), not this override.
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./Frontend/dist:/usr/share/nginx/html:ro
+      # Certificates are provisioned outside source control. The directory may
+      # contain the normal letsencrypt `live/` tree.
+      - ./infra/certs:/etc/letsencrypt:ro
+    environment:
+      TLS_SERVER_NAME: ${TLS_SERVER_NAME:-localhost}
     restart: unless-stopped
-    networks:
-      - erp_app
-
-networks:
-  erp_app:
-    external: true
-    name: erp_app

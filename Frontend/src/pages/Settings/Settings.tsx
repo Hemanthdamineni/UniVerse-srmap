@@ -5,8 +5,20 @@
  */
 
 import { Download } from "lucide-react";
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ErpPageShell, SectionCard } from '../../components/erp/ErpPrimitives';
+import CareerIntentSettings from './CareerIntentSettings';
+import PushNotificationSettings from './PushNotificationSettings';
+import GoogleCalendarSettings from './GoogleCalendarSettings';
+import {
+  DEFAULT_PREFERENCES,
+  loadPreferences,
+  resetPreferences,
+  savePreferences,
+  type Preferences,
+} from '../../lib/core/preferences';
+import { getThemeChoice, setThemeChoice, subscribeToTheme, type ThemeChoice } from '../../lib/core/theme';
 
 /* ---------- Sub-components ---------- */
 
@@ -53,23 +65,62 @@ function ToggleSwitch({ checked, onChange, label, description }: {
 /* ---------- Main Page ---------- */
 
 export default function Settings() {
-  // Notification preferences
-  const [eventReminders, setEventReminders] = useState(true);
-  const [registrationUpdates, setRegistrationUpdates] = useState(true);
-  const [resultAlerts, setResultAlerts] = useState(true);
-  const [organizerMessages, setOrganizerMessages] = useState(false);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
+  const queryClient = useQueryClient();
+  const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
+  const [selectedTheme, setSelectedTheme] = useState<ThemeChoice>(() => getThemeChoice());
+  const [status, setStatus] = useState<string>("");
 
-  // Privacy
-  const [profilePublic, setProfilePublic] = useState(true);
-  const [showAchievements, setShowAchievements] = useState(true);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  // Theme can also change from the header toggle or an OS flip — stay in sync.
+  useEffect(() => subscribeToTheme((choice) => setSelectedTheme(choice)), []);
 
-  // Appearance
-  const [selectedTheme, setSelectedTheme] = useState<'system' | 'light' | 'dark'>('system');
+  const set = useCallback(<K extends keyof Preferences>(key: K, value: Preferences[K]) => {
+    setPrefs((prev) => ({ ...prev, [key]: value }));
+    setStatus("");
+  }, []);
+
+  const handleSave = useCallback(() => {
+    setStatus(savePreferences(prefs)
+      ? "Preferences saved."
+      : "Couldn't save — your browser is blocking site storage.");
+  }, [prefs]);
+
+  const handleReset = useCallback(() => {
+    setPrefs(resetPreferences());
+    setThemeChoice("system");
+    setStatus("Reset to defaults.");
+  }, []);
+
+  // Exports what this device actually holds. Server-side records (registrations,
+  // submissions, certificates) need an authenticated export endpoint — not
+  // claimed here until that exists.
+  const handleExport = useCallback(() => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      scope: "device-local settings only",
+      theme: getThemeChoice(),
+      preferences: prefs,
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `universe-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus("Exported your device settings.");
+  }, [prefs]);
+
+  const handleClearCache = useCallback(() => {
+    queryClient.clear();
+    setStatus("Cached data cleared — pages will refetch.");
+  }, [queryClient]);
+
+  const isDirty = (Object.keys(DEFAULT_PREFERENCES) as (keyof Preferences)[])
+    .some((key) => prefs[key] !== loadPreferences()[key]);
 
   return (
-    <ErpPageShell title="Settings" source="Internal API" isLoading={false}>
+    <ErpPageShell title="Settings" source="This device" isLoading={false}>
       <div className="flex max-w-[720px] flex-col gap-6">
 
         <p className="comp-body mt-1">
@@ -80,72 +131,81 @@ export default function Settings() {
         <SectionCard title="Event Notifications">
           <div className="flex flex-col">
             <ToggleSwitch
-              checked={eventReminders}
-              onChange={setEventReminders}
+              checked={prefs.eventReminders}
+              onChange={(v) => set("eventReminders", v)}
               label="Event Reminders"
               description="Get notified 24h and 1h before events you've registered for"
             />
             <ToggleSwitch
-              checked={registrationUpdates}
-              onChange={setRegistrationUpdates}
+              checked={prefs.registrationUpdates}
+              onChange={(v) => set("registrationUpdates", v)}
               label="Registration Updates"
               description="Status changes for your event registrations"
             />
             <ToggleSwitch
-              checked={resultAlerts}
-              onChange={setResultAlerts}
+              checked={prefs.resultAlerts}
+              onChange={(v) => set("resultAlerts", v)}
               label="Result Announcements"
               description="Instant alerts when competition results are published"
             />
             <ToggleSwitch
-              checked={organizerMessages}
-              onChange={setOrganizerMessages}
+              checked={prefs.organizerMessages}
+              onChange={(v) => set("organizerMessages", v)}
               label="Organizer Messages"
               description="Direct messages from event organizers"
             />
             <ToggleSwitch
-              checked={weeklyDigest}
-              onChange={setWeeklyDigest}
+              checked={prefs.weeklyDigest}
+              onChange={(v) => set("weeklyDigest", v)}
               label="Weekly Digest"
               description="Summary of upcoming events and campus activity"
             />
           </div>
         </SectionCard>
 
+        {/* Push + channel/quiet-hour controls (Batch B8) */}
+        <PushNotificationSettings />
+
+        {/* Google Calendar sync (Batch B10) */}
+        <GoogleCalendarSettings />
+
         {/* Privacy */}
         <SectionCard title="Privacy & Visibility">
           <div className="flex flex-col">
             <ToggleSwitch
-              checked={profilePublic}
-              onChange={setProfilePublic}
+              checked={prefs.profilePublic}
+              onChange={(v) => set("profilePublic", v)}
               label="Public Profile"
               description="Allow other students and organizers to view your profile"
             />
             <ToggleSwitch
-              checked={showAchievements}
-              onChange={setShowAchievements}
+              checked={prefs.showAchievements}
+              onChange={(v) => set("showAchievements", v)}
               label="Show Achievements"
               description="Display your badges and achievements on your public profile"
             />
             <ToggleSwitch
-              checked={showLeaderboard}
-              onChange={setShowLeaderboard}
+              checked={prefs.showLeaderboard}
+              onChange={(v) => set("showLeaderboard", v)}
               label="Leaderboard Visibility"
               description="Include your profile in faculty and department leaderboards"
             />
           </div>
         </SectionCard>
 
+        {/* Career intent + inference controls (Batch B5) */}
+        <CareerIntentSettings />
+
         {/* Appearance */}
         <SectionCard title="Appearance">
           <p className="comp-body mb-4 text-sm">
-            Choose how the platform looks to you
+            Choose how the platform looks to you. Applies immediately — “System” follows your device.
           </p>
           <div className="flex gap-4">
             {(['system', 'light', 'dark'] as const).map((theme) => (
               <button
                 key={theme}
-                onClick={() => setSelectedTheme(theme)}
+                onClick={() => { setThemeChoice(theme); setSelectedTheme(theme); }}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl border-2 p-4 transition-colors ${
                   selectedTheme === theme
                     ? 'border-[var(--comp-accent)] bg-[var(--comp-accent-light)]'
@@ -180,26 +240,38 @@ export default function Settings() {
                   Download all your registrations, submissions, and certificates
                 </p>
               </div>
-              <button className="comp-btn-ghost"><Download size={14} aria-hidden="true" /> Export</button>
+              <button type="button" className="comp-btn-ghost" onClick={handleExport}>
+                <Download size={14} aria-hidden="true" /> Export
+              </button>
             </div>
             <div className="flex items-center justify-between py-2">
               <div>
                 <p className="text-sm font-medium text-[var(--comp-text-primary)]">
-                  Clear Event Cache
+                  Clear cached data
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">
-                  Reset locally cached event data for a fresh sync
+                  Drop locally cached ERP and event responses and refetch from the server
                 </p>
               </div>
-              <button className="comp-btn-ghost" style={{ color: 'var(--status-live-text)' }}>Clear</button>
+              <button
+                type="button"
+                className="comp-btn-ghost"
+                style={{ color: 'var(--status-live-text)' }}
+                onClick={handleClearCache}
+              >
+                Clear
+              </button>
             </div>
           </div>
         </SectionCard>
 
         {/* Save */}
-        <div className="flex justify-end gap-2">
-          <button className="comp-btn-ghost">Reset to Defaults</button>
-          <button className="comp-btn-primary">Save Preferences</button>
+        <div className="flex items-center justify-end gap-3">
+          <p aria-live="polite" className="mr-auto text-sm text-[var(--comp-text-muted)]">{status}</p>
+          <button type="button" className="comp-btn-ghost" onClick={handleReset}>Reset to Defaults</button>
+          <button type="button" className="comp-btn-primary" onClick={handleSave} disabled={!isDirty}>
+            {isDirty ? 'Save Preferences' : 'Saved'}
+          </button>
         </div>
       </div>
     </ErpPageShell>

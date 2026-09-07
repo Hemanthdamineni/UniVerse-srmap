@@ -29,9 +29,12 @@ import { HistoryTab } from "./hub/HistoryTab";
 import { PlannerTab } from "./hub/PlannerTab";
 import { RisksTab } from "./hub/RisksTab";
 import { ActionTab } from "./hub/ActionTab";
+import { useStudentGraph } from "../../hooks/useStudentGraph";
+import { DeadlineTimeline } from "./hub/DeadlineTimeline";
 
 export default function AcademicHubPage() {
   const navigate = useNavigate();
+  const { graph } = useStudentGraph();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [history, setHistory] = useState<HistoryData | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -115,6 +118,7 @@ export default function AcademicHubPage() {
     try {
       const batch = await getErpBatch([
         "examination/current-semester-results",
+        "examination/internal-mark-details",
         "academic/course-registration",
         "academic/student-wise-subjects",
         "academic/cgpa-summary",
@@ -186,6 +190,10 @@ export default function AcademicHubPage() {
             }))}
           />
 
+          {/* Merged deadline timeline (Batch B12) — visible on every tab; it
+              renders nothing when there's nothing coming up. */}
+          <DeadlineTimeline />
+
           {activeTab === "overview" && (
             <OverviewTab
               overview={overview}
@@ -218,6 +226,7 @@ export default function AcademicHubPage() {
               overview={overview}
               insights={insights}
               unified={unified}
+              graph={graph}
             />
           )}
 

@@ -31,6 +31,8 @@ export const MAIN_NAV: NavSection[] = [
         domain: "campus",
         children: [
           { type: "link", label: "Vacant Rooms", route: "/campus/vacant-rooms", domain: "campus", access: "B" },
+          { type: "link", label: "Hostel Booking", route: "/transport-hostel/hostel-booking", domain: "campus", access: "B" },
+          { type: "link", label: "Rooms Details", route: "/transport-hostel/room-details", domain: "campus", access: "B" },
         ],
       },
       {
@@ -51,19 +53,12 @@ export const MAIN_NAV: NavSection[] = [
         children: [
           { type: "link", label: "Fees Dues", route: "/finance/fee-dues", domain: "erp", access: "B" },
           { type: "link", label: "Fees Paid", route: "/finance/fee-paid", domain: "erp", access: "B" },
+          { type: "link", label: "Bank Details", route: "/finance/bank-details", domain: "erp", access: "B" },
         ],
       },
-      {
-        type: "group",
-        label: "Registration",
-        icon: "ClipboardList",
-        domain: "mixed",
-        children: [
-          { type: "link", label: "Course Registration", route: "/registration/course-registration", domain: "erp", access: "B" },
-          { type: "link", label: "Hostel Registration", route: "/registration/hostel-registration", domain: "campus", access: "B" },
-          { type: "link", label: "Transport Registration", route: "/registration/transport-registration", domain: "campus", access: "B" },
-        ],
-      },
+      // B14 / T5.1.1 — one entry for every registration flow; the tabs live on
+      // the hub page (Course · Hostel · Transport · Exam · Minor/OE · SAP).
+      { type: "link", label: "Registration", route: "/registration", domain: "erp", icon: "ClipboardList", access: "B" },
 
       {
         type: "group",

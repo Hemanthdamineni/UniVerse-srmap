@@ -41,64 +41,6 @@ export type FeedbackSubmitResponse = {
   message: string;
 };
 
-export type ResourceCatalogCourse = {
-  year: number | null;
-  courseCode: string;
-  courseName: string;
-  subjectCount: number;
-  resourceCount: number;
-};
-
-export type ResourceCatalogResponse = {
-  years: number[];
-  selectedYear: number | null;
-  courses: ResourceCatalogCourse[];
-};
-
-export type ResourceSubjectResponse = {
-  year: number;
-  courseCode: string;
-  subjects: Array<{
-    subjectCode: string;
-    subjectName: string;
-    semester: number | null;
-    groups: string[];
-    resourceCount: number;
-  }>;
-};
-
-export type ResourceLibraryResponse = {
-  subject: {
-    year: number;
-    courseCode: string;
-    courseName: string;
-    subjectCode: string;
-    subjectName: string;
-    semester: number | null;
-  };
-  groups: Array<{
-    group: string;
-    label: string;
-    items: Array<{
-      id: string;
-      title: string;
-      description: string;
-      metadata?: Record<string, unknown>;
-      resources: Array<{
-        id: string;
-        contentId: string;
-        kind: string;
-        title: string;
-        urlOrPath: string;
-        mimeType?: string | null;
-        sizeBytes?: number | null;
-        createdAt?: string;
-      }>;
-    }>;
-  }>;
-  totalItems: number;
-  totalResources: number;
-};
 
 export function validateFeedbackComment(value: string) {
   const comment = String(value || "").replace(/\s+/g, " ").trim();
@@ -136,35 +78,3 @@ export async function submitEndSemesterFeedback(payload: {
   });
 }
 
-export async function getLearningMaterialCatalog(year?: number | null): Promise<ResourceCatalogResponse> {
-  const query = year ? `?year=${encodeURIComponent(String(year))}` : "";
-  return requestJson<ResourceCatalogResponse>(`/api/resources/catalog${query}`);
-}
-
-export async function getLearningMaterialSubjects(
-  year: number,
-  courseCode: string
-): Promise<ResourceSubjectResponse> {
-  return requestJson<ResourceSubjectResponse>(
-    `/api/resources/subjects?year=${encodeURIComponent(String(year))}&courseCode=${encodeURIComponent(courseCode)}`
-  );
-}
-
-export async function getLearningMaterialLibrary(payload: {
-  year: number;
-  courseCode: string;
-  subjectCode: string;
-  query?: string;
-}): Promise<ResourceLibraryResponse> {
-  const params = new URLSearchParams({
-    year: String(payload.year),
-    courseCode: payload.courseCode,
-    subjectCode: payload.subjectCode,
-  });
-
-  if (payload.query && payload.query.trim()) {
-    params.set("query", payload.query.trim());
-  }
-
-  return requestJson<ResourceLibraryResponse>(`/api/resources/library?${params.toString()}`);
-}

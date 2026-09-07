@@ -51,7 +51,6 @@ const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, classNa
   );
 };
 
-export { DeadlineCountdown };
 export { DeadlineCountdown as DeadlineBadge };
 
 
@@ -133,18 +132,35 @@ const sourceStyles: Record<string, string> = {
   devfolio: 'text-[var(--comp-accent)] font-semibold',
   unstop: 'text-[var(--comp-accent)] font-semibold',
   linkedin: 'text-[var(--comp-accent)] font-bold',
-  manual: 'text-[var(--comp-text-muted)] italic',
+};
+
+// How each ingestion source reads to a student. Internal-only origins map to
+// null and render nothing — "VIA MANUAL" is a pipeline detail, not information.
+const SOURCE_DISPLAY_NAMES: Record<string, string | null> = {
+  jobspy: 'LinkedIn',
+  linkedin: 'LinkedIn',
+  devfolio: 'Devfolio',
+  unstop: 'Unstop',
+  manual: null,
+  seed: null,
+  internal: null,
+  admin: null,
 };
 
 const SourceBadge: React.FC<SourceBadgeProps> = ({ source, className }) => {
   if (!source) return null;
 
-  const displaySource = source === 'jobspy' ? 'LinkedIn' : source; // Example normalization
+  const key = source.toLowerCase();
+  const known = key in SOURCE_DISPLAY_NAMES;
+  const displaySource = known ? SOURCE_DISPLAY_NAMES[key] : source;
+  // Unknown → show the raw value (better than hiding a real portal name);
+  // known-but-internal → render nothing.
+  if (displaySource === null) return null;
 
   return (
     <span className={cn(
       'text-[10px] sm:text-xs uppercase tracking-wider',
-      sourceStyles[source.toLowerCase()] || 'text-[var(--comp-text-muted)]',
+      sourceStyles[key] || 'text-[var(--comp-text-muted)]',
       className
     )}>
       via {displaySource}

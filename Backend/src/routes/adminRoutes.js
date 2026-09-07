@@ -1,7 +1,7 @@
 const express = require("express");
 const { resolveSessionId } = require("../utils/cookies");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
-const { hasAdminAccess } = require("../utils/adminAccess");
+const { verifyAdminPassword } = require("../utils/adminAccess");
 
 function createAdminRoutes({ sessionStore, adminPassword }) {
   const router = express.Router();
@@ -25,7 +25,7 @@ function createAdminRoutes({ sessionStore, adminPassword }) {
         error.status = 403;
         throw error;
       }
-      if (!hasAdminAccess(req, adminPassword)) {
+      if (!verifyAdminPassword(req, adminPassword)) {
         const error = new Error("Admin authentication failed");
         error.status = 403;
         throw error;

@@ -162,6 +162,11 @@ function addStaticExtraction(pageKey: string, result: StaticErpBatchPageResult) 
     const schedule = rows
       .filter((row) => /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i.test(String(row.col1 || "")))
       .map((row) => ({ day: String(row.col1), periods: slotKeys.map((key) => String(row[key] || "")) }));
+    // subjects stays [] on purpose: the fixture's subjects sub-table has a
+    // two-row header, so the generic adapter's keys are shifted one column off
+    // their labels (Faculty Name holds the L-T-P-C value, etc.). Reading it
+    // would emit misaligned rows. schedule/timeSlots above are keyed by the
+    // numeric slot columns and are unaffected. See prototypeSynthesis.test.ts.
     section._extracted = { type: "timetable", timeSlots, schedule, subjects: [] };
   }
 
@@ -188,8 +193,16 @@ function addStaticExtraction(pageKey: string, result: StaticErpBatchPageResult) 
         classesConducted: Number(row.ClassesConducted) || 0,
         present: Number(row["Attendance Entered (Slots)"]) || 0,
         odMlTaken: Number(row["Present % P / (P+A+OD)"]) || 0,
-        attendancePercentage: String(row["Attendance %"] || "0"),
-        odMlPercentage: String(row.col9 || "0"),
+        // The captured ERP table has a two-row header (Attendance Entered spans
+        // Present/Absent), so the generic table adapter's keys run one column
+        // ahead of their labels from "OD/ML Taken" onward. The real attendance
+        // percentage therefore lands in `col9`, while the key literally named
+        // "Attendance %" holds the OD/ML approved percentage. Reading them the
+        // other way round reported 10% for a student sitting at 85%.
+        // Check against the row: conducted 28 = present 21 + absent 4 + od/ml 3,
+        // and (21 + 3) / 28 = 85.7% -> col9 "85.00".
+        attendancePercentage: String(row.col9 || "0"),
+        odMlPercentage: String(row["Attendance %"] || "0"),
       }));
     section._extracted = { type: "attendance", records };
   }

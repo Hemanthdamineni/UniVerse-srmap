@@ -62,14 +62,6 @@ export function getCurrentProfileName(profile = readStoredProfileData()) {
   );
 }
 
-export function getCurrentProfileSummary(profile = readStoredProfileData()) {
-  return {
-    name: getCurrentProfileName(profile),
-    regNo: getCurrentRegNo(profile),
-    isPlatformAdmin: isPlatformAdmin(profile),
-  };
-}
-
 export function isPlatformAdmin(profileOrRegNo: ProfileRecord | string | null = readStoredProfileData()) {
   const regNo =
     typeof profileOrRegNo === "string"

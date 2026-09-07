@@ -33,6 +33,17 @@ export type EventSummary = {
   tags?: string[];
   featured?: boolean;
   myRegistration?: unknown;
+  /** Present when the list was requested with sort=fit (B7 / T4.4). */
+  fit?: EventFit;
+};
+
+export type EventFit = {
+  fitScore: number;
+  eligible: boolean;
+  matchedSkills: string[];
+  missingSkills: string[];
+  whyThis: string[];
+  breakdown: Record<string, number>;
 };
 
 export type EventDetail = EventSummary & {
@@ -109,17 +120,6 @@ export type Team = {
   name: string;
   leaderId: string;
   members: string[];
-  createdAt: string;
-};
-
-export type TeamInvitation = {
-  id: string;
-  teamId: string;
-  teamName: string;
-  eventId: string;
-  invitedBy: string;
-  inviteeRegisterNumber: string;
-  status: string;
   createdAt: string;
 };
 
@@ -436,13 +436,6 @@ export async function createEvent(payload: Record<string, unknown>, headers?: He
   });
 }
 
-export async function deleteEvent(eventId: string, headers?: HeadersInit) {
-  return requestData<{ deleted: boolean }>(`/api/events/${encodeURIComponent(eventId)}`, {
-    method: "DELETE",
-    headers,
-  });
-}
-
 export async function registerForEvent(eventId: string) {
   if (isStaticPrototype()) {
     getStaticEventDetail(eventId);
@@ -636,13 +629,6 @@ export async function sendCompetitionAnnouncement(
       body: JSON.stringify(payload),
     }
   );
-}
-
-export async function createTeam(eventId: string, payload: { name: string }) {
-  return requestData<Team>(`/api/competitions/${encodeURIComponent(eventId)}/teams`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
 }
 
 export async function getMyTeam(eventId: string) {
@@ -1179,16 +1165,6 @@ function buildStaticHostelBuddyResponse() {
         "Entries are retained until the student removes them or until the end of the academic session. Contact info is shared only with students in the same room and block.",
     } satisfies HostelBuddyGovernance,
   };
-}
-
-export async function getHostelBuddyGovernance(): Promise<HostelBuddyGovernance> {
-  if (isStaticPrototype()) {
-    return buildStaticHostelBuddyResponse().governance;
-  }
-  const data = await requestData<{ governance: HostelBuddyGovernance }>(
-    "/api/hostel-buddy/governance"
-  );
-  return data.governance;
 }
 
 export async function listHostelBuddyBlocks(): Promise<HostelBuddyBlock[]> {

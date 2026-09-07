@@ -61,12 +61,3 @@ export function getEventPhase(event: EventDetail): EventPhase {
   return EVENT_PHASE.REGISTRATION_OPEN;
 }
 
-/** Phase → display label/color mapping (used in StatusBadge) */
-export const PHASE_DISPLAY: Record<EventPhase, { label: string; color: string; pulse: boolean }> = {
-  UPCOMING: { label: 'Upcoming', color: '#64748b', pulse: false },
-  REGISTRATION_OPEN: { label: 'Registration Open', color: 'var(--status-open-text)', pulse: false },
-  LIVE: { label: 'Live', color: 'var(--status-live-text)', pulse: true },
-  EVALUATION: { label: 'Evaluation', color: 'var(--status-pending-text)', pulse: false },
-  RESULTS: { label: 'Results Out', color: 'var(--comp-accent)', pulse: false },
-  COMPLETED: { label: 'Completed', color: 'var(--status-closed-text)', pulse: false },
-};

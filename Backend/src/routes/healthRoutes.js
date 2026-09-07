@@ -15,25 +15,10 @@ function createHealthRoutes({
   const router = express.Router();
 
   router.get("/health", async (_req, res) => {
-    const integrity = integrityService?.evaluate ? integrityService.evaluate() : null;
-    const career =
-      careerStore && typeof careerStore.getScraperHealth === "function"
-        ? {
-            enabled: true,
-            scraperSources: careerStore.getScraperHealth(),
-            recentRuns: careerStore.getScraperRuns(5),
-          }
-        : { enabled: false };
-
     res.json({
       ok: true,
       now: nowIso(),
-      sessions: await sessionStore.size(),
-      discovery: discoveryRepository.getHealth(),
-      policy: pagePolicyStore?.getHealth?.() || null,
-      integrity,
-      redis: redisClient ? "configured" : "disabled",
-      career,
+      status: "live",
     });
   });
 
@@ -51,7 +36,9 @@ function createHealthRoutes({
       const checks = {
         discoveryLoaded: Boolean(discoveryRepository?.getHealth?.().loaded),
         pagePolicyLoaded: Boolean(pagePolicyStore?.getHealth?.().policyPath),
-        redisReady: redisClient ? Boolean(redisClient.isReady) : true,
+        redisReady: process.env.REDIS_URL || process.env.REDIS_SENTINEL_URLS
+          ? Boolean(redisClient?.isReady)
+          : true,
         externalDbReady: externalDataStore?.ping ? externalDataStore.ping() : true,
         contentDbReady: contentStore?.ping ? contentStore.ping() : true,
         integrityEvaluated: integrity ? true : false,

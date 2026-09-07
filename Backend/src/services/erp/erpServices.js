@@ -1,4 +1,4 @@
-const cheerio = require("cheerio");
+const { loadHtml: loadErpHtml } = require("./extractors/loadHtml");
 const { cleanText } = require("../../utils/text");
 const fs = require("fs");
 const path = require("path");
@@ -67,7 +67,7 @@ function extractCgpaSummaryFromHtml(html = "") {
     };
   }
 
-  const $ = cheerio.load(rawHtml);
+  const $ = loadErpHtml(rawHtml);
   const selectorCandidates = [
     "div[style*='float: right'][style*='font-size']",
     "div:contains('CGPA')",

@@ -870,9 +870,9 @@ docker compose exec backend chown -R node:node /app/data   # adjust uid/gid to m
 
 ### 9¾. The three append-only event tables (the v15 long-term growth risk)
 
-Three SQLite tables in the codebase are append-only event streams with no built-in retention. Without explicit PRAGMAs, they grow unbounded and dominate the data-dir size (per §41's analysis: 4.4 GB at year 1 for `companion_analytics_events` alone).
+Three SQLite tables in the codebase are event streams that need capacity monitoring. `companion_analytics_events` has a 90-day in-application retention policy and per-actor ingest cap; the remaining two require the operational PRAGMAs below.
 
-- **`companion_analytics_events`** in `companion-analytics.sqlite` — frontend telemetry, ~5M rows/year
+- **`companion_analytics_events`** in `companion-analytics.sqlite` — allowlisted frontend events, retained for 90 days
 - **`student_signal_ledger`** in `unified-profile.sqlite` — per-user signal events, ~900K rows/year
 - **`recommendation_impressions`** in `unified-profile.sqlite` — recommendation engine impressions, ~1.8M rows/year
 

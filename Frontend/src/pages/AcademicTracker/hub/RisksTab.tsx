@@ -1,24 +1,34 @@
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
 import { ProgressBar } from "../../../components/ui/Progress";
 import type { InsightsData, OverviewData, UnifiedData } from "./types";
+import { BunkAdvicePanel } from "./BunkAdvicePanel";
+import type { StudentGraph } from "../../../lib/core/studentGraph";
 
 export function RisksTab({
   overview,
   insights,
   unified,
+  graph = null,
 }: {
   overview: OverviewData | null;
   insights: InsightsData | null;
   unified: UnifiedData | null;
+  graph?: StudentGraph | null;
 }) {
   if (!overview) return null;
 
   const attendancePct = parseFloat(overview.attendancePct) || 0;
+  // The graph gives per-subject specifics; only fall back to the blunt
+  // aggregate alert when it has no attendance snapshot to work from.
+  const hasPerSubject = (graph?.academic.attendance?.subjects?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
-      {/* Attendance Risk */}
-      {attendancePct < 75 && (
+      {/* Concrete, per-subject "can I skip class?" answers (B6 / T4.1.1) */}
+      <BunkAdvicePanel graph={graph} />
+
+      {/* Attendance Risk — aggregate fallback when the graph has no snapshot */}
+      {!hasPerSubject && attendancePct < 75 && (
         <SectionCard title="🚨 Critical: Attendance Below Threshold">
           <div className="rounded-xl p-4" style={{ background: "color-mix(in srgb, var(--error) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--error) 30%, transparent)" }}>
             <div className="flex items-start gap-3">
@@ -137,7 +147,9 @@ export function RisksTab({
       )}
 
       {/* All Clear State */}
-      {attendancePct >= 75 && overview.subjectsAtRisk === 0 && (
+      {attendancePct >= 75 &&
+        overview.subjectsAtRisk === 0 &&
+        (graph?.derived.atRiskSubjects.length ?? 0) === 0 && (
         <SectionCard title="✅ All Systems Clear">
           <div className="flex flex-col gap-2 rounded-xl p-6 text-center" style={{ background: "color-mix(in srgb, var(--success) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--success) 20%, transparent)" }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">

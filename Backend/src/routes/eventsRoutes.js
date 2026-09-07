@@ -1,10 +1,18 @@
 const express = require("express");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { EVENT_STATES } = require("../services/events/eventsStore");
+const { rankEvents, studentSliceFromGraph } = require("../services/events/eventFit");
 
-function createEventsRoutes({ eventsStore, sessionStore, competitionStore, adminPassword = "" }) {
+function createEventsRoutes({
+  eventsStore,
+  sessionStore,
+  competitionStore,
+  studentGraphService = null,
+  userDirectory = null,
+  adminPassword = "",
+}) {
   const router = express.Router();
-  const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
+  const userContext = createUserContextMiddleware({ sessionStore, adminPassword, userDirectory });
   router.use(userContext);
 
   function ensureAuthenticated(req) {
@@ -29,6 +37,24 @@ function createEventsRoutes({ eventsStore, sessionStore, competitionStore, admin
     };
   }
 
+  // Category/tag affinity from the events this user has actually registered for.
+  function registrationHistory(user) {
+    const pastCategories = new Set();
+    const pastTags = new Set();
+    try {
+      const regs = eventsStore.registrationsByUser?.get?.(user.userId) || [];
+      for (const reg of regs) {
+        const event = eventsStore.eventById?.get?.(reg.eventId);
+        if (!event) continue;
+        if (event.category) pastCategories.add(String(event.category));
+        for (const tag of Array.isArray(event.tags) ? event.tags : []) pastTags.add(String(tag));
+      }
+    } catch {
+      /* history is a nice-to-have signal; ignore lookup failures */
+    }
+    return { pastCategories: [...pastCategories], pastTags: [...pastTags] };
+  }
+
   router.get("/events", wrap((req) => {
     ensureAuthenticated(req);
     const filters = {
@@ -44,6 +70,25 @@ function createEventsRoutes({ eventsStore, sessionStore, competitionStore, admin
       registered: req.query.registered === "true",
       createdBy: req.query.createdBy,
     };
+
+    // sort=fit — rank upcoming events against the student graph (B7 / T4.4.1).
+    // Falls back to the default chronological list when the graph isn't wired.
+    if (req.query.sort === "fit" && studentGraphService) {
+      const events = eventsStore.listEvents({
+        user: req.userContext,
+        filters: { ...filters, type: filters.type || "upcoming" },
+      });
+      let student = {};
+      try {
+        student = {
+          ...studentSliceFromGraph(studentGraphService.getGraph(req.userContext)),
+          ...registrationHistory(req.userContext),
+        };
+      } catch {
+        student = registrationHistory(req.userContext);
+      }
+      return rankEvents(events, student);
+    }
 
     return eventsStore.listEvents({ user: req.userContext, filters });
   }));

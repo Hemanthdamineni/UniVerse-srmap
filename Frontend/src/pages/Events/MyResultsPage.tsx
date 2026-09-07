@@ -51,8 +51,10 @@ export default function MyResultsPage() {
           setCriteria(round?.evaluationCriteria ?? []);
           setResultsPublished(round?.resultsPublished ?? false);
           try {
-            const cert = await getMyRoundCertificate(eventId, roundId);
-            if (!cancelled) setCertificatePath(`/files/${cert.filePath}`);
+            await getMyRoundCertificate(eventId, roundId);
+            if (!cancelled) {
+              setCertificatePath(`/api/competitions/${encodeURIComponent(eventId)}/rounds/${encodeURIComponent(roundId)}/certificates/me/download`);
+            }
           } catch {
             if (!cancelled) setCertificatePath('');
           }

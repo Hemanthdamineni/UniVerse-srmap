@@ -3,6 +3,8 @@ const assert = require("node:assert/strict");
 const os = require("os");
 const path = require("path");
 
+process.env.ADMIN_REGISTER_NUMBERS = "AP23110010419";
+
 const { CompanionAnalyticsStore } = require("../src/services/career/careerServices");
 const { createCompanionAnalyticsRoutes } = require("../src/routes/companionAnalyticsRoutes");
 
@@ -139,6 +141,36 @@ test("CompanionAnalyticsStore records events and reports adoption and recommenda
   assert.ok(report.funnel.some((item) => item.eventName === "resume_analyzed"));
 });
 
+test("route_view feeds a page-view report and stays out of the product-event budget", () => {
+  const store = createStore();
+
+  // A heavy navigator: 200 route_views must not lock them out of product events.
+  for (let i = 0; i < 200; i++) {
+    store.recordEvent(
+      { event: "route_view", route: i % 2 === 0 ? "/dashboard" : "/events" },
+      { userId: "student-1", role: "student", sessionId: "session-1" }
+    );
+  }
+  // Still allowed to record a real product event afterwards.
+  assert.doesNotThrow(() =>
+    store.recordEvent({ event: "submission_started" }, { userId: "student-1", sessionId: "session-1" })
+  );
+
+  store.recordEvent(
+    { event: "route_view", route: "/dashboard" },
+    { userId: "student-2", role: "student", sessionId: "session-2" }
+  );
+
+  const report = store.getReport({ days: 30, limit: 50 });
+  assert.equal(report.pageViews.totalViews, 201);
+  assert.equal(report.pageViews.distinctRoutes, 2);
+  const dashboard = report.pageViews.byRoute.find((r) => r.route === "/dashboard");
+  assert.ok(dashboard, "dashboard route present in byRoute");
+  assert.equal(dashboard.views, 101);
+  assert.equal(dashboard.actors, 2);
+  assert.ok(report.byCategory.some((item) => item.category === "navigation"));
+});
+
 test("Companion analytics routes collect events and protect reports behind admin access", async () => {
   const store = createStore();
   const router = createCompanionAnalyticsRoutes({
@@ -173,4 +205,29 @@ test("Companion analytics routes collect events and protect reports behind admin
   assert.equal(report.status, 200);
   assert.equal(report.body.totals.totalEvents, 1);
   assert.equal(report.body.topEvents[0].eventName, "lms_exam_prep_recommendations_viewed");
+});
+
+test("CompanionAnalyticsStore requires an actor and bounds event schema, volume, and retention", () => {
+  const store = createStore();
+  assert.throws(() => store.recordEvent({ event: "submission_started" }, {}), { status: 401 });
+  assert.throws(
+    () => store.recordEvent({ event: "attacker_controlled_metric" }, { sessionId: "session-1" }),
+    { status: 400 }
+  );
+
+  for (let index = 0; index < 120; index += 1) {
+    store.recordEvent({ event: "submission_started" }, { sessionId: "session-1" });
+  }
+  assert.throws(
+    () => store.recordEvent({ event: "submission_started" }, { sessionId: "session-1" }),
+    { status: 429 }
+  );
+
+  store.db.prepare(
+    `INSERT INTO companion_analytics_events
+     (id, eventName, category, propertiesJson, occurredAt, receivedAt)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run("old-event", "submission_started", "events", "{}", "2020-01-01T00:00:00.000Z", "2020-01-01T00:00:00.000Z");
+  store.recordEvent({ event: "submission_started" }, { userId: "fresh-user" });
+  assert.equal(store.db.prepare("SELECT COUNT(*) AS count FROM companion_analytics_events WHERE id = ?").get("old-event").count, 0);
 });

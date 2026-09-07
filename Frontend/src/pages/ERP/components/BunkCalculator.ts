@@ -7,6 +7,9 @@ interface BunkResult {
   classesNeededToAttend: number;
 }
 
+/** Spare classes below which the buffer is treated as thin rather than safe. */
+const CAUTION_BUFFER = 3;
+
 export function calculateBunkCapacity(
   classesConducted: number,
   present: number,
@@ -31,18 +34,18 @@ export function calculateBunkCapacity(
   // Current attendance percentage including OD/ML adjustments
   const currentAttendance = currentAdjusted > 0 ? (currentAdjusted / classesConducted) * 100 : 0;
 
-  // Determine status based on how many classes can be skipped - NEW LOGIC
+  // Status reads the size of the buffer: a bigger buffer is safer. The previous
+  // thresholds were inverted — a student who could skip ten classes was shown an
+  // amber "Caution" while one clinging to a single spare class was shown green.
   let status: "safe" | "caution" | "required";
-  if (safeToSkip > 0) {
-    // If you have any classes you can skip
-    if (safeToSkip < 3) {  // Less than 3 classes can be skipped
-      status = "safe";   // Your buffer is small and safe
-    } else {
-      status = "caution";// Your buffer is large, need extra vigilance
-    }
-  } else {
-    // No classes can be skipped
+  if (safeToSkip <= 0) {
+    // Already at or below the target — further absence keeps it there.
     status = "required";
+  } else if (safeToSkip < CAUTION_BUFFER) {
+    // A thin margin: one or two absences away from dropping below target.
+    status = "caution";
+  } else {
+    status = "safe";
   }
 
   return {

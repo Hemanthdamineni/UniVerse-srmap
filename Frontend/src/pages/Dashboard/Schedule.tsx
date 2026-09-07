@@ -205,7 +205,12 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
     const nodeRect = node.getBoundingClientRect();
     const target =
       list.scrollTop + (nodeRect.top - listRect.top) - (list.clientHeight - nodeRect.height) / 2;
-    list.scrollTo({ top: Math.max(0, target), behavior: reduceMotion ? "auto" : "smooth" });
+    // `Element.scrollTo` is absent in jsdom and older engines; fall back to the property.
+    if (typeof list.scrollTo === "function") {
+      list.scrollTo({ top: Math.max(0, target), behavior: reduceMotion ? "auto" : "smooth" });
+    } else {
+      list.scrollTop = Math.max(0, target);
+    }
   }, [focusSlotIndex]);
 
   return (

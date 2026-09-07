@@ -6,6 +6,7 @@ import { hasSessionAuth } from "../lib/core/session";
 import { adminRoutes } from "./adminRoutes";
 import { baseRoutes } from "./baseRoutes";
 import { erpRoutes } from "./erpRoutes";
+import { careerRedirectRoutes } from "./careerRedirects";
 import { eventRoutes } from "./eventRoutes";
 import { lmsRoutes } from "./lmsRoutes";
 
@@ -76,6 +77,7 @@ export const router = createBrowserRouter([
   ...eventRoutes,
   ...lmsRoutes,
   ...erpRoutes,
+  ...careerRedirectRoutes,
   ...adminRoutes,
   { path: "*", element: <NotFoundPage /> },
 ]);

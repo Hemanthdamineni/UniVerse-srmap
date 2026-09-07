@@ -7,6 +7,7 @@ import {
   Calendar,
   Clock,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { listEvents, type EventSummary } from "../../lib/campus/campusApi";
 import { listOpportunities, listApplications, type CareerOpportunity } from "../../lib/career/careerApi";
@@ -65,8 +66,12 @@ export default function CampusHubWidget() {
     setEventsState("loading");
     setEventsError(null);
     try {
-      const result = await listEvents({ status: "published", type: "upcoming" });
+      // sort=fit ranks against the student graph (B7 / T4.4.3); a stale server
+      // just returns the plain list and we fall back to the deadline sort.
+      const result = await listEvents({ status: "published", type: "upcoming", sort: "fit" });
+      const hasFit = result.some((event) => event.fit);
       const sorted = [...result].sort((a, b) => {
+        if (hasFit) return (b.fit?.fitScore ?? 0) - (a.fit?.fitScore ?? 0);
         const aDate = a.registrationDeadline || a.startAt || "";
         const bDate = b.registrationDeadline || b.startAt || "";
         return new Date(aDate).getTime() - new Date(bDate).getTime();
@@ -220,17 +225,28 @@ export default function CampusHubWidget() {
                           {event.title}
                         </p>
                       </div>
-                      <span
-                        className="inline-flex shrink-0 items-center gap-2 self-center rounded-full px-2 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: `color-mix(in srgb, ${dl.isUrgent ? "var(--deadline-urgent)" : "var(--deadline-safe)"} 15%, transparent)`,
-                          color: dl.isUrgent ? "var(--deadline-urgent)" : "var(--deadline-safe)",
-                        }}
-                      >
-                        <Clock size={12} aria-hidden="true" />
-                        {dl.label}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1 self-center">
+                        {event.fit ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_15%,transparent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--comp-accent)]">
+                            <Sparkles size={10} aria-hidden="true" />
+                            For you
+                          </span>
+                        ) : null}
+                        <span
+                          className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${dl.isUrgent ? "var(--deadline-urgent)" : "var(--deadline-safe)"} 15%, transparent)`,
+                            color: dl.isUrgent ? "var(--deadline-urgent)" : "var(--deadline-safe)",
+                          }}
+                        >
+                          <Clock size={12} aria-hidden="true" />
+                          {dl.label}
+                        </span>
+                      </div>
                     </div>
+                    {event.fit?.whyThis?.[0] ? (
+                      <p className="mt-1 line-clamp-1 text-xs text-[var(--comp-text-secondary)]">{event.fit.whyThis[0]}</p>
+                    ) : null}
                   </div>
                 );
               })}

@@ -147,4 +147,3 @@ export function InternalMarksBundledSection({
   );
 }
 
-export default InternalMarksBundledSection;

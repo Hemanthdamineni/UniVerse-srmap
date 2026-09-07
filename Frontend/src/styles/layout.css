@@ -41,6 +41,18 @@
     );
   }
 
+  /* Below the sidebar breakpoint the content column runs edge-to-edge, so the
+     motif has no gutter to live in — its fixed polygon percentages put the dark
+     wedge directly behind body copy while that copy keeps its light-theme
+     colour, rendering headings dark-on-dark. The motif is decorative, so it is
+     dropped rather than recoloured. Keep this in sync with the 768px breakpoint
+     used by components.css and the sidebar. */
+  @media (max-width: 767px) {
+    .dashboard-background::before {
+      display: none;
+    }
+  }
+
   .dashboard-background::after {
     content: "";
     position: absolute;

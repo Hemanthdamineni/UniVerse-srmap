@@ -1,26 +1,45 @@
-// Professional Profile — canonical placement data model.
-// Resume upload, ATS analysis, profile completeness, and skill management
-// all operate on this single shared profile.
+// Professional Profile — the single canonical placement data model. Resume
+// upload + ATS analysis, skill management, career preferences (which feed the
+// opportunity fit scorer), the public-portfolio controls, and verified
+// achievements all operate on this one profile.
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageContainer } from "../../components/layout/PageLayouts";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { StatusBanner } from "../../components/erp/ErpPrimitives";
-import { FileUploadZone } from "../../components/ui/FileUploadZone";
-import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { InlineError } from "../../components/ui/Feedback";
 import { ProgressBar } from "../../components/ui/Progress";
 import { Button } from "../../components/button";
 import { Input } from "../../components/input";
-import { getProfile, updateProfile, createResumeVersion, mergeResumeToProfile, listResumeVersions, type CareerProfile, type ResumeVersion } from "../../lib/career/careerApi";
-import { getUnifiedProfile, listProfileSkills, syncProfileAchievements, type UnifiedProfile, type UnifiedProfileSkill } from "../../lib/career/profileApi";
+import {
+  getProfile,
+  updateProfile,
+  createResumeVersion,
+  mergeResumeToProfile,
+  listResumeVersions,
+  type CareerProfile,
+  type ResumeVersion,
+} from "../../lib/career/careerApi";
+import { getUnifiedProfile, syncProfileAchievements, type UnifiedProfile } from "../../lib/career/profileApi";
 import { useSession } from "../../hooks/useSession";
-import { FileText, Award, CheckCircle2, ChevronRight, Plus, X } from "lucide-react";
+import { track } from "../../lib/core/analytics";
+import { Award, Briefcase, ChevronRight, DollarSign, MapPin, Plus, X } from "lucide-react";
 import { SkeletonCard } from "../../components/ui/Skeletons";
+import ProfileSharingPanels from "./ProfileSharingPanels";
+import ResumeProofPanel, { type ResumeUploadState } from "./ResumeProofPanel";
 
-interface ResumeUpload {
-  file: File | null;
-  uploading: boolean;
-  version: ResumeVersion | null;
-  merged: boolean;
+const PREFERRED_TYPES = ["Job", "Internship", "Hackathon", "Competition"];
+
+// `File.text()` is not present in every runtime (older jsdom, some test envs);
+// fall back to FileReader so resume parsing works everywhere.
+function readResumeFileText(file: File): Promise<string> {
+  if (typeof file.text === "function") return file.text();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
 }
 
 export default function ProfessionalProfilePage() {
@@ -31,7 +50,7 @@ export default function ProfessionalProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [newSkill, setNewSkill] = useState("");
-  const [resume, setResume] = useState<ResumeUpload>({ file: null, uploading: false, version: null, merged: false });
+  const [resume, setResume] = useState<ResumeUploadState>({ file: null, uploading: false, version: null, merged: false });
   const [syncingAchievements, setSyncingAchievements] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -51,6 +70,8 @@ export default function ProfessionalProfilePage() {
     });
   }, []);
 
+  const patch = (updates: Partial<CareerProfile>) => setProfile((p) => (p ? { ...p, ...updates } : p));
+
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
@@ -61,7 +82,12 @@ export default function ProfessionalProfilePage() {
         githubUrl: profile.githubUrl,
         portfolioUrl: profile.portfolioUrl,
         skills: profile.skills,
+        preferredTypes: profile.preferredTypes,
+        preferredLocations: profile.preferredLocations,
+        minStipend: profile.minStipend,
+        cgpa: profile.cgpa,
       });
+      setMessage({ type: "success", text: "Profile saved." });
     } catch {
       setMessage({ type: "error", text: "Couldn't save your profile. Check your connection and try again." });
     } finally {
@@ -71,27 +97,34 @@ export default function ProfessionalProfilePage() {
 
   const addSkill = () => {
     const s = newSkill.trim();
-    if (!s || !profile) return;
-    if (profile.skills.includes(s)) return;
-    setProfile({ ...profile, skills: [...profile.skills, s] });
+    if (!s || !profile || profile.skills.includes(s)) return;
+    patch({ skills: [...profile.skills, s] });
     setNewSkill("");
   };
 
   const removeSkill = (skill: string) => {
     if (!profile) return;
-    setProfile({ ...profile, skills: profile.skills.filter((s) => s !== skill) });
+    patch({ skills: profile.skills.filter((s) => s !== skill) });
+  };
+
+  const toggleType = (type: string) => {
+    if (!profile) return;
+    const cur = profile.preferredTypes || [];
+    patch({ preferredTypes: cur.includes(type) ? cur.filter((t) => t !== type) : [...cur, type] });
   };
 
   const handleResumeUpload = async (file: File) => {
     setResume((prev) => ({ ...prev, uploading: true }));
     try {
-      const text = await file.text();
-      const result = await createResumeVersion({
-        fileName: file.name,
-        extractedText: text,
-      });
+      const text = await readResumeFileText(file);
+      const result = await createResumeVersion({ fileName: file.name, mimeType: file.type || "text/plain", extractedText: text });
       setResume((prev) => ({ ...prev, file, uploading: false, version: result, merged: false }));
-      setMessage({ type: "success", text: "Resume parsed successfully." });
+      track("resume_analyzed", {
+        qualityScore: result.qualityScore,
+        skillCount: result.parsedJson.skills?.length || 0,
+        mimeType: result.mimeType,
+      });
+      setMessage({ type: "success", text: `Resume analysed. Quality score: ${result.qualityScore}/100.` });
     } catch {
       setResume((prev) => ({ ...prev, uploading: false }));
       setMessage({ type: "error", text: `Couldn't read "${file.name}". Try a different resume file.` });
@@ -101,11 +134,20 @@ export default function ProfessionalProfilePage() {
   const handleMergeResume = async () => {
     if (!resume.version) return;
     try {
-      await mergeResumeToProfile(resume.version.id);
+      const result = await mergeResumeToProfile(resume.version.id);
       setResume((prev) => ({ ...prev, merged: true }));
-      setMessage({ type: "success", text: "Resume data merged into profile." });
-      const refreshedProfile = await getProfile();
-      setProfile(refreshedProfile);
+      setProfile(result.profile);
+      track("resume_skills_synced", {
+        resumeVersionId: resume.version.id,
+        mergedSkillCount: result.mergedSkills.length,
+      });
+      setMessage({
+        type: "success",
+        text:
+          result.mergedSkills.length > 0
+            ? `Added ${result.mergedSkills.length} resume skill${result.mergedSkills.length === 1 ? "" : "s"} to your profile.`
+            : "Profile is already aligned with this resume.",
+      });
     } catch {
       setMessage({ type: "error", text: "Couldn't merge your resume into the profile. Please try again." });
     }
@@ -117,7 +159,7 @@ export default function ProfessionalProfilePage() {
       await syncProfileAchievements();
       const refreshed = await getUnifiedProfile();
       setUnified(refreshed);
-      setMessage({ type: "success", text: "Achievements synchronized." });
+      setMessage({ type: "success", text: "Achievements synchronised." });
     } catch {
       setMessage({ type: "error", text: "Couldn't sync achievements right now. Please try again." });
     } finally {
@@ -125,19 +167,23 @@ export default function ProfessionalProfilePage() {
     }
   };
 
-  if (loading) return (
-    <PageContainer>
-      <div className="space-y-4 p-6">
-        <SkeletonCard /><SkeletonCard /><SkeletonCard />
-      </div>
-    </PageContainer>
-  );
+  if (loading)
+    return (
+      <PageContainer>
+        <div className="space-y-4 p-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </PageContainer>
+    );
 
-  if (error) return (
-    <PageContainer>
-      <InlineError message={error} />
-    </PageContainer>
-  );
+  if (error)
+    return (
+      <PageContainer>
+        <InlineError message={error} />
+      </PageContainer>
+    );
 
   const completeness = profile ? computeCompleteness(profile) : 0;
 
@@ -154,58 +200,32 @@ export default function ProfessionalProfilePage() {
           />
         )}
 
-        {/* Identity Panel */}
+        {/* Identity */}
         <SectionCard title="Identity" description="Auto-populated from your academic profile and editable as needed.">
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Name</label>
-              <p className="mt-1 text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
-                {erpProfile?.name || profile?.name || "—"}
-              </p>
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Register No</label>
-              <p className="mt-1 text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
-                {erpProfile?.regNo || profile?.name || "—"}
-              </p>
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Email</label>
-              <p className="mt-1 text-sm" style={{ color: "var(--comp-text-primary)" }}>{profile?.email || "—"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Department</label>
-              <p className="mt-1 text-sm" style={{ color: "var(--comp-text-primary)" }}>{unified?.user?.department || "—"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Branch</label>
-              <p className="mt-1 text-sm" style={{ color: "var(--comp-text-primary)" }}>{unified?.user?.branch || "—"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Year</label>
-              <p className="mt-1 text-sm" style={{ color: "var(--comp-text-primary)" }}>{unified?.user?.year ? `Year ${unified.user.year}` : "—"}</p>
-            </div>
+            <Field label="Name" value={erpProfile?.name || profile?.name || "—"} />
+            <Field label="Register No" value={erpProfile?.regNo || profile?.name || "—"} />
+            <Field label="Email" value={profile?.email || "—"} />
+            <Field label="Department" value={unified?.user?.department || "—"} />
+            <Field label="Branch" value={unified?.user?.branch || "—"} />
+            <Field label="Year" value={unified?.user?.year ? `Year ${unified.user.year}` : "—"} />
             <div className="md:col-span-2">
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Bio</label>
+              <label htmlFor="pp-bio" className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>
+                Bio
+              </label>
               <textarea
+                id="pp-bio"
                 className="mt-1 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] p-2.5 text-sm outline-none focus:border-[var(--comp-accent)]"
                 rows={2}
                 value={profile?.bio || ""}
-                onChange={(e) => setProfile(profile ? { ...profile, bio: e.target.value } : null)}
+                onChange={(e) => patch({ bio: e.target.value })}
                 placeholder="Tell employers about yourself in 2-3 sentences."
               />
             </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>LinkedIn URL</label>
-              <Input value={profile?.linkedinUrl || ""} onChange={(e) => setProfile(profile ? { ...profile, linkedinUrl: e.target.value } : null)} placeholder="https://linkedin.com/in/..." />
-            </div>
-            <div>
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>GitHub URL</label>
-              <Input value={profile?.githubUrl || ""} onChange={(e) => setProfile(profile ? { ...profile, githubUrl: e.target.value } : null)} placeholder="https://github.com/..." />
-            </div>
+            <LabeledInput label="LinkedIn URL" value={profile?.linkedinUrl || ""} onChange={(v) => patch({ linkedinUrl: v })} placeholder="https://linkedin.com/in/..." />
+            <LabeledInput label="GitHub URL" value={profile?.githubUrl || ""} onChange={(v) => patch({ githubUrl: v })} placeholder="https://github.com/..." />
             <div className="md:col-span-2">
-              <label className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>Portfolio URL</label>
-              <Input value={profile?.portfolioUrl || ""} onChange={(e) => setProfile(profile ? { ...profile, portfolioUrl: e.target.value } : null)} placeholder="https://portfolio.dev/..." />
+              <LabeledInput label="Portfolio URL" value={profile?.portfolioUrl || ""} onChange={(v) => patch({ portfolioUrl: v })} placeholder="https://portfolio.dev/..." />
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -215,7 +235,7 @@ export default function ProfessionalProfilePage() {
           </div>
         </SectionCard>
 
-        {/* Competencies Panel */}
+        {/* Competencies */}
         <SectionCard title="Competencies" description="Skills from your profile, resume, courses, and events.">
           <div className="flex flex-wrap gap-2">
             {profile?.skills?.map((skill) => (
@@ -231,7 +251,9 @@ export default function ProfessionalProfilePage() {
                 className="w-24 bg-transparent text-xs outline-none"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") addSkill(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") addSkill();
+                }}
                 placeholder="Add skill"
               />
               <button onClick={addSkill} className="text-[var(--comp-text-muted)] hover:text-[var(--comp-accent)]" title="Add skill" aria-label="Add skill">
@@ -256,70 +278,94 @@ export default function ProfessionalProfilePage() {
           )}
         </SectionCard>
 
-        {/* Proof Panel (Resume) */}
-        <SectionCard title="Proof" description="Upload a resume to parse and merge structured data into your profile.">
-          <div className="space-y-4">
-            <FileUploadZone
-              onFile={handleResumeUpload}
-              accept={[".pdf", ".docx", ".txt"]}
-              maxSizeMb={5}
-              isUploading={resume.uploading}
-              label="Upload Resume"
-            />
-
-            {resume.version && (
-              <div className="rounded-xl border border-[var(--comp-border)] p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-[var(--comp-text-muted)]" />
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
-                        {resume.version.fileName}
-                      </p>
-                      <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>
-                        Quality score: {Math.round((resume.version.qualityScore || 0) * 100)}%
-                      </p>
-                    </div>
-                  </div>
-                  <Button size="sm" disabled={resume.merged} onClick={handleMergeResume}>
-                    {resume.merged ? "Merged" : "Merge to Profile"}
-                  </Button>
-                </div>
-
-                {resume.version.parsedJson && (
-                  <div className="mt-3 grid grid-cols-3 gap-4 text-center">
-                    <div className="rounded-lg bg-[var(--comp-surface-hover)] p-2">
-                      <p className="text-lg font-bold" style={{ color: "var(--comp-text-primary)" }}>
-                        {resume.version.parsedJson.projects?.length || 0}
-                      </p>
-                      <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>Projects</p>
-                    </div>
-                    <div className="rounded-lg bg-[var(--comp-surface-hover)] p-2">
-                      <p className="text-lg font-bold" style={{ color: "var(--comp-text-primary)" }}>
-                        {resume.version.parsedJson.experience?.length || 0}
-                      </p>
-                      <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>Experience</p>
-                    </div>
-                    <div className="rounded-lg bg-[var(--comp-surface-hover)] p-2">
-                      <p className="text-lg font-bold" style={{ color: "var(--comp-text-primary)" }}>
-                        {resume.version.parsedJson.certifications?.length || 0}
-                      </p>
-                      <p className="text-xs" style={{ color: "var(--comp-text-muted)" }}>Certs</p>
-                    </div>
-                  </div>
-                )}
+        {/* Career Preferences — feeds the opportunity fit scorer */}
+        <SectionCard title="Career Preferences" description="Used to rank opportunities and events for you.">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <span className="flex items-center gap-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+                <Briefcase className="h-4 w-4" /> Preferred types
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {PREFERRED_TYPES.map((type) => {
+                  const active = profile?.preferredTypes?.includes(type);
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => toggleType(type)}
+                      aria-pressed={active}
+                      className={`min-h-11 rounded-lg border px-3 py-1 text-xs font-medium transition-colors sm:min-h-9 ${
+                        active
+                          ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
+                          : "border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-secondary)] hover:border-[var(--comp-accent)]"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="pp-locations" className="flex items-center gap-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+                <MapPin className="h-4 w-4" /> Preferred locations
+              </label>
+              <Input
+                id="pp-locations"
+                placeholder="e.g. Remote, Bangalore, Hyderabad"
+                value={(profile?.preferredLocations || []).join(", ")}
+                onChange={(e) =>
+                  patch({ preferredLocations: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="pp-stipend" className="flex items-center gap-2 text-sm font-semibold text-[var(--comp-text-primary)]">
+                <DollarSign className="h-4 w-4" /> Minimum stipend / salary
+              </label>
+              <Input
+                id="pp-stipend"
+                placeholder="e.g. ₹20,000/mo"
+                value={profile?.minStipend || ""}
+                onChange={(e) => patch({ minStipend: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="pp-cgpa" className="text-sm font-semibold text-[var(--comp-text-primary)]">
+                CGPA
+              </label>
+              <Input
+                id="pp-cgpa"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 8.5"
+                value={profile?.cgpa ?? ""}
+                onChange={(e) => patch({ cgpa: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={handleSave} disabled={saving} variant="outline" size="sm">
+              {saving ? "Saving..." : "Save preferences"}
+            </Button>
           </div>
         </SectionCard>
+
+        {/* Proof (Resume) */}
+        <ResumeProofPanel resume={resume} onUpload={handleResumeUpload} onMerge={handleMergeResume} />
 
         {/* Readiness Scorecard */}
         <SectionCard title="Readiness Scorecard" description="Your career profile completeness and placement readiness.">
           <div className="space-y-4">
             <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>Profile Completeness</span>
-                <span className="text-sm font-medium" style={{ color: completeness >= 80 ? "var(--success)" : completeness >= 50 ? "var(--warning)" : "var(--error)" }}>
+              <div className="mb-1 flex justify-between">
+                <span className="text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
+                  Profile Completeness
+                </span>
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: completeness >= 80 ? "var(--success)" : completeness >= 50 ? "var(--warning)" : "var(--error)" }}
+                >
                   {completeness}%
                 </span>
               </div>
@@ -328,15 +374,20 @@ export default function ProfessionalProfilePage() {
 
             {unified?.career?.skillGaps && unified.career.skillGaps.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>Skill Gaps ({unified.career.skillGaps.length})</p>
+                <p className="mb-2 text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
+                  Skill Gaps ({unified.career.skillGaps.length})
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {unified.career.skillGaps.slice(0, 8).map((g, i) => (
-                    <span key={i} className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-2.5 py-1 text-xs bg-[color-mix(in_srgb,var(--warning)_8%,transparent)]" style={{ color: "var(--warning)" }}>
+                    <span
+                      key={i}
+                      className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_8%,transparent)] px-2.5 py-1 text-xs"
+                      style={{ color: "var(--warning)" }}
+                    >
                       {g.skill} <span className="opacity-60">({g.opportunityCount})</span>
                     </span>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" className="mt-2">View Full Analysis</Button>
               </div>
             )}
 
@@ -345,21 +396,60 @@ export default function ProfessionalProfilePage() {
                 <Award className="mr-1.5 h-4 w-4" />
                 {syncingAchievements ? "Syncing..." : "Sync Achievements"}
               </Button>
-              <Button variant="ghost" size="sm" disabled>
-                <ChevronRight className="mr-1.5 h-4 w-4" />
-                Placement Recommendations
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/career/me/skill-gap">
+                  <ChevronRight className="mr-1.5 h-4 w-4" />
+                  Full skill-gap analysis
+                </Link>
               </Button>
             </div>
           </div>
         </SectionCard>
+
+        {/* Sharing: public portfolio + verified achievements (merged from CareerProfilePage) */}
+        <ProfileSharingPanels userId={profile?.userId} onMessage={setMessage} />
       </div>
     </PageContainer>
   );
 }
 
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>
+        {label}
+      </span>
+      <p className="mt-1 text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const id = `pp-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+  return (
+    <div>
+      <label htmlFor={id} className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>
+        {label}
+      </label>
+      <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+    </div>
+  );
+}
+
 function computeCompleteness(p: CareerProfile): number {
   let score = 0;
-  const max = 100;
   if (p.bio && p.bio.trim().length > 20) score += 20;
   if (p.linkedinUrl) score += 15;
   if (p.githubUrl) score += 15;
@@ -368,5 +458,5 @@ function computeCompleteness(p: CareerProfile): number {
   else if (p.skills && p.skills.length > 0) score += 10;
   if (p.email) score += 10;
   if (p.resumeUrl) score += 10;
-  return Math.min(Math.round((score / max) * 100), 100);
+  return Math.min(Math.round(score), 100);
 }

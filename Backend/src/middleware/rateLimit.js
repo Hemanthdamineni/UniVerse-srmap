@@ -8,11 +8,10 @@ const {
 } = require("../config/env");
 
 function extractIp(req) {
-  const forwarded = String(req.header("x-forwarded-for") || "")
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)[0];
-  return forwarded || req.ip || "unknown";
+  // Express applies the configured trust-proxy policy to req.ip. Parsing an
+  // arbitrary X-Forwarded-For value here would let callers choose their own
+  // limiter bucket when the backend is reached directly.
+  return req.ip || req.socket?.remoteAddress || "unknown";
 }
 
 // Infra probes run every few seconds from monitors and docker healthchecks;
@@ -76,6 +75,7 @@ function memoryRateLimiter() {
 }
 
 function redisRateLimiter(redisClient) {
+  const fallback = memoryRateLimiter();
   return async function redisLimiter(req, res, next) {
     if (isBypassedPath(req)) {
       return next();
@@ -110,7 +110,8 @@ function redisRateLimiter(redisClient) {
         });
       }
     } catch {
-      // Degrade to allow requests if Redis limiter is unavailable.
+      // Preserve throttling during a Redis outage instead of failing open.
+      return fallback(req, res, next);
     }
 
     return next();
@@ -130,6 +131,27 @@ function createLoginRateLimitMiddleware({ redisClient } = {}) {
   const windowMs = LOGIN_RATE_LIMIT_WINDOW_MS;
   const max = LOGIN_RATE_LIMIT_MAX;
   const prefix = LOGIN_RATE_LIMIT_REDIS_PREFIX;
+  const fallbackBuckets = new Map();
+
+  function fallback(req, res, next) {
+    const now = Date.now();
+    const ip = extractIp(req);
+    const key = `${prefix}:fallback:${ip}`;
+    const recent = (fallbackBuckets.get(key) || []).filter((timestamp) => timestamp >= now - windowMs);
+    recent.push(now);
+    fallbackBuckets.set(key, recent);
+    res.setHeader("x-ratelimit-limit", String(max));
+    res.setHeader("x-ratelimit-remaining", String(Math.max(0, max - recent.length)));
+    if (recent.length > max) {
+      res.setHeader("retry-after", String(Math.ceil(windowMs / 1000)));
+      return res.status(429).json({
+        success: false,
+        error: { code: "RATE_LIMITED", message: "Too many login attempts. Please wait a minute and try again.", retryable: true },
+        requestId: req.requestId || null,
+      });
+    }
+    return next();
+  }
 
   if (redisClient) {
     return async function loginRedisLimiter(req, res, next) {
@@ -160,42 +182,15 @@ function createLoginRateLimitMiddleware({ redisClient } = {}) {
           });
         }
       } catch {
-        // Degrade to allow requests if Redis limiter is unavailable.
+        return fallback(req, res, next);
       }
 
       return next();
     };
   }
 
-  const buckets = new Map();
   return async function loginMemoryLimiter(req, res, next) {
-    const now = Date.now();
-    const ip = extractIp(req);
-    const key = `${prefix}:mem:${ip}`;
-    const windowStart = now - windowMs;
-
-    const entry = buckets.get(key) || [];
-    const recent = entry.filter((timestamp) => timestamp >= windowStart);
-    recent.push(now);
-    buckets.set(key, recent);
-
-    res.setHeader("x-ratelimit-limit", String(max));
-    res.setHeader("x-ratelimit-remaining", String(Math.max(0, max - recent.length)));
-
-    if (recent.length > max) {
-      res.setHeader("retry-after", String(Math.ceil(windowMs / 1000)));
-      return res.status(429).json({
-        success: false,
-        error: {
-          code: "RATE_LIMITED",
-          message: "Too many login attempts. Please wait a minute and try again.",
-          retryable: true,
-        },
-        requestId: req.requestId || null,
-      });
-    }
-
-    return next();
+    return fallback(req, res, next);
   };
 }
 

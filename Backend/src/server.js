@@ -23,9 +23,14 @@ const {
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
   ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
+  ERP_ACADEMIC_SNAPSHOTS_DB_PATH,
+  GOOGLE_TOKENS_DB_PATH,
+  APP_BASE_URL,
+  EMAIL_CONFIG,
   VACANT_ROOMS_DB_PATH,
   PERSISTENT_TEAMS_DB_PATH,
   HOSTEL_BUDDY_DB_PATH,
+  USER_DIRECTORY_DB_PATH,
   FEEDBACK_AUTOMATION_ENABLED,
   UPLOADS_DIR,
   LMS_FILES_DIR,
@@ -51,6 +56,7 @@ const { ErpAggregationService } = require("./services/erp/erpAggregationService"
 const { ErpUiMapStore } = require("./services/erp/erpUiMapStore");
 const { ErpActionExecutor } = require("./services/erp/erpActionExecutor");
 const { AttendanceSnapshotStore } = require("./services/erp/attendanceSnapshotStore");
+const { ErpAcademicSnapshotStore } = require("./services/erp/erpAcademicSnapshotStore");
 const { VacantRoomStore, timetableScheduleFromPagePayload } = require("./services/erp/vacantRoomStore");
 const { createApiContext } = require("./services/erp/erpClient");
 const { PagePolicyStore } = require("./services/core/sessionServices");
@@ -60,6 +66,7 @@ const { createPersistentTeamStore } = require("./services/events/persistentTeamS
 const { HelpdeskStore } = require("./services/campus/helpdeskStore");
 const { CampusFeedbackStore } = require("./services/campus/campusFeedbackStore");
 const { HostelBuddyStore } = require("./services/campus/hostelBuddyStore");
+const { UserDirectoryStore } = require("./services/core/userDirectoryStore");
 const { CareerStore } = require("./services/career/careerStore");
 const {
   createCareerScraperSupervisor,
@@ -68,6 +75,22 @@ const { LmsTrackerService } = require("./services/lms/lmsTrackerService");
 const { LmsTrackerStore } = require("./services/lms/lmsTrackerStore");
 const { LmsStore } = require("./services/lms/lmsStore");
 const { UnifiedProfileStore } = require("./services/core/unifiedProfileStore");
+const { StudentGraphService } = require("./services/core/studentGraphService");
+const { StudentIntentStore } = require("./services/core/studentIntentStore");
+const { NotificationStore } = require("./services/core/notificationStore");
+const {
+  NotificationService,
+  createInAppAdapter,
+  createWebPushAdapter,
+  createEmailAdapter,
+  createNativePushAdapter,
+} = require("./services/core/notificationService");
+const { runWeeklyDigestCycle } = require("./services/core/digestService");
+const { GoogleTokenStore } = require("./services/core/googleTokenStore");
+const { CalendarSyncService } = require("./services/core/calendarSyncService");
+const { ClassroomService } = require("./services/core/classroomService");
+const { UnifiedDeadlineService } = require("./services/core/unifiedDeadlineService");
+const { resolveVapid } = require("./config/vapid");
 const { CompanionAnalyticsStore } = require("./services/career/careerServices");
 const { LmsModerationService } = require("./services/lms/lmsServices");
 const { LmsRevisionScheduler } = require("./services/lms/lmsServices");
@@ -78,6 +101,7 @@ const { LmsRecommendationEngine } = require("./services/lms/lmsServices");
 const { LmsInteractionQueue } = require("./services/lms/lmsServices");
 const { LmsInteractionTracker } = require("./services/lms/lmsServices");
 const { LmsExamFeedbackService } = require("./services/lms/lmsServices");
+const academicCalendar = require("./services/core/academicCalendar");
 const { ErpIntegrityService } = require("./services/erp/erpServices");
 const { log, getLogFilePath, shutdownLogger } = require("./utils/logger");
 
@@ -187,12 +211,15 @@ async function startServer() {
   const hostelBuddyStore = new HostelBuddyStore({
     dbPath: HOSTEL_BUDDY_DB_PATH,
   });
+  const userDirectoryStore = new UserDirectoryStore({
+    dbPath: USER_DIRECTORY_DB_PATH,
+  });
   const careerStore = new CareerStore({
     dbPath: CAREER_DB_PATH,
   });
   const careerScraperSupervisor = createCareerScraperSupervisor();
   const lmsModerationService = new LmsModerationService();
-  const lmsRevisionScheduler = new LmsRevisionScheduler();
+  const lmsRevisionScheduler = new LmsRevisionScheduler({ academicCalendar });
   const lmsStore = new LmsStore({
     dbPath: LMS_DB_PATH,
     filesDir: LMS_FILES_DIR,
@@ -256,6 +283,50 @@ async function startServer() {
     dbPath: VACANT_ROOMS_DB_PATH,
   });
 
+  // Batch B5 — what the student told us they want, plus consent choices.
+  // Shares the unified-profile DB file (same "who is this student" concern).
+  const studentIntentStore = new StudentIntentStore({ dbPath: UNIFIED_PROFILE_DB_PATH });
+
+  // Batch B6 — last-known curriculum / results / CGPA per user, fed by the
+  // live-data sink, read synchronously by the student graph.
+  const erpAcademicSnapshotStore = new ErpAcademicSnapshotStore({
+    dbPath: ERP_ACADEMIC_SNAPSHOTS_DB_PATH,
+  });
+
+  // Batch B10 — Google Calendar sync. Inert until GOOGLE_CLIENT_* env is set.
+  const googleTokenStore = new GoogleTokenStore({ dbPath: GOOGLE_TOKENS_DB_PATH });
+  const calendarSyncService = new CalendarSyncService({ tokenStore: googleTokenStore, log });
+  // Batch B12 — Classroom read-only pull (further gated on GOOGLE_CLASSROOM_ENABLED=1)
+  // + a merged deadline timeline that works with or without Classroom.
+  const classroomService = new ClassroomService({ tokenStore: googleTokenStore, log });
+  const unifiedDeadlineService = new UnifiedDeadlineService({ classroomService, careerStore, eventsStore });
+
+  // Batch B8 — one channel-agnostic notification layer. In-app always; Web
+  // Push when a VAPID keypair is present (auto-generated in dev).
+  const vapid = resolveVapid();
+  const notificationStore = new NotificationStore({ dbPath: UNIFIED_PROFILE_DB_PATH });
+  const emailAdapter = createEmailAdapter({ store: notificationStore, config: EMAIL_CONFIG });
+  const notificationService = new NotificationService({
+    store: notificationStore,
+    adapters: [
+      createInAppAdapter({ eventsStore }),
+      createWebPushAdapter({ store: notificationStore, vapid }),
+      createNativePushAdapter({ store: notificationStore }),
+      emailAdapter,
+    ],
+  });
+
+  // Batch B4 — the student graph composes identity + academic + skills +
+  // activity + derived signals from the stores above. In-process TTL cache for
+  // now; swap `cache` for a Redis-backed get/set/delete when available.
+  const studentGraphService = new StudentGraphService({
+    unifiedProfileStore,
+    attendanceSnapshotStore,
+    careerStore,
+    studentIntentStore,
+    erpReader: erpAcademicSnapshotStore.readerFor(),
+  });
+
   const app = createApp({
     sessionStore,
     discoveryRepository,
@@ -267,12 +338,23 @@ async function startServer() {
     helpdeskStore,
     campusFeedbackStore,
     hostelBuddyStore,
+    userDirectoryStore,
     careerStore,
     scraperSupervisorStatus: () => careerScraperSupervisor.getStatus(),
     scraperTriggerOnce: () => careerScraperSupervisor.triggerOnce(),
     competitionStore,
     persistentTeamStore,
     unifiedProfileStore,
+    studentGraphService,
+    studentIntentStore,
+    notificationStore,
+    notificationService,
+    vapid,
+    calendarSyncService,
+    classroomService,
+    unifiedDeadlineService,
+    erpAcademicSnapshotStore,
+    appBaseUrl: APP_BASE_URL,
     companionAnalyticsStore,
     lmsStore,
     lmsTrackerService,
@@ -299,11 +381,45 @@ async function startServer() {
         erpAggregationService
           .resolveUserKey(sessionId)
           .then((userKey) => {
+            // Any fresh academic/exam page can move a graph input — drop the
+            // cached graph so the next read recomputes (B4 / T3.1.3).
+            if (userKey && (String(pageKey).startsWith("academic/") || String(pageKey).startsWith("examination/"))) {
+              studentGraphService.invalidate(userKey);
+              // Capture curriculum / results / CGPA / exam history for the graph.
+              // Note whether graded results existed *before* this ingest so the
+              // results-published notification only fires on the transition.
+              const hadResults = erpAcademicSnapshotStore.hasGradedResults(userKey);
+              erpAcademicSnapshotStore.ingest({ userKey, pageKey, payload });
+              if (!hadResults && erpAcademicSnapshotStore.hasGradedResults(userKey)) {
+                void notificationService.emit("results_published", { userId: userKey }).catch(() => {});
+              }
+            }
             if (
               (pageKey === "academic/attendance-details" || pageKey === "academic/student-attendance") &&
               Array.isArray(payload.records)
             ) {
-              attendanceSnapshotStore.record({ userKey, pageKey, records: payload.records });
+              const outcome = attendanceSnapshotStore.record({ userKey, pageKey, records: payload.records });
+              // Only alert on a *changed* snapshot, so a re-fetch doesn't
+              // re-notify. One notification per breaching subject (B8 / T6.2.3).
+              if (outcome === "stored") {
+                for (const r of payload.records) {
+                  const pct = Number.parseFloat(String(r.attendancePercentage ?? "").replace("%", ""));
+                  if (Number.isFinite(pct) && pct < 75) {
+                    const conducted = Number.parseInt(String(r.classesConducted ?? ""), 10);
+                    const present = Number.parseInt(String(r.present ?? ""), 10);
+                    const needed =
+                      Number.isFinite(conducted) && Number.isFinite(present)
+                        ? Math.max(0, Math.ceil((0.75 * conducted - present) / 0.25))
+                        : null;
+                    void notificationService
+                      .emit("attendance_risk", {
+                        userId: userKey,
+                        params: { subject: r.subjectCode || r.subjectDescription, pct: Math.round(pct), needed },
+                      })
+                      .catch(() => {});
+                  }
+                }
+              }
               return;
             }
             if (pageKey === "academic/time-table" || pageKey === "academic/timetable") {
@@ -316,7 +432,14 @@ async function startServer() {
               }
             }
           })
-          .catch(() => {});
+          .catch((error) => {
+            log({
+              level: "error",
+              msg: "ERP live-data sink failed",
+              pageKey,
+              error: error?.message || String(error),
+            });
+          });
       },
     },
   });
@@ -353,6 +476,37 @@ async function startServer() {
     }
   }, 15 * 60 * 1000);
   careerNotifyTicker.unref();
+
+  // Batch B9 — weekly email digest. Checks hourly; the per-ISO-week
+  // idempotency marker in the delivery log means at most one send per user
+  // per week regardless of tick frequency. Inert unless SMTP is configured
+  // and the user opted the email channel in.
+  // Batch B10 — re-sync connected Google Calendars every 6h. No-op when
+  // Google is not configured or nobody has connected.
+  const calendarTicker = setInterval(() => {
+    void calendarSyncService
+      .runSyncCycle({ erpAcademicSnapshotStore, careerStore })
+      .then((s) => {
+        if (s.users) log({ msg: "Google Calendar sync cycle", users: s.users });
+      })
+      .catch((error) => log({ level: "error", msg: "Google Calendar sync job failed", error: error?.message || String(error) }));
+  }, 6 * 60 * 60 * 1000);
+  calendarTicker.unref();
+
+  const digestTicker = setInterval(() => {
+    void runWeeklyDigestCycle({
+      notificationStore,
+      studentGraphService,
+      emailAdapter,
+      careerStore,
+      log,
+    })
+      .then((summary) => {
+        if (summary.sent) log({ msg: "Weekly digest cycle", sent: summary.sent, skipped: summary.skipped });
+      })
+      .catch((error) => log({ level: "error", msg: "Weekly digest job failed", error: error?.message || String(error) }));
+  }, 60 * 60 * 1000);
+  digestTicker.unref();
 
   let shuttingDown = false;
   const server = app.listen(PORT, () => {

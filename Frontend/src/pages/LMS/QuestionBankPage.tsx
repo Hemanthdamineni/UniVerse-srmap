@@ -37,7 +37,7 @@ type QuestionFormState = {
   topicId: string;
 };
 
-export function QuestionBankPage() {
+function QuestionBankPage() {
   const [subjectCode, setSubjectCode] = useState("");
   const [questionForm, setQuestionForm] = useState<QuestionFormState>({
     question: "",

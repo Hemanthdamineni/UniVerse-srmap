@@ -34,10 +34,3 @@ export function DashboardLayout({ children, className }: PropsWithChildren<{ cla
   return <PageContainer surface="flat" className={className}>{children}</PageContainer>;
 }
 
-export function DataPageLayout({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <PageContainer className={cn("space-y-4", className)}>{children}</PageContainer>;
-}
-
-export function DetailPageLayout({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <PageContainer className={cn("space-y-6", className)}>{children}</PageContainer>;
-}

@@ -1,4 +1,7 @@
 const { toSafeString } = require("../../services/lms/lmsUtils");
+const academicCalendar = require("../../services/core/academicCalendar");
+
+const WEEK_MS = 7 * 86_400_000;
 
 function registerLearningAdminRoutes(
   router,
@@ -9,8 +12,43 @@ function registerLearningAdminRoutes(
     featureFlagService,
     ensureAdmin,
     renderGuidePdf,
+    studentGraphService = null,
   }
 ) {
+  // Graph + calendar context for revision weighting (B7 / T4.5).
+  function revisionContext(user) {
+    const atRiskCodes = [];
+    try {
+      const graph = studentGraphService?.getGraph?.(user);
+      for (const subject of graph?.derived?.atRiskSubjects || []) {
+        if (subject?.code) atRiskCodes.push(toSafeString(subject.code).toUpperCase());
+      }
+    } catch {
+      /* the graph is optional — fall back to the plain schedule */
+    }
+    let examWindows = [];
+    try {
+      examWindows = academicCalendar.listExamWindows({ now: Date.now() });
+    } catch {
+      examWindows = [];
+    }
+    return { atRiskCodes, examWindows };
+  }
+
+  // Chronological, but within each ~week bucket an at-risk subject floats up.
+  function weightRevisionQueue(rows, atRiskCodes) {
+    const codes = new Set(atRiskCodes);
+    const now = Date.now();
+    const bucket = (iso) => Math.floor(((Date.parse(iso) || now) - now) / WEEK_MS);
+    return rows
+      .map((row) => ({ ...row, atRisk: codes.has(toSafeString(row.subjectCode).toUpperCase()) }))
+      .sort((a, b) => {
+        const byBucket = bucket(a.dueDate) - bucket(b.dueDate);
+        if (byBucket !== 0) return byBucket;
+        if (a.atRisk !== b.atRisk) return a.atRisk ? -1 : 1;
+        return (Date.parse(a.dueDate) || 0) - (Date.parse(b.dueDate) || 0);
+      });
+  }
   router.get("/lms/recommendations/next-step", (req, res, next) =>
     createHandle(req, res, next, async () => {
       const resource = lmsStore.getResource(req.query.resourceId, req.userContext.userId, {
@@ -113,13 +151,20 @@ function registerLearningAdminRoutes(
   );
 
   router.get("/lms/revision", (req, res, next) =>
-    createHandle(req, res, next, async () => lmsStore.getRevisionQueue(req.userContext.userId))
+    createHandle(req, res, next, async () => {
+      const { atRiskCodes } = revisionContext(req.userContext);
+      return weightRevisionQueue(lmsStore.getRevisionQueue(req.userContext.userId), atRiskCodes);
+    })
   );
 
   router.post("/lms/revision/:resourceId/review", (req, res, next) =>
-    createHandle(req, res, next, async () =>
-      lmsStore.submitRevisionReview(req.userContext.userId, req.params.resourceId, req.body.score)
-    )
+    createHandle(req, res, next, async () => {
+      const { atRiskCodes, examWindows } = revisionContext(req.userContext);
+      return lmsStore.submitRevisionReview(req.userContext.userId, req.params.resourceId, req.body.score, {
+        atRiskCodes,
+        examWindows,
+      });
+    })
   );
 
   router.get("/lms/streak", (req, res, next) =>
@@ -127,9 +172,12 @@ function registerLearningAdminRoutes(
   );
 
   router.post("/lms/session/generate", (req, res, next) =>
-    createHandle(req, res, next, async () =>
-      lmsStore.generateLearningSession(req.userContext.userId, req.body.durationMinutes)
-    )
+    createHandle(req, res, next, async () => {
+      const { atRiskCodes } = revisionContext(req.userContext);
+      return lmsStore.generateLearningSession(req.userContext.userId, req.body.durationMinutes, {
+        atRiskCodes,
+      });
+    })
   );
 
   router.get("/lms/me/contributions", (req, res, next) =>

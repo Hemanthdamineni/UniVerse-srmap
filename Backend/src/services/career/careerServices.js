@@ -204,7 +204,18 @@ class CareerRelevanceEngine {
 }
 
 // --- companionAnalyticsStore.js ---
-const ALLOWED_EVENT_PATTERN = /^[a-z][a-z0-9_:.:-]{1,96}$/i;
+const ALLOWED_ANALYTICS_EVENTS = new Set([
+  "career_achievement_visibility_changed", "career_achievements_synced", "certificate_downloaded",
+  "create_event_abandoned", "create_event_completed", "create_event_full_mode", "create_event_quick_mode", "create_event_started",
+  "evaluation_opened", "evaluation_saved", "evaluation_started", "events_recommendation_clicked", "events_recommendations_viewed",
+  "leaderboard_viewed", "lms_exam_prep_recommendations_viewed", "lms_roadmap_recommendations_viewed", "opportunity_fit_viewed",
+  "public_career_profile_exported", "public_career_profile_link_copied", "public_career_profile_viewed", "results_published",
+  "resume_analyzed", "resume_skills_synced", "shortlist_applied", "submission_completed", "submission_failed", "submission_form_viewed",
+  "submission_started", "team_created", "team_invite_sent", "team_recruitment_posted",
+  // Automatic navigation signal — one per distinct route a session lands on.
+  // Powers the "which pages are actually used" report (backlog T8.1).
+  "route_view",
+]);
 const MAX_PROPERTY_BYTES = 8 * 1024;
 
 function nowIso() {
@@ -240,6 +251,7 @@ function normalizeDate(value, fallback) {
 
 function classifyEvent(eventName) {
   const name = safeString(eventName, 100);
+  if (name === "route_view") return "navigation";
   if (name.includes("recommendation")) return "recommendation";
   if (name.includes("resume") || name.includes("career") || name.includes("opportunity")) return "career";
   if (name.includes("lms") || name.includes("roadmap") || name.includes("exam_prep")) return "lms";
@@ -287,9 +299,34 @@ class CompanionAnalyticsStore {
 
   recordEvent(payload = {}, context = {}) {
     const eventName = safeString(payload.event || payload.eventName, 100);
-    if (!ALLOWED_EVENT_PATTERN.test(eventName)) {
+    if (!ALLOWED_ANALYTICS_EVENTS.has(eventName)) {
       const error = new Error("Invalid analytics event name");
       error.status = 400;
+      throw error;
+    }
+    const actorKey = safeString(context.userId || context.sessionId, 120);
+    if (!actorKey) {
+      const error = new Error("Analytics actor is required");
+      error.status = 401;
+      throw error;
+    }
+    // route_view fires on every navigation, so it gets its own, larger hourly
+    // budget and is kept out of the deliberate-product-event budget — a heavy
+    // navigator must never get 429s on real product events.
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const isRouteView = eventName === "route_view";
+    const recentActorEvents = this.db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM companion_analytics_events
+         WHERE COALESCE(userId, sessionId, 'anonymous') = ?
+           AND receivedAt >= ?
+           AND eventName ${isRouteView ? "=" : "!="} 'route_view'`
+      )
+      .get(actorKey, hourAgo);
+    const actorBudget = isRouteView ? 400 : 120;
+    if (Number(recentActorEvents?.count || 0) >= actorBudget) {
+      const error = new Error("Analytics event budget exceeded");
+      error.status = 429;
       throw error;
     }
     const propertiesJson = safeJson(payload.properties || {});
@@ -325,6 +362,10 @@ class CompanionAnalyticsStore {
         record.occurredAt,
         record.receivedAt
       );
+    // Bound long-running installations without relying on a manual vacuum job.
+    this.db.prepare("DELETE FROM companion_analytics_events WHERE receivedAt < ?").run(
+      new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    );
     return this._publicEvent(record);
   }
 
@@ -423,6 +464,32 @@ class CompanionAnalyticsStore {
       .all(since, Math.min(cappedLimit, 25))
       .map((row) => this._publicEvent(row));
 
+    // "Which pages are actually used" — driven by the automatic route_view
+    // signal. views = raw hits, actors = distinct users/sessions.
+    const byRoute = this.db
+      .prepare(
+        `SELECT route,
+                COUNT(*) AS views,
+                COUNT(DISTINCT COALESCE(userId, sessionId, 'anonymous')) AS actors
+         FROM companion_analytics_events
+         WHERE occurredAt >= ?
+           AND eventName = 'route_view'
+           AND route IS NOT NULL
+         GROUP BY route
+         ORDER BY views DESC, route ASC
+         LIMIT ?`
+      )
+      .all(since, cappedLimit);
+
+    const routeTotals = this.db
+      .prepare(
+        `SELECT COUNT(*) AS totalViews,
+                COUNT(DISTINCT route) AS distinctRoutes
+         FROM companion_analytics_events
+         WHERE occurredAt >= ? AND eventName = 'route_view' AND route IS NOT NULL`
+      )
+      .get(since);
+
     const impressions = Number(recommendation?.impressions || 0);
     const clicks = Number(recommendation?.clicks || 0);
 
@@ -450,6 +517,15 @@ class CompanionAnalyticsStore {
         actors: Number(row.actors || 0),
       })),
       funnel: funnel.map((row) => ({ eventName: row.eventName, count: Number(row.count || 0) })),
+      pageViews: {
+        totalViews: Number(routeTotals?.totalViews || 0),
+        distinctRoutes: Number(routeTotals?.distinctRoutes || 0),
+        byRoute: byRoute.map((row) => ({
+          route: row.route,
+          views: Number(row.views || 0),
+          actors: Number(row.actors || 0),
+        })),
+      },
       recent,
     };
   }

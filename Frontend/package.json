@@ -17,11 +17,17 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit:tap-targets": "node ./scripts/tap-target-audit.mjs",
+    "audit:bundle": "node ./scripts/bundle-budget.mjs",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "cap:doctor": "npx cap doctor"
   },
   "dependencies": {
-    "@babel/preset-react": "^7.29.7",
-    "@babel/preset-typescript": "^7.29.7",
+    "@capacitor/core": "^6.2.2",
+    "@capacitor/push-notifications": "^6.0.5",
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-go": "^6.0.1",
     "@codemirror/lang-html": "^6.4.12",
@@ -39,12 +45,12 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/query-sync-storage-persister": "^5.102.8",
     "@tanstack/react-query": "^5.85.0",
     "@tanstack/react-query-devtools": "^5.102.1",
+    "@tanstack/react-query-persist-client": "^5.102.8",
     "@vitejs/plugin-react": "^5.2.0",
     "axios": "^1.10.0",
-    "babel-plugin-module-resolver": "^5.0.3",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "katex": "^0.16.47",
@@ -60,6 +66,7 @@
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.2.2",
     "@eslint/js": "^9.30.1",
     "@playwright/test": "^1.54.1",
     "@tanstack/eslint-plugin-query": "^5.102.1",

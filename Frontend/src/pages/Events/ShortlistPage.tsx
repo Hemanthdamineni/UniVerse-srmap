@@ -17,6 +17,7 @@ import { EmptyState } from '../../components/competition/CompetitionEmptyState';
 import { SkeletonTable } from '../../components/ui/Skeletons';
 import { Input } from "../../components/input";
 import { Select } from "../../components/select";
+import { useResolvedNames } from '../../hooks/useResolvedNames';
 
 type SubmissionRow = {
   id: string;
@@ -29,6 +30,7 @@ type SubmissionRow = {
 export default function ShortlistPage() {
   const { eventId = '', roundId = '' } = useParams();
   const [rows, setRows] = useState<SubmissionRow[]>([]);
+  const nameFor = useResolvedNames(rows.map((r) => r.submittedBy));
   const [mode, setMode] = useState<'topN' | 'threshold'>('topN');
   const [value, setValue] = useState(10);
   const [busy, setBusy] = useState(false);
@@ -198,7 +200,7 @@ export default function ShortlistPage() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="min-w-7 font-bold text-[var(--comp-accent)]">#{idx + 1}</span>
-                      <span className="text-sm text-[var(--text-primary)]">{row.submittedBy}</span>
+                      <span className="text-sm text-[var(--text-primary)]">{nameFor(row.submittedBy)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-[var(--text-primary)]">{row.totalScore}</span>

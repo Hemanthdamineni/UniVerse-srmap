@@ -8,6 +8,20 @@ import { PageContainer } from '../../components/layout/PageLayouts';
 import { EmptyState, InlineError } from '../../components/ui/Feedback';
 import { SkeletonCard } from '../../components/ui/Skeletons';
 
+/**
+ * An opportunity whose deadline has passed should never be recommended — the
+ * personalised rail was surfacing expired listings beside a live "Apply" button.
+ * Undated opportunities are kept: many sources omit a deadline entirely.
+ */
+function isStillOpen(opp: CareerOpportunity): boolean {
+  if (opp.isActive === false) return false;
+  if (!opp.deadline) return true;
+  const due = Date.parse(opp.deadline);
+  if (Number.isNaN(due)) return true;
+  // Compare against the end of the deadline day, not the current instant.
+  return due + 24 * 60 * 60 * 1000 > Date.now();
+}
+
 const CareerHomePage: React.FC = () => {
   const [latestOpps, setLatestOpps] = useState<CareerOpportunity[]>([]);
   const [personalizedOpps, setPersonalizedOpps] = useState<CareerOpportunity[]>([]);
@@ -25,8 +39,8 @@ const CareerHomePage: React.FC = () => {
         getPersonalizedFeed()
       ]);
       setLatestOpps(latest.items);
-      setExpiringOpps(expiring.items);
-      setPersonalizedOpps(personalized.items.slice(0, 3));
+      setExpiringOpps(expiring.items.filter(isStillOpen));
+      setPersonalizedOpps(personalized.items.filter(isStillOpen).slice(0, 3));
     } catch (err) {
       console.error('Failed to fetch career opportunities', err);
       setError(err instanceof Error ? err.message : "Could not load career opportunities.");
@@ -130,7 +144,17 @@ const CareerHomePage: React.FC = () => {
               Update Profile
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Sized to the item count so a one-item rail doesn't render as a
+              three-column grid with two empty cells. */}
+          <div
+            className={`grid gap-4 ${
+              personalizedOpps.length === 1
+                ? "grid-cols-1"
+                : personalizedOpps.length === 2
+                ? "grid-cols-1 md:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {personalizedOpps.map(opp => (
               <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}

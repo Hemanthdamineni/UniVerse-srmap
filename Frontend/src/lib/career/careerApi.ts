@@ -59,6 +59,15 @@ export type CareerOpportunity = {
     missing: string[];
     percent: number;
   };
+  /** Present when the list was requested with sort=fit (B7). */
+  fit?: {
+    fitScore: number;
+    eligible: boolean;
+    matchedSkills: string[];
+    missingSkills: string[];
+    whyThis: string[];
+    breakdown?: Record<string, number>;
+  };
   similar?: CareerOpportunity[];
 };
 
@@ -125,27 +134,6 @@ export type OpportunityFit = {
   recommendations: string[];
   resumeVersionId: string | null;
   opportunityId: string;
-};
-
-export type ResumeCareerSkill = { name: string; level: string };
-
-export type ResumeCareerProject = {
-  id: string;
-  title: string;
-  description: string;
-  tech: string;
-  link: string;
-};
-
-export type ResumeCareerProfile = Omit<CareerProfile, "skills"> & {
-  name: string;
-  email: string;
-  department: string;
-  headline: string;
-  summary: string;
-  completionPercent: number;
-  skills: ResumeCareerSkill[];
-  projects: ResumeCareerProject[];
 };
 
 export type SkillGap = {
@@ -380,19 +368,41 @@ export type InterviewBooking = {
 
 
 
-export async function listOpportunities(filters?: Record<string, string>) {
+export type OpportunityPage = {
+  items: CareerOpportunity[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  /** Total eligible+ranked count, only when sort=fit. */
+  rankedTotal?: number;
+};
+
+export async function listOpportunities(
+  filters?: Record<string, string>
+): Promise<OpportunityPage> {
   if (isStaticPrototype()) {
     const query = String(filters?.query || "").toLowerCase();
-    return {
-      items: STATIC_CAREER_OPPORTUNITIES.filter((item) =>
-        query ? `${item.title} ${item.company || ""}`.toLowerCase().includes(query) : true
-      ),
-    };
+    const items = STATIC_CAREER_OPPORTUNITIES.filter((item) =>
+      query ? `${item.title} ${item.company || ""}`.toLowerCase().includes(query) : true
+    );
+    return { items, page: 1, limit: items.length, hasMore: false };
   }
+
   const params = new URLSearchParams(filters || {});
-  return requestData<{ items: CareerOpportunity[] }>(
+  const res = await requestData<Partial<OpportunityPage> & { items: CareerOpportunity[] }>(
     `/api/career/opportunities${params.toString() ? `?${params.toString()}` : ""}`
   );
+
+  // Tolerate the pre-pagination response shape so a stale server can't blank the list.
+  const page = Number(res.page) || Number(filters?.page) || 1;
+  const limit = Number(res.limit) || res.items.length;
+  return {
+    items: res.items,
+    page,
+    limit,
+    hasMore: typeof res.hasMore === "boolean" ? res.hasMore : res.items.length === limit,
+    rankedTotal: typeof res.rankedTotal === "number" ? res.rankedTotal : undefined,
+  };
 }
 
 export async function getPersonalizedFeed() {

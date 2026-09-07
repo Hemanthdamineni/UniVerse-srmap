@@ -30,8 +30,44 @@ export { sanitizeErpDisplayText as sanitizeText };
  * - Looks like a form redirect call (contains "redirect" or "Loading...")
  * - The text starts with the title repeated (common ERP duplication)
  */
+/**
+ * Returns true if the text is leaked page source rather than prose.
+ *
+ * Several ERP pages inline `<script>`/`<style>` inside the region the extractor
+ * treats as content, so the raw jQuery and CSS arrive here as "text". Without
+ * this guard it renders verbatim to students — `/settings` was displaying
+ * `input,select{ height: 30px; } $(function () { ... })` as body copy.
+ *
+ * Two independent signals must agree before text is discarded, so ordinary
+ * sentences that merely contain a brace or a parenthesis are never suppressed.
+ */
+function looksLikeCode(text: string): boolean {
+  if (!text) return false;
+
+  const signals = [
+    /\bfunction\s+\w*\s*\([^)]*\)\s*\{/, // function declarations
+    /\$\(\s*(?:function|document|["'#.])/, // jQuery entry points
+    /\b(?:var|const|let)\s+\w+\s*=/, // variable declarations
+    /\b(?:ajax|jqXHR|xmlhttp|responseText|onreadystatechange)\b/i, // XHR plumbing
+    /[.#]?[\w-]+\s*\{[^}]*:[^}]*(?:px|em|rem|%|#[0-9a-f]{3,6})[^}]*\}/i, // CSS rule bodies
+    /\b(?:alert|console\.log)\s*\(/, // debug calls
+    /\}\s*\)\s*;/, // closing callback punctuation
+  ];
+
+  const hits = signals.reduce((n, re) => n + (re.test(text) ? 1 : 0), 0);
+  if (hits >= 2) return true;
+
+  // A single very strong signal is enough when the text is also brace-dense —
+  // prose does not carry a brace every eighty characters.
+  const braces = (text.match(/[{}]/g) || []).length;
+  return hits >= 1 && braces >= 4 && braces / text.length > 0.0125;
+}
+
 function isTableDump(text: string, title: string): boolean {
   if (!text) return false;
+
+  // Leaked <script>/<style> contents from the upstream page
+  if (looksLikeCode(text)) return true;
 
   // JS redirect or loading stub
   if (/redirect\w+\s*\(\s*\)/i.test(text)) return true;

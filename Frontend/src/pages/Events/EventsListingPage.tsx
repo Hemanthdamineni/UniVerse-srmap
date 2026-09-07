@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Building2, CalendarClock, Plus, Search, Sparkles, Users } from "lucide-react";
 import { CompetitionCard, CompetitionEmptyPanel, CompetitionPageShell } from "../../components/competition/CompetitionChrome";
@@ -120,22 +120,57 @@ function EventCard({ event, index }: { event: EventSummary; index: number }) {
   );
 }
 
-function RecommendationRail({
-  recommendations,
-  eventsById,
-}: {
-  recommendations: PlatformRecommendation[];
-  eventsById: Map<string, EventSummary>;
-}) {
-  const visible = recommendations
-    .map((recommendation) => ({
-      recommendation,
-      event: eventsById.get(recommendation.itemId),
-    }))
-    .filter((item): item is { recommendation: PlatformRecommendation; event: EventSummary } => Boolean(item.event))
-    .slice(0, 3);
+type RailItem = {
+  itemId: string;
+  title: string;
+  label: string;
+  department: string;
+  score: number; // 0..1
+  reasons: string[];
+  href: string;
+  impressionId?: string;
+};
 
-  if (!visible.length) return null;
+/** Graph fit-ranked events → rail items (T4.4). */
+function railItemsFromFit(events: EventSummary[]): RailItem[] {
+  return events
+    .filter((event) => event.fit && event.fit.eligible !== false)
+    .sort((a, b) => (b.fit?.fitScore ?? 0) - (a.fit?.fitScore ?? 0))
+    .slice(0, 3)
+    .map((event) => ({
+      itemId: event.id,
+      title: event.title,
+      label: event.category || "Event match",
+      department: event.department || eventVenue(event),
+      score: (event.fit?.fitScore ?? 0) / 100,
+      reasons: event.fit?.whyThis ?? [],
+      href: `/events/${encodeURIComponent(event.id)}`,
+    }));
+}
+
+/** Keyword recommendation service → rail items (fallback when the graph isn't available). */
+function railItemsFromPlatform(
+  recommendations: PlatformRecommendation[],
+  eventsById: Map<string, EventSummary>,
+): RailItem[] {
+  return recommendations
+    .map((recommendation) => ({ recommendation, event: eventsById.get(recommendation.itemId) }))
+    .filter((item): item is { recommendation: PlatformRecommendation; event: EventSummary } => Boolean(item.event))
+    .slice(0, 3)
+    .map(({ recommendation, event }) => ({
+      itemId: recommendation.itemId,
+      title: event.title,
+      label: recommendation.label || event.category || "Event match",
+      department: event.department || eventVenue(event),
+      score: recommendation.score,
+      reasons: recommendation.reasons,
+      href: recommendation.href || `/events/${encodeURIComponent(recommendation.itemId)}`,
+      impressionId: recommendation.impressionId,
+    }));
+}
+
+function RecommendationRail({ items }: { items: RailItem[] }) {
+  if (!items.length) return null;
 
   return (
     <section className="pt-4" aria-label="Recommended events">
@@ -145,25 +180,25 @@ function RecommendationRail({
             <Sparkles size={14} />
             Recommended for you
           </p>
-          <h2 className="m-0 mt-1 text-lg font-semibold text-[var(--text-primary)]">Campus opportunities matched to your profile</h2>
+          <h2 className="m-0 mt-1 text-lg font-semibold text-[var(--text-primary)]">Campus events matched to your profile</h2>
         </div>
         <span className="text-xs font-semibold text-[var(--text-secondary)]">Profile signals</span>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        {visible.map(({ recommendation, event }) => (
+        {items.map((item) => (
           <Link
-            key={recommendation.impressionId || recommendation.itemId}
-            to={recommendation.href || `/events/${encodeURIComponent(recommendation.itemId)}`}
+            key={item.impressionId || item.itemId}
+            to={item.href}
             className="rounded-lg border border-[var(--border)] bg-[var(--dash-subcard-bg)] p-4 text-left no-underline transition hover:border-[color-mix(in_srgb,var(--accent-blue)_35%,var(--border))] hover:bg-[var(--background)]"
             onClick={() => {
               track("events_recommendation_clicked", {
-                eventId: recommendation.itemId,
-                impressionId: recommendation.impressionId,
-                score: recommendation.score,
+                eventId: item.itemId,
+                impressionId: item.impressionId,
+                score: item.score,
               });
-              if (recommendation.impressionId) {
+              if (item.impressionId) {
                 void recordPlatformRecommendationFeedback({
-                  impressionId: recommendation.impressionId,
+                  impressionId: item.impressionId,
                   action: "clicked",
                   metadata: { surface: "events_listing" },
                 });
@@ -173,16 +208,16 @@ function RecommendationRail({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="m-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                  {recommendation.label || event.category || "Event match"}
+                  {item.label}
                 </p>
-                <h3 className="m-0 mt-1 text-base font-semibold leading-snug text-[var(--text-primary)]">{event.title}</h3>
+                <h3 className="m-0 mt-1 text-base font-semibold leading-snug text-[var(--text-primary)]">{item.title}</h3>
               </div>
               <span className="rounded-full border border-[color-mix(in_srgb,var(--accent-blue)_28%,var(--border))] px-2 py-1 text-xs font-semibold text-[var(--accent-blue)]">
-                {Math.round(recommendation.score * 100)}%
+                {Math.round(item.score * 100)}%
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {recommendation.reasons.slice(0, 2).map((reason) => (
+              {item.reasons.slice(0, 2).map((reason) => (
                 <span key={reason} className="rounded-full border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-secondary)]">
                   {reason}
                 </span>
@@ -190,7 +225,7 @@ function RecommendationRail({
             </div>
             <p className="m-0 mt-3 inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
               <Building2 size={13} />
-              {event.department || eventVenue(event)}
+              {item.department}
             </p>
           </Link>
         ))}
@@ -201,11 +236,11 @@ function RecommendationRail({
 
 export default function EventsListingPage() {
   const [events, setEvents] = useState<EventSummary[]>([]);
+  const [fitEvents, setFitEvents] = useState<EventSummary[]>([]);
   const [recommendations, setRecommendations] = useState<PlatformRecommendation[]>([]);
+  const railViewedRef = useRef(false);
   const [loading, setLoading] = useState(true);
-  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [recommendationError, setRecommendationError] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(categories[0]);
   const [department, setDepartment] = useState(departments[0]);
@@ -225,26 +260,32 @@ export default function EventsListingPage() {
     loadEvents();
   }, [loadEvents]);
 
+  // Graph fit-ranked upcoming events (B7 / T4.4.1). Best-effort: a stale server
+  // or the static prototype just returns an unranked list and the rail falls
+  // back to the keyword recommendation service below.
   useEffect(() => {
     let active = true;
-    setRecommendationsLoading(true);
-    setRecommendationError("");
+    listEvents({ sort: "fit", type: "upcoming", status: "published" })
+      .then((list) => {
+        if (active) setFitEvents(list);
+      })
+      .catch(() => {
+        if (active) setFitEvents([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Keyword recommendation service — the fallback source for the rail.
+  useEffect(() => {
+    let active = true;
     getPlatformRecommendations("events")
       .then((response) => {
-        if (!active) return;
-        setRecommendations(response.items || []);
-        if (response.items?.length) {
-          track("events_recommendations_viewed", {
-            count: response.items.length,
-            topEventId: response.items[0]?.itemId,
-          });
-        }
+        if (active) setRecommendations(response.items || []);
       })
-      .catch((err: unknown) => {
-        if (active) setRecommendationError(err instanceof Error ? err.message : "Failed to load event recommendations.");
-      })
-      .finally(() => {
-        if (active) setRecommendationsLoading(false);
+      .catch(() => {
+        if (active) setRecommendations([]);
       });
     return () => {
       active = false;
@@ -252,6 +293,20 @@ export default function EventsListingPage() {
   }, []);
 
   const eventsById = useMemo(() => new Map(events.map((event) => [event.id, event])), [events]);
+
+  const railItems = useMemo(() => {
+    const fromFit = railItemsFromFit(fitEvents);
+    return fromFit.length ? fromFit : railItemsFromPlatform(recommendations, eventsById);
+  }, [fitEvents, recommendations, eventsById]);
+
+  useEffect(() => {
+    if (railViewedRef.current || railItems.length === 0) return;
+    railViewedRef.current = true;
+    track("events_recommendations_viewed", {
+      count: railItems.length,
+      topEventId: railItems[0]?.itemId,
+    });
+  }, [railItems]);
 
   const filteredEvents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -342,9 +397,7 @@ export default function EventsListingPage() {
       </section>
 
       {error ? <ErrorMessage title="Events could not load" message={error} onRetry={loadEvents} /> : null}
-      {!recommendationsLoading && !recommendationError ? (
-        <RecommendationRail recommendations={recommendations} eventsById={eventsById} />
-      ) : null}
+      {railItems.length > 0 ? <RecommendationRail items={railItems} /> : null}
 
       {loading ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-4">

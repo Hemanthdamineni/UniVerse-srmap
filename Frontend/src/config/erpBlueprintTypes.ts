@@ -2,8 +2,6 @@ export type AccessType = "B" | "A";
 
 export type Domain = "erp" | "lms" | "career" | "campus" | "admin";
 export type SidebarDomain = Domain | "mixed";
-export type PageSourceMode = "erp" | "internal" | "external";
-export type IntegrationState = "native" | "adapter" | "summary" | "placeholder";
 export type PageStatus = "active" | "hidden" | "coming-soon" | "experimental";
 
 export type PageRenderer =

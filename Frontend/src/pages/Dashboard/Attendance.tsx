@@ -112,7 +112,8 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
               tickLine={false}
               axisLine={false}
               fontSize={10}
-              width={28}
+              // 28px clipped the widest tick ("100%") down to "00%".
+              width={36}
               tickCount={5}
               tickFormatter={(value) => `${value}%`}
               tick={{ fill: "var(--comp-text-secondary)" }}

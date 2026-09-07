@@ -13,8 +13,8 @@
  * @module erpExtractors/extractGenericTable
  */
 
-const cheerio = require("cheerio");
 const { cleanText } = require("../../../utils/text");
+const { loadHtml } = require("./loadHtml");
 
 /**
  * @param {string} html
@@ -22,7 +22,8 @@ const { cleanText } = require("../../../utils/text");
  * @returns {{ type: "generic-table", title: string, tables: Array<{columns: string[], rows: Object[]}>, text: string, notice: string|undefined }}
  */
 function extractGenericTable(html, expectedTitle) {
-  const $ = cheerio.load(html || "");
+  const $ = loadHtml(html); // strips <script>/<style> so their source can't
+                            // reach the $("body").text() fallback below
 
   const title = cleanText($("h2").first().text()) || expectedTitle || "";
 

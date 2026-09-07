@@ -3,9 +3,6 @@ import { isStaticPrototype } from "../core/prototype";
 import type { AcademicCalendar, CalendarTerm } from "./types";
 import type { TermWindow } from "./calendarUtils";
 
-export type AcademicCalendarResponse = AcademicCalendar & {
-  termWindows: Record<CalendarTerm, TermWindow>;
-};
 
 export async function getAcademicCalendar(): Promise<AcademicCalendar> {
   if (isStaticPrototype()) {

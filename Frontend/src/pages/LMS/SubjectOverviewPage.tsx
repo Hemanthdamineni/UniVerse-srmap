@@ -148,7 +148,7 @@ export function SubjectOverviewSection({ code }: { code: string }) {
   );
 }
 
-export function SubjectOverviewPage() {
+function SubjectOverviewPage() {
   const { code = "" } = useParams();
 
   return (

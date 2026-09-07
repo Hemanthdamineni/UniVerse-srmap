@@ -778,24 +778,89 @@ function uniqueKeywords(values) {
 
 // --- lmsRevisionScheduler.js ---
 const INTERVALS = [1, 3, 7, 14, 30];
+const DAY_MS = 86_400_000;
+const AT_RISK_MAX_INTERVAL = 3;
+// How far out an exam can be and still be considered the reason for this review.
+const EXAM_LOOKAHEAD_DAYS = 45;
 
 class LmsRevisionScheduler {
-  getNextRevision({ previousInterval = 1, previousRepetition = 0, score = 0 }) {
-    if (score < 60) {
-      return {
-        dueDate: addDaysIso(nowIso(), 1),
-        interval: 1,
-        repetition: 0,
-      };
+  /**
+   * @param {object} [deps]
+   * @param {{ listExamWindows: (opts?: object) => Array }} [deps.academicCalendar]
+   *   Optional. When present, `getNextRevision` pulls a review in front of the
+   *   nearest mid-term / end-term / practical / CLA assessment (B7 / T4.5.1).
+   */
+  constructor({ academicCalendar = null } = {}) {
+    this.academicCalendar = academicCalendar;
+  }
+
+  /**
+   * @param {object} input
+   * @param {number}  [input.previousInterval]
+   * @param {number}  [input.previousRepetition]
+   * @param {number}  [input.score]                last self-rated recall, 0–100
+   * @param {boolean} [input.atRisk]               subject is on the graph's at-risk list — tighten the loop
+   * @param {Array}   [input.examWindows]          `[{ title, startAt }]`; falls back to the injected calendar
+   * @param {string}  [input.now]                  ISO, for deterministic tests
+   * @returns {{ dueDate: string, interval: number, repetition: number, adjustedForAtRisk?: boolean, adjustedForExam?: string }}
+   */
+  getNextRevision({
+    previousInterval = 1,
+    previousRepetition = 0,
+    score = 0,
+    atRisk = false,
+    examWindows = null,
+    now = nowIso(),
+  } = {}) {
+    const failed = score < 60;
+    const repetition = failed ? 0 : previousRepetition + 1;
+    let interval = failed
+      ? 1
+      : INTERVALS[Math.min(INTERVALS.length - 1, repetition - 1)] || previousInterval || 30;
+
+    let adjustedForAtRisk = false;
+    if (atRisk && interval > AT_RISK_MAX_INTERVAL) {
+      interval = AT_RISK_MAX_INTERVAL;
+      adjustedForAtRisk = true;
     }
 
-    const repetition = previousRepetition + 1;
-    const interval = INTERVALS[Math.min(INTERVALS.length - 1, repetition - 1)] || previousInterval || 30;
+    let dueDate = addDaysIso(now, interval);
+
+    const windows = Array.isArray(examWindows) ? examWindows : this._loadExamWindows(now);
+    const exam = this._pullBeforeExam(dueDate, now, windows);
+    if (exam) dueDate = exam.dueDate;
+
     return {
-      dueDate: addDaysIso(nowIso(), interval),
+      dueDate,
       interval,
       repetition,
+      ...(adjustedForAtRisk ? { adjustedForAtRisk: true } : {}),
+      ...(exam ? { adjustedForExam: exam.title } : {}),
     };
+  }
+
+  _loadExamWindows(now) {
+    try {
+      return this.academicCalendar?.listExamWindows?.({ now }) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** If the natural due date lands on/after the nearest upcoming exam, move it two days before. */
+  _pullBeforeExam(dueDateIso, nowIsoValue, windows) {
+    const nowMs = Date.parse(nowIsoValue);
+    const dueMs = Date.parse(dueDateIso);
+    if (!Number.isFinite(nowMs) || !Number.isFinite(dueMs)) return null;
+    for (const window of windows || []) {
+      const startMs = Date.parse(window.startAt);
+      if (!Number.isFinite(startMs) || startMs <= nowMs) continue;
+      if (startMs - nowMs > EXAM_LOOKAHEAD_DAYS * DAY_MS) break; // sorted — nothing nearer
+      if (dueMs < startMs - DAY_MS) return null; // review already lands before it
+      const target = Math.max(nowMs + DAY_MS, startMs - 2 * DAY_MS);
+      return { dueDate: new Date(target).toISOString(), title: window.title };
+    }
+    return null;
   }
 }
 

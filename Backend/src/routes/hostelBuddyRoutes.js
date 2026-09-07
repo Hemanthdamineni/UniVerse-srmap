@@ -60,7 +60,7 @@ function createHostelBuddyRoutes({ hostelBuddyStore }) {
     }
   }
 
-  router.get("/hostel-buddy/governance", (req, res) => { require("fs").appendFileSync("/tmp/route-hits.log", "GOVERNANCE-HANDLER-CALLED " + new Date().toISOString() + "\n");
+  router.get("/hostel-buddy/governance", (req, res) => {
     try {
       return sendApiSuccess(res, req, { governance: GOVERNANCE });
     } catch (error) {
