@@ -56,9 +56,22 @@ export const MAIN_NAV: NavSection[] = [
           { type: "link", label: "Bank Details", route: "/finance/bank-details", domain: "erp", access: "B" },
         ],
       },
-      // B14 / T5.1.1 — one entry for every registration flow; the tabs live on
-      // the hub page (Course · Hostel · Transport · Exam · Minor/OE · SAP).
-      { type: "link", label: "Registration", route: "/registration", domain: "erp", icon: "ClipboardList", access: "B" },
+      // One nav group, six standalone pages — Course · Minor/OE · Exam ·
+      // Hostel · Transport · SAP.
+      {
+        type: "group",
+        label: "Registration",
+        icon: "ClipboardList",
+        domain: "mixed",
+        children: [
+          { type: "link", label: "Course Registration", route: "/registration/course-registration", domain: "erp", access: "B" },
+          { type: "link", label: "Minor / OE Registration", route: "/registration/minor-oe-registration", domain: "erp", access: "B" },
+          { type: "link", label: "Exam Registration", route: "/registration/exam-registration", domain: "erp", access: "B" },
+          { type: "link", label: "Hostel Registration", route: "/registration/hostel-registration", domain: "campus", access: "B" },
+          { type: "link", label: "Transport Registration", route: "/registration/transport-registration", domain: "campus", access: "B" },
+          { type: "link", label: "SAP Registration", route: "/registration/sap-registration", domain: "erp", access: "B" },
+        ],
+      },
 
       {
         type: "group",

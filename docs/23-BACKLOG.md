@@ -29,6 +29,7 @@ Every story carries **AC** (acceptance criteria). A story is not done until its 
 - **B8 done (2026-09-06)** — Epic 6 Stories 6.1 + 6.2: `notificationService` (event taxonomy, adapter contract, delivery log + retry, quiet hours / category mute / rate limit) with in-app + Web Push adapters; VAPID auto-generates in dev; `sw-push.js` handlers; Settings "Push notifications" card; `attendance_risk` + `results_published` wired from the ERP sink.
 - **B9 code-complete (2026-09-06)** — Epic 6 Story 6.4: `createEmailAdapter` (nodemailer, inert without `SMTP_HOST`), `digestService` weekly-digest builder + once-per-ISO-week cycle driven by the student graph, one-click HMAC unsubscribe (RFC 8058 headers), Settings toggle. Only a real SMTP host stands between it and prod.
 - **B14 done (2026-09-06)** — Epic 5 Story 5.1: `/registration` hub with 6 tabs replaces the 3-child nav group; Bank Details moved into the Finance group; 5 placeholder blueprints + `EventsRegistrationHub` deleted (87 → 83 pages). `audit:metadata` green.
+- **B14 revised (2026-09-08, user request)** — the tabbed `/registration` hub was reverted to six standalone pages under one "Registration" nav group (`RegistrationHubPage.tsx` + the `/registration` blueprint/route deleted; the six per-flow blueprints un-hidden).
 - **B10 code-complete (2026-09-06)** — Epic 6 Story 6.3: dependency-free Google OAuth (`config/googleOAuth.js`), AES-256-GCM `googleTokenStore`, `calendarSyncService` (secondary calendar + weekly-recurring timetable events + one-off deadline events, idempotent upsert via `erpKey`, prune, disconnect removes the whole calendar + revokes). Settings card. Only a Google OAuth client stands between it and prod.
 - **B12 code-complete (2026-09-06)** — Epic 6 Story 6.6: `classroomService` (read-only coursework pull, flag-gated `GOOGLE_CLASSROOM_ENABLED`), `unifiedDeadlineService` merging Classroom + opportunities + events + academic-calendar into one `/api/deadlines` timeline, "Coming up" panel in the Academic Hub. Works fully without Classroom; the flag stays off until T6.6.0 is answered.
 - **B13 spike + code-complete (2026-09-06)** — Epic 7: Capacitor 6 config + scripts + `docs/24-NATIVE-SHELL.md` (auth strategy settled), native-push helper + inert FCM adapter + `native_subscriptions` endpoints, offline-first query persister + honest `OfflineBanner`. Remaining: store-listing builds (Play + App Store accounts) and biometric unlock.
@@ -444,12 +445,15 @@ into `AcademicHubPage`.
 > **Outcome:** Fewer, better destinations. Removes ~7 sidebar entries.
 
 ### STORY 5.1 — As a student, related ERP pages live in one place `M` ✅ (Batch B14, 2026-09-06)
-- [x] **T5.1.1** `pages/ERP/RegistrationHubPage.tsx` at `/registration` — one
-      `SegmentedControl` with six tabs (Course · Hostel · Transport · Exam ·
-      Minor/OE · SAP), each rendering the existing `RegistrationErpPage` against
-      its blueprint (live data + refresh + "submit on the portal" guidance all
-      intact). Deep-linkable via `?tab=hostel` (verified headless). The nav's
-      3-child "Registration" group collapsed to a single link `M`
+- [x] **T5.1.1** ~~`pages/ERP/RegistrationHubPage.tsx` at `/registration` — one
+      `SegmentedControl` with six tabs~~ **Superseded (2026-09-08, user request):**
+      the tabbed hub is gone. The six per-flow blueprints
+      (`/registration/{course,minor-oe,exam,hostel,transport,sap}-registration`)
+      are visible standalone pages again — each renders `RegistrationErpPage`
+      (hostel via `HostelRegistrationPage` for the Buddy Finder) — grouped under
+      a single "Registration" nav group. `RegistrationHubPage.tsx` +
+      `SegmentedControl` tab chrome + the `/registration` blueprint / route
+      deleted `M`
 - [x] **T5.1.2** `/finance/bank-details` un-hidden and added to the **Finance**
       nav group; SAP & Scholarships is reachable from the hub's SAP tab. The
       six per-flow registration blueprints are now `status: hidden` (the hub is

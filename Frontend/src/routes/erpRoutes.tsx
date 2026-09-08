@@ -40,7 +40,6 @@ const BankDetailsPage = lazy(() => import("../pages/ERP/BankDetailsPage"));
 const CurriculumPage = lazy(() => import("../pages/ERP/CurriculumPage"));
 const DocumentErpPage = lazy(() => import("../pages/ERP/DocumentErpPage"));
 const RegistrationErpPage = lazy(() => import("../pages/ERP/RegistrationErpPage"));
-const RegistrationHubPage = lazy(() => import("../pages/ERP/RegistrationHubPage"));
 const FaqsPage = lazy(() => import("../pages/ERP/FaqsPage"));
 const FeeDuesPage = lazy(() => import("../pages/ERP/FeeDuesPage"));
 const FeePaidPage = lazy(() => import("../pages/ERP/FeePaidPage"));
@@ -73,7 +72,6 @@ export const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/helpdesk/raise-ticket": <RaiseTicket />,
   "/helpdesk/faqs": <HelpdeskFAQs />,
   "/helpdesk/track-escalate": <TrackEscalate />,
-  "/registration": <RegistrationHubPage />,
   "/feedback/events-feedback": <EventsFeedback />,
   "/feedback/hostel-mess-feedback": <HostelMessFeedback />,
   "/feedback/transport-feedback": <TransportFeedback />,

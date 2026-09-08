@@ -68,23 +68,14 @@ export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   "/transport-hostel/hostel-booking": campus("/transport-hostel/hostel-booking", "Hostel Booking", ["hostel/hostel-booking-for-full-year"], "Loading hostel info..."),
   "/transport-hostel/room-details": { ...erp("/transport-hostel/room-details", "Rooms Details", ["hostel/room-details"], "room-details", "Loading room details..."), domain: "campus" },
 
-  // B14 / T5.1.1 — one tabbed hub replaces the six per-flow entries. The
-  // per-flow blueprints below stay (the hub renders them, and they remain
-  // directly navigable / deep-linkable via `?tab=`).
-  "/registration": {
-    route: "/registration",
-    heading: "Registration",
-    fetchKeys: [],
-    domain: "erp",
-    sourceMode: "erp",
-    integrationState: "native",
-    renderer: "generic",
-    loadingMessage: "Loading registration...",
-  } as PageBlueprint,
-  "/registration/course-registration": { ...erp("/registration/course-registration", "Course Registration", ["academic/course-registration", "academic/course-registration-cancellation"], "document", "Loading course registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/minor-oe-registration": { ...erp("/registration/minor-oe-registration", "Minor / OE Registration", ["academic/minor-program-registration"], "document", "Loading minor/OE registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/exam-registration": { ...erp("/registration/exam-registration", "Exam Registration", ["examination/exam-registration", "examination/exam-registration-details"], "document", "Loading exam registration..."), status: "hidden" as PageBlueprint["status"] },
-  "/registration/hostel-registration": { ...erp("/registration/hostel-registration", "Hostel Registration", ["hostel/hostel-booking-for-full-year"], "document", "Loading hostel registration..."), domain: "campus", status: "hidden" as PageBlueprint["status"] },
-  "/registration/transport-registration": { ...erp("/registration/transport-registration", "Transport Registration", ["transport/transport-registration", "transport/registration-acknowledgment"], "document", "Loading transport registration..."), domain: "campus", status: "hidden" as PageBlueprint["status"] },
-  "/registration/sap-registration": { ...erp("/registration/sap-registration", "SAP Registration", ["sap/sap-process"], "document", "Loading SAP registration..."), status: "hidden" as PageBlueprint["status"] },
+  // Six standalone registration pages, one per flow. Each renders
+  // `RegistrationErpPage` against its own blueprint (hostel adds the Buddy
+  // Finder via `HostelRegistrationPage`); the sidebar groups them under a
+  // single "Registration" nav group.
+  "/registration/course-registration": erp("/registration/course-registration", "Course Registration", ["academic/course-registration", "academic/course-registration-cancellation"], "document", "Loading course registration..."),
+  "/registration/minor-oe-registration": erp("/registration/minor-oe-registration", "Minor / OE Registration", ["academic/minor-program-registration"], "document", "Loading minor/OE registration..."),
+  "/registration/exam-registration": erp("/registration/exam-registration", "Exam Registration", ["examination/exam-registration", "examination/exam-registration-details"], "document", "Loading exam registration..."),
+  "/registration/hostel-registration": { ...erp("/registration/hostel-registration", "Hostel Registration", ["hostel/hostel-booking-for-full-year"], "document", "Loading hostel registration..."), domain: "campus" },
+  "/registration/transport-registration": { ...erp("/registration/transport-registration", "Transport Registration", ["transport/transport-registration", "transport/registration-acknowledgment"], "document", "Loading transport registration..."), domain: "campus" },
+  "/registration/sap-registration": erp("/registration/sap-registration", "SAP Registration", ["sap/sap-process"], "document", "Loading SAP registration..."),
 };
