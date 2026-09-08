@@ -242,7 +242,7 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
           boxShadow: "var(--sidebar-shadow)",
         }}
       >
-      <div className="flex items-center gap-2 border-b px-4 py-2" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center justify-center gap-2 border-b px-4 py-2" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
           <BrandLogo height={52} className="shrink-0" />
         ) : null}
