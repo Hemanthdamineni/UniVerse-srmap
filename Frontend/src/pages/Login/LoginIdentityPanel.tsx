@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import UniVerseWordmark from "../../components/brand/UniVerseWordmark";
+import BrandLogo from "../../components/brand/BrandLogo";
 
 const HIGHLIGHTS = [
   { label: "Secure session-based login", sub: "Credentials verified directly against the university backend." },
@@ -37,12 +37,9 @@ export default function LoginIdentityPanel() {
 
       <div className="login-identity-content" style={{ padding: "var(--space-xl) var(--space-lg)", justifyContent: "space-between" }}>
         <div>
-          <div className="login-identity-enter login-id-d0">
-            {/* Panel is always dark; keep the wordmark white and let the accent
-                marks read against it. */}
-            <span style={{ display: "block", color: "#fff", marginBottom: "var(--space-lg)" }}>
-              <UniVerseWordmark height={40} titleId="login-wordmark-title" />
-            </span>
+          <div className="login-identity-enter login-id-d0" style={{ marginBottom: "var(--space-lg)" }}>
+            {/* Panel is always dark; seat the mark on a white plaque. */}
+            <BrandLogo height={38} plaque />
           </div>
           <div className="login-identity-enter login-id-d1">
             <h1 style={{ fontSize: "1.7rem", fontWeight: 700, color: "var(--panel-fg)", lineHeight: 1.25, margin: 0, letterSpacing: "-0.02em" }}>

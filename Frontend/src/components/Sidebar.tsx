@@ -5,7 +5,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/r
 import { BOTTOM_NAV, isPageVisible, PAGE_BLUEPRINTS } from "../config/erpBlueprints";
 import { getMainNavSections } from "../config/navigationRegistry";
 import { SidebarNavIcon } from "./SidebarNavIcons";
-import UniVerseWordmark from "./brand/UniVerseWordmark";
+import BrandLogo from "./brand/BrandLogo";
 import { fetchSessionProfile, hasSessionAuth, logoutSession, readStoredProfileData } from "../lib/core/session";
 import { isStaticPrototype } from "../lib/core/prototype";
 import { sessionKeys } from "../lib/core/queryKeys";
@@ -242,9 +242,9 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
           boxShadow: "var(--sidebar-shadow)",
         }}
       >
-      <div className="flex items-center gap-2 border-b py-0.5 pl-3 pr-2" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center gap-2 border-b px-4 py-2" style={{ borderColor: "var(--border)" }}>
         {!sidebarClosed ? (
-          <UniVerseWordmark height={38} className="flex-1" titleId="sidebar-wordmark-title" />
+          <BrandLogo height={52} className="shrink-0" />
         ) : null}
         <button
           type="button"

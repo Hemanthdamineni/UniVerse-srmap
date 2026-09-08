@@ -45,9 +45,10 @@ export default defineConfig({
               importScripts: ['/sw-push.js'],
               // Keep the on-demand badge sprites out of the PWA shell precache —
               // they aren't part of the app shell and are loaded lazily by
-              // React components. (The multi-MB Icons.png / *_mode_icon.png /
-              // horizontal_logo.png collection was deleted 2026-09-04 — the
-              // brand mark is now the inline `UniVerseWordmark` SVG.)
+              // React components. (The multi-MB Icons.png / *_mode_icon.png
+              // collection was deleted 2026-09-04; `horizontal_logo.png` came
+              // back 2026-09-08 as a ~30 KB resized/palette-reduced brand mark
+              // rendered via `BrandLogo`.)
               globIgnores: [
                 '**/icons/badges.jpeg',
                 '**/icons/dark_mode_badge.jpeg',

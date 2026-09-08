@@ -1,15 +1,13 @@
 // Header bar uses --comp-accent instead of hardcoded hex for theme parity.
 import { Link, useLocation } from "react-router-dom";
 import { hasSessionAuth } from "../lib/core/session";
-import UniVerseWordmark from "./brand/UniVerseWordmark";
+import BrandLogo from "./brand/BrandLogo";
 
 function Logo() {
     return (
         <Link to="/" className="inline-flex min-h-11 items-center" aria-label="UniVerse home">
-            {/* Header sits on the dark accent bar, so force a light tone. */}
-            <span className="text-white">
-                <UniVerseWordmark height={40} titleId="header-wordmark-title" />
-            </span>
+            {/* Header sits on the dark accent bar — seat the mark on a plaque. */}
+            <BrandLogo height={34} plaque />
         </Link>
     );
 }
