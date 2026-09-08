@@ -85,10 +85,11 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
           {feedbackPendingCount} course feedback item{feedbackPendingCount === 1 ? "" : "s"} need attention.
         </div>
       ) : null}
-      {/* Always a single column: this card is ~1/3 of the desktop dashboard row and
-          full-width on mobile — a 2-up grid left ~90px for the label and forced
-          "Attendance" to truncate to "At…". */}
-      <div className="grid flex-1 grid-cols-1 auto-rows-fr gap-2">
+      {/* Two columns at every width. The tighter icon tile + padding keep the
+          longest label ("Attendance") on one line down to the xl breakpoint,
+          where this card is only ~1/3 of the dashboard row; below that it has
+          room to spare. */}
+      <div className="grid flex-1 grid-cols-2 auto-rows-fr gap-2">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -96,14 +97,14 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
             key={link.path}
             type="button"
             onClick={() => handleLinkClick(link.path)}
-            className="dashboard-subcard flex min-h-14 items-center gap-2 rounded-lg px-3 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)]"
+            className="dashboard-subcard flex min-h-14 items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)]"
             style={{ transitionDuration: 'var(--duration-fast)' }}
           >
             <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-accent)]"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-accent)]"
               style={toneTile(LINK_TONES[link.path])}
             >
-              <Icon size={16} />
+              <Icon size={14} />
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold leading-tight text-[var(--comp-text-primary)]">{link.name}</span>
@@ -114,13 +115,13 @@ function QuickLinks({ feedbackPendingCount = 0 }: { feedbackPendingCount?: numbe
         <button
           type="button"
           onClick={() => handleLinkClick("/feedback/course-feedback")}
-          className={`dashboard-subcard flex min-h-14 items-center gap-2 rounded-lg px-3 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)] ${feedbackPendingCount > 0 ? "ring-2 ring-[color-mix(in_srgb,var(--warning)_45%,transparent)]" : ""}`}
+          className={`dashboard-subcard flex min-h-14 items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-all hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--comp-accent)] ${feedbackPendingCount > 0 ? "ring-2 ring-[color-mix(in_srgb,var(--warning)_45%,transparent)]" : ""}`}
         >
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-accent)]"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-accent)]"
             style={feedbackPendingCount > 0 ? toneTile("var(--warning)") : undefined}
           >
-            <ClipboardCheck size={16} />
+            <ClipboardCheck size={14} />
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold leading-tight text-[var(--comp-text-primary)]">Feedback</span>
