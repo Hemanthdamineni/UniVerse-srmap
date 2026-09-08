@@ -1,7 +1,8 @@
 // Opportunities: PageHeader, FilterBar, SkeletonCard loading, EmptyState; listOpportunities unchanged.
 import React, { useState } from "react";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listOpportunities, bookmarkOpportunity, type CareerOpportunity } from "../../lib/career/careerApi";
+import { listOpportunities, bookmarkOpportunity, type CareerOpportunity, type SavedSearchFilters } from "../../lib/career/careerApi";
+import { SavedSearchBar } from "./SavedSearchBar";
 import { careerKeys } from "../../lib/career/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import OpportunityCard from "../../components/career/OpportunityCard";
@@ -105,6 +106,11 @@ const OpportunitiesPage: React.FC = () => {
     void bookmarkToggle.mutateAsync(id).catch(() => undefined);
   };
 
+  const applySavedSearch = (filters: SavedSearchFilters) => {
+    handleSearch(filters.query ?? "");
+    handleTypeChange(filters.type ?? "");
+  };
+
   return (
     <PageContainer className="space-y-6">
       <PageHeader title="Opportunities" subtitle="Search openings, compare deadlines, and save roles to track later." />
@@ -150,6 +156,11 @@ const OpportunitiesPage: React.FC = () => {
             </select>
           </label>
         }
+      />
+
+      <SavedSearchBar
+        currentFilters={{ query: debouncedSearch || undefined, type: type || undefined }}
+        onApply={applySavedSearch}
       />
 
       {error ? (

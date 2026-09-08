@@ -8,6 +8,10 @@ import { createTestQueryClient } from "../../test/testUtils";
 
 vi.mock("../../lib/career/careerApi", () => ({
   bookmarkOpportunity: vi.fn(async (id: string) => ({ id, bookmarked: true })),
+  listSavedSearches: vi.fn(() => Promise.resolve({ items: [] })),
+  createSavedSearch: vi.fn(),
+  updateSavedSearch: vi.fn(),
+  deleteSavedSearch: vi.fn(),
   listOpportunities: vi.fn(() =>
     Promise.resolve({
       items: [

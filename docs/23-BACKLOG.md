@@ -20,12 +20,12 @@ Every story carries **AC** (acceptance criteria). A story is not done until its 
 **Status (2026-09-04):**
 - Epic 1 complete.
 - **B1 complete** — Epic 2 (mobile): data tables → cards, single-item rails, mobile shell, tap-target sweep (0 offenders), responsive audit at 390px + wedge check, both blocking in CI.
-- **B2 complete bar the tail** — Epic 8: route-reachability tests (8.4), server-side `<script>/<style>` strip + tests (8.5), prototype-synthesiser audit + reconciliation tests (8.6.3), `route_view` analytics + admin Top-Pages report (8.1.1–8.1.2), ~14 MB orphaned assets deleted (8.2.2), **Knip cleanup + CI blocking (8.3) and bundle-budget CI (8.2.3) done 2026-09-07** — Knip baseline 176 exports / 105 types / 6 deps → 0/0/0; `audit:bundle` gates JS gzip + largest chunk + precache size. Epic 8 is now complete bar the 2-week analytics soak (8.1.3, ops wait) and the KaTeX chunk split (8.2.1, optional nicety).
+- **B2 complete bar the tail** — Epic 8: route-reachability tests (8.4), server-side `<script>/<style>` strip + tests (8.5), prototype-synthesiser audit + reconciliation tests (8.6.3), `route_view` analytics + admin Top-Pages report (8.1.1–8.1.2), ~14 MB orphaned assets deleted (8.2.2), **Knip cleanup + CI blocking (8.3) and bundle-budget CI (8.2.3) done 2026-09-07** — Knip baseline 176 exports / 105 types / 6 deps → 0/0/0; `audit:bundle` gates JS gzip + largest chunk + precache size. Epic 8 code is complete (incl. the KaTeX `$`-detection split, 8.2.1, 2026-09-07); only the 2-week analytics soak (8.1.3, ops wait) is outstanding.
 - **B3 done (2026-09-07)** — Epic 5 (minus 5.1, done in B14): naming guarded (5.2); career discovery collapsed to one `/career/opportunities` front door + `?type=` redirects (5.3); `CareerProfilePage` merged (5.4.1); `HostelBookingPage` routed + Campus Tools nav (5.4.2); 14 dead files deleted (5.4.3); last Events `<select>` swapped (5.4.5); `SourceBadge` cleaned + `userDirectoryStore` / `GET /api/users/resolve` / `useResolvedNames` so leaderboards, judge/shortlist lists and audit trails show names not register numbers (5.4.6).
 - **B4 done (2026-09-06)** — Epic 3 Story 3.1: `studentGraphService` (identity + attendance + skills + activity + derived signals: at-risk subjects, skill gaps, readiness score), `GET/POST /api/student-graph`, 60s TTL cache with ERP-refresh invalidation, `StudentGraph` TS contract + `useStudentGraph()` hook. `erpReader` seam wired in B6.
 - **B5 done (2026-09-06)** — Epic 3 Stories 3.2 + 3.3: `studentIntentStore` + intent/consent/provenance/delete endpoints, a 5-step `OnboardingFlow` (consent-first, skippable, skills pre-filled from the graph), a skipped-state re-prompt banner, full editing + a "What we know about you" list + inference-delete in Settings.
-- **B6 partial (2026-09-06 / 2026-09-07)** — Epic 4 Story 4.1: `BunkAdvicePanel` (per-subject "can I skip class" answers from the graph) leads the Risks tab; `erpAcademicSnapshotStore` makes curriculum/results/CGPA/SGPA-by-sem live on the graph (closes B4's seam); deleted 3 orphaned insight components; **`GradeTargetCalculator` (2026-09-07)** — per-subject "N in this final for grade X" from live internal marks. Remaining: end-of-term trend (4.1.3), elective guidance (4.1.4).
-- **B7 partial (2026-09-06)** — Epic 4 Story 4.2 done: `opportunityFit.js` graph fit-scorer (skills, CGPA cutoff, eligibility, target-role, deadline), `GET /career/opportunities?sort=fit` ranking a 400-candidate window, `sort=fit` as the default, "Why this: …" + fit-% badge on `OpportunityCard`. Story 4.3 partial (skill-specific "Find resources" deep links). **Stories 4.4 + 4.5 done (2026-09-07)**: `eventFit.js` graph scorer (mirrors `opportunityFit`, adds a "recovery aid" signal for at-risk subjects + registration-history affinity), `GET /events?sort=fit`, fit-powered "Recommended for you" rail on `EventsListingPage`, "For you" ordering on the dashboard `CampusHubWidget`; and a shared `academicCalendar.js` feeding `LmsRevisionScheduler` (reviews pulled before mid-term/end-term/practical/CLA windows, at-risk subjects capped to a 3-day loop and floated up the queue).
+- **B6 partial (2026-09-06 / 2026-09-07)** — Epic 4 Story 4.1: `BunkAdvicePanel` (per-subject "can I skip class" answers from the graph) leads the Risks tab; `erpAcademicSnapshotStore` makes curriculum/results/CGPA/SGPA-by-sem live on the graph (closes B4's seam); deleted 3 orphaned insight components; **`GradeTargetCalculator` (2026-09-07)** — per-subject "N in this final for grade X" from live internal marks; **end-of-term attendance trend projection (4.1.3, 2026-09-07)** off the new academic-calendar `termProgress`; **elective guidance (4.1.4, 2026-09-07)** — role taxonomy + `rankElectives()` + a keyword seed map (exact SRM AP elective codes TODO). Story 4.1 code-complete.
+- **B7 partial (2026-09-06)** — Epic 4 Story 4.2 done: `opportunityFit.js` graph fit-scorer (skills, CGPA cutoff, eligibility, target-role, deadline), `GET /career/opportunities?sort=fit` ranking a 400-candidate window, `sort=fit` as the default, "Why this: …" + fit-% badge on `OpportunityCard`. **Stories 4.2 (incl. rail de-dup + saved-search alerts), 4.3 (skill-gap resource/roadmap/jobs links + opt-in learning plans with auto-closure tracking), 4.4 + 4.5 all done (2026-09-07)**: `eventFit.js` graph scorer (mirrors `opportunityFit`, adds a "recovery aid" signal for at-risk subjects + registration-history affinity), `GET /events?sort=fit`, fit-powered "Recommended for you" rail on `EventsListingPage`, "For you" ordering on the dashboard `CampusHubWidget`; and a shared `academicCalendar.js` feeding `LmsRevisionScheduler` (reviews pulled before mid-term/end-term/practical/CLA windows, at-risk subjects capped to a 3-day loop and floated up the queue).
 - **B8 done (2026-09-06)** — Epic 6 Stories 6.1 + 6.2: `notificationService` (event taxonomy, adapter contract, delivery log + retry, quiet hours / category mute / rate limit) with in-app + Web Push adapters; VAPID auto-generates in dev; `sw-push.js` handlers; Settings "Push notifications" card; `attendance_risk` + `results_published` wired from the ERP sink.
 - **B9 code-complete (2026-09-06)** — Epic 6 Story 6.4: `createEmailAdapter` (nodemailer, inert without `SMTP_HOST`), `digestService` weekly-digest builder + once-per-ISO-week cycle driven by the student graph, one-click HMAC unsubscribe (RFC 8058 headers), Settings toggle. Only a real SMTP host stands between it and prod.
 - **B14 done (2026-09-06)** — Epic 5 Story 5.1: `/registration` hub with 6 tabs replaces the 3-child nav group; Bank Details moved into the Finance group; 5 placeholder blueprints + `EventsRegistrationHub` deleted (87 → 83 pages). `audit:metadata` green.
@@ -35,7 +35,7 @@ Every story carries **AC** (acceptance criteria). A story is not done until its 
 - Verification (2026-09-07, after the tails): FE **1,210/1,210**, BE **351/351**, `tsc -b` + ESLint clean, production build green, `knip` at 0 (now blocking), `audit:bundle` OK, tap-target + responsive audits 0 issues.
 - **B11 DEFERRED** — WhatsApp. Do not implement; blocked on a human go/no-go (ToS + number-ban risk). The B8 seam is ready for a drop-in adapter later.
 - **Pure-code tails cleared (2026-09-07):** `CareerProfilePage`→`ProfessionalProfilePage` merge (T5.4.1), event graph fit-scorer + recs (Story 4.4), exam-aware / at-risk-weighted revision scheduler (Story 4.5), per-subject end-term grade calculator (T4.1.2), Knip cleanup + CI blocking (Story 8.3), bundle-budget CI (T8.2.3).
-- **What's left inside batches:** account-gated store listings (B13), the flag-flip decisions (T6.6.0 answered / T6.5.1 pending), the 2-week analytics soak (T8.1.3, ops), and the optional KaTeX chunk split (T8.2.1). Everything else is done, code-complete, or (B11) deliberately deferred.
+- **What's left inside batches:** account-gated store listings (B13), the flag-flip decisions (T6.6.0 answered / T6.5.1 pending), the 2-week analytics soak (T8.1.3, ops), populating `electiveRoleMap.json` with SRM AP's real elective codes (T4.1.4 — content, not code), and the deferred WhatsApp story (B11). Everything else is done or code-complete.
 
 ---
 
@@ -50,12 +50,12 @@ dependency chain**, except where "Needs" says otherwise.
 | Batch | Scope (epics/stories) | Needs first | External gate | Status |
 |---|---|---|---|---|
 | **B1 — Mobile finish + responsive CI** | Epic 2 remainder (2.2.2, 2.4.3, 2.6, 2.7) | — | none | ✅ **done 2026-09-04** |
-| **B2 — Engineering-health guardrails** | Epic 8 (8.1.1–8.1.2, 8.2, 8.3, 8.4, 8.5, 8.6.3) + carried 1.3.3, 1.5.2 | — | none (8.1.3 = 2-week data soak is an ops wait, not code) | ✅ **all code done 2026-09-07** (guardrails, Knip cleanup + blocking, bundle-budget CI); only the 8.1.3 analytics soak (ops) + optional KaTeX split (8.2.1) outstanding |
+| **B2 — Engineering-health guardrails** | Epic 8 (8.1.1–8.1.2, 8.2, 8.3, 8.4, 8.5, 8.6.3) + carried 1.3.3, 1.5.2 | — | none (8.1.3 = 2-week data soak is an ops wait, not code) | ✅ **all code done 2026-09-07** (guardrails, Knip cleanup + blocking, bundle-budget CI, KaTeX `$`-gate); only the 8.1.3 analytics soak (ops) is outstanding |
 | **B3 — Navigation & naming consolidation** | Epic 5 except 5.1 (5.2, 5.3, 5.4) | — | none | ✅ **done 2026-09-07** — career one front door + redirects (5.3), `HostelBookingPage` routed (5.4.2), Events `<select>` (5.4.5), register-no→name resolution on organizer surfaces (5.4.6) |
 | **B4 — Student graph service** | Story 3.1 | — | Redis (or documented in-proc fallback) | ✅ **done 2026-09-06** (`erpReader` seam wired in B6 via `erpAcademicSnapshotStore`) |
 | **B5 — Onboarding & consent** | Stories 3.2, 3.3 | B4 contract (T3.1.1) | none | ✅ **done 2026-09-06** |
-| **B6 — Academic Hub becomes an answer** | Story 4.1 | B4 | none | ◐ **bunk advice + curriculum/marks wiring + per-subject grade sim (4.1.2) + orphan cleanup done**; trend projection (4.1.3), elective guidance (4.1.4) remain |
-| **B7 — Ranking & recommendations** | Stories 4.2, 4.3, 4.4, 4.5 | B4 | none | ◐ **Stories 4.2 + 4.4 + 4.5 done** (career + event graph fit-scorers, `?sort=fit`, "why this" rails, dashboard "For you", exam-aware + at-risk-weighted revision scheduler); only 4.3 (skill-gap → learning plan) partial |
+| **B6 — Academic Hub becomes an answer** | Story 4.1 | B4 | none | ✅ **Story 4.1 code-complete 2026-09-07** (bunk advice, grade sim, end-of-term trend, elective guidance scaffold); only content left: real elective codes in `electiveRoleMap.json` |
+| **B7 — Ranking & recommendations** | Stories 4.2, 4.3, 4.4, 4.5 | B4 | none | ✅ **all four stories done 2026-09-07** (career + event graph fit-scorers, `?sort=fit`, rail de-dup, saved-search alerts, skill-gap learning plans, exam-aware + at-risk-weighted revision scheduler) |
 | **B8 — Notification core + Web Push** | Stories 6.1, 6.2 | — | VAPID keypair (self-generated) | ✅ **done 2026-09-06** (VAPID auto-generates in dev; set env keys for prod) |
 | **B9 — Email digests** | Story 6.4 | B8 | transactional-email provider API key | ✅ **code-complete 2026-09-06** (inert without `SMTP_HOST`; `EMAIL_DEV_JSON=1` to preview) |
 | **B10 — Google Calendar sync** | Story 6.3 | B8 | Google Cloud OAuth client (calendar scope) + verified consent screen | ✅ **code-complete 2026-09-06** (inert without `GOOGLE_CLIENT_ID`/`SECRET`/`OAUTH_REDIRECT`) |
@@ -311,12 +311,26 @@ banner). BE 270, FE 1,200.
       absolute bands O…P, or a custom %), and states "Need **78/100** on the
       CSE304 end-term for **A**" — with "locked in" / "out of reach (caps at
       X/100)" verdicts. 6 tests. `M`
-- [~] **T4.1.3** `BunkAdvicePanel` flags "75% is out of reach this term" when the
-      classes-needed exceeds a plausible remainder (the pre-breach alert). A
-      true end-of-term trend projection needs the ERP academic calendar
-      (see T4.5.1) `M`
-- [ ] **T4.1.4** Elective guidance — **data unblocked** (`graph.academic.curriculum`
-      is now live via B6), still needs an elective↔role taxonomy `L`
+- [x] **T4.1.3** Real end-of-term projection (2026-09-07). `academicCalendar.js`
+      gains `listTeachingTerms()` + `termProgress({now})` (elapsed fraction,
+      weeks remaining to the last teaching day); `studentGraphService._derive`
+      surfaces it as `graph.derived.termProgress`. `BunkAdvicePanel` estimates
+      each subject's classes-per-week from the pace so far and projects to the
+      last teaching day: "Attend N of the ~M classes left to clear 75%", or
+      "75% is out of reach — even a perfect record from here lands near X%".
+      Falls back to the old remaining-fraction heuristic when the calendar is
+      absent or the term is < 2 weeks in. 4 BE + 3 FE tests. `M`
+- [x] **T4.1.4** Elective guidance scaffolded (2026-09-07). Role taxonomy
+      (`TRACKS`, 12 tracks) + free-text-goal → track resolver +
+      `rankElectives()` in `services/career/electiveGuidance.js`; a **keyword
+      seed map** `data/electiveRoleMap.json` (~40 topic → `[trackId, weight]`
+      entries) matched as substrings against each curriculum subject's name —
+      **TODO in the file: swap/augment with SRM AP's exact elective codes** once
+      the catalogue is to hand (keyword matching stays as the fallback).
+      `GET /career/elective-guidance` (reads curriculum + intent off the student
+      graph); `hub/ElectiveGuidancePanel.tsx` in the "What if…" tab: "Ranked for
+      **ML / AI Engineer** — Introduction to Machine Learning · *Strong for ML /
+      AI Engineer*". 5 BE + 3 FE tests. `L`
 - [x] **T4.1.5** Deleted the orphaned standalone `UnifiedInsights.tsx` /
       `AcademicInsights.tsx` / `ProgressOverview.tsx` (+ tests) — unrouted, and
       their data has long been consumed through the hub tabs' `getLms*` queries `M`
@@ -349,15 +363,35 @@ into `AcademicHubPage`.
       service is absent. Recency / deadline / popular kept `S`
 - [x] **T4.2.4** `isStillOpen()` in `CareerHomePage` filters passed-deadline /
       `isActive === false` opportunities out of the rails (earlier mobile pass) `XS`
-- [ ] **T4.2.5** De-duplicate across rails on one page `S`
-- [ ] **T4.2.6** Saved searches + "alert me when something matches" `M`
+- [x] **T4.2.5** `CareerHomePage` now shows each opportunity in at most one rail
+      (Personalized > Expiring soon > Latest) via a `useMemo` dedup; the Latest
+      section hides entirely when everything in it already appeared above. `S`
+- [x] **T4.2.6** Saved searches + alerts (2026-09-07). `career_saved_searches`
+      table + `savedSearchMethods` on `careerStore` (CRUD, 20/user cap,
+      `matchSavedSearchAlerts(now)` counting new matches since `lastRunAt` via
+      the FTS query + column filters). `runCareerNotificationCycle` emits one
+      idempotent-per-day `career_saved_search_match` in-app notification per hit.
+      `GET/POST/PATCH/DELETE /career/saved-searches`. Frontend:
+      `SavedSearchBar` on `OpportunitiesPage` — a "Save search" chip that
+      captures the current `{query,type}` (name + alert toggle), plus chips to
+      re-apply / bell-toggle / delete each saved search. 3 BE + 4 FE tests. `M`
 
-### STORY 4.3 — As a student, skill gaps come with a way to close them `M` ◐
-- [~] **T4.3.1** `SkillGapPage` "Learn" → "Find resources" links now deep-link to
-      `/learn/discover?q=<skill>` (skill-specific); `DiscoverPage` honours `?q=` /
-      `?query=`. Roadmap/event mapping not yet wired `M`
-- [ ] **T4.3.2** "Close this gap" action creating a learning plan `M`
-- [ ] **T4.3.3** Track gap closure over time `S`
+### STORY 4.3 — As a student, skill gaps come with a way to close them `M` ✅ (2026-09-07)
+- [x] **T4.3.1** Per gap, `SkillGapPage` now deep-links to **Resources**
+      (`/learn/discover?q=<skill>`), a **Roadmap** (`/learn/roadmaps?q=<skill>` —
+      `RoadmapsListPage` gained `?q=` filtering over skill/title/description) and
+      **jobs** (`/career/opportunities?query=<skill>`). `M`
+- [x] **T4.3.2** "Close this gap" → `career_learning_plans` table +
+      `learningPlanMethods` on `careerStore` (create/reopen, 30-active cap,
+      manual close/reopen, delete). `GET/POST/PATCH/DELETE
+      /career/learning-plans`. The button on each gap becomes "Mark done" /
+      "Closed" once a plan exists. `M`
+- [x] **T4.3.3** `reconcileLearningPlans(user, acquiredSkills)` auto-closes a
+      plan (`closedReason: "acquired"`) once its skill appears in
+      `graph.skills` — run on every `GET /career/learning-plans`. `SkillGapPage`
+      shows a "Your progress" card: N gaps closed / N in progress, the active
+      list with "done", and recently-closed with "now on your profile" +
+      reopen/remove. 3 BE + 4 FE (SkillGap) + 3 FE (Roadmaps ?q) tests. `S`
 
 ### STORY 4.4 — As a student, events are recommended by relevance `M` ✅ (2026-09-07)
 - [x] **T4.4.1** `services/events/eventFit.js` — the events-side mirror of
@@ -718,13 +752,18 @@ BE 323, FE 1,202.
 - [ ] **T8.1.3** **Run for 2 weeks before committing Epic 4 priorities** — ops
       wait, starts the day the B2 client ships `XS`
 
-### STORY 8.2 — As a student, the app loads fast on mobile data `M` ◐
-- [~] **T8.2.1** Re-checked during B13's production build: the 1 MB chunk is
-      **KaTeX** (`rehype-katex` → `katex`), Rollup-misnamed `mermaid-*.js`. It is
-      **already lazy** — only loads with the Markdown component (`LazyMarkdown`),
-      not on the app shell. `mermaid` itself is not installed. Remaining nicety:
-      split KaTeX's font/macro bundle or gate math rendering behind a
-      `$`-detection check so most Markdown never pulls it `M`
+### STORY 8.2 — As a student, the app loads fast on mobile data `M` ✅ (2026-09-07)
+- [x] **T8.2.1** Math gated behind `$`-detection (2026-09-07). Split
+      `components/markdown/math.ts` into `mathNormalize.ts` (dep-free, runs
+      every render) + `math.ts` (the KaTeX plugin) + new `mathDetect.ts`.
+      `Markdown.tsx` now `import()`s `./math` **and** `katex/dist/katex.min.css`
+      only when `hasMath(source)` is true, caching the plugin across instances.
+      `katex` pinned to its own `manualChunks` entry (was the Rollup-misnamed
+      `mermaid-*.js`). Result: **`katex-*.js` (77 KB gz) + `math-*.js` (rehype/
+      remark-katex) load on demand only** — verified no route chunk statically
+      depends on either. The residual eager `mermaid-*.js` (224 KB gz) is
+      streamdown's own bundled mermaid+shiki, not KaTeX. `Markdown.test` math
+      cases now `await` the lazy render; 3 new `mathDetect` tests. `M`
 - [x] **T8.2.2** Deleted the orphaned multi-MB raster set (`Icons.png` 2.9M,
       `dark_mode_icon.png` 1.6M, `light_mode_icon.png` 1.2M, `horizontal_logo.png`
       1.5M in **both** `src/assets/Icons/` and `public/assets/icons/`, plus

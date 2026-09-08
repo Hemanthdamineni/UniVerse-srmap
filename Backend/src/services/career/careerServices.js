@@ -105,7 +105,27 @@ function runCareerNotificationCycle({ careerStore, eventsStore, now = new Date()
     digestSent += 1;
   }
 
-  return { deadlineSent, digestSent };
+  // T4.2.6 — user-defined saved-search alerts.
+  let savedSearchSent = 0;
+  if (typeof careerStore.matchSavedSearchAlerts === "function") {
+    for (const hit of careerStore.matchSavedSearchAlerts(now)) {
+      if (careerStore.hasCareerNotificationLog(hit.userId, "saved_search", hit.searchId, day)) {
+        continue;
+      }
+      eventsStore.pushCareerNotification(hit.userId, {
+        type: "career_saved_search_match",
+        title: `New matches for "${hit.name}"`,
+        message: `${hit.count} new opportunit${hit.count === 1 ? "y" : "ies"} match your saved search${
+          hit.sampleTitle ? ` — e.g. "${hit.sampleTitle}"` : ""
+        }.`,
+        channel: ["in-app"],
+      });
+      careerStore.recordCareerNotificationLog(hit.userId, "saved_search", hit.searchId, day);
+      savedSearchSent += 1;
+    }
+  }
+
+  return { deadlineSent, digestSent, savedSearchSent };
 }
 
 // --- careerRelevanceEngine.js ---

@@ -118,12 +118,94 @@ function listExamWindows({ now } = {}) {
     .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
 }
 
+const DAY_MS = 86_400_000;
+
+/** `[{ label, startAt, endAt }]` — the teaching window of each term, sorted. */
+function listTeachingTerms() {
+  const raw = loadAcademicCalendar() || {};
+  const groups = [
+    ["Odd semester", raw.oddSemesterData],
+    ["Even semester", raw.evenSemesterData],
+    ["Summer term", raw.summerTermData],
+  ];
+  const terms = [];
+  for (const [label, rows] of groups) {
+    if (!Array.isArray(rows)) continue;
+    const commencement = rows.find((r) => /commencement of classes/i.test(r?.details || ""));
+    const lastTeaching = rows.find((r) => /last day of teaching/i.test(r?.details || ""));
+    const startAt = commencement && parseAcademicDateRange(commencement.date)?.startAt;
+    const endAt =
+      (lastTeaching && parseAcademicDateRange(lastTeaching.date)?.endAt) ||
+      // Summer term has no explicit "last day of teaching" — fall back to the
+      // day before its exam window.
+      (() => {
+        const exam = rows.find((r) => examKind(r?.details) === "endterm");
+        const s = exam && parseAcademicDateRange(exam.date)?.startAt;
+        return s ? new Date(Date.parse(s) - DAY_MS).toISOString() : null;
+      })();
+    if (startAt && endAt) terms.push({ label, startAt, endAt });
+  }
+  return terms.sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
+}
+
+/**
+ * Where the student is in the current teaching term (B6 / T4.1.3).
+ *
+ * @param {{ now?: number|string }} [opts]
+ * @returns {{
+ *   inTerm: boolean, label: string|null,
+ *   startAt: string|null, lastTeachingDay: string|null,
+ *   elapsedFraction: number, daysRemaining: number, weeksRemaining: number
+ * }}
+ */
+function termProgress({ now } = {}) {
+  const nowMs = now == null ? Date.now() : typeof now === "number" ? now : Date.parse(now);
+  const terms = listTeachingTerms();
+  const empty = {
+    inTerm: false,
+    label: null,
+    startAt: null,
+    lastTeachingDay: null,
+    elapsedFraction: 0,
+    daysRemaining: 0,
+    weeksRemaining: 0,
+  };
+  if (terms.length === 0) return empty;
+
+  const current =
+    terms.find((t) => nowMs >= Date.parse(t.startAt) && nowMs <= Date.parse(t.endAt)) || null;
+  if (!current) {
+    // Between terms — surface the next one's start so the UI can say "term
+    // hasn't started" rather than projecting off nothing.
+    const next = terms.find((t) => Date.parse(t.startAt) > nowMs) || null;
+    return next
+      ? { ...empty, label: next.label, startAt: next.startAt, lastTeachingDay: next.endAt }
+      : empty;
+  }
+
+  const startMs = Date.parse(current.startAt);
+  const endMs = Date.parse(current.endAt);
+  const span = Math.max(1, endMs - startMs);
+  const daysRemaining = Math.max(0, Math.ceil((endMs - nowMs) / DAY_MS));
+  return {
+    inTerm: true,
+    label: current.label,
+    startAt: current.startAt,
+    lastTeachingDay: current.endAt,
+    elapsedFraction: Math.min(1, Math.max(0, (nowMs - startMs) / span)),
+    daysRemaining,
+    weeksRemaining: Math.ceil(daysRemaining / 7),
+  };
+}
+
 module.exports = {
   parseDdMmYyyy,
   parseAcademicDateRange,
   loadAcademicCalendar,
   listAcademicMilestones,
   listExamWindows,
+  listTeachingTerms,
+  termProgress,
   examKind,
   _resetCache,
 };

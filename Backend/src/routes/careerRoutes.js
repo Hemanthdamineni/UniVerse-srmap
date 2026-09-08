@@ -4,6 +4,7 @@ const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { resolveSessionId } = require("../utils/cookies");
 const { createCareerCache } = require("../services/career/careerServices");
 const { rankOpportunities, studentSliceFromGraph } = require("../services/career/opportunityFit");
+const electiveGuidance = require("../services/career/electiveGuidance");
 
 function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, studentGraphService = null, redisClient = null, scraperSupervisorStatus = null, scraperTriggerOnce = null }) {
   const router = express.Router();
@@ -396,6 +397,73 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
   router.delete("/career/applications/:applicationId", wrap((req) =>
     careerStore.deleteApplication(req.params.applicationId, req.userContext.userId)
   ));
+
+  // Saved searches + alerts (T4.2.6).
+  router.get("/career/saved-searches", wrap((req) => ({
+    items: careerStore.listSavedSearches(req.userContext),
+  })));
+
+  router.post("/career/saved-searches", wrap((req) =>
+    careerStore.createSavedSearch(req.userContext, {
+      name: req.body?.name,
+      filters: req.body?.filters,
+      alertsEnabled: req.body?.alertsEnabled,
+    })
+  ));
+
+  router.patch("/career/saved-searches/:id", wrap((req) =>
+    careerStore.updateSavedSearch(req.userContext, req.params.id, req.body || {})
+  ));
+
+  router.delete("/career/saved-searches/:id", wrap((req) =>
+    careerStore.deleteSavedSearch(req.userContext, req.params.id)
+  ));
+
+  // Skill learning plans + gap-closure tracking (Story 4.3).
+  router.get("/career/learning-plans", wrap((req) => {
+    // Auto-close plans for skills the student has since acquired.
+    if (studentGraphService) {
+      try {
+        const graph = studentGraphService.getGraph(req.userContext);
+        const skills = (graph?.skills || [])
+          .map((s) => (typeof s === "string" ? s : s?.skill))
+          .filter(Boolean);
+        careerStore.reconcileLearningPlans(req.userContext, skills);
+      } catch {
+        /* reconciliation is a bonus — never fail the list over it */
+      }
+    }
+    return careerStore.listLearningPlans(req.userContext);
+  }));
+
+  router.post("/career/learning-plans", wrap((req) =>
+    careerStore.createLearningPlan(req.userContext, req.body?.skill)
+  ));
+
+  router.patch("/career/learning-plans/:id", wrap((req) =>
+    careerStore.setLearningPlanStatus(
+      req.userContext,
+      req.params.id,
+      req.body?.status === "closed" ? "closed" : "active",
+      "manual",
+    )
+  ));
+
+  router.delete("/career/learning-plans/:id", wrap((req) =>
+    careerStore.deleteLearningPlan(req.userContext, req.params.id)
+  ));
+
+  // Elective guidance — rank the student's electives against their career
+  // track(s) (Story 4.1 / T4.1.4). Needs the student graph for curriculum +
+  // intent; returns an empty list (with a resolved-tracks hint) otherwise.
+  router.get("/career/elective-guidance", wrap((req) => {
+    if (!studentGraphService) return { tracks: [], electives: [] };
+    try {
+      return electiveGuidance.fromGraph(studentGraphService.getGraph(req.userContext));
+    } catch {
+      return { tracks: [], electives: [] };
+    }
+  }));
 
   router.post("/career/submit", wrap((req) =>
     careerStore.submitOpportunity(req.userContext.userId, req.body || {})

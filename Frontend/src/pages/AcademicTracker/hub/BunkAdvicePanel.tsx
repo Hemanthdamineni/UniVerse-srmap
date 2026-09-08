@@ -4,17 +4,19 @@
  *
  * Reads the student graph's per-subject attendance and, for each subject,
  * states the concrete number: how many more you can miss before dropping below
- * 75%, or how many you must attend to climb back — plus a blunt flag when 75%
- * is mathematically out of reach for the term.
+ * 75%, or how many you must attend to climb back. When the ERP academic
+ * calendar is available (`graph.derived.termProgress`), it projects each
+ * subject to the last day of teaching using the classes-per-week pace so far —
+ * so "75% is out of reach" is a real end-of-term forecast, not a guess.
  */
 import { SectionCard } from "../../../components/erp/ErpPrimitives";
 import { calculateBunkCapacity } from "../../ERP/components/BunkCalculator";
-import type { AttendanceSubject, StudentGraph } from "../../../lib/core/studentGraph";
+import type { AttendanceSubject, StudentGraph, TermProgress } from "../../../lib/core/studentGraph";
 
 const THRESHOLD = 75;
 
-// Rough fraction of a term still ahead when a student checks this mid-semester.
-// Only used to say "75% is out of reach unless N more classes are held".
+// Fallback fraction of a term still ahead, used only when the academic
+// calendar isn't available to give a real "weeks remaining".
 const ASSUMED_REMAINING_FRACTION = 0.4;
 
 type Advice = {
@@ -24,10 +26,63 @@ type Advice = {
   detail: string;
 };
 
-function adviseSubject(s: AttendanceSubject): Advice | null {
+/** Classes still to be held for this subject, from the pace so far. */
+function projectRemainingClasses(conducted: number, term: TermProgress): number | null {
+  if (!term.inTerm || term.weeksRemaining <= 0 || term.elapsedFraction <= 0.05) return null;
+  const totalWeeks = term.weeksRemaining / Math.max(0.05, 1 - term.elapsedFraction);
+  const weeksElapsed = totalWeeks - term.weeksRemaining;
+  if (weeksElapsed < 2) return null; // too early for a stable rate
+  const perWeek = conducted / weeksElapsed;
+  return Math.max(0, Math.round(perWeek * term.weeksRemaining));
+}
+
+function adviseSubject(s: AttendanceSubject, term: TermProgress | null): Advice | null {
   if (s.conducted == null || s.present == null || s.conducted <= 0) return null;
 
   const r = calculateBunkCapacity(s.conducted, s.present, THRESHOLD, 0);
+
+  // Real projection to the last day of teaching, when we have the calendar.
+  const projectedRemaining = term ? projectRemainingClasses(s.conducted, term) : null;
+  if (projectedRemaining != null) {
+    const finalConducted = s.conducted + projectedRemaining;
+    const bestCasePct = (finalConducted > 0 ? (s.present + projectedRemaining) / finalConducted : 0) * 100;
+    // Min of the remaining classes to attend to clear 75% by term end.
+    const mustAttend = Math.max(
+      0,
+      Math.ceil((THRESHOLD / 100) * finalConducted - s.present),
+    );
+
+    if (bestCasePct < THRESHOLD - 0.5) {
+      return {
+        subject: s,
+        tone: "unreachable",
+        headline: `${THRESHOLD}% is out of reach this term`,
+        detail: `At ${fmtPct(s.pct)} with about ${projectedRemaining} class${
+          projectedRemaining === 1 ? "" : "es"
+        } left, even a perfect record from here lands you near ${Math.round(bestCasePct)}%. Ask the faculty about make-up sessions or a condonation.`,
+      };
+    }
+    if (r.status === "required" || r.status === "caution") {
+      return {
+        subject: s,
+        tone: r.status === "required" ? "required" : "caution",
+        headline: `Attend ${mustAttend} of the ~${projectedRemaining} classes left`,
+        detail: `You're at ${fmtPct(s.pct)}. Attending ${mustAttend} of the ~${projectedRemaining} remaining classes clears ${THRESHOLD}% by the last teaching day (${term!.weeksRemaining} week${
+          term!.weeksRemaining === 1 ? "" : "s"
+        } out); miss more and you slip.`,
+      };
+    }
+    return {
+      subject: s,
+      tone: "safe",
+      headline: `You can miss ${r.safeToSkip} more`,
+      detail: `At ${fmtPct(s.pct)}. On your current pace you finish the term around ${Math.round(
+        bestCasePct,
+      )}% even after skipping ${r.safeToSkip}.`,
+    };
+  }
+
+  // --- Fallback: no calendar, use the rough remaining-fraction heuristic. ---
   const plausibleRemaining = Math.max(1, Math.round(s.conducted * ASSUMED_REMAINING_FRACTION));
 
   if (r.status === "required") {
@@ -74,7 +129,8 @@ const TONE_STYLE: Record<Advice["tone"], { border: string; text: string; badge: 
 
 export function BunkAdvicePanel({ graph }: { graph: StudentGraph | null }) {
   const subjects = graph?.academic.attendance?.subjects ?? [];
-  const advice = subjects.map(adviseSubject).filter((a): a is Advice => a !== null);
+  const term = graph?.derived.termProgress ?? null;
+  const advice = subjects.map((s) => adviseSubject(s, term)).filter((a): a is Advice => a !== null);
 
   if (advice.length === 0) return null;
 
@@ -86,6 +142,11 @@ export function BunkAdvicePanel({ graph }: { graph: StudentGraph | null }) {
     }, 0);
   const below = advice.filter((a) => a.tone === "required" || a.tone === "unreachable").length;
 
+  const termNote =
+    term?.inTerm && term.weeksRemaining > 0
+      ? ` About ${term.weeksRemaining} week${term.weeksRemaining === 1 ? "" : "s"} of teaching left.`
+      : "";
+
   return (
     <SectionCard title="Can I skip class?">
       <p className="mb-4 text-sm" style={{ color: "var(--comp-text-secondary)" }}>
@@ -93,6 +154,7 @@ export function BunkAdvicePanel({ graph }: { graph: StudentGraph | null }) {
           ? `${below} subject${below === 1 ? " is" : "s are"} below ${THRESHOLD}%. Across the rest you have ${totalSlack} class${totalSlack === 1 ? "" : "es"} of slack.`
           : `You have ${totalSlack} class${totalSlack === 1 ? "" : "es"} of total slack across ${advice.length} subjects.`}
         {graph?.academic.attendance?.asOf ? ` As of ${graph.academic.attendance.asOf}.` : ""}
+        {termNote}
       </p>
 
       <ul className="flex list-none flex-col gap-2 p-0">
@@ -138,4 +200,3 @@ export function BunkAdvicePanel({ graph }: { graph: StudentGraph | null }) {
 function toneRank(tone: Advice["tone"]): number {
   return { unreachable: 0, required: 1, caution: 2, safe: 3 }[tone];
 }
-

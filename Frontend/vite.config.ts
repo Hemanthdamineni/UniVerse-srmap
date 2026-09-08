@@ -84,6 +84,10 @@ export default defineConfig({
           // shipping ~14 KB gz to every page.
           vendor: ["clsx", "tailwind-merge"],
           charts: ["recharts"],
+          // KaTeX in its own honestly-named chunk (Rollup otherwise co-locates
+          // it and mislabels it `mermaid-*`). Loaded lazily by the markdown
+          // renderer's `$`-detection gate — see components/markdown/Markdown.tsx.
+          katex: ["katex"],
         },
       },
     },

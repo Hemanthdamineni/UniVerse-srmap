@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { listOpportunities, getPersonalizedFeed, bookmarkOpportunity, type CareerOpportunity } from '../../lib/career/careerApi';
 import OpportunityCard from '../../components/career/OpportunityCard';
 import { Button } from '../../components/button';
@@ -74,6 +74,16 @@ const CareerHomePage: React.FC = () => {
       setExpiringOpps(updateOpps);
     }
   };
+
+  // T4.2.5 — an opportunity should appear in at most one rail on this page.
+  // Priority: Personalized > Expiring soon > Latest.
+  const { railExpiring, railLatest } = useMemo(() => {
+    const seen = new Set(personalizedOpps.map((o) => o.id));
+    const railExpiring = expiringOpps.filter((o) => !seen.has(o.id));
+    railExpiring.forEach((o) => seen.add(o.id));
+    const railLatest = latestOpps.filter((o) => !seen.has(o.id));
+    return { railExpiring, railLatest };
+  }, [personalizedOpps, expiringOpps, latestOpps]);
 
   const typeFilters = [
     { label: 'All', icon: <Search className="w-4 h-4" />, type: '' },
@@ -163,38 +173,39 @@ const CareerHomePage: React.FC = () => {
       )}
 
       {/* Expiring Soon */}
-      {!error && expiringOpps.length > 0 && (
+      {!error && railExpiring.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-[var(--error)]" />
             <h2 className="section-title">Expiring soon</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {expiringOpps.map(opp => (
+            {railExpiring.map(opp => (
               <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
           </div>
         </section>
       )}
 
-      {/* Latest Opportunities */}
-      {!error ? <section>
+      {/* Latest Opportunities — hidden entirely when every latest item has
+          already been shown in a rail above (T4.2.5). */}
+      {!error && (loading || railLatest.length > 0 || (personalizedOpps.length === 0 && railExpiring.length === 0)) ? <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="section-title">Latest opportunities</h2>
           <Link to="/career/opportunities" className="text-[var(--comp-accent)] hover:underline text-sm font-medium">
             View all
           </Link>
         </div>
-        
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : latestOpps.length > 0 ? (
+        ) : railLatest.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {latestOpps.map(opp => (
+            {railLatest.map(opp => (
               <OpportunityCard key={opp.id} opportunity={opp} onBookmarkToggle={handleBookmarkToggle} />
             ))}
           </div>

@@ -1,13 +1,14 @@
 import { Streamdown } from "streamdown";
+import type { MathPlugin } from "streamdown";
 import type { ComponentProps } from "react";
-import { memo, useMemo } from "react";
-import "katex/dist/katex.min.css";
+import { memo, useEffect, useMemo, useState } from "react";
 
 import { cn } from "../../lib/core/utils";
 import { ChatStreamingProvider } from "./CodeBlock";
 import { MarkdownCode } from "./MarkdownCode";
 import { MarkdownLink } from "./MarkdownLink";
-import { mathPlugin, normalizeMathSource } from "./math";
+import { normalizeMathSource } from "./mathNormalize";
+import { hasMath } from "./mathDetect";
 
 export type MarkdownProps = Omit<ComponentProps<typeof Streamdown>, "components"> & {
   /** True while content is still arriving (AI/chat surfaces). Renders
@@ -16,6 +17,46 @@ export type MarkdownProps = Omit<ComponentProps<typeof Streamdown>, "components"
 };
 
 const markdownComponents = { a: MarkdownLink, code: MarkdownCode };
+
+const EMPTY_PLUGINS = {} as const;
+
+// Cache the resolved plugin across every <Markdown> instance so the KaTeX
+// chunk + stylesheet are fetched at most once per session.
+let cachedMathPlugin: MathPlugin | null = null;
+let mathLoad: Promise<MathPlugin> | null = null;
+function loadMathPlugin(): Promise<MathPlugin> {
+  if (cachedMathPlugin) return Promise.resolve(cachedMathPlugin);
+  if (!mathLoad) {
+    mathLoad = Promise.all([import("./math"), import("katex/dist/katex.min.css")]).then(([mod]) => {
+      cachedMathPlugin = mod.mathPlugin;
+      return cachedMathPlugin;
+    });
+  }
+  return mathLoad;
+}
+
+/**
+ * Load the KaTeX math plugin only when the source actually contains an
+ * equation. Markdown without math (the overwhelming majority — course notes,
+ * READMEs, chat) never pulls the KaTeX chunk (B2 / T8.2.1).
+ */
+function useMathPlugin(source: unknown): MathPlugin | null {
+  const needsMath = typeof source === "string" && hasMath(source);
+  const [plugin, setPlugin] = useState<MathPlugin | null>(cachedMathPlugin);
+
+  useEffect(() => {
+    if (!needsMath || plugin) return;
+    let alive = true;
+    void loadMathPlugin().then((p) => {
+      if (alive) setPlugin(p);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [needsMath, plugin]);
+
+  return needsMath ? plugin : null;
+}
 
 /**
  * App-wide markdown renderer. Ported from the terax renderer: streamdown
@@ -28,7 +69,11 @@ const markdownComponents = { a: MarkdownLink, code: MarkdownCode };
 export const Markdown = memo(
   ({ className, streaming = false, children, ...props }: MarkdownProps) => {
     const source = typeof children === "string" ? normalizeMathSource(children) : children;
-    const plugins = useMemo(() => ({ math: mathPlugin }), []);
+    const mathPlugin = useMathPlugin(source);
+    const plugins = useMemo(
+      () => (mathPlugin ? { math: mathPlugin } : EMPTY_PLUGINS),
+      [mathPlugin],
+    );
     return (
       <ChatStreamingProvider value={streaming}>
         <Streamdown

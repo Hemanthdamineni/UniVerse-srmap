@@ -67,10 +67,23 @@ const ATTENDANCE = [
 
 /* ---------- unit tests ---------- */
 
+const FAKE_TERM = {
+  termProgress: () => ({
+    inTerm: true,
+    label: "Odd semester",
+    startAt: "2026-08-03T23:59:00.000Z",
+    lastTeachingDay: "2026-11-30T23:59:00.000Z",
+    elapsedFraction: 0.5,
+    daysRemaining: 56,
+    weeksRemaining: 8,
+  }),
+};
+
 test("assembles a full graph from rich inputs", () => {
   const svc = new StudentGraphService({
     unifiedProfileStore: fakeUnifiedProfileStore(RICH_PROFILE),
     attendanceSnapshotStore: fakeAttendanceStore(ATTENDANCE),
+    academicCalendar: FAKE_TERM,
   });
 
   const g = svc.getGraph({ userId: "AP23110010001", name: "Rich Student", branch: "CSE", year: 3 });
@@ -100,6 +113,11 @@ test("assembles a full graph from rich inputs", () => {
   assert.deepEqual(g.derived.skillGaps.map((x) => x.skill).sort(), ["Docker", "Kubernetes"]);
   assert.ok(g.derived.readinessScore > 0 && g.derived.readinessScore <= 100);
   assert.ok(g.derived.readinessBreakdown.skills > 0);
+
+  // termProgress: from the injected academic calendar (T4.1.3).
+  assert.equal(g.derived.termProgress.inTerm, true);
+  assert.equal(g.derived.termProgress.weeksRemaining, 8);
+  assert.equal(g.derived.termProgress.lastTeachingDay, "2026-11-30T23:59:00.000Z");
 
   assert.equal(g.sources.attendance, "snapshot");
   assert.equal(g.sources.skills, "store");

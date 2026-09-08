@@ -6,6 +6,8 @@ const {
   parseAcademicDateRange,
   listAcademicMilestones,
   listExamWindows,
+  listTeachingTerms,
+  termProgress,
   examKind,
 } = require("../src/services/core/academicCalendar");
 
@@ -55,4 +57,37 @@ test("listExamWindows returns only assessments, sorted, future-filtered", () => 
   // A cutoff after every 2026 window drops them.
   const late = listExamWindows({ now: Date.parse("2027-09-01T00:00:00.000Z") });
   assert.ok(late.every((w) => Date.parse(w.endAt) >= Date.parse("2027-09-01T00:00:00.000Z")));
+});
+
+test("listTeachingTerms brackets each term's teaching window", () => {
+  const terms = listTeachingTerms();
+  assert.ok(terms.length >= 2);
+  const odd = terms.find((t) => t.label === "Odd semester");
+  assert.equal(odd.startAt, "2026-08-03T23:59:00.000Z");   // Commencement of Classes
+  assert.equal(odd.endAt, "2026-11-30T23:59:00.000Z");     // Last Day of Teaching
+  const starts = terms.map((t) => Date.parse(t.startAt));
+  assert.deepEqual(starts, [...starts].sort((a, b) => a - b));
+});
+
+test("termProgress reports elapsed fraction and weeks remaining mid-term", () => {
+  // ~1 month into the odd semester (commences 03.08, last teaching 30.11).
+  const p = termProgress({ now: Date.parse("2026-09-07T00:00:00.000Z") });
+  assert.equal(p.inTerm, true);
+  assert.equal(p.label, "Odd semester");
+  assert.equal(p.lastTeachingDay, "2026-11-30T23:59:00.000Z");
+  assert.ok(p.elapsedFraction > 0.2 && p.elapsedFraction < 0.4, `got ${p.elapsedFraction}`);
+  assert.ok(p.weeksRemaining >= 11 && p.weeksRemaining <= 13, `got ${p.weeksRemaining}`);
+});
+
+test("termProgress before the term surfaces the next term, inTerm=false", () => {
+  const p = termProgress({ now: Date.parse("2026-07-01T00:00:00.000Z") });
+  assert.equal(p.inTerm, false);
+  assert.equal(p.label, "Odd semester");
+  assert.equal(p.weeksRemaining, 0);
+});
+
+test("termProgress between terms returns an empty projection", () => {
+  const p = termProgress({ now: Date.parse("2026-12-15T00:00:00.000Z") });
+  assert.equal(p.inTerm, false);
+  assert.equal(p.weeksRemaining, 0);
 });

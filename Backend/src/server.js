@@ -325,6 +325,7 @@ async function startServer() {
     careerStore,
     studentIntentStore,
     erpReader: erpAcademicSnapshotStore.readerFor(),
+    academicCalendar,
   });
 
   const app = createApp({

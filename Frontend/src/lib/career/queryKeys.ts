@@ -10,4 +10,6 @@ export const careerKeys = {
   opportunities: (filters?: Record<string, string>) =>
     (filters ? (["career", "opportunities", filters] as const) : (["career", "opportunities"] as const)),
   applications: ["career", "applications"] as const,
+  savedSearches: ["career", "saved-searches"] as const,
+  learningPlans: ["career", "learning-plans"] as const,
 };

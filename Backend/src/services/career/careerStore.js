@@ -1692,6 +1692,334 @@ const resumeMethods = {
   },
 };
 
+// --- savedSearches.js (T4.2.6) ---
+const SAVED_SEARCH_LIMIT = 20;
+const SAVED_SEARCH_FILTER_KEYS = ["query", "type", "skills", "location", "mode", "isFree", "hasStipend"];
+
+function normalizeSavedFilters(raw) {
+  const src = raw && typeof raw === "object" ? raw : {};
+  const out = {};
+  for (const key of SAVED_SEARCH_FILTER_KEYS) {
+    const v = src[key];
+    if (v === undefined || v === null || v === "" || v === false) continue;
+    out[key] = typeof v === "string" ? v.trim() : v;
+  }
+  return out;
+}
+
+function rowToSavedSearch(row) {
+  let filters = {};
+  try {
+    filters = JSON.parse(row.filters || "{}");
+  } catch {
+    filters = {};
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    filters,
+    alertsEnabled: Boolean(row.alertsEnabled),
+    createdAt: row.createdAt,
+    lastRunAt: row.lastRunAt || null,
+  };
+}
+
+const savedSearchMethods = {
+  listSavedSearches(user) {
+    this._ensureAuthenticatedUser(user);
+    return this.db
+      .prepare("SELECT * FROM career_saved_searches WHERE userId = ? ORDER BY createdAt DESC")
+      .all(user.userId)
+      .map(rowToSavedSearch);
+  },
+
+  createSavedSearch(user, { name, filters, alertsEnabled = false } = {}) {
+    this._ensureAuthenticatedUser(user);
+    const cleanName = String(name || "").trim().slice(0, 80);
+    if (!cleanName) {
+      const e = new Error("A name is required for a saved search");
+      e.status = 400;
+      throw e;
+    }
+    const count = this.db
+      .prepare("SELECT COUNT(*) AS n FROM career_saved_searches WHERE userId = ?")
+      .get(user.userId).n;
+    if (count >= SAVED_SEARCH_LIMIT) {
+      const e = new Error(`You can keep up to ${SAVED_SEARCH_LIMIT} saved searches`);
+      e.status = 409;
+      throw e;
+    }
+    const id = randomUUID();
+    this.db
+      .prepare(
+        "INSERT INTO career_saved_searches (id, userId, name, filters, alertsEnabled, createdAt) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .run(id, user.userId, cleanName, JSON.stringify(normalizeSavedFilters(filters)), alertsEnabled ? 1 : 0, nowIso());
+    return rowToSavedSearch(
+      this.db.prepare("SELECT * FROM career_saved_searches WHERE id = ?").get(id),
+    );
+  },
+
+  updateSavedSearch(user, id, patch = {}) {
+    this._ensureAuthenticatedUser(user);
+    const row = this.db
+      .prepare("SELECT * FROM career_saved_searches WHERE id = ? AND userId = ?")
+      .get(id, user.userId);
+    if (!row) {
+      const e = new Error("Saved search not found");
+      e.status = 404;
+      throw e;
+    }
+    const name = patch.name !== undefined ? String(patch.name || "").trim().slice(0, 80) || row.name : row.name;
+    const filters =
+      patch.filters !== undefined ? JSON.stringify(normalizeSavedFilters(patch.filters)) : row.filters;
+    const alertsEnabled =
+      patch.alertsEnabled !== undefined ? (patch.alertsEnabled ? 1 : 0) : row.alertsEnabled;
+    this.db
+      .prepare("UPDATE career_saved_searches SET name = ?, filters = ?, alertsEnabled = ? WHERE id = ?")
+      .run(name, filters, alertsEnabled, id);
+    return rowToSavedSearch(
+      this.db.prepare("SELECT * FROM career_saved_searches WHERE id = ?").get(id),
+    );
+  },
+
+  deleteSavedSearch(user, id) {
+    this._ensureAuthenticatedUser(user);
+    const info = this.db
+      .prepare("DELETE FROM career_saved_searches WHERE id = ? AND userId = ?")
+      .run(id, user.userId);
+    return { deleted: info.changes > 0 };
+  },
+
+  /**
+   * For every alert-enabled saved search, count active opportunities added
+   * since its last run that match its filters. Advances `lastRunAt`.
+   * @returns {Array<{ userId, searchId, name, count, sampleTitle }>}
+   */
+  matchSavedSearchAlerts(now = new Date()) {
+    const nowStr = now.toISOString();
+    const rows = this.db
+      .prepare("SELECT * FROM career_saved_searches WHERE alertsEnabled = 1")
+      .all();
+    const hits = [];
+
+    for (const row of rows) {
+      const search = rowToSavedSearch(row);
+      const since = search.lastRunAt || search.createdAt;
+      const f = search.filters;
+
+      // ISO-8601 strings sort lexicographically, and unlike SQLite's
+      // datetime() they keep sub-second precision — so an opportunity added
+      // moments after the search was saved still counts.
+      let sql = `
+        SELECT COUNT(*) AS count, MAX(o.title) AS sampleTitle
+        FROM career_opportunities o
+        WHERE o.isActive = 1 AND o.moderationState = 0
+          AND COALESCE(o.postedAt, o.scrapedAt) > ?
+      `;
+      const params = [since];
+
+      if (f.type) {
+        sql += " AND o.type = ?";
+        params.push(String(f.type));
+      }
+      if (f.query) {
+        const raw = String(f.query).trim();
+        const matchExpr = careerSearchMatchExpression(raw);
+        if (matchExpr) {
+          sql += " AND o.rowid IN (SELECT rowid FROM career_search WHERE career_search MATCH ?)";
+          params.push(matchExpr);
+        } else {
+          const like = `%${raw.toLowerCase().replace(/[%_]/g, "").slice(0, 200)}%`;
+          sql += " AND (LOWER(o.title) LIKE ? OR LOWER(IFNULL(o.description,'')) LIKE ?)";
+          params.push(like, like);
+        }
+      }
+      if (f.location) {
+        sql += " AND LOWER(COALESCE(o.location,'')) LIKE ?";
+        params.push(`%${String(f.location).toLowerCase()}%`);
+      }
+      if (f.mode) {
+        sql += " AND o.mode = ?";
+        params.push(String(f.mode));
+      }
+      if (f.isFree) sql += " AND o.isFree = 1";
+      if (f.hasStipend) sql += " AND o.stipend IS NOT NULL AND TRIM(o.stipend) != ''";
+      for (const skill of String(f.skills || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) {
+        sql += " AND LOWER(o.skills) LIKE ?";
+        params.push(`%${skill}%`);
+      }
+
+      let result;
+      try {
+        result = this.db.prepare(sql).get(...params);
+      } catch {
+        result = { count: 0, sampleTitle: null };
+      }
+
+      this.db
+        .prepare("UPDATE career_saved_searches SET lastRunAt = ? WHERE id = ?")
+        .run(nowStr, search.id);
+
+      if (result && result.count > 0) {
+        hits.push({
+          userId: row.userId,
+          searchId: search.id,
+          name: search.name,
+          count: result.count,
+          sampleTitle: result.sampleTitle || null,
+        });
+      }
+    }
+    return hits;
+  },
+};
+
+// --- learningPlans.js (Story 4.3) ---
+const LEARNING_PLAN_LIMIT = 30;
+
+function normalizeSkill(raw) {
+  return String(raw || "").trim().slice(0, 80);
+}
+
+function rowToLearningPlan(row) {
+  return {
+    id: row.id,
+    skill: row.skill,
+    status: row.status,
+    startedAt: row.startedAt,
+    closedAt: row.closedAt || null,
+    closedReason: row.closedReason || null,
+  };
+}
+
+const learningPlanMethods = {
+  listLearningPlans(user) {
+    this._ensureAuthenticatedUser(user);
+    const items = this.db
+      .prepare(
+        `SELECT * FROM career_learning_plans WHERE userId = ?
+         ORDER BY (status = 'active') DESC, COALESCE(closedAt, startedAt) DESC`,
+      )
+      .all(user.userId)
+      .map(rowToLearningPlan);
+    return { items, stats: this.learningPlanStats(user) };
+  },
+
+  learningPlanStats(user) {
+    this._ensureAuthenticatedUser(user);
+    const rows = this.db
+      .prepare("SELECT status, closedAt FROM career_learning_plans WHERE userId = ?")
+      .all(user.userId);
+    const monthPrefix = new Date().toISOString().slice(0, 7);
+    return {
+      active: rows.filter((r) => r.status === "active").length,
+      closed: rows.filter((r) => r.status === "closed").length,
+      closedThisMonth: rows.filter(
+        (r) => r.status === "closed" && String(r.closedAt || "").startsWith(monthPrefix),
+      ).length,
+    };
+  },
+
+  /** Start (or reopen) a plan for a skill. */
+  createLearningPlan(user, skillRaw) {
+    this._ensureAuthenticatedUser(user);
+    const skill = normalizeSkill(skillRaw);
+    if (!skill) {
+      const e = new Error("A skill is required");
+      e.status = 400;
+      throw e;
+    }
+    const existing = this.db
+      .prepare("SELECT * FROM career_learning_plans WHERE userId = ? AND LOWER(skill) = LOWER(?)")
+      .get(user.userId, skill);
+    if (existing) {
+      if (existing.status === "closed") {
+        this.db
+          .prepare(
+            "UPDATE career_learning_plans SET status = 'active', startedAt = ?, closedAt = NULL, closedReason = NULL WHERE id = ?",
+          )
+          .run(nowIso(), existing.id);
+      }
+      return rowToLearningPlan(
+        this.db.prepare("SELECT * FROM career_learning_plans WHERE id = ?").get(existing.id),
+      );
+    }
+    const active = this.db
+      .prepare("SELECT COUNT(*) AS n FROM career_learning_plans WHERE userId = ? AND status = 'active'")
+      .get(user.userId).n;
+    if (active >= LEARNING_PLAN_LIMIT) {
+      const e = new Error(`You can have up to ${LEARNING_PLAN_LIMIT} active learning plans`);
+      e.status = 409;
+      throw e;
+    }
+    const id = randomUUID();
+    this.db
+      .prepare(
+        "INSERT INTO career_learning_plans (id, userId, skill, status, startedAt) VALUES (?, ?, ?, 'active', ?)",
+      )
+      .run(id, user.userId, skill, nowIso());
+    return rowToLearningPlan(this.db.prepare("SELECT * FROM career_learning_plans WHERE id = ?").get(id));
+  },
+
+  setLearningPlanStatus(user, id, status, reason = "manual") {
+    this._ensureAuthenticatedUser(user);
+    const row = this.db
+      .prepare("SELECT * FROM career_learning_plans WHERE id = ? AND userId = ?")
+      .get(id, user.userId);
+    if (!row) {
+      const e = new Error("Learning plan not found");
+      e.status = 404;
+      throw e;
+    }
+    if (status === "closed") {
+      this.db
+        .prepare("UPDATE career_learning_plans SET status = 'closed', closedAt = ?, closedReason = ? WHERE id = ?")
+        .run(nowIso(), reason, id);
+    } else {
+      this.db
+        .prepare("UPDATE career_learning_plans SET status = 'active', closedAt = NULL, closedReason = NULL, startedAt = ? WHERE id = ?")
+        .run(nowIso(), id);
+    }
+    return rowToLearningPlan(this.db.prepare("SELECT * FROM career_learning_plans WHERE id = ?").get(id));
+  },
+
+  deleteLearningPlan(user, id) {
+    this._ensureAuthenticatedUser(user);
+    const info = this.db
+      .prepare("DELETE FROM career_learning_plans WHERE id = ? AND userId = ?")
+      .run(id, user.userId);
+    return { deleted: info.changes > 0 };
+  },
+
+  /**
+   * Close any active plan whose skill the student has since acquired
+   * (T4.3.3 — track gap closure). Returns the ids that were auto-closed.
+   */
+  reconcileLearningPlans(user, acquiredSkills = []) {
+    this._ensureAuthenticatedUser(user);
+    const have = new Set(
+      (Array.isArray(acquiredSkills) ? acquiredSkills : [])
+        .map((s) => String(s || "").trim().toLowerCase())
+        .filter(Boolean),
+    );
+    if (have.size === 0) return [];
+    const active = this.db
+      .prepare("SELECT id, skill FROM career_learning_plans WHERE userId = ? AND status = 'active'")
+      .all(user.userId);
+    const closed = [];
+    for (const plan of active) {
+      if (have.has(String(plan.skill).toLowerCase())) {
+        this.db
+          .prepare("UPDATE career_learning_plans SET status = 'closed', closedAt = ?, closedReason = 'acquired' WHERE id = ?")
+          .run(nowIso(), plan.id);
+        closed.push(plan.id);
+      }
+    }
+    return closed;
+  },
+};
+
 // --- schema.js ---
 const schemaMethods = {
   _migrateFtsToRowidModel() {
@@ -2063,6 +2391,33 @@ const schemaMethods = {
         createdAt TEXT NOT NULL,
         PRIMARY KEY (userId, kind, refKey, sentDay)
       );
+
+      -- T4.2.6 — a student's saved opportunity searches, optionally alerting
+      -- when new listings match.
+      CREATE TABLE IF NOT EXISTS career_saved_searches (
+        id            TEXT PRIMARY KEY,
+        userId        TEXT NOT NULL,
+        name          TEXT NOT NULL,
+        filters       TEXT NOT NULL DEFAULT '{}',
+        alertsEnabled INTEGER NOT NULL DEFAULT 0,
+        createdAt     TEXT NOT NULL,
+        lastRunAt     TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_career_saved_user ON career_saved_searches(userId);
+
+      -- Story 4.3 — "close this gap": a per-skill learning plan the student
+      -- opts into, auto-closed once the skill shows up in their profile.
+      CREATE TABLE IF NOT EXISTS career_learning_plans (
+        id           TEXT PRIMARY KEY,
+        userId       TEXT NOT NULL,
+        skill        TEXT NOT NULL,
+        status       TEXT NOT NULL DEFAULT 'active',
+        startedAt    TEXT NOT NULL,
+        closedAt     TEXT,
+        closedReason TEXT,
+        UNIQUE (userId, skill)
+      );
+      CREATE INDEX IF NOT EXISTS idx_career_plans_user ON career_learning_plans(userId);
 
       CREATE VIRTUAL TABLE IF NOT EXISTS career_search USING fts5(
         title, description, skills, tags, company, organizer,
@@ -2535,7 +2890,9 @@ Object.assign(
   profileMethods,
   resumeMethods,
   alumniMethods,
-  interviewMethods
+  interviewMethods,
+  savedSearchMethods,
+  learningPlanMethods
 );
 
 module.exports = {

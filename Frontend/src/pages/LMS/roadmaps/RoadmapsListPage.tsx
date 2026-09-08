@@ -101,13 +101,24 @@ import type {
 
 export function RoadmapsListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const query = (searchParams.get("q") || searchParams.get("query") || "").trim().toLowerCase();
   const { data, loading, error } = useAsyncPage(() => listRoadmaps(), []);
-  const roadmaps = data || [];
+  const allRoadmaps: LmsRoadmap[] = data || [];
+  const roadmaps = useMemo(
+    () =>
+      query
+        ? allRoadmaps.filter((r: LmsRoadmap) =>
+            `${r.skill ?? ""} ${r.title ?? ""} ${r.description ?? ""}`.toLowerCase().includes(query),
+          )
+        : allRoadmaps,
+    [allRoadmaps, query],
+  );
   return (
-    <LmsFrame title="Roadmaps" loading={loading} error={error}>
+    <LmsFrame title={query ? `Roadmaps · "${query}"` : "Roadmaps"} loading={loading} error={error}>
       {roadmaps.length === 0 ? (
         <EmptyView
-          title="No roadmaps published yet"
+          title={query ? `No roadmaps for "${query}" yet` : "No roadmaps published yet"}
           description="Roadmaps are guided skill paths built by the community. Be the first to chart one."
           actionLabel="Build a roadmap"
           onAction={() => navigate("/learn/roadmaps/new")}

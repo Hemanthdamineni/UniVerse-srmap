@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 
 import { Markdown } from "./Markdown";
 
@@ -63,53 +63,57 @@ describe("Markdown", () => {
   });
 
   describe("math", () => {
-    it("renders inline $…$ automatically via KaTeX", () => {
+    // The KaTeX plugin loads lazily (B2 / T8.2.1), so math renders a tick
+    // after mount — assertions wait for it.
+    it("renders inline $…$ automatically via KaTeX", async () => {
       const { container } = render(<Markdown>{"Energy: $E=mc^2$ indeed."}</Markdown>);
 
-      expect(container.querySelector(".katex")).not.toBeNull();
+      await waitFor(() => expect(container.querySelector(".katex")).not.toBeNull());
       expect(container.querySelector(".katex")).toHaveTextContent("E=mc2");
     });
 
-    it("renders display $$…$$ as a centered block", () => {
+    it("renders display $$…$$ as a centered block", async () => {
       const { container } = render(<Markdown>{"$$\\int_0^1 x^2\\,dx$$"}</Markdown>);
 
-      expect(container.querySelector(".katex-display")).not.toBeNull();
+      await waitFor(() => expect(container.querySelector(".katex-display")).not.toBeNull());
     });
 
-    it("normalizes Pandoc \\(…\\) and \\[…\\] delimiters", () => {
+    it("normalizes Pandoc \\(…\\) and \\[…\\] delimiters", async () => {
       const { container } = render(
         <Markdown>{"Given \\(\\alpha_i\\) and:\n\\[x = b\\]"}</Markdown>,
       );
 
-      expect(container.querySelectorAll(".katex").length).toBe(2);
+      await waitFor(() => expect(container.querySelectorAll(".katex").length).toBe(2));
       // Rendered glyph appears; the raw Pandoc delimiters do not.
       expect(container.textContent).toContain("α");
       expect(container.querySelectorAll(".katex-html")[1]).toHaveTextContent("x=b");
     });
 
-    it("leaves currency amounts as literal text (no TeX markers, digit-led)", () => {
+    it("leaves currency amounts as literal text (no TeX markers, digit-led)", async () => {
       const { container } = render(
         <Markdown>{"Stipend $1,200 to $1,500 per month."}</Markdown>,
       );
 
+      await new Promise((r) => setTimeout(r, 0));
       expect(container.querySelector(".katex")).toBeNull();
       expect(container.textContent).toContain("$1,200");
     });
 
-    it("keeps dollar signs inside code blocks untouched", () => {
+    it("keeps dollar signs inside code blocks untouched", async () => {
       const { container } = render(<Markdown>{"```\ncost=$100\n```"}</Markdown>);
 
+      await new Promise((r) => setTimeout(r, 0));
       expect(container.querySelector(".katex")).toBeNull();
       expect(container.textContent).toContain("cost=$100");
     });
 
-    it("renders math inside tables and list items", () => {
+    it("renders math inside tables and list items", async () => {
       const { container } = render(
         <Markdown>{"- item $a_1$\n\n| Expr |\n| ---- |\n| $b^2$ |"}</Markdown>,
       );
 
       // one for list inline math, one for table cell
-      expect(container.querySelectorAll(".katex").length).toBe(2);
+      await waitFor(() => expect(container.querySelectorAll(".katex").length).toBe(2));
     });
   });
 });

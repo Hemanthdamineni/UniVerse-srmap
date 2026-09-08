@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeMathSource } from "./math";
+import { normalizeMathSource } from "./mathNormalize";
 
 describe("normalizeMathSource", () => {
   it("passes plain text through unchanged", () => {

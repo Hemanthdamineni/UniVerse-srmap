@@ -93,6 +93,20 @@ export interface StudentGraphDerived {
     activity: number;
     profile: number;
   };
+  /** Where the student is in the current teaching term (from the ERP academic
+   *  calendar). `null` when the calendar is unavailable. */
+  termProgress: TermProgress | null;
+}
+
+export interface TermProgress {
+  inTerm: boolean;
+  label: string | null;
+  startAt: string | null;
+  lastTeachingDay: string | null;
+  /** 0–1: how far through the teaching term. */
+  elapsedFraction: number;
+  daysRemaining: number;
+  weeksRemaining: number;
 }
 
 export type PlacementIntent =

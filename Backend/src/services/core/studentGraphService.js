@@ -23,6 +23,8 @@
  * @module core/studentGraphService
  */
 
+const defaultAcademicCalendar = require("./academicCalendar");
+
 const CONTRACT_VERSION = "student-graph-v1";
 
 // Attendance below this is a breach; within BUFFER above it is "borderline".
@@ -108,6 +110,7 @@ class StudentGraphService {
     careerStore = null,
     studentIntentStore = null,
     erpReader = null,
+    academicCalendar = defaultAcademicCalendar,
     cache = null,
     cacheTtlMs = 60_000,
   } = {}) {
@@ -119,6 +122,7 @@ class StudentGraphService {
     this.careerStore = careerStore;
     this.studentIntentStore = studentIntentStore;
     this.erpReader = erpReader;
+    this.academicCalendar = academicCalendar;
     this.cache = cache || new SimpleTtlCache({ ttlMs: cacheTtlMs });
   }
 
@@ -419,12 +423,20 @@ class StudentGraphService {
         100,
     );
 
+    let termProgress = null;
+    try {
+      termProgress = this.academicCalendar?.termProgress?.() ?? null;
+    } catch {
+      termProgress = null;
+    }
+
     return {
       atRiskSubjects,
       borderlineSubjects,
       skillGaps,
       readinessScore,
       readinessBreakdown,
+      termProgress,
     };
   }
 

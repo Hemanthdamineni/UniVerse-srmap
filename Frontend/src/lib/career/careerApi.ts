@@ -156,6 +156,48 @@ export type CareerApplication = {
   type?: string;
 };
 
+export type SavedSearchFilters = {
+  query?: string;
+  type?: string;
+  skills?: string;
+  location?: string;
+  mode?: string;
+  isFree?: boolean;
+  hasStipend?: boolean;
+};
+
+export type SavedSearch = {
+  id: string;
+  name: string;
+  filters: SavedSearchFilters;
+  alertsEnabled: boolean;
+  createdAt: string;
+  lastRunAt: string | null;
+};
+
+export type LearningPlan = {
+  id: string;
+  skill: string;
+  status: "active" | "closed";
+  startedAt: string;
+  closedAt: string | null;
+  closedReason: "manual" | "acquired" | null;
+};
+
+export type LearningPlanStats = { active: number; closed: number; closedThisMonth: number };
+
+export type ElectiveGuidance = {
+  tracks: Array<{ id: string; label: string; primary: boolean }>;
+  electives: Array<{
+    code: string | null;
+    name: string;
+    credit: number | null;
+    score: number;
+    tracks: Array<{ id: string; label: string; weight: number }>;
+    why: string;
+  }>;
+};
+
 export type CareerSubmission = {
   id: string;
   submittedBy: string;
@@ -583,6 +625,74 @@ export async function listApplications() {
     return { items: STATIC_CAREER_APPLICATIONS };
   }
   return requestData<{ items: CareerApplication[] }>("/api/career/applications");
+}
+
+// --- Saved searches + alerts (T4.2.6) ---
+
+export async function listSavedSearches() {
+  if (isStaticPrototype()) return { items: [] as SavedSearch[] };
+  return requestData<{ items: SavedSearch[] }>("/api/career/saved-searches");
+}
+
+export async function createSavedSearch(payload: {
+  name: string;
+  filters: SavedSearchFilters;
+  alertsEnabled?: boolean;
+}) {
+  return requestData<SavedSearch>("/api/career/saved-searches", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateSavedSearch(
+  id: string,
+  patch: Partial<{ name: string; filters: SavedSearchFilters; alertsEnabled: boolean }>,
+) {
+  return requestData<SavedSearch>(`/api/career/saved-searches/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function deleteSavedSearch(id: string) {
+  return requestData<{ deleted: boolean }>(`/api/career/saved-searches/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Skill learning plans (Story 4.3) ---
+
+export async function listLearningPlans() {
+  if (isStaticPrototype()) {
+    return { items: [] as LearningPlan[], stats: { active: 0, closed: 0, closedThisMonth: 0 } };
+  }
+  return requestData<{ items: LearningPlan[]; stats: LearningPlanStats }>("/api/career/learning-plans");
+}
+
+export async function createLearningPlan(skill: string) {
+  return requestData<LearningPlan>("/api/career/learning-plans", {
+    method: "POST",
+    body: JSON.stringify({ skill }),
+  });
+}
+
+export async function updateLearningPlan(id: string, status: "active" | "closed") {
+  return requestData<LearningPlan>(`/api/career/learning-plans/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function deleteLearningPlan(id: string) {
+  return requestData<{ deleted: boolean }>(`/api/career/learning-plans/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getElectiveGuidance() {
+  if (isStaticPrototype()) return { tracks: [], electives: [] } as ElectiveGuidance;
+  return requestData<ElectiveGuidance>("/api/career/elective-guidance");
 }
 
 export async function createApplication(opportunityId: string, notes?: string) {
