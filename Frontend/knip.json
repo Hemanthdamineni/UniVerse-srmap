@@ -6,7 +6,12 @@
     "src/components/markdown/index.ts"
   ],
   "project": ["src/**/*.{ts,tsx}"],
-  "ignoreDependencies": ["tailwindcss"],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "@babel/preset-react",
+    "@babel/preset-typescript",
+    "babel-plugin-module-resolver"
+  ],
   "ignore": [
     "src/components/chart.tsx",
     "src/components/popover.tsx"

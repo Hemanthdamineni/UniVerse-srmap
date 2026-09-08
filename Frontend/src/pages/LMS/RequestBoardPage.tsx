@@ -20,7 +20,7 @@ import type { LmsRequest } from "./_shared/LmsPageShared";
 
 const REQUEST_STATUSES = ["open", "fulfilled", "closed"] as const;
 
-export function RequestBoardPage() {
+function RequestBoardPage() {
   const { profile } = useSession();
   const currentRegNo = getProfileRegisterNo(profile);
 

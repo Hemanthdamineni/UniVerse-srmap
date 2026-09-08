@@ -259,7 +259,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 key={batch}
                 type="button"
                 onClick={() => setBatchFilter(batch)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
                   batchFilter === batch
                     ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-white"
                     : "border-[var(--border)] bg-[var(--comp-surface)] text-[var(--text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"

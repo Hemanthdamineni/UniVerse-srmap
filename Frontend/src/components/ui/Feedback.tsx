@@ -62,7 +62,7 @@ export function InlineError({ message, title, description, action, onRetry, clas
               <button
                 onClick={onRetry}
                 type="button"
-                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-[color-mix(in_srgb,var(--error)_24%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[color-mix(in_srgb,var(--error)_8%,var(--surface))]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[color-mix(in_srgb,var(--error)_24%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[color-mix(in_srgb,var(--error)_8%,var(--surface))]"
               >
                 <RefreshCw size={14} />
                 Try again

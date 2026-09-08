@@ -98,7 +98,7 @@ import type {
   ResourceFormState
 } from "../_shared/LmsPageShared";
 
-export function ContributorProfilePage() {
+function ContributorProfilePage() {
   const { userId = "" } = useParams();
   const { data, loading, error } = useAsyncPage(() => getContributorProfile(userId), [userId]);
   const trust = (data?.trust as Record<string, unknown> | undefined) || {};

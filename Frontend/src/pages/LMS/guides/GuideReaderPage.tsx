@@ -99,7 +99,7 @@ import type {
 } from "../_shared/LmsPageShared";
 import { ConfirmDialog } from "../../../components/dialog";
 
-export function GuideReaderPage() {
+function GuideReaderPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { profile } = useSession();

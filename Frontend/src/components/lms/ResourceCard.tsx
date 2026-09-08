@@ -70,7 +70,7 @@ export default function ResourceCard({
       <div className="space-y-0.5">
         <Link
           to={`/learn/r/${resource.id}`}
-          className="text-sm font-semibold leading-snug text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
+          className="flex min-h-11 items-center text-sm font-semibold leading-snug text-[var(--comp-text-primary)] no-underline hover:text-[var(--info)]"
         >
           {resource.title}
         </Link>

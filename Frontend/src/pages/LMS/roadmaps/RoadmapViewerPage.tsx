@@ -99,7 +99,7 @@ import type {
   ResourceFormState
 } from "../_shared/LmsPageShared";
 
-export function RoadmapViewerPage() {
+function RoadmapViewerPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { profile } = useSession();

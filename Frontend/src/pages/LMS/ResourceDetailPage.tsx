@@ -100,7 +100,7 @@ import type {
   ResourceFormState
 } from "./_shared/LmsPageShared";
 
-export function ResourceDetailPage() {
+function ResourceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

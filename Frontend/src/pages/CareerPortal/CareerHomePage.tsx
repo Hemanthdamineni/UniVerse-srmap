@@ -190,9 +190,12 @@ const CareerHomePage: React.FC = () => {
       {/* Latest Opportunities — hidden entirely when every latest item has
           already been shown in a rail above (T4.2.5). */}
       {!error && (loading || railLatest.length > 0 || (personalizedOpps.length === 0 && railExpiring.length === 0)) ? <section>
-        <div className="flex justify-between items-center mb-4">
+        <div className="-my-2 flex justify-between items-center mb-4">
           <h2 className="section-title">Latest opportunities</h2>
-          <Link to="/career/opportunities" className="text-[var(--comp-accent)] hover:underline text-sm font-medium">
+          <Link
+            to="/career/opportunities"
+            className="inline-flex min-h-11 items-center text-[var(--comp-accent)] hover:underline text-sm font-medium"
+          >
             View all
           </Link>
         </div>

@@ -59,7 +59,7 @@ type FlashcardCard = {
   back: string;
 };
 
-export function AddResourcePage({ embedded = false }: { embedded?: boolean } = {}) {
+function AddResourcePage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit") || "";

@@ -100,7 +100,7 @@ import type {
 import { EmptyView } from "../../../components/ui/Feedback";
 import { MessageSquareHeart } from "lucide-react";
 
-export function ExamFeedbackPage() {
+function ExamFeedbackPage() {
   const navigate = useNavigate();
   const { data, loading, error } = useAsyncPage(() => getPendingExamFeedback(), []);
   const [votes, setVotes] = useState<Record<string, boolean>>({});

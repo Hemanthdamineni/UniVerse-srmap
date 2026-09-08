@@ -98,7 +98,7 @@ import type {
   ResourceFormState
 } from "../_shared/LmsPageShared";
 
-export function GuideEditorPage() {
+function GuideEditorPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit") || "";

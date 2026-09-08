@@ -140,7 +140,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
               key={queue}
               type="button"
               onClick={() => setFilterQueue(queue)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-1 text-xs font-semibold transition ${
                 filterQueue === queue
                   ? "border-[var(--comp-accent)] bg-[var(--comp-accent)] text-[var(--comp-accent-fg)]"
                   : "border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text-secondary)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
@@ -161,11 +161,11 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search tickets"
-              className="min-h-10 min-w-0 flex-1 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 text-sm outline-none focus:border-[var(--comp-accent)]"
             />
             <button
               type="submit"
-              className="min-h-10 rounded-lg bg-[var(--comp-accent)] px-4 text-sm font-semibold text-white"
+              className="min-h-11 rounded-lg bg-[var(--comp-accent)] px-4 text-sm font-semibold text-white"
             >
               Search
             </button>
@@ -185,7 +185,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
               type="button"
               onClick={() => void runBulkInProgress()}
               disabled={!selectedIds.length}
-              className="min-h-10 rounded-lg border border-[var(--comp-border)] px-3 text-sm font-semibold text-[var(--comp-text-primary)] disabled:cursor-not-allowed disabled:opacity-55"
+              className="min-h-11 rounded-lg border border-[var(--comp-border)] px-3 text-sm font-semibold text-[var(--comp-text-primary)] disabled:cursor-not-allowed disabled:opacity-55"
             >
               Bulk: mark in progress ({selectedIds.length})
             </button>
@@ -287,7 +287,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                             `Ticket ${ticket.id} escalated.`
                           )
                         }
-                        className="rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
+                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--error)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--error)] transition hover:bg-[color-mix(in_srgb,var(--error)_10%,transparent)]"
                       >
                         Escalate
                       </button>
@@ -314,7 +314,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                                   `Ticket ${ticket.id} moved to ${status}.`
                                 )
                               }
-                              className="rounded-lg border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
+                              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--info)_30%,transparent)] px-3 py-2 text-xs font-semibold text-[var(--info)] transition hover:bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
                             >
                               Mark {status}
                             </button>
@@ -347,7 +347,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               `Ticket ${ticket.id} reassigned.`
                             )
                           }
-                          className="rounded-lg border border-[var(--comp-border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--comp-border)] px-3 py-2 text-xs font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
                         >
                           Assign
                         </button>
@@ -377,7 +377,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               `Ticket ${ticket.id} resolved.`
                             )
                           }
-                          className="rounded-lg bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--success)] px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
                         >
                           Resolve
                         </button>
@@ -408,7 +408,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               }))
                             )
                           }
-                          className="rounded-lg bg-[var(--comp-accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--comp-accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--comp-accent-hover)] disabled:opacity-50"
                         >
                           Public Reply
                         </button>
@@ -431,7 +431,7 @@ export default function TrackEscalate({ adminMode = false }: { adminMode?: boole
                               }))
                             )
                           }
-                          className="rounded-lg border border-[var(--comp-border)] px-3 py-2 text-sm font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--comp-border)] px-3 py-2 text-sm font-semibold text-[var(--comp-text-primary)] transition hover:border-[var(--comp-accent)] disabled:opacity-50"
                         >
                           Internal Note
                         </button>

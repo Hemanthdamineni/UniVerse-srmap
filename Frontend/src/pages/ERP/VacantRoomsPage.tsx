@@ -103,7 +103,7 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
             <select
               value={day}
               onChange={(event) => setDay(event.target.value)}
-              className="min-h-9 rounded-lg border px-3 py-2 text-sm font-normal"
+              className="min-h-11 rounded-lg border px-3 py-2 text-sm font-normal"
               style={{ borderColor: "var(--comp-border)", color: "var(--comp-text-primary)" }}
             >
               {VACANT_DAY_OPTIONS.map((option) => (
@@ -119,7 +119,7 @@ export default function VacantRoomsPage({ blueprint }: { blueprint: PageBlueprin
             <select
               value={slot}
               onChange={(event) => setSlot(Number.parseInt(event.target.value, 10))}
-              className="min-h-9 rounded-lg border px-3 py-2 text-sm font-normal"
+              className="min-h-11 rounded-lg border px-3 py-2 text-sm font-normal"
               style={{ borderColor: "var(--comp-border)", color: "var(--comp-text-primary)" }}
             >
               {VACANT_SLOT_LABELS.map((label, index) => (

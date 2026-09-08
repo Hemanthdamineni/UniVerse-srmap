@@ -11,14 +11,14 @@ export default function RecommendationSection({
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="-my-2 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-[var(--comp-text-primary)]">
           {title}
         </h2>
         {items.length > 0 && (
           <Link
             to="/learn/discover"
-            className="text-xs font-medium text-[var(--comp-text-muted)] no-underline hover:text-[var(--comp-text-primary)]"
+            className="inline-flex min-h-11 items-center text-xs font-medium text-[var(--comp-text-muted)] no-underline hover:text-[var(--comp-text-primary)]"
           >
             View all
           </Link>

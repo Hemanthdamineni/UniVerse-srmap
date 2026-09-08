@@ -74,6 +74,14 @@ test("matchSavedSearchAlerts counts new matching opportunities and advances last
     alertsEnabled: true,
   });
 
+  // Backdate the search so the first run's `since` (createdAt) is safely in
+  // the past. Otherwise createdAt and the opportunities' postedAt are all
+  // "now" to millisecond precision and can collide on a fast CI clock,
+  // making the `> since` filter drop a match at random.
+  store.db
+    .prepare("UPDATE career_saved_searches SET createdAt = ? WHERE id = ?")
+    .run(new Date(Date.now() - 60_000).toISOString(), s.id);
+
   // Two matches added after the search was created, one non-match.
   insertOpp(store, "m1", { title: "React Native Intern" });
   insertOpp(store, "m2", { title: "Frontend React Intern" });

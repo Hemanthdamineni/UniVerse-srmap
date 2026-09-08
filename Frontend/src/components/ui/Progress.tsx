@@ -76,8 +76,10 @@ export function StarRating({ value, max = 5, onChange, size = "md", className }:
           <span
             key={i}
             className={cn(
-              "inline-flex",
-              interactive && "cursor-pointer"
+              "inline-flex items-center justify-center",
+              // Interactive stars need a 44×44 hit area (WCAG 2.5.5) even
+              // though the glyph itself stays small.
+              interactive && "size-11 cursor-pointer"
             )}
             onClick={interactive ? () => onChange(i + 1) : undefined}
             onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(i + 1); } } : undefined}

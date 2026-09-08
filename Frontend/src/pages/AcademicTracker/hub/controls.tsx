@@ -57,7 +57,7 @@ export function PriorityBadge({ priority }: { priority: string }) {
 }
 
 export function ActionButton({ label, onClick, variant = "primary", icon, className = "" }: { label: string; onClick: () => void; variant?: "primary" | "outline" | "ghost"; icon?: React.ReactNode; className?: string }) {
-  const base = "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors";
+  const base = "inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors";
   const variants = {
     primary: "bg-[var(--comp-accent)] text-[var(--comp-accent-fg)] hover:bg-[var(--comp-accent-hover)] shadow-sm",
     outline: "border border-[var(--comp-border)] bg-transparent hover:bg-[var(--comp-surface-hover)] text-[var(--comp-text-primary)]",

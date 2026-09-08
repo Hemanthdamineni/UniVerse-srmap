@@ -163,7 +163,7 @@ export default function HostelRegistrationPage({ blueprint }: Props) {
                       <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Room Code</label>
                       <input
                         required
-                        className="mt-1 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                        className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                         value={roomInput}
                         onChange={(e) => setRoomInput(e.target.value)}
                         placeholder="e.g. 101"
@@ -172,7 +172,7 @@ export default function HostelRegistrationPage({ blueprint }: Props) {
                     <div>
                       <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Block name</label>
                       <select
-                        className="mt-1 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                        className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                         value={blockInput}
                         onChange={(e) => setBlockInput(e.target.value)}
                         disabled={blocksQuery.isLoading}
@@ -186,7 +186,7 @@ export default function HostelRegistrationPage({ blueprint }: Props) {
                   <div>
                     <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Contact Info</label>
                     <input
-                      className="mt-1 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
+                      className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
                       value={contactInput}
                       onChange={(e) => setContactInput(e.target.value)}
                       placeholder="Mobile or email"

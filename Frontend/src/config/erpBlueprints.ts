@@ -2,22 +2,13 @@ import { BOTTOM_NAV, DASHBOARD_QUICK_LINKS, MAIN_NAV, PAGE_BLUEPRINTS } from "./
 import type { Domain, NavItem, NavSection, PageBlueprint, PlaceholderPageBlueprint, SidebarItem } from "./erpBlueprintTypes";
 export { BOTTOM_NAV, DASHBOARD_QUICK_LINKS, MAIN_NAV, PAGE_BLUEPRINTS } from "./erpBlueprintData";
 export type {
-  AccessType,
-  ActivePageBlueprint,
   Domain,
-  NavGroupItem,
   NavItem,
-  NavLinkItem,
   NavSection,
   PageBlueprint,
   PageRenderer,
-  PageStatus,
   PlaceholderPageBlueprint,
-  SidebarDomain,
-  SidebarGroupItem,
   SidebarItem,
-  SidebarLeafItem,
-  SidebarSubItem,
 } from "./erpBlueprintTypes";
 
 /**

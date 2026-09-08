@@ -98,7 +98,7 @@ import type {
   ResourceFormState
 } from "../_shared/LmsPageShared";
 
-export function RoadmapBuilderPage() {
+function RoadmapBuilderPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [skill, setSkill] = useState("");

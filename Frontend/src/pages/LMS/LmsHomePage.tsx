@@ -164,7 +164,10 @@ export function LmsHomePage() {
       <CanonicalSectionCard
         title="Recommended Roadmaps"
         actions={
-          <Link to="/learn/roadmaps" className="text-xs font-medium text-[var(--comp-accent)] no-underline hover:underline">
+          <Link
+            to="/learn/roadmaps"
+            className="-my-2 inline-flex min-h-11 items-center text-xs font-medium text-[var(--comp-accent)] no-underline hover:underline"
+          >
             Browse all
           </Link>
         }

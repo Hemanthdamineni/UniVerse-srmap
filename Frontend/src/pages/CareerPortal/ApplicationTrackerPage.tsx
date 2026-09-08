@@ -193,9 +193,9 @@ const ApplicationTrackerPage: React.FC = () => {
                         className="group relative flex flex-col gap-2 rounded-lg bg-[var(--background)] p-3 border border-[color-mix(in_srgb,var(--border)_95%,transparent)] shadow-sm hover:border-[var(--comp-accent)] hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <Link 
+                          <Link
                             to={`/career/opportunities/${app.opportunityId}`}
-                            className="text-sm font-semibold text-[var(--text-primary)] leading-tight no-underline hover:text-[var(--comp-accent)] line-clamp-2"
+                            className="flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] leading-tight no-underline hover:text-[var(--comp-accent)] line-clamp-2"
                           >
                             {app.opportunityTitle}
                           </Link>

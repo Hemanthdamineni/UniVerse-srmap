@@ -9,7 +9,7 @@ import {
 } from "../_shared/LmsPageShared";
 import type { LmsGuide } from "../_shared/LmsPageShared";
 
-export function GuidesListPage() {
+function GuidesListPage() {
   const [query, setQuery] = useState("");
   const [subjectCode, setSubjectCode] = useState("");
   const [sort, setSort] = useState("");
