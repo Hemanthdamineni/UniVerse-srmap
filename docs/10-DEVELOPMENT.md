@@ -13,7 +13,7 @@
 | Node.js | ≥22.5 | `node:sqlite` (built-in) and the rest of the runtime require it |
 | npm | 10+ | Frontend + Backend both ship `package-lock.json` |
 | Docker | 24+ | Redis (dev), Playwright browsers (CI), the e2e stack |
-| Git | 2.40+ | Filtered rewrite (`git filter-repo`) if you ever redo the contributor cleanup |
+| Git | 2.40+ | Version control; `git filter-repo` for occasional history maintenance |
 | Python | 3.10+ | The career scraper (optional — only if you want to run the scraper locally) |
 | (optional) k6 | latest | Load tests (`Backend/load-tests/*.js`) |
 
@@ -323,7 +323,6 @@ docs/11-TESTING.md        # test strategy + how to write tests
 docs/12-CONTRIBUTING.md   # PR flow, code style, commit hygiene
 docs/14-PROD-READINESS-CHECKLIST.md  # the gates (P0/P1/P2)
 docs/15-DEBUGGING-NOTES.md  # recurring failure modes + 30s checks
-docs/16-CONTRIBUTOR-CLEANUP.md  # how the contributor-rewriting was done
 docs/17-DEPLOYMENT-GUIDE.md  # free-tier single-VM deploy walkthrough
 infra/runbooks/         # operational runbooks (backup, rollback, etc.)
 AGENTS.md / CLAUDE.md / PRODUCT.md  # AI assistant design context

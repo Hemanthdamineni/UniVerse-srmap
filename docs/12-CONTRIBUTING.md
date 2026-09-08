@@ -27,8 +27,8 @@ making UI changes.
   Git is the source of truth for "who did what when".
 - **Don't commit secrets, ERP dump JSON, or `*.sqlite` files.**
   They're all in `.gitignore`. If you accidentally committed one,
-  see the [16 — Contributor Cleanup](./16-CONTRIBUTOR-CLEANUP.md)
-  doc for the recovery procedure.
+  scrub it from history with `git filter-repo --invert-paths --path <file>`
+  and force-push.
 
 ## 12.2 The PR flow
 
@@ -247,7 +247,6 @@ with the code, **the code is right**; open a PR to fix the doc.
 - `docs/12-CONTRIBUTING.md` — this file
 - `docs/14-PROD-READINESS-CHECKLIST.md` — the gates (P0/P1/P2)
 - `docs/15-DEBUGGING-NOTES.md` — recurring failure modes
-- `docs/16-CONTRIBUTOR-CLEANUP.md` — contributor-rewriting history
 - `docs/17-DEPLOYMENT-GUIDE.md` — free-tier deploy walkthrough
 
 ### 12.6.2 When to update a doc

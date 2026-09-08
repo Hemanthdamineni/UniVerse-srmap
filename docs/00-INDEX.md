@@ -66,8 +66,6 @@ The remaining docs are operational / historical:
 
 - **[15 — Debugging Notes](./15-DEBUGGING-NOTES.md)** — recurring failure
   modes and the 30-second checks that would have caught them.
-- **[16 — Contributor Cleanup](./16-CONTRIBUTOR-CLEANUP.md)** — the
-  `git filter-repo` rewrite that consolidated the contributor list.
 
 ## Quick start (local dev)
 
@@ -140,9 +138,7 @@ University-ERP/
 
 This is a self-published student project — no formal semver yet. The
 `@Hemanthdamineni` GitHub account is the only contributor; every commit
-hash is signed and the Contributors list is clean (see
-**[16 — Contributor Cleanup](./16-CONTRIBUTOR-CLEANUP.md)** for the
-history of that).
+hash is signed and the Contributors list is clean.
 
 ## License
 
