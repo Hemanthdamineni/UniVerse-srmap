@@ -32,7 +32,7 @@ function CollectionsPage() {
   };
 
   return (
-    <LmsFrame title="Collections" loading={loading} error={error}>
+    <LmsFrame bare title="Collections" loading={loading} error={error}>
       {actionError ? <InlineError message={actionError} /> : null}
 
       <SectionCard title="Create collection">

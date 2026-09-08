@@ -109,7 +109,7 @@ function ProgressPage() {
     : [];
   const hasAnyProgress = Number(progress.data?.started || 0) > 0;
   return (
-    <LmsFrame title="Progress" loading={progress.loading || mastery.loading} error={progress.error || mastery.error}>
+    <LmsFrame bare title="Progress" loading={progress.loading || mastery.loading} error={progress.error || mastery.error}>
       {!hasAnyProgress ? (
         <EmptyView
           title="No study progress yet"

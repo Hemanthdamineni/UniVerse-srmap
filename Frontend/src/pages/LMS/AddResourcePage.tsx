@@ -59,7 +59,7 @@ type FlashcardCard = {
   back: string;
 };
 
-export function AddResourcePage() {
+export function AddResourcePage({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit") || "";
@@ -354,7 +354,7 @@ export function AddResourcePage() {
   };
 
   return (
-    <LmsFrame title={frameTitle} loading={Boolean(editId && editState.loading)} error={editState.error}>
+    <LmsFrame title={frameTitle} bare={embedded} loading={Boolean(editId && editState.loading)} error={editState.error}>
       <div className="dashboard-card grid gap-4 p-5">
         <DuplicateWarning exact={duplicateWarning?.exact || null} similarCount={duplicateWarning?.similar?.length || 0} />
         {formError ? <InlineError message={formError} /> : null}

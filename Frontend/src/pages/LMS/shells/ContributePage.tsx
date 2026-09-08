@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { SegmentedControl } from "../../../components/ui";
 import AddResourcePage from "../AddResourcePage";
 import MyContributionsPage from "../me/MyContributionsPage";
+import { LmsFrame } from "../_shared/LmsPageShared";
 
 type ContributeTab = "create" | "contributions";
 
@@ -18,14 +19,18 @@ export default function ContributePage() {
   const tab: ContributeTab = TAB_VALUES.has(String(requested)) ? (requested as ContributeTab) : "create";
 
   return (
-    <div className="flex flex-col gap-4">
-      <SegmentedControl
-        options={TAB_OPTIONS}
-        value={tab}
-        onChange={(value) =>
-          setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
-        }
-      />
+    <LmsFrame
+      title="Contribute"
+      tabs={
+        <SegmentedControl
+          options={TAB_OPTIONS}
+          value={tab}
+          onChange={(value) =>
+            setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
+          }
+        />
+      }
+    >
       {tab === "create" ? (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -48,10 +53,10 @@ export default function ContributePage() {
               </p>
             </Link>
           </div>
-          <AddResourcePage />
+          <AddResourcePage embedded />
         </div>
       ) : null}
       {tab === "contributions" ? <MyContributionsPage /> : null}
-    </div>
+    </LmsFrame>
   );
 }

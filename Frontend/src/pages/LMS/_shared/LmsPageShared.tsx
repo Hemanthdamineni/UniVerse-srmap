@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 // LMS shell: InlineError in frame; StatCard momentum row; resource preview uses comp-surface tokens.
 import { ErpPageShell, SectionCard } from "../../../components/erp/ErpPrimitives";
 import { InlineError, EmptyView } from "../../../components/ui/Feedback";
+import { SkeletonCard } from "../../../components/ui/Skeletons";
 import { StatCard } from "../../../components/ui/Progress";
 import AnnotationPanel from "../../../components/lms/AnnotationPanel";
 import { DuplicateWarning, OutdatedWarning } from "../../../components/lms/LmsChips";
@@ -221,30 +222,56 @@ export function useAsyncPage<T>(loader: () => Promise<T>, deps: unknown[], cache
 
 export function LmsFrame({
   title,
+  tabs,
+  bare = false,
   loading,
   error,
   children,
 }: {
-  title: string;
+  title?: string;
+  /** Tab strip rendered directly under the page heading (events "My Teams" pattern). */
+  tabs?: React.ReactNode;
+  /**
+   * Content-only mode: no page shell, no heading. For a sub-view mounted inside
+   * another `LmsFrame` (a tab panel) so the chrome and `<h1>` are not doubled.
+   */
+  bare?: boolean;
   loading?: boolean;
   error?: string | null;
   children: React.ReactNode;
 }) {
+  const errorBlock = error ? (
+    <InlineError
+      title={title ? `Could not load ${title}` : "Something went wrong"}
+      message={error}
+      description="Your ERP session may have expired, or the LMS service may be temporarily unavailable."
+      action={
+        <Link to="/learn" className="lms-btn lms-btn-ghost no-underline">
+          Back to LMS home
+        </Link>
+      }
+      className="mb-4"
+    />
+  ) : null;
+
+  if (bare) {
+    return (
+      <>
+        {errorBlock}
+        {loading ? <SkeletonCard /> : <div className="space-y-6">{children}</div>}
+      </>
+    );
+  }
+
   return (
-    <ErpPageShell title={title} source="Internal API" isLoading={loading} loadingMessage={`Loading ${title}...`}>
-      {error ? (
-        <InlineError
-          title={`Could not load ${title}`}
-          message={error}
-          description="Your ERP session may have expired, or the LMS service may be temporarily unavailable."
-          action={
-            <Link to="/learn" className="lms-btn lms-btn-ghost no-underline">
-              Back to LMS home
-            </Link>
-          }
-          className="mb-4"
-        />
-      ) : null}
+    <ErpPageShell
+      title={title ?? ""}
+      source="Internal API"
+      isLoading={loading}
+      loadingMessage={`Loading ${title ?? "content"}...`}
+    >
+      {tabs ? <div className="mb-4">{tabs}</div> : null}
+      {errorBlock}
       <div className="space-y-6">{children}</div>
     </ErpPageShell>
   );

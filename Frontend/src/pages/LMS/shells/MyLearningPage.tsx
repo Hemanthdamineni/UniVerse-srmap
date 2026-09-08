@@ -3,7 +3,7 @@ import { SegmentedControl, SkeletonCard } from "../../../components/ui";
 import CollectionsPage from "../CollectionsPage";
 import ProgressPage from "../me/ProgressPage";
 import SavedResourcesPage from "../me/SavedResourcesPage";
-import { getMyActivity, listRoadmaps, useAsyncPage, SectionCard } from "../_shared/LmsPageShared";
+import { getMyActivity, listRoadmaps, useAsyncPage, SectionCard, LmsFrame } from "../_shared/LmsPageShared";
 import type { LmsRoadmap } from "../_shared/LmsPageShared";
 
 type MyLearningTab = "saved" | "collections" | "progress" | "history";
@@ -95,15 +95,18 @@ export default function MyLearningPage() {
   const requested = searchParams.get("tab");
   const tab: MyLearningTab = TAB_VALUES.has(String(requested)) ? (requested as MyLearningTab) : "saved";
 
+  const tabStrip = (
+    <SegmentedControl
+      options={TAB_OPTIONS}
+      value={tab}
+      onChange={(value) =>
+        setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
+      }
+    />
+  );
+
   return (
-    <div className="flex flex-col gap-4">
-      <SegmentedControl
-        options={TAB_OPTIONS}
-        value={tab}
-        onChange={(value) =>
-          setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
-        }
-      />
+    <LmsFrame title="My Learning" tabs={tabStrip}>
       {tab === "saved" ? <SavedResourcesPage /> : null}
       {tab === "collections" ? <CollectionsPage /> : null}
       {tab === "progress" ? (
@@ -113,6 +116,6 @@ export default function MyLearningPage() {
         </>
       ) : null}
       {tab === "history" ? <HistorySection /> : null}
-    </div>
+    </LmsFrame>
   );
 }

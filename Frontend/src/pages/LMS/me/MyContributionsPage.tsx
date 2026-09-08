@@ -72,7 +72,7 @@ function MyContributionsPage() {
   };
 
   return (
-    <LmsFrame title="My Contributions" loading={loading} error={error}>
+    <LmsFrame bare title="My Contributions" loading={loading} error={error}>
       {actionError ? <InlineError message={actionError} /> : null}
 
       <SectionCard title="My Resources">

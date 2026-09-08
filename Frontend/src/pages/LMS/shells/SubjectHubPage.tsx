@@ -49,8 +49,9 @@ export default function SubjectHubPage() {
     : "overview";
 
   return (
-    <LmsFrame title={`Subject ${code}`}>
-      <div className="space-y-4">
+    <LmsFrame
+      title={`Subject ${code}`}
+      tabs={
         <SegmentedControl
           options={TAB_OPTIONS}
           value={tab}
@@ -58,10 +59,11 @@ export default function SubjectHubPage() {
             setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab: value }), { replace: true })
           }
         />
-        {tab === "overview" ? <SubjectOverviewSection code={code} /> : null}
-        {tab === "resources" ? <SubjectResourcesSection code={code} /> : null}
-        {tab === "pyq" ? <PYQBankSection code={code} /> : null}
-      </div>
+      }
+    >
+      {tab === "overview" ? <SubjectOverviewSection code={code} /> : null}
+      {tab === "resources" ? <SubjectResourcesSection code={code} /> : null}
+      {tab === "pyq" ? <PYQBankSection code={code} /> : null}
     </LmsFrame>
   );
 }

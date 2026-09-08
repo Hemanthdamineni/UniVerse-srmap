@@ -101,7 +101,7 @@ import type {
 function SavedResourcesPage() {
   const { data, loading, error } = useAsyncPage(() => getMyBookmarks(), []);
   return (
-    <LmsFrame title="Saved Resources" loading={loading} error={error}>
+    <LmsFrame bare title="Saved Resources" loading={loading} error={error}>
       <ResourceGrid
         items={data || []}
         emptyTitle="No saved resources yet"

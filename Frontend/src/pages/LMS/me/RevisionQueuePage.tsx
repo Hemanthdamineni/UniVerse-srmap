@@ -119,7 +119,7 @@ function RevisionQueuePage() {
   const { data, setData, loading, error } = useAsyncPage(() => getRevisionQueue(), []);
   const queue = data || [];
   return (
-    <LmsFrame title="Revision Queue" loading={loading} error={error}>
+    <LmsFrame bare title="Revision Queue" loading={loading} error={error}>
       {queue.length === 0 ? (
         <EmptyView
           title="Nothing due for revision"

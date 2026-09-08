@@ -154,7 +154,7 @@ function QuestionBankPage() {
   };
 
   return (
-    <LmsFrame title="Question Bank" loading={loading} error={error}>
+    <LmsFrame bare title="Question Bank" loading={loading} error={error}>
       <SectionCard title="Contribute Question">
         {formError ? <InlineError message={formError} /> : null}
         <div className="grid gap-3">

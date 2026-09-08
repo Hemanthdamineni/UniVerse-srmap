@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { SegmentedControl } from "../../../components/ui";
 import QuestionBankPage from "../QuestionBankPage";
 import RevisionQueuePage from "../me/RevisionQueuePage";
-import { getExamPrepRecommendations, useAsyncPage } from "../_shared/LmsPageShared";
+import { getExamPrepRecommendations, useAsyncPage, LmsFrame } from "../_shared/LmsPageShared";
 import RecommendationSection from "../../../components/lms/RecommendationSection";
 
 type PracticeTab = "revision" | "questions" | "exam-prep";
@@ -33,8 +33,10 @@ export default function PracticePage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={selectTab} />
+    <LmsFrame
+      title="Practice"
+      tabs={<SegmentedControl options={TAB_OPTIONS} value={tab} onChange={selectTab} />}
+    >
       {tab === "revision" ? <RevisionQueuePage /> : null}
       {tab === "questions" ? <QuestionBankPage /> : null}
       {tab === "exam-prep" ? (
@@ -49,6 +51,6 @@ export default function PracticePage() {
           </p>
         </div>
       ) : null}
-    </div>
+    </LmsFrame>
   );
 }
