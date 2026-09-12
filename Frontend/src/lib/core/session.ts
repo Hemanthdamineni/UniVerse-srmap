@@ -1,4 +1,5 @@
 import { isStaticPrototype, STATIC_PROTOTYPE_PROFILE } from "./prototype";
+import { clearQueryPersistedCache, setQueryPersistScope } from "./queryPersist";
 
 // The httpOnly `erp_session` cookie is the only credential the backend
 // accepts. Nothing session-shaped is ever stored client-side; this flag is a
@@ -10,6 +11,25 @@ const LOGIN_REDIRECT_KEY = "login_redirect";
 const SESSION_EXPIRED_FLAG_KEY = "session_expired";
 
 type PlainRecord = Record<string, unknown>;
+
+function getStudentCacheIdentity(profileData: unknown) {
+  if (!profileData || typeof profileData !== "object") return "";
+  const record = profileData as PlainRecord;
+  const table = record.TableContent && typeof record.TableContent === "object"
+    ? (record.TableContent as PlainRecord)
+    : {};
+  const candidates = [
+    record.userId,
+    record.studentId,
+    record.registrationNumber,
+    record.regNo,
+    table["Registration No."],
+    table["Registration Number"],
+    table["Regd. No."],
+    table["Student ID"],
+  ];
+  return candidates.find((value) => typeof value === "string" && value.trim()) as string | undefined || "";
+}
 
 function hasStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -80,8 +100,14 @@ export function storeSessionAuth({ profileData }: { profileData?: unknown }) {
 
   if (profileData && typeof profileData === "object") {
     window.localStorage.setItem(PROFILE_DATA_KEY, JSON.stringify(profileData));
+    const identity = getStudentCacheIdentity(profileData);
+    // A login response without a stable identity may still use the app, but it
+    // must never enable offline persistence for an unknown account.
+    if (identity) setQueryPersistScope(identity);
+    else clearQueryPersistedCache();
   } else {
     window.localStorage.removeItem(PROFILE_DATA_KEY);
+    clearQueryPersistedCache();
   }
 }
 
@@ -89,6 +115,7 @@ export function clearSessionAuth() {
   if (!hasStorage()) return;
   window.localStorage.removeItem(LOGGED_IN_KEY);
   window.localStorage.removeItem(PROFILE_DATA_KEY);
+  clearQueryPersistedCache();
   if (typeof window !== "undefined" && window.sessionStorage) {
     window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
   }
