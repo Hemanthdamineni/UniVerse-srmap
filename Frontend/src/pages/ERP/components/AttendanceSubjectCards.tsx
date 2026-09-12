@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { calculateBunkCapacity } from "./BunkCalculator";
+import { AttendanceStatusPill } from "./AttendanceStatusPill";
 
 /**
  * Mobile presentation of the attendance table.
@@ -73,15 +74,7 @@ export default function AttendanceSubjectCards({ records }: { records: Attendanc
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span
-                className="erp-status-pill"
-                style={{
-                  backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`,
-                  color,
-                }}
-              >
-                {bunk.status === "safe" ? "✓ Safe" : bunk.status === "caution" ? "⚠ Caution" : "✕ Required"}
-              </span>
+              <AttendanceStatusPill status={bunk.status} />
               <span className="text-xs font-medium" style={{ color }}>
                 {actionLine(bunk.status, bunk.safeToSkip, bunk.classesNeededToAttend)}
               </span>

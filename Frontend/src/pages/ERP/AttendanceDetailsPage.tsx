@@ -11,6 +11,7 @@ import { ErpPageShell, TableEmptyRow } from "../../components/erp/ErpPrimitives"
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { calculateBunkCapacity } from "./components/BunkCalculator";
 import AttendanceSubjectCards from "./components/AttendanceSubjectCards";
+import { AttendanceStatusPill } from "./components/AttendanceStatusPill";
 import { useIsMobileViewport } from "../../hooks/useMediaQuery";
 import { AttendanceTrendSection } from "./components/AttendanceTrendSection";
 
@@ -139,22 +140,20 @@ export default function AttendanceDetailsPage({ blueprint }: AttendanceDetailsPa
                         <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: rec.attendancePct < 75 ? 'var(--error)' : 'var(--success)' }}>
                           {rec.attendancePct.toFixed(2)}%
                         </td>
-                        <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: statusColor }}>
+                        <td
+                          className="erp-table-cell erp-table-align-center font-semibold tabular-nums"
+                          style={{ color: bunk.safeToSkip > 0 ? statusColor : "var(--comp-text-muted)" }}
+                        >
                           {bunk.safeToSkip > 0 ? bunk.safeToSkip : "—"}
                         </td>
-                        <td className="erp-table-cell erp-table-align-center font-semibold" style={{ color: statusColor }}>
+                        <td
+                          className="erp-table-cell erp-table-align-center font-semibold tabular-nums"
+                          style={{ color: bunk.classesNeededToAttend > 0 ? statusColor : "var(--comp-text-muted)" }}
+                        >
                           {bunk.classesNeededToAttend > 0 ? bunk.classesNeededToAttend : "—"}
                         </td>
                         <td className="erp-table-cell erp-table-align-center">
-                          <span
-                            className="erp-status-pill"
-                            style={{
-                              backgroundColor: `color-mix(in srgb, ${statusColor} 20%, transparent)`,
-                              color: statusColor,
-                            }}
-                          >
-                            {bunk.status === "safe" ? "✓ Safe" : bunk.status === "caution" ? "⚠ Caution" : "✕ Required"}
-                          </span>
+                          <AttendanceStatusPill status={bunk.status} />
                         </td>
                         <td className="erp-table-cell">
                           <Link
