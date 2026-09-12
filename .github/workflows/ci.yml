@@ -1,5 +1,12 @@
 name: CI
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -10,9 +17,31 @@ env:
   NODE_VERSION: "22"
 
 jobs:
+  scraper-quality:
+    name: Scraper quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Scraper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: Scraper/.python-version
+          cache: pip
+          cache-dependency-path: Scraper/requirements.txt
+      - name: Install pinned dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Verify imports and run tests
+        run: |
+          python -c "import aiohttp, pandas, schedule, yaml; from scrapers import devpost_scraper, remote_scraper"
+          python -m unittest discover -s tests -v
+
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -37,13 +66,8 @@ jobs:
       - name: Audit production dependencies
         id: backend-audit
         if: always()
-        continue-on-error: true
         run: |
-          set +e
           npm audit --omit=dev --audit-level=high > backend-audit.txt 2>&1
-          AUDIT_EXIT=$?
-          set -e
-          echo "audit_exit=$AUDIT_EXIT"
           echo "report=$(wc -l < backend-audit.txt) lines"
 
       - name: Upload backend audit report
@@ -51,12 +75,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-audit
-          path: backend-audit.txt
-          if-no-files-found: ignore
+          path: Backend/backend-audit.txt
+          if-no-files-found: error
 
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -90,13 +115,8 @@ jobs:
       - name: Audit production dependencies
         id: frontend-audit
         if: always()
-        continue-on-error: true
         run: |
-          set +e
           npm audit --omit=dev --audit-level=high > frontend-audit.txt 2>&1
-          AUDIT_EXIT=$?
-          set -e
-          echo "audit_exit=$AUDIT_EXIT"
           echo "report=$(wc -l < frontend-audit.txt) lines"
 
       - name: Upload frontend audit report
@@ -104,8 +124,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-audit
-          path: frontend-audit.txt
-          if-no-files-found: ignore
+          path: Frontend/frontend-audit.txt
+          if-no-files-found: error
 
   frontend-build:
     name: Frontend Build
