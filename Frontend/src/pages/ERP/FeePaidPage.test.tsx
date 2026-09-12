@@ -42,9 +42,9 @@ describe("FeePaidPage", () => {
       disconnect() {}
     };
     executeErpAction.mockResolvedValue({ success: true, html: "<html><body>Receipt</body></html>" });
+    Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:receipt"), configurable: true });
+    Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), configurable: true });
     vi.spyOn(window, "open").mockReturnValue({
-      document: { write: vi.fn(), close: vi.fn() },
-      focus: vi.fn(),
       print: vi.fn(),
     } as any);
   });
@@ -157,5 +157,6 @@ describe("FeePaidPage", () => {
         url: expect.stringContaining("7788"),
       })
     );
+    expect(window.open).toHaveBeenCalledWith("blob:receipt", "_blank", "noopener,noreferrer");
   });
 });

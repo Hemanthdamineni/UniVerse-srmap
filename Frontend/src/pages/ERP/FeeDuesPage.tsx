@@ -4,7 +4,7 @@ import { executePipeline, type FeeDuesModel } from "../../lib/erp/erpTransformer
 // ErpPageShell section-card; fee table structure unchanged.
 import { getErpBatch } from "../../lib/erp/index";
 import { erpKeys } from "../../lib/erp/queryKeys";
-import type { PageBlueprint } from "../../config/erpBlueprints";
+import { OFFICIAL_ERP_URL, type PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell, TableCardHeader } from "../../components/erp/ErpPrimitives";
 import { InlineError, EmptyState } from "../../components/ui/Feedback";
 import { ClearanceCard } from "../../components/ui/ClearanceCard";
@@ -37,6 +37,52 @@ function extractFeeDueNotes(rawData: unknown) {
     .filter(Boolean)
     .filter((note) => note.length > 20)
     .slice(0, 3);
+}
+
+function OpenErpButton({ className = "" }: { className?: string }) {
+  return (
+    <a
+      href={OFFICIAL_ERP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`btn-primary gap-2 no-underline ${className}`.trim()}
+      style={{ display: "inline-flex" }}
+    >
+      Open Official ERP
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" x2="21" y1="14" y2="3" />
+      </svg>
+    </a>
+  );
+}
+
+/**
+ * Standalone "go to the ERP" card. Shown in the states where there is no fee
+ * table to hang the payment callout off — no data, a clear ledger, or no
+ * pending dues — so the official-portal link is reachable regardless.
+ */
+function OfficialErpCta() {
+  return (
+    <section className="dashboard-card p-5">
+      <div className="flex items-start gap-4">
+        <div className="mt-0.5 shrink-0" style={{ color: "var(--comp-accent)" }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-bold" style={{ color: "var(--comp-text-primary)" }}>
+            Official ERP Portal
+          </h3>
+          <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--comp-text-secondary)" }}>
+            Fee statements, payment history, and online payment verification are handled on the
+            university ERP. Open it to review your account or clear any dues directly.
+          </p>
+          <OpenErpButton className="mt-4" />
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function FinanceClearanceCard({ notes }: { notes: string[] }) {
@@ -188,6 +234,7 @@ export default function FeeDuesPage({ blueprint }: Props) {
                   <p className="mt-1.5 text-sm leading-6" style={{ color: 'var(--comp-text-secondary)' }}>
                     To ensure secure transaction processing, all online fee payments must be completed through the official university ERP portal. Please log in to the main website to clear your outstanding dues.
                   </p>
+                  <OpenErpButton className="mt-4" />
                 </div>
               </div>
 
@@ -216,6 +263,10 @@ export default function FeeDuesPage({ blueprint }: Props) {
             </div>
           </section>
         </>
+      )}
+
+      {!error && !loading && (!data || data.noDues || data.records.length === 0) && (
+        <OfficialErpCta />
       )}
     </ErpPageShell>
   );

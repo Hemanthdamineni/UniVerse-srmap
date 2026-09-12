@@ -40,15 +40,17 @@ export default function FeePaidPage({ blueprint }: Props) {
       });
 
       if (response.html) {
-        const win = window.open("", "_blank");
+        // The backend returns an inert printable document. An opaque Blob URL
+        // and a severed opener prevent upstream markup from sharing app origin.
+        const receiptUrl = URL.createObjectURL(new Blob([response.html], { type: "text/html;charset=utf-8" }));
+        const win = window.open(receiptUrl, "_blank", "noopener,noreferrer");
         if (win) {
-          win.document.write(response.html);
-          win.document.close();
-          win.focus();
           setTimeout(() => {
             win.print();
-          }, 500);
+            URL.revokeObjectURL(receiptUrl);
+          }, 750);
         } else {
+          URL.revokeObjectURL(receiptUrl);
           alert("Please allow popups to print receipts.");
         }
       } else {

@@ -11,6 +11,9 @@ export type {
   SidebarItem,
 } from "./erpBlueprintTypes";
 
+/** The official SRM AP student ERP portal — the only place print/registration actions actually live. */
+export const OFFICIAL_ERP_URL = "https://student.srmap.edu.in/srmapstudentcorner";
+
 /**
  * Gets the actual status of a blueprint, falling back to 'active' if unset.
  */
