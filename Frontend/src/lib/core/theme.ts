@@ -57,6 +57,10 @@ export function getThemeChoice(): ThemeChoice {
 }
 
 export function resolveTheme(choice: ThemeChoice): ResolvedTheme {
+  // Dark mode is still in development — production users only ever see light,
+  // regardless of a stored choice or OS preference. Dev keeps full dark-mode
+  // behavior so work on it can continue.
+  if (import.meta.env.PROD) return "light";
   if (choice === "system") return prefersDark() ? "dark" : "light";
   return choice;
 }
@@ -68,6 +72,11 @@ function applyResolvedTheme(resolved: ResolvedTheme): void {
   root.setAttribute("data-theme", resolved);
   root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
+}
+
+/** Apply once before React paints, without attaching an OS listener. */
+export function applyInitialTheme(): void {
+  applyResolvedTheme(resolveTheme(getThemeChoice()));
 }
 
 export function setThemeChoice(choice: ThemeChoice): ResolvedTheme {
@@ -99,7 +108,7 @@ export function subscribeToTheme(listener: Listener): () => void {
  * `system`. Call once at app start; returns a teardown for StrictMode remounts.
  */
 export function initTheme(): () => void {
-  applyResolvedTheme(resolveTheme(getThemeChoice()));
+  applyInitialTheme();
 
   if (typeof window === "undefined" || !window.matchMedia) return () => {};
 
