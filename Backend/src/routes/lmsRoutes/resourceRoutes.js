@@ -1,4 +1,5 @@
 const { resolveSessionId } = require("../../utils/cookies");
+const path = require("path");
 
 function registerResourceRoutes(
   router,
@@ -16,9 +17,33 @@ function registerResourceRoutes(
     ensureAdmin,
     parseResourcePayload,
     persistUploadedFile,
+    lmsFilesDir,
     toBoolean,
   }
 ) {
+  router.get("/lms/resources/:id/file", async (req, res, next) => {
+    try {
+      // getResource is the authorization gate. The raw storage path never
+      // leaves the server and is resolved only after access is approved.
+      lmsStore.getResource(req.params.id, req.userContext.userId, {
+        includeHiddenOwn: true,
+        isAdmin: req.userContext.hasAdminAccess,
+      });
+      const row = lmsStore.getResourceRow(req.params.id);
+      if (!row?.filePath) throw createHttpError(404, "No uploaded file is attached", "LMS_FILE_NOT_FOUND");
+      const root = path.resolve(lmsFilesDir);
+      const filePath = path.resolve(String(row.filePath));
+      if (!filePath.startsWith(`${root}${path.sep}`)) {
+        throw createHttpError(404, "Uploaded file is unavailable", "LMS_FILE_NOT_FOUND");
+      }
+      return res.download(filePath, path.basename(filePath), (error) => {
+        if (error && !res.headersSent) next(error);
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.get("/lms/resources", (req, res, next) =>
     createHandle(req, res, next, async () =>
       lmsStore.getResources(
@@ -97,20 +122,28 @@ function registerResourceRoutes(
         url: payload.url,
       });
 
-      return lmsStore.createResource(req.userContext.userId, {
-        ...payload,
-        filePath,
-        fileHash,
-        fileSize,
-        mimeType,
-        estimatedMinutes,
-      });
+      try {
+        return lmsStore.createResource(req.userContext.userId, {
+          ...payload,
+          filePath,
+          fileHash,
+          fileSize,
+          mimeType,
+          estimatedMinutes,
+        });
+      } catch (error) {
+        // Disk write precedes validation/DB persistence. Compensate on every
+        // failed create so invalid metadata cannot leave orphaned files.
+        lmsStore.removeManagedFile(filePath);
+        throw error;
+      }
     })
   );
 
   router.put("/lms/resources/:id", uploadLimiter, upload.single("file"), (req, res, next) =>
     createHandle(req, res, next, async () => {
       const payload = parseResourcePayload(req);
+      const previous = lmsStore.getResourceRow(req.params.id);
       let filePath = payload.filePath;
       let fileHash = payload.fileHash;
       let fileSize = payload.fileSize;
@@ -145,16 +178,25 @@ function registerResourceRoutes(
         url: payload.url,
       });
 
-      return lmsStore.updateResource(req.params.id, req.userContext.userId, {
-        ...payload,
-        filePath,
-        fileHash,
-        fileSize,
-        mimeType,
-        estimatedMinutes,
-      }, {
-        isAdmin: req.userContext.hasAdminAccess,
-      });
+      try {
+        const updated = lmsStore.updateResource(req.params.id, req.userContext.userId, {
+          ...payload,
+          filePath,
+          fileHash,
+          fileSize,
+          mimeType,
+          estimatedMinutes,
+        }, {
+          isAdmin: req.userContext.hasAdminAccess,
+        });
+        if (req.file && previous?.filePath && previous.filePath !== filePath) {
+          lmsStore.removeManagedFile(previous.filePath);
+        }
+        return updated;
+      } catch (error) {
+        if (req.file) lmsStore.removeManagedFile(filePath);
+        throw error;
+      }
     })
   );
 

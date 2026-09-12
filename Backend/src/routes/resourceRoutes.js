@@ -32,6 +32,10 @@ function toUpper(value) {
   return toSafeString(value).toUpperCase();
 }
 
+function ownerPrefix(userId) {
+  return crypto.createHash("sha256").update(String(userId || "")).digest("hex").slice(0, 24);
+}
+
 function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", uploadsDir }) {
   const router = express.Router();
   const userContext = createUserContextMiddleware({ sessionStore, adminPassword });
@@ -59,9 +63,9 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
   const upload = multer({
     storage: multer.diskStorage({
       destination: (_req, _file, cb) => cb(null, uploadRoot),
-      filename: (_req, file, cb) => {
+      filename: (req, file, cb) => {
         const safeExt = path.extname(file.originalname || "").slice(0, 10).replace(/[^a-zA-Z0-9.]/g, "");
-        const unique = `${Date.now()}-${crypto.randomUUID()}`;
+        const unique = `${ownerPrefix(req.userContext?.userId)}-${Date.now()}-${crypto.randomUUID()}`;
         cb(null, `${unique}${safeExt || ""}`);
       },
     }),
@@ -93,11 +97,26 @@ function createResourceRoutes({ contentStore, sessionStore, adminPassword = "", 
         fileName: req.file.originalname,
         mimeType: req.file.mimetype,
         sizeBytes: req.file.size,
-        url: `/uploads/${req.file.filename}`,
+        url: `/api/uploads/${encodeURIComponent(req.file.filename)}`,
       });
     } catch (error) {
       return sendApiError(res, req, error);
     }
+  });
+
+  router.get("/uploads/:fileId", (req, res, next) => {
+    const fileId = String(req.params.fileId || "");
+    const expectedPrefix = `${ownerPrefix(req.userContext?.userId)}-`;
+    if (path.basename(fileId) !== fileId || !fileId.startsWith(expectedPrefix)) {
+      return next(createHttpError(404, "Uploaded file not found", "RESOURCE_FILE_NOT_FOUND"));
+    }
+    const fullPath = path.resolve(uploadRoot, fileId);
+    if (!fullPath.startsWith(`${path.resolve(uploadRoot)}${path.sep}`) || !fs.existsSync(fullPath)) {
+      return next(createHttpError(404, "Uploaded file not found", "RESOURCE_FILE_NOT_FOUND"));
+    }
+    return res.download(fullPath, fileId, (error) => {
+      if (error && !res.headersSent) next(error);
+    });
   });
 
   router.get("/resources/catalog", (req, res) => {

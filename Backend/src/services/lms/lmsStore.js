@@ -2027,8 +2027,8 @@ const resourceMethods = {
     const resource = this.getResourceRow(id);
     if (!resource) return { deleted: false, id };
     this.withTransaction(() => {
-      this.db.prepare("DELETE FROM lms_resources WHERE id = ?").run(id);
       this.db.prepare("DELETE FROM lms_search WHERE rowid = (SELECT rowid FROM lms_resources WHERE id = ?)").run(id);
+      this.db.prepare("DELETE FROM lms_resources WHERE id = ?").run(id);
     });
     return { deleted: true, id };
   },
@@ -3012,11 +3012,26 @@ class LmsStore {
     }
   }
 
+  removeManagedFile(filePath) {
+    if (!filePath) return;
+    const root = path.resolve(this.filesDir);
+    const resolved = path.resolve(String(filePath));
+    if (!resolved.startsWith(`${root}${path.sep}`)) return;
+    try {
+      fs.unlinkSync(resolved);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
+
   mapResource(row) {
     if (!row) return null;
     const moderation = this.buildModerationSummary(row);
+    const { filePath, ...safeRow } = row;
     return {
-      ...row,
+      ...safeRow,
+      fileAvailable: Boolean(filePath),
+      fileDownloadUrl: filePath ? `/api/lms/resources/${encodeURIComponent(row.id)}/file` : null,
       tags: parseJson(row.tags, []),
       structuredContent: parseJson(row.structuredContent, null),
       topics: this.getTopicsForResource(row.id),

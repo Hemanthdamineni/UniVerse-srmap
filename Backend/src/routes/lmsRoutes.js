@@ -59,48 +59,83 @@ function createHandle(req, res, next, action) {
 
 function createLimiter({ max, windowMs }) {
   const buckets = new Map();
+  const maxBuckets = 10_000;
+  let nextSweepAt = 0;
   return function limiter(req, _res, next) {
     const key = `${req.userContext?.userId || req.ip}:${req.route?.path || req.path}`;
-    const windowStart = Date.now() - windowMs;
+    const now = Date.now();
+    const windowStart = now - windowMs;
+    if (now >= nextSweepAt) {
+      for (const [bucketKey, timestamps] of buckets) {
+        if (!timestamps.some((timestamp) => timestamp >= windowStart)) buckets.delete(bucketKey);
+      }
+      nextSweepAt = now + Math.min(windowMs, 60_000);
+    }
+    if (!buckets.has(key) && buckets.size >= maxBuckets) {
+      buckets.delete(buckets.keys().next().value);
+    }
     const recent = (buckets.get(key) || []).filter((timestamp) => timestamp >= windowStart);
     if (recent.length >= max) {
       return next(createHttpError(429, "Too many requests. Please retry later.", "LMS_RATE_LIMITED"));
     }
-    recent.push(Date.now());
+    recent.push(now);
+    // Refresh insertion order so the bounded eviction above acts as LRU.
+    buckets.delete(key);
     buckets.set(key, recent);
     return next();
   };
 }
 
+const GUIDE_PDF_MAX_CONCURRENCY = Math.max(1, Number(process.env.LMS_PDF_MAX_CONCURRENCY || 2));
+let activeGuidePdfJobs = 0;
+
+function escapePrintableText(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildGuidePdfHtml(guide) {
+  const sections = ensureArray(guide.sections)
+    .slice(0, 200)
+    .map(
+      (section) => `
+        <section style="margin-bottom:24px;">
+          <h2 style="font-size:18px;margin-bottom:8px;">${escapePrintableText(section.title)}</h2>
+          <div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${escapePrintableText(section.content)}</div>
+        </section>
+      `
+    )
+    .join("");
+  return `
+    <html>
+      <head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline';"></head>
+      <body style="font-family: Georgia, 'Times New Roman', serif; padding: 32px;">
+        <h1 style="font-size: 28px; margin-bottom: 8px;">${escapePrintableText(guide.title)}</h1>
+        <p style="font-size: 14px; color: #555; margin-bottom: 24px;">${escapePrintableText(guide.description)}</p>
+        ${sections}
+      </body>
+    </html>
+  `;
+}
+
 async function renderGuidePdf(guide) {
+  if (activeGuidePdfJobs >= GUIDE_PDF_MAX_CONCURRENCY) {
+    throw createHttpError(429, "Too many PDF exports are in progress. Please retry shortly.", "LMS_PDF_BUSY");
+  }
+  activeGuidePdfJobs += 1;
   const browser = await chromium.launch({ headless: true });
   try {
-    const page = await browser.newPage();
-    const sections = ensureArray(guide.sections)
-      .map(
-        (section) => `
-          <section style="margin-bottom:24px;">
-            <h2 style="font-size:18px;margin-bottom:8px;">${section.title}</h2>
-            <div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${section.content}</div>
-          </section>
-        `
-      )
-      .join("");
-    await page.setContent(
-      `
-        <html>
-          <body style="font-family: 'Georgia', 'Times New Roman', serif; padding: 32px;">
-            <h1 style="font-size: 28px; margin-bottom: 8px;">${guide.title}</h1>
-            <p style="font-size: 14px; color: #555; margin-bottom: 24px;">${guide.description || ""}</p>
-            ${sections}
-          </body>
-        </html>
-      `,
-      { waitUntil: "domcontentloaded" }
-    );
-    return await page.pdf({ format: "A4", printBackground: true });
+    const page = await browser.newPage({ javaScriptEnabled: false });
+    await page.route("**/*", (route) => route.abort());
+    await page.setContent(buildGuidePdfHtml(guide), { waitUntil: "domcontentloaded", timeout: 10_000 });
+    return await page.pdf({ format: "A4", printBackground: true, timeout: 15_000 });
   } finally {
     await browser.close();
+    activeGuidePdfJobs -= 1;
   }
 }
 
@@ -187,6 +222,7 @@ function createLmsRoutes({
     ensureAdmin,
     parseResourcePayload,
     persistUploadedFile,
+    lmsFilesDir: LMS_FILES_DIR,
     toBoolean,
   });
   registerGuideRoadmapRoutes(router, {
@@ -211,4 +247,6 @@ function createLmsRoutes({
 
 module.exports = {
   createLmsRoutes,
+  buildGuidePdfHtml,
+  escapePrintableText,
 };
