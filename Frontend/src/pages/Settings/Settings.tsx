@@ -196,7 +196,10 @@ export default function Settings() {
         {/* Career intent + inference controls (Batch B5) */}
         <CareerIntentSettings />
 
-        {/* Appearance */}
+        {/* Appearance — dark mode is still in development, so production only
+            offers Light; System/Dark stay dev-only rather than offering a
+            choice that can't visibly change anything. */}
+        {import.meta.env.DEV ? (
         <SectionCard title="Appearance">
           <p className="comp-body mb-4 text-sm">
             Choose how the platform looks to you. Applies immediately — “System” follows your device.
@@ -227,6 +230,7 @@ export default function Settings() {
             ))}
           </div>
         </SectionCard>
+        ) : null}
 
         {/* Data & Export */}
         <SectionCard title="Data & Export">
