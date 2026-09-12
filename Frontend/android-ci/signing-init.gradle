@@ -1,0 +1,36 @@
+// signing-init.gradle — applied via `gradlew -I` in .github/workflows/build-android.yml.
+//
+// `npx cap add android` generates android/app/build.gradle fresh every CI run
+// (the native project is gitignored, see docs/24-NATIVE-SHELL.md), so signing
+// config can't live there. An init script avoids patching the generated file:
+// it reaches into the `app` module after Gradle evaluates it and adds a
+// `release` signing config sourced from environment variables, then points
+// the `release` build type at it.
+//
+// Required env vars (set as GitHub Actions secrets, never committed):
+//   ANDROID_KEYSTORE_PATH      absolute path to the decoded .keystore file
+//   ANDROID_KEYSTORE_PASSWORD
+//   ANDROID_KEY_ALIAS
+//   ANDROID_KEY_PASSWORD
+allprojects {
+    plugins.withId("com.android.application") {
+        android {
+            signingConfigs {
+                release {
+                    def keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+                    if (keystorePath) {
+                        storeFile file(keystorePath)
+                        storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                        keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                        keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                    }
+                }
+            }
+            buildTypes {
+                release {
+                    signingConfig signingConfigs.release
+                }
+            }
+        }
+    }
+}

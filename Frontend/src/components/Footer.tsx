@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Footer() {
   const year = new Date().getFullYear();
 
@@ -6,8 +8,11 @@ function Footer() {
       <div className="text-left">
         © {year} UniVerse, SRMAP Edition. All rights reserved.
       </div>
-      <div className="text-left opacity-85 sm:text-right">
-        SRM AP student companion
+      <div className="flex items-center gap-4 text-left opacity-85 sm:text-right">
+        <Link to="/download-app" className="underline-offset-4 hover:underline" style={{ color: "var(--footer-fg)" }}>
+          Get the app
+        </Link>
+        <span>SRM AP student companion</span>
       </div>
     </footer>
   );

@@ -14,6 +14,7 @@ const ForgotPasswordPage = lazy(() => import("../pages/Login/ForgotPasswordPage"
 const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard"));
 const ProfilePage = lazy(() => import("../pages/Profile/ProfilePage"));
 const PublicCareerProfilePage = lazy(() => import("../pages/CareerPortal/PublicCareerProfilePage"));
+const DownloadAppPage = lazy(() => import("../pages/DownloadApp/DownloadAppPage"));
 
 export const baseRoutes = [
   { path: "/", element: <RootRedirect /> },
@@ -21,6 +22,7 @@ export const baseRoutes = [
   { path: "/login", element: <PageLayout><SuspenseWrapper><LoginPage /></SuspenseWrapper></PageLayout> },
   { path: "/forgot-password", element: <PageLayout><SuspenseWrapper><ForgotPasswordPage /></SuspenseWrapper></PageLayout> },
   { path: "/career/public/:userId", element: <PageLayout><SuspenseWrapper><PublicCareerProfilePage /></SuspenseWrapper></PageLayout> },
+  { path: "/download-app", element: <PageLayout><SuspenseWrapper><DownloadAppPage /></SuspenseWrapper></PageLayout> },
   { path: "/dashboard", element: <ProtectedPage><SuspenseWrapper><Dashboard /></SuspenseWrapper></ProtectedPage> },
   { path: "/profile", element: <ProtectedPage><SuspenseWrapper><ProfilePage /></SuspenseWrapper></ProtectedPage> },
 ];

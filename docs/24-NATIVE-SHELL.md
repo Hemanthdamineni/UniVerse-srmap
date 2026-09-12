@@ -1,8 +1,10 @@
 # 24 — Native shell (Capacitor)
 
-**Batch B13 / Epic 7.** Status: **spike complete, code-complete for what doesn't
-need store accounts.** Store listings (T7.1.3 / T7.1.4) need an Apple Developer
-account and a Play Console account — not started.
+**Batch B13 / Epic 7.** Status: **Android ships via direct download, not the
+Play Store** (T7.1.3 — deliberate, avoids a Play Console listing for now). iOS
+has no equivalent sideload path without a paid Apple Developer account
+(T7.1.4 — still blocked), so iOS users get the already-installable PWA
+("Add to Home Screen") instead. Both are explained on `/download-app`.
 
 ## What's in the repo
 
@@ -14,6 +16,10 @@ account and a Play Console account — not started.
 | Backend `notificationService` `nativePush` adapter | sends via FCM legacy HTTP; **inert without `FCM_SERVER_KEY`** |
 | Backend `notification_native` table + `/api/notifications/native/{register,unregister}` | token storage |
 | `.gitignore` | `Frontend/android/`, `Frontend/ios/` are generated, not committed |
+| `.github/workflows/build-android.yml` | builds + signs the release APK, publishes it to the `android-latest` GitHub Release |
+| `Frontend/android-ci/signing-init.gradle` | injects the release signing config from env vars into the freshly-generated (gitignored) Gradle project |
+| `Frontend/src/pages/DownloadApp/DownloadAppPage.tsx` | `/download-app` — the direct-download page, linked from the footer |
+| `Frontend/src/config/nativeApp.ts` | the APK's stable download URL |
 
 ## First-time setup (per machine)
 
@@ -56,9 +62,57 @@ app must open with zero connectivity.
 - The B13 offline banner + persisted query cache give a usable offline read of
   timetable / attendance / results.
 
-## Remaining (needs accounts)
+## Android: direct download instead of the Play Store (T7.1.3)
 
-- **T7.1.3** Android build signing + Play Console listing.
-- **T7.1.4** iOS build + App Store Connect listing (Apple Developer account).
+`.github/workflows/build-android.yml` builds a **signed** release APK on
+every push of an `app-v*` tag (or a manual `workflow_dispatch`) and publishes
+it as the `android-latest` GitHub Release asset on this public repo.
+`Frontend/src/pages/DownloadApp/DownloadAppPage.tsx` (routed at
+`/download-app`, linked from the footer) points straight at that asset's
+stable URL (`Frontend/src/config/nativeApp.ts`) — a new build replaces the
+download without touching the frontend.
+
+### One-time setup: generate a signing keystore
+
+Do this once, locally, and never commit the keystore or its passwords:
+
+```bash
+keytool -genkeypair -v -keystore universe-release.keystore \
+  -alias universe -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 universe-release.keystore > universe-release.keystore.b64
+```
+
+Then, in the repo's GitHub Settings → Secrets and variables → Actions, add:
+
+| Name | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` (secret) | contents of `universe-release.keystore.b64` |
+| `ANDROID_KEYSTORE_PASSWORD` (secret) | the keystore password you chose |
+| `ANDROID_KEY_ALIAS` (secret) | `universe` (or whatever `-alias` you used) |
+| `ANDROID_KEY_PASSWORD` (secret) | the key password you chose |
+| `CAP_SERVER_URL` (variable) | the deployed origin, e.g. `https://erp.srmap.edu.in` |
+
+Keep `universe-release.keystore` itself somewhere safe outside the repo — a
+lost keystore means every future build is a different signing identity, so
+users would have to uninstall the old app before installing the new one.
+
+### Cutting a release
+
+```bash
+git tag app-v1.0.0
+git push origin app-v1.0.0
+```
+
+or trigger the workflow manually from the Actions tab. The job builds, signs,
+and publishes to the `android-latest` release tag (a fixed tag so the
+download URL never changes); the release's own tag/body still records which
+commit and version each build came from.
+
+## Remaining (needs accounts, or deferred)
+
+- **T7.1.4** iOS: no sideload path exists without an Apple Developer account
+  (App Store, TestFlight, and ad-hoc distribution all require enrollment) —
+  genuinely blocked, not a configuration choice. The PWA install path on
+  `/download-app` is the interim answer.
 - **T7.1.5** Biometric unlock — add `capacitor-native-biometric`, gate app open
   behind it when a "lock" pref is set. Small, deferred (adds a community dep).
