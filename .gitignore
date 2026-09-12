@@ -131,3 +131,8 @@ Backend/test-uimap.json
 Frontend/android/
 Frontend/ios/
 Frontend/.capacitor/
+
+# Operator SSH keys — never commit private key material
+infra/oracle/
+*.pem
+*.key
