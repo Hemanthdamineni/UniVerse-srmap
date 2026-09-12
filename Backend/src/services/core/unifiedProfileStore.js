@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { randomUUID } = require("crypto");
 const { DatabaseSync } = require("node:sqlite");
+const { canonicalizeSkill } = require("../../utils/skillNames");
 
 function nowIso() {
   return new Date().toISOString();
@@ -22,7 +23,7 @@ function ensureArray(value) {
 }
 
 function normalizeSkill(skill) {
-  return String(skill || "").trim();
+  return canonicalizeSkill(skill);
 }
 
 function normalizeKeyword(value) {
@@ -161,6 +162,34 @@ class UnifiedProfileStore {
         createdAt TEXT NOT NULL
       );
     `);
+
+    this._cleanupDuplicateAchievements();
+  }
+
+  /**
+   * One-time repair for databases written before `syncEventAchievements` became
+   * reconciling: collapse duplicate achievements (same user, type and title,
+   * case-insensitive) down to the most recently created row.
+   */
+  _cleanupDuplicateAchievements() {
+    try {
+      this.db.exec(`
+        DELETE FROM student_achievements
+        WHERE id NOT IN (
+          SELECT id FROM (
+            SELECT id,
+                   ROW_NUMBER() OVER (
+                     PARTITION BY userId, type, lower(trim(title))
+                     ORDER BY createdAt DESC, id DESC
+                   ) AS rn
+            FROM student_achievements
+          )
+          WHERE rn = 1
+        )
+      `);
+    } catch {
+      // Best-effort housekeeping — never block startup on it.
+    }
   }
 
   _ensureAuthenticated(user) {
@@ -454,8 +483,12 @@ class UnifiedProfileStore {
       : ["public"];
     const syntheticUser = { userId: ownerId, role: "student" };
 
+    // Read-only: this path serves the owner's preview and other people's public
+    // views. Achievement/skill sync happens on the authenticated
+    // `buildUnifiedProfile` and the explicit "Sync" action, never here — a
+    // viewer must not mutate the owner's record, and `syncEventAchievements`
+    // is now reconciling (destructive) so a synthetic user could prune rows.
     this._syncCareerSkills(syntheticUser);
-    this.syncEventAchievements(syntheticUser);
 
     const career = this._getCareerProfile(syntheticUser);
     const profile = career.profile || {};
@@ -502,6 +535,8 @@ class UnifiedProfileStore {
         name: snapshotUser.name || profile.name || ownerId,
         department: snapshotUser.department || "",
         branch: snapshotUser.branch || "",
+        programme: snapshotUser.programme || "",
+        specialization: snapshotUser.specialization || "",
         year: snapshotUser.year ?? null,
       },
       headline: profile.bio || `${snapshotUser.branch || "Student"} career profile`,
@@ -635,6 +670,26 @@ class UnifiedProfileStore {
       }
     }
 
+    // Reconcile: drop event-sourced achievements whose origin no longer exists
+    // (e.g. a demo event was re-seeded with a fresh id, or a registration was
+    // withdrawn). Without this, `student_achievements` only ever grows and the
+    // profile shows duplicate / phantom records.
+    const competitionChecked = Boolean(this.competitionStore?.db);
+    const syncedRefs = synced.map((achievement) => String(achievement.sourceRefId || ""));
+    let deleteSql =
+      "DELETE FROM student_achievements WHERE userId = ? AND sourceDomain = 'events'";
+    const deleteParams = [user.userId];
+    if (syncedRefs.length > 0) {
+      deleteSql += ` AND sourceRefId NOT IN (${syncedRefs.map(() => "?").join(",")})`;
+      deleteParams.push(...syncedRefs);
+    }
+    if (!competitionChecked) {
+      // Competition rows (id shaped "<eventId>:<roundId>:<submissionId>") were
+      // not evaluated this pass — leave them untouched.
+      deleteSql += " AND sourceRefId NOT LIKE '%:%:%'";
+    }
+    this.db.prepare(deleteSql).run(...deleteParams);
+
     return { synced };
   }
 
@@ -661,6 +716,9 @@ class UnifiedProfileStore {
         role: user.role,
         department: user.department,
         branch: user.branch,
+        programme: user.programme || "",
+        specialization: user.specialization || "",
+        section: user.section || "",
         year: user.year,
       },
       privacy,

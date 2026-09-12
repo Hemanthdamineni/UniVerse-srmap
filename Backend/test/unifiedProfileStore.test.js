@@ -289,3 +289,56 @@ test("UnifiedProfileStore builds privacy-filtered public career profile projecti
   assert.ok(employerProfile.skills.some((skill) => skill.skill === "Node.js"));
   assert.ok(!employerProfile.achievements.some((achievement) => achievement.title === "Private Resume Review"));
 });
+
+test("syncEventAchievements is reconciling — no duplicates, prunes vanished sources", () => {
+  const orgId = "AP23110010419";
+  const eventA = { id: "evt-a", title: "Milan 2026", description: "", tags: ["fest"], startAt: "2099-01-01T00:00:00.000Z", createdByUserId: orgId };
+  const eventB = { id: "evt-b", title: "Hackathon 3.0", description: "", tags: ["hackathon"], startAt: "2099-02-01T00:00:00.000Z", createdByUserId: orgId };
+  const eventsStore = {
+    events: [eventA, eventB],
+    eventById: new Map([[eventA.id, eventA], [eventB.id, eventB]]),
+    registrationsByUser: new Map(),
+  };
+  const store = new UnifiedProfileStore({
+    dbPath: path.join(os.tmpdir(), `unified-recon-${process.pid}-${Date.now()}-${Math.random()}.sqlite`),
+    eventsStore,
+  });
+  const org = { userId: orgId, name: "Org", role: "student" };
+
+  store.syncEventAchievements(org);
+  store.syncEventAchievements(org); // a second pass must not multiply rows
+  let list = store.listAchievements(org);
+  assert.equal(list.length, 2);
+  assert.equal(new Set(list.map((a) => a.title)).size, 2);
+
+  // Event B disappears (e.g. demo re-seed with fresh ids) -> its achievement is pruned.
+  eventsStore.events = [eventA];
+  eventsStore.eventById = new Map([[eventA.id, eventA]]);
+  store.syncEventAchievements(org);
+  list = store.listAchievements(org);
+  assert.equal(list.length, 1);
+  assert.equal(list[0].title, "Organized Milan 2026");
+});
+
+test("_cleanupDuplicateAchievements collapses pre-existing dupes on construction", () => {
+  const dbPath = path.join(os.tmpdir(), `unified-dedupe-${process.pid}-${Date.now()}-${Math.random()}.sqlite`);
+  const first = new UnifiedProfileStore({ dbPath });
+  const u = { userId: "u-dupe", role: "student" };
+  // Two rows, same (userId, type, title) — the shape a repeated seed used to leave.
+  for (let i = 0; i < 2; i += 1) {
+    first.upsertAchievement({
+      userId: u.userId,
+      type: "event_organizer",
+      title: "Organized Milan 2026",
+      sourceDomain: "events",
+      sourceRefId: `evt-${i}:organizer`,
+      visibility: "private",
+    });
+  }
+  assert.equal(first.listAchievements(u).length, 2);
+  first.db.close();
+
+  // Re-open: the constructor's one-time cleanup runs.
+  const second = new UnifiedProfileStore({ dbPath });
+  assert.equal(second.listAchievements(u).length, 1);
+});

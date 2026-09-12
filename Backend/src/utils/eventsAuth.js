@@ -1,53 +1,37 @@
 const { resolveSessionId } = require("./cookies");
 const { extractRegisterNoFromProfile, isPotentialAdminRegisterNo } = require("../config/adminUsers");
+const erpProfileFields = require("./erpProfileFields");
 
-function parseDepartmentFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  const candidates = ["Program / Section", "Department", "School", "Program"];
-  for (const key of candidates) {
-    if (table[key]) {
-      return String(table[key]).split("/")[0].trim() || "General";
-    }
-  }
-  return "General";
-}
-
+// Thin wrappers over the shared, unit-tested ERP-profile parsers. They keep the
+// non-empty fallbacks the events/career routers have always relied on.
 function parseNameFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  return String(table["Student Name"] || table["Name"] || "ERP User");
+  return erpProfileFields.parseName(profileData) || "ERP User";
 }
 
 function parseEmailFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  return String(table["Student E-Mail"] || table["Email"] || "user@example.edu");
+  return erpProfileFields.parseEmail(profileData) || "user@example.edu";
 }
 
 function parseBranchFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  const program = String(table["Program / Section"] || "").trim();
-  // Example: "B.Tech Computer Science and Engineering / A" -> "Computer Science and Engineering"
-  // Example: "B.Tech CSE / B" -> "CSE"
-  if (!program) return "General";
-  const match = program.match(/B\.Tech\s+([^/]+)/i);
-  return match ? match[1].trim() : program.split("/")[0].trim();
+  return erpProfileFields.parseBranch(profileData) || "General";
+}
+
+function parseDepartmentFromProfile(profileData) {
+  // The live ERP profile has no distinct "department" — the branch is the unit
+  // students identify with. Kept as a separate accessor for call-site clarity.
+  return (
+    erpProfileFields.parseInstitution(profileData) ||
+    erpProfileFields.parseBranch(profileData) ||
+    "General"
+  );
 }
 
 function parseYearFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  const academicYear = String(table["Academic Year"] || "").trim();
-  // Example: "III Year" -> 3
-  // Example: "1st Year" -> 1
-  if (!academicYear) return null;
-  const romanMap = { "I": 1, "II": 2, "III": 3, "IV": 4, "V": 5 };
-  const firstWord = academicYear.split(" ")[0].toUpperCase();
-  if (romanMap[firstWord]) return romanMap[firstWord];
-  const digitMatch = academicYear.match(/(\d+)/);
-  return digitMatch ? parseInt(digitMatch[1]) : null;
+  return erpProfileFields.parseYear(profileData);
 }
 
 function parseUserIdFromProfile(profileData) {
-  const table = profileData?.TableContent || {};
-  return String(table["Register No."] || table["Student ID"] || "erp-user");
+  return erpProfileFields.parseRegisterNo(profileData) || "erp-user";
 }
 
 function resolveRole(req, sessionStore, adminPassword = "") {
@@ -98,6 +82,9 @@ function createUserContextMiddleware({ sessionStore, adminPassword = "", userDir
       email: parseEmailFromProfile(profile),
       department: parseDepartmentFromProfile(profile),
       branch: parseBranchFromProfile(profile),
+      programme: erpProfileFields.parseDegree(profile),
+      specialization: erpProfileFields.parseSpecialization(profile),
+      section: erpProfileFields.parseSection(profile),
       year: parseYearFromProfile(profile),
       sessionId,
       isAuthenticated: Boolean(session && session.loggedIn),
