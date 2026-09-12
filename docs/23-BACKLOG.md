@@ -153,7 +153,7 @@ dependency chain**, except where "Needs" says otherwise.
 - [x] **T2.3.1** Dissolve the widget row below `md` so cards order independently `S`
 - [x] **T2.3.2** Re-order: Welcome → Attendance → Schedule → Calendar → Tasks → To-Do → Campus → Basic Info `S`
 
-### STORY 2.4 — As a student, I can read data tables on my phone `L` ◐
+### STORY 2.4 — As a student, I can read data tables on my phone `L` ✅
 **AC:** No table requires horizontal scrolling or zoom; the key number is visible on first paint.
 
 - [x] **T2.4.1** Per-viewport rendering via `hooks/useMediaQuery.ts` (`useIsMobileViewport`) —
@@ -204,12 +204,12 @@ dependency chain**, except where "Needs" says otherwise.
 
 ---
 
-## EPIC 3 — The student graph   ◐ (Batch B4, 2026-09-06 — Story 3.1 landed)
+## EPIC 3 — The student graph   ✅ COMPLETE (Batch B4/B6, 2026-09-06)
 
 > **Outcome:** One typed, cached, queryable profile per student. Nothing else in
 > Epics 4–6 works properly without it. **Build this before those.**
 
-### STORY 3.1 — As the platform, I can assemble a complete student profile `L` ✅ (bar the ERP-marks seam)
+### STORY 3.1 — As the platform, I can assemble a complete student profile `L` ✅ (Batch B6, 2026-09-06)
 **AC:** `GET /api/student-graph` returns identity, academic, skills, activity and derived sections for the session user in <200ms warm. ✔ (warm path is a `Map.get`)
 
 - [x] **T3.1.1** `Frontend/src/lib/core/studentGraph.ts` — full `StudentGraph`
@@ -221,7 +221,7 @@ dependency chain**, except where "Needs" says otherwise.
   - [x] Identity from the session user context
   - [x] Per-subject attendance from `attendanceSnapshotStore.history()`
   - [x] Skills + activity (events / LMS / achievements) from `unifiedProfileStore.buildUnifiedProfile()`
-  - [~] Curriculum + marks/SGPA/CGPA via an **`erpReader` seam** (sync `getCurriculum`/`getResults`) — defined and tested, not yet wired to the ERP aggregation cache, so those sections currently report `sources.* = "unavailable"` and the graph still builds. **This is the remaining T3.1.2 work.**
+  - [x] Curriculum + marks/SGPA/CGPA via an **`erpReader` seam** (sync `getCurriculum`/`getResults`) — closed in Batch B6 by `services/erp/erpAcademicSnapshotStore.js`: the live-data sink captures curriculum/current-results/CGPA/exam history per user, and `server.js` wires `erpReader: erpAcademicSnapshotStore.readerFor()` into `StudentGraphService`, so `graph.academic.curriculum`/`.results` are live rather than `"unavailable"` once the ERP pages have been fetched at least once for that user.
 - [x] **T3.1.3** `SimpleTtlCache` (60s TTL, user-scoped `student-graph:<id>` key,
       LRU-ish cap). `invalidate()` wired into `erpDataSink.onLivePageFetched`
       for any `academic/*` or `examination/*` page. Redis swap = replace `cache`
@@ -440,7 +440,7 @@ into `AcademicHubPage`.
 
 ---
 
-## EPIC 5 — Consolidate navigation and naming
+## EPIC 5 — Consolidate navigation and naming ✅ COMPLETE (2026-09-07)
 
 > **Outcome:** Fewer, better destinations. Removes ~7 sidebar entries.
 
@@ -698,12 +698,14 @@ BE 323, FE 1,202.
 
 ---
 
-## EPIC 7 — Native apps   ◐ (Batch B13, 2026-09-06 — spike + code-complete parts)
+## EPIC 7 — Native apps   ◐ (Batch B13, 2026-09-06; Android distribution 2026-09-12)
 
-> **Outcome:** Play Store and App Store presence.
-> Capacitor wrapper, not a rewrite. See **[docs/24 — Native shell](./24-NATIVE-SHELL.md)**.
+> **Outcome:** an installable app. Originally scoped as Play Store/App Store
+> presence; direct-download (Android) + PWA install (iOS) was chosen instead of
+> a Play Console listing for now — see T7.1.3. Capacitor wrapper, not a
+> rewrite. See **[docs/24 — Native shell](./24-NATIVE-SHELL.md)**.
 
-### STORY 7.1 — As a student, I can install the app from the store `L` ◐
+### STORY 7.1 — As a student, I can install the app `L` ◐
 - [x] **T7.1.1** Capacitor 6 added (`@capacitor/core`/`app`/`network`/`cli`),
       `Frontend/capacitor.config.ts`, `cap:sync`/`cap:android`/`cap:ios`/`cap:doctor`
       scripts, `android/`+`ios/` gitignored, `docs/24-NATIVE-SHELL.md`. The spike
@@ -718,10 +720,26 @@ BE 323, FE 1,202.
       native/{register,unregister}` + `createNativePushAdapter` (FCM legacy HTTP,
       **inert without `FCM_SERVER_KEY`**, prunes `NotRegistered`). `nativePush`
       added to the channel set + the taxonomy's push events `M`
-- [ ] **T7.1.3** Android build signing + Play Console listing — **needs a Play
-      Console account** `M`
-- [ ] **T7.1.4** iOS build + App Store Connect listing — **needs an Apple
-      Developer account** `L`
+- [x] **T7.1.3** (2026-09-12) Reworked from "Play Console listing" (needs a
+      paid account) to **direct download** — no store needed. New
+      `.github/workflows/build-android.yml` builds a signed release APK on an
+      `app-v*` tag or manual dispatch (`android-actions/setup-android` +
+      Temurin 17; `Frontend/android-ci/signing-init.gradle` injects the release
+      signing config from 4 GitHub secrets into the freshly-generated,
+      gitignored Gradle project — never patches a committed file) and publishes
+      it as the fixed `android-latest` GitHub Release asset. New
+      `/download-app` page (`Frontend/src/pages/DownloadApp/DownloadAppPage.tsx`,
+      linked from the footer) links straight at that stable asset URL
+      (`Frontend/src/config/nativeApp.ts`) with install steps ("allow installs
+      from this source" is expected outside the Play Store) and a release-notes
+      link. Keystore generation + the 4 required secrets + 1 repo variable
+      documented in `docs/24-NATIVE-SHELL.md`. 3 FE tests `M`
+- [ ] **T7.1.4** iOS: genuinely blocked, not a configuration choice — Apple
+      requires an enrolled Developer account for *any* install path (App
+      Store, TestFlight, or ad-hoc), so there is no sideload equivalent to
+      T7.1.3. Interim: `/download-app`'s iOS panel walks through "Add to Home
+      Screen" for the already-installable PWA (manifest + SW have shipped
+      since Batch B8) `L`
 - [ ] **T7.1.5** Biometric unlock — adds `capacitor-native-biometric`; gate app
       open behind it when a "lock" pref is set. Deferred (community dep) `M`
 
