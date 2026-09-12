@@ -240,8 +240,10 @@ function createAuthRoutes({ sessionStore, erpDumpService }) {
   router.post("/auth/login", handleLogin);
 
   async function handleDevelopmentLogin(req, res) {
-    if (NODE_ENV === "production") {
-      const error = new Error("Development login is disabled in production.");
+    // Demo authentication is never an implicit non-production fallback. It is
+    // intentionally opt-in and only available in the explicit dev profile.
+    if (NODE_ENV !== "development" || process.env.ENABLE_DEMO_LOGIN !== "1") {
+      const error = new Error("Development login is disabled unless explicitly enabled for development.");
       error.status = 404;
       error.code = "NOT_FOUND";
       return sendApiError(res, req, error);

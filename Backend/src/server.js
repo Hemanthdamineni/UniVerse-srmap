@@ -106,6 +106,12 @@ const { ErpIntegrityService } = require("./services/erp/erpServices");
 const { log, getLogFilePath, shutdownLogger } = require("./utils/logger");
 
 async function createSessionStore(redisClient) {
+  const redisRequired =
+    SESSION_STORE_DRIVER === "redis" ||
+    (process.env.NODE_ENV === "production" && Boolean(REDIS_URL || REDIS_SENTINEL_URLS));
+  if (redisRequired && !redisClient) {
+    throw new Error("Redis session store is required but unavailable; refusing in-memory production fallback");
+  }
   const shouldUseRedis =
     SESSION_STORE_DRIVER === "redis" ||
     (SESSION_STORE_DRIVER === "auto" && Boolean(redisClient) && Boolean(REDIS_URL));
@@ -118,6 +124,12 @@ async function createSessionStore(redisClient) {
 }
 
 async function createErpCacheStore(redisClient) {
+  const redisRequired =
+    ERP_CACHE_DRIVER === "redis" ||
+    (process.env.NODE_ENV === "production" && Boolean(REDIS_URL || REDIS_SENTINEL_URLS));
+  if (redisRequired && !redisClient) {
+    throw new Error("Redis ERP cache is required but unavailable; refusing in-memory production fallback");
+  }
   const shouldUseRedis =
     ERP_CACHE_DRIVER === "redis" ||
     (ERP_CACHE_DRIVER === "auto" && Boolean(redisClient) && Boolean(REDIS_URL));
