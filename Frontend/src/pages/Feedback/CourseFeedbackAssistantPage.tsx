@@ -11,7 +11,7 @@ import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index
 import { erpKeys } from "../../lib/erp/queryKeys";
 import { useQuery } from "@tanstack/react-query";
 import { extractSections, sanitizeText, type ParsedSection } from "../../lib/erp/sanitize";
-import type { PageBlueprint } from "../../config/erpBlueprints";
+import { OFFICIAL_ERP_URL, type PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
 import { EmptyState, InlineError } from "../../components/ui/Feedback";
 import { StatusBadge } from "../../components/ui/Badges";
@@ -383,7 +383,7 @@ function PortalCta({ meta }: { meta: PortalMeta }) {
           {meta.portalNote}
         </p>
         <a
-          href="https://erp.srmist.edu.in"
+          href={OFFICIAL_ERP_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary mt-4 gap-2 no-underline"
