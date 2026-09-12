@@ -3,8 +3,6 @@
  *
  * The server sends JSON: { title, body, url, data }.
  */
-/* eslint-disable no-restricted-globals */
-
 self.addEventListener("push", (event) => {
   let payload = {};
   try {
