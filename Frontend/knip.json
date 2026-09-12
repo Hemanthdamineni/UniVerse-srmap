@@ -10,7 +10,8 @@
     "tailwindcss",
     "@babel/preset-react",
     "@babel/preset-typescript",
-    "babel-plugin-module-resolver"
+    "babel-plugin-module-resolver",
+    "@capacitor/android"
   ],
   "ignore": [
     "src/components/chart.tsx",
