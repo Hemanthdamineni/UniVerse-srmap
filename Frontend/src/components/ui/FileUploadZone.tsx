@@ -75,7 +75,12 @@ export function FileUploadZone({
         accept={acceptValue}
         className="sr-only"
         disabled={isUploading}
-        onChange={(event) => handleFile(event.target.files?.[0])}
+        onChange={(event) => {
+          handleFile(event.target.files?.[0]);
+          // Clear the value so re-selecting the same file still fires onChange
+          // (e.g. replacing a résumé with a corrected copy of the same name).
+          event.target.value = "";
+        }}
       />
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--comp-accent)_10%,transparent)] text-[var(--comp-accent)]">
         {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : currentFile ? <FileCheck2 className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
