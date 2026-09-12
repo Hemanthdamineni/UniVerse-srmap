@@ -376,10 +376,11 @@ export default function LoginPage() {
                   onKeyUp={(e) => setCapsLockOn(e.getModifierState?.("CapsLock") ?? false)}
                   placeholder="Your ERP password"
                   autoComplete="current-password"
-                  style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
+                  style={{ flex: 1, minHeight: "44px", padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                 />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-                  style={{ padding: "0 14px", background: "transparent", border: "none", cursor: "pointer", color: "var(--text-secondary)", display: "flex", alignItems: "center", flexShrink: 0, transition: "color 0.15s ease" }}
+                  aria-pressed={showPassword}
+                  style={{ minWidth: "44px", minHeight: "44px", padding: "0 14px", background: "transparent", border: "none", cursor: "pointer", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s ease" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--comp-accent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
                 >
@@ -427,7 +428,7 @@ export default function LoginPage() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="Type the characters above"
                     autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                    style={{ flex: 1, padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
+                    style={{ flex: 1, minHeight: "44px", padding: "10px 12px", fontSize: "var(--text-sm)", border: "none", background: "transparent", color: "var(--text-primary)", outline: "none", fontFamily: "inherit", minWidth: 0 }}
                   />
                 </div>
                 {!captchaLoading && captchaExpiresAt > 0 && captchaTotalMs > 0 && (
@@ -440,16 +441,16 @@ export default function LoginPage() {
 
             {/* Remember + Forgot */}
             <div className="login-form-enter login-f-d5 flex flex-wrap items-center justify-between gap-3">
-              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", fontWeight: 500, color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
+              <label style={{ display: "inline-flex", minHeight: "44px", alignItems: "center", gap: "8px", fontSize: "0.78rem", fontWeight: 500, color: "var(--text-secondary)", cursor: "pointer", userSelect: "none" }}>
                 <input
                   type="checkbox"
                   checked={rememberOptIn}
                   onChange={(e) => setRememberOptIn(e.target.checked)}
-                  style={{ accentColor: "var(--comp-accent)", width: "15px", height: "15px", margin: 0, cursor: "pointer" }}
+                  style={{ accentColor: "var(--comp-accent)", width: "20px", height: "20px", margin: 0, cursor: "pointer" }}
                 />
                 Remember registration number
               </label>
-              <Link to="/forgot-password" style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--comp-accent)", textDecoration: "none" }}
+              <Link to="/forgot-password" style={{ minHeight: "44px", display: "inline-flex", alignItems: "center", fontSize: "0.8rem", fontWeight: 600, color: "var(--comp-accent)", textDecoration: "none" }}
                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
               >

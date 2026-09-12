@@ -207,9 +207,9 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center px-4 py-8">
-      <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--background)] p-8 shadow-[0_24px_80px_rgba(10,38,42,0.12)]">
+    <div className="flex min-w-0 items-center justify-center px-4 py-8">
+      <div className="grid min-w-0 w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="min-w-0 rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--background)] p-5 shadow-[0_24px_80px_rgba(10,38,42,0.12)] sm:p-8">
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-[var(--comp-accent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
               Password Recovery
@@ -253,7 +253,7 @@ export default function ForgotPasswordPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--surface)] p-6 shadow-[0_24px_70px_rgba(10,38,42,0.1)]">
+        <section className="min-w-0 rounded-[28px] border border-[color-mix(in_srgb,var(--border)_90%,transparent)] bg-[var(--surface)] p-5 shadow-[0_24px_70px_rgba(10,38,42,0.1)] sm:p-6">
           <div className="mb-5 rounded-2xl bg-[var(--comp-accent)] px-5 py-4 text-white">
             <p className="text-lg font-semibold">
               {step === "initiate" ? "Request OTP" : step === "change" ? "Verify OTP" : "Password Updated"}
@@ -297,7 +297,7 @@ export default function ForgotPasswordPage() {
                       onClick={() => {
                         void fetchCaptcha("Captcha refreshed.");
                       }}
-                      className="text-xs font-semibold text-[var(--comp-text-primary)] underline-offset-4 hover:underline"
+                      className="inline-flex min-h-11 items-center text-xs font-semibold text-[var(--comp-text-primary)] underline-offset-4 hover:underline"
                       disabled={captchaLoading}
                     >
                       {captchaLoading ? "Refreshing..." : "Refresh"}
@@ -430,7 +430,7 @@ export default function ForgotPasswordPage() {
                 <p>You’ll be sent back to the login page in a moment.</p>
                 <Link
                   to="/login"
-                  className="inline-flex rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-white no-underline"
+                    className="inline-flex min-h-11 items-center rounded-lg bg-[var(--comp-accent)] px-4 py-2 text-sm font-semibold text-[var(--comp-accent-fg)] no-underline"
                 >
                   Go to login
                 </Link>
@@ -438,7 +438,7 @@ export default function ForgotPasswordPage() {
             ) : null}
 
             <div className="border-t border-[color-mix(in_srgb,var(--border)_70%,transparent)] pt-4 text-sm text-[var(--text-secondary)]">
-              <Link to="/login" className="font-semibold text-[var(--comp-text-primary)] no-underline hover:underline">
+              <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-[var(--comp-text-primary)] no-underline hover:underline">
                 Back to login
               </Link>
             </div>

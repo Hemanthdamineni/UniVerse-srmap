@@ -290,12 +290,16 @@
     grid-template-columns: 1fr;
     max-width: 480px;
     min-height: 0;
+    /* The form can legitimately grow with error/help text or browser zoom.
+       Do not make the rounded desktop shell a vertical clipping boundary. */
+    overflow: visible;
   }
   .login-identity-panel {
     display: none;
   }
   .login-form-panel {
     padding: 32px 24px;
+    border-radius: 0 0 22px 22px;
   }
 }
 

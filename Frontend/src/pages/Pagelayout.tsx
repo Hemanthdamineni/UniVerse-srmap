@@ -38,10 +38,10 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
 
   if (isPublicRoute) {
     return (
-      <div className="flex h-screen flex-col bg-[var(--background)]">
+      <div className="flex min-h-[100dvh] flex-col bg-[var(--background)]">
         <OfflineBanner />
         <Header />
-        <main role="main" className="flex flex-1 items-center justify-center bg-[var(--background)]">
+        <main role="main" className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto bg-[var(--background)] sm:items-center">
           {children}
         </main>
         <Footer />
