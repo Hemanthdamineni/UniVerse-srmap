@@ -370,10 +370,12 @@ export function EmptyStateCard({
   title = "Nothing to show yet",
   message,
   action,
+  icon,
 }: {
   title?: string;
   message: string;
   action?: ReactNode;
+  icon?: ReactNode;
 }) {
-  return <EmptyState title={title} description={message} action={action} className="p-10" />;
+  return <EmptyState title={title} description={message} action={action} icon={icon} className="p-10" />;
 }
