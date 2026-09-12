@@ -1,5 +1,6 @@
 const { BASE_PATH } = require("../../config/env");
 const { normalizeMutationUrl } = require("./erpUiMapStore");
+const { load } = require("cheerio");
 
 // --- utils.js ---
 function cleanText(value) {
@@ -99,6 +100,40 @@ function shouldIncludeHtml(action, url, contentType) {
   if (endpoint.includes("studentsonlinepaymentresponse.jsp")) return true;
   if (endpoint.includes("printstudentexamapplication.jsp")) return true;
   return false;
+}
+
+// ERP print endpoints return upstream HTML. Preserve only receipt structure,
+// never executable markup, navigation, forms, external resources, or styles.
+const PRINTABLE_TAGS = new Set([
+  "html", "head", "body", "title", "div", "span", "p", "br", "hr",
+  "h1", "h2", "h3", "h4", "h5", "h6", "strong", "b", "em", "i",
+  "small", "ul", "ol", "li", "table", "thead", "tbody", "tfoot", "tr",
+  "th", "td", "caption",
+]);
+const PRINTABLE_ATTRIBUTES = new Set(["colspan", "rowspan", "align", "valign", "width", "height"]);
+
+function sanitizePrintableHtml(raw) {
+  const $ = load(String(raw || ""), { decodeEntities: false });
+  $("script,style,link,base,meta,iframe,frame,object,embed,form,input,button,select,textarea,svg,math,img,a").remove();
+  $("*").each((_, element) => {
+    const tag = String(element.tagName || "").toLowerCase();
+    if (!PRINTABLE_TAGS.has(tag)) {
+      $(element).replaceWith($(element).contents());
+      return;
+    }
+    for (const attribute of Object.keys(element.attribs || {})) {
+      if (!PRINTABLE_ATTRIBUTES.has(attribute.toLowerCase())) {
+        $(element).removeAttr(attribute);
+        continue;
+      }
+      const value = String($(element).attr(attribute) || "");
+      if (!/^[a-z0-9.% -]{0,24}$/i.test(value)) $(element).removeAttr(attribute);
+    }
+  });
+
+  const title = cleanText($("title").first().text()).slice(0, 160) || "University ERP receipt";
+  const content = $("body").html() || $.root().html() || "";
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; style-src 'none'; img-src data:"><title>${title.replace(/</g, "&lt;")}</title></head><body>${content}</body></html>`;
 }
 
 // --- payloadBuilders.js ---
@@ -341,7 +376,7 @@ const transportResultMethods = {
       message: extractMessageFromResponse(safeRaw, defaultMessage),
       preview: cleanText(safeRaw).slice(0, 260),
       ...(contentType ? { contentType } : {}),
-      ...(includeHtml ? { html: safeRaw } : {}),
+      ...(includeHtml ? { html: sanitizePrintableHtml(safeRaw) } : {}),
       ...(extra && typeof extra === "object" ? extra : {}),
     };
   },
@@ -642,4 +677,5 @@ Object.assign(
 module.exports = {
   ErpActionExecutor,
   normalizeExpectedUrl,
+  sanitizePrintableHtml,
 };
