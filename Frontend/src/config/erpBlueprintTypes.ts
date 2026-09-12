@@ -15,7 +15,6 @@ export type PageRenderer =
   | "finance-dues"
   | "finance-paid"
   | "bank-details"
-  | "room-details"
   | "sap-scholarships"
   | "faqs"
   | "refund-change"

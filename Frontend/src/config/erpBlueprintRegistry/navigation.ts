@@ -31,8 +31,6 @@ export const MAIN_NAV: NavSection[] = [
         domain: "campus",
         children: [
           { type: "link", label: "Vacant Rooms", route: "/campus/vacant-rooms", domain: "campus", access: "B" },
-          { type: "link", label: "Hostel Booking", route: "/transport-hostel/hostel-booking", domain: "campus", access: "B" },
-          { type: "link", label: "Rooms Details", route: "/transport-hostel/room-details", domain: "campus", access: "B" },
         ],
       },
       {

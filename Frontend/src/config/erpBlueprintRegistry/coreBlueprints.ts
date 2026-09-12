@@ -20,19 +20,6 @@ function erp(
   } as PageBlueprint;
 }
 
-function campus(route: string, heading: string, fetchKeys: string[], loadingMessage: string): PageBlueprint {
-  return {
-    route,
-    heading,
-    fetchKeys,
-    loadingMessage,
-    domain: "campus",
-    sourceMode: "erp",
-    integrationState: "native",
-    renderer: "generic",
-  } as PageBlueprint;
-}
-
 export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
 
   "/dashboard": erp("/dashboard", "Dashboard", ["dashboard"], "dashboard", "Loading dashboard..."),
@@ -65,8 +52,6 @@ export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   // nav group rather than orphaned.
   "/finance/bank-details": erp("/finance/bank-details", "Bank Details", ["finance/bank-account-details"], "bank-details", "Loading bank details..."),
 
-  "/transport-hostel/hostel-booking": campus("/transport-hostel/hostel-booking", "Hostel Booking", ["hostel/hostel-booking-for-full-year"], "Loading hostel info..."),
-  "/transport-hostel/room-details": { ...erp("/transport-hostel/room-details", "Rooms Details", ["hostel/room-details"], "room-details", "Loading room details..."), domain: "campus" },
 
   // Six standalone registration pages, one per flow. Each renders
   // `RegistrationErpPage` against its own blueprint (hostel adds the Buddy
@@ -77,5 +62,5 @@ export const CORE_PAGE_BLUEPRINTS: Record<string, PageBlueprint> = {
   "/registration/exam-registration": erp("/registration/exam-registration", "Exam Registration", ["examination/exam-registration", "examination/exam-registration-details"], "document", "Loading exam registration..."),
   "/registration/hostel-registration": { ...erp("/registration/hostel-registration", "Hostel Registration", ["hostel/hostel-booking-for-full-year"], "document", "Loading hostel registration..."), domain: "campus" },
   "/registration/transport-registration": { ...erp("/registration/transport-registration", "Transport Registration", ["transport/transport-registration", "transport/registration-acknowledgment"], "document", "Loading transport registration..."), domain: "campus" },
-  "/registration/sap-registration": erp("/registration/sap-registration", "SAP Registration", ["sap/sap-process"], "document", "Loading SAP registration..."),
+  "/registration/sap-registration": { ...erp("/registration/sap-registration", "SAP Registration", ["sap/sap-process"], "document", "Loading SAP registration..."), status: "hidden" as PageBlueprint["status"] },
 };
