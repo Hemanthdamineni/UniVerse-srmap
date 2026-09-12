@@ -13,6 +13,9 @@ BACKUP_DIR="${BACKUP_DIR:-/var/backups/university-erp}"
 DB_DIR="${DB_DIR:-Backend/data}"
 BACKUP_DEST="${BACKUP_DEST:-}"
 REDIS_RDB_PATH="${REDIS_RDB_PATH:-/var/lib/redis/dump.rdb}"
+REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+REDIS_PORT="${REDIS_PORT:-6379}"
+REDIS_PASSWORD="${REDIS_PASSWORD:-}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # File directories the prod-readiness audit identified as needing
@@ -119,14 +122,22 @@ announce "Backing up Redis RDB ..."
 REDIS_DUMP="${DAILY_DIR}/redis.rdb"
 
 if [[ "$DRY_RUN" == true ]]; then
-  dry "Would run: redis-cli --rdb \"${REDIS_DUMP}\""
+  dry "Would run authenticated redis-cli against ${REDIS_HOST}:${REDIS_PORT} -> ${REDIS_DUMP}"
 else
-  if command -v redis-cli &>/dev/null; then
-    redis-cli --rdb "$REDIS_DUMP"
-    announce "Redis RDB saved to ${REDIS_DUMP}."
-  else
-    warn "redis-cli not found. Skipping Redis backup."
+  if ! command -v redis-cli &>/dev/null; then
+    err "redis-cli is required for a Redis backup."
+    exit 1
   fi
+  if [[ -z "$REDIS_PASSWORD" ]]; then
+    err "REDIS_PASSWORD is required for a Redis backup."
+    exit 1
+  fi
+  redis-cli --no-auth-warning -h "$REDIS_HOST" -p "$REDIS_PORT" -a "$REDIS_PASSWORD" --rdb "$REDIS_DUMP"
+  if [[ ! -s "$REDIS_DUMP" ]]; then
+    err "Redis reported success but no non-empty RDB was written."
+    exit 1
+  fi
+  announce "Redis RDB saved to ${REDIS_DUMP}."
 fi
 
 # Create a weekly snapshot automatically when run on Sunday, or force it with

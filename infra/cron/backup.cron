@@ -6,12 +6,10 @@
 # pin to a single 02:00 entry. Add a second entry for staging if
 # the schedule needs to differ.
 #
-# Prereq: BACKUP_DIR, REDIS_PASSWORD (if backing up Redis), and
-# any BACKUP_DEST must be exported in the cron environment. Edit
-# the `BACKUP_DIR=...` line below to match the operator's chosen
-# location (default: /var/backups/university-erp).
+# Prereq: create `/etc/universe-erp/backup.env` (mode 0600) containing
+# BACKUP_DIR, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, and optional BACKUP_DEST.
 #
 # Example log: /var/log/university-erp-backup.log
 #
 # m h dom mon dow command
-0 2 * * *  BACKUP_DIR=/var/backups/university-erp /opt/universe-erp/infra/scripts/setup-backups.sh >> /var/log/university-erp-backup.log 2>&1
+0 2 * * *  . /etc/universe-erp/backup.env && /opt/universe-erp/infra/scripts/setup-backups.sh >> /var/log/university-erp-backup.log 2>&1
