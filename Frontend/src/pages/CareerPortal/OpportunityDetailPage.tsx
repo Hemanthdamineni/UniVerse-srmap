@@ -11,7 +11,7 @@ import { useSession } from '../../hooks/useSession';
 import { PageContainer } from '../../components/layout/PageLayouts';
 import { cn } from '../../lib/core/utils';
 import { track } from '../../lib/core/analytics';
-import { Markdown } from '../../components/markdown';
+import { LazyMarkdown as Markdown } from '../../components/markdown';
 import { LoadingState } from '../../components/ui/Feedback';
 
 const AdaptiveTextRenderer = ({ text }: { text: string }) => {
@@ -168,7 +168,12 @@ const OpportunityDetailPage: React.FC = () => {
     if (!id || !opp) return;
     try {
       await trackApply(id);
-      window.open(opp.applyUrl, '_blank');
+      const destination = new URL(opp.applyUrl, window.location.origin);
+      if (destination.protocol !== "https:") {
+        throw new Error("Application link must use HTTPS");
+      }
+      const popup = window.open(destination.href, "_blank", "noopener,noreferrer");
+      if (popup) popup.opener = null;
       setApplied(true);
       localStorage.setItem(`applied_${id}`, "true");
     } catch (err) {
