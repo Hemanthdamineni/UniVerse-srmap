@@ -9,9 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError, type ErpPageResponse, getErpBatch } from "../../lib/erp/index";
 import { erpKeys } from "../../lib/erp/queryKeys";
 import { extractSections, sanitizeText, type ParsedSection } from "../../lib/erp/sanitize";
-import type { PageBlueprint } from "../../config/erpBlueprints";
+import { OFFICIAL_ERP_URL, type PageBlueprint } from "../../config/erpBlueprints";
 import { ErpPageShell } from "../../components/erp/ErpPrimitives";
-import { EmptyState, InlineError } from "../../components/ui/Feedback";
+import { InlineError } from "../../components/ui/Feedback";
 import { StatusBadge } from "../../components/ui/Badges";
 
 type Props = { blueprint: PageBlueprint; extraContent?: ReactNode };
@@ -173,10 +173,40 @@ function isTextRedundant(text: string, reference: string): boolean {
   return t === r || t.includes(r) || r.includes(t);
 }
 
+const NEGATIVE_STATUS_PATTERN = /not registered|no registration|not found|no record|no data/i;
+const PENDING_STATUS_PATTERN = /pending|processing|hold|awaiting/i;
+const POSITIVE_STATUS_PATTERN = /registered|confirmed|success|approved|allocated/i;
+
+/**
+ * A column explicitly dedicated to registration/status carries a stronger
+ * signal than scanning every cell in the page — e.g. the Transport ack table
+ * has an "Institute"/"Address" column alongside "Transport Registration",
+ * and only the latter should decide the badge.
+ */
+function detectStatusFromColumns(sections: ParsedSection[]): "registered" | "pending" | "not-registered" | null {
+  for (const section of sections) {
+    for (const rows of section.tables) {
+      if (rows.length === 0) continue;
+      const columns = Object.keys(rows[0]);
+      const statusColumn = columns.find((c) => /status|registration|result/i.test(c));
+      if (!statusColumn) continue;
+      const values = rows.map((row) => row[statusColumn] || "").join(" ");
+      if (NEGATIVE_STATUS_PATTERN.test(values)) return "not-registered";
+      if (PENDING_STATUS_PATTERN.test(values)) return "pending";
+      if (POSITIVE_STATUS_PATTERN.test(values)) return "registered";
+    }
+  }
+  return null;
+}
+
 function detectStatus(sections: ParsedSection[]): "registered" | "pending" | "not-registered" | null {
-  // Negative evidence must win: ERP ack pages routinely contain both
-  // "TRANSPORT REGISTRATION 2025" and "You are not registered to Transport",
-  // and every negative phrase embeds a positive one ("not **registered**").
+  const fromColumn = detectStatusFromColumns(sections);
+  if (fromColumn) return fromColumn;
+
+  // Fallback: scan every cell. Negative evidence must win here too — ERP ack
+  // pages routinely contain both "TRANSPORT REGISTRATION 2025" and "You are
+  // not registered to Transport", and every negative phrase embeds a
+  // positive one ("not **registered**").
   const combined = sections
     .map((s) => [
       s.title,
@@ -185,11 +215,25 @@ function detectStatus(sections: ParsedSection[]): "registered" | "pending" | "no
     ].join(" "))
     .join(" ")
     .toLowerCase();
-  if (/not registered|no registration|not found|no record|no data/i.test(combined)) return "not-registered";
-  if (/pending|processing|hold|awaiting/i.test(combined)) return "pending";
-  if (/registered|confirmed|success|approved|allocated/i.test(combined)) return "registered";
+  if (NEGATIVE_STATUS_PATTERN.test(combined)) return "not-registered";
+  if (PENDING_STATUS_PATTERN.test(combined)) return "pending";
+  if (POSITIVE_STATUS_PATTERN.test(combined)) return "registered";
   if (sections.some((s) => s.tables.some((t) => t.length > 0))) return "registered";
   return null;
+}
+
+/**
+ * A short standalone line that just says "you're not registered" adds
+ * nothing once the red "Not Registered" badge is already on screen — it
+ * only reads as a glitchy duplicate of the same sentence. This is narrower
+ * than the general status detection on purpose: a "registered"/"pending"
+ * badge plus a short note (e.g. "Registration closed" while still holding a
+ * registered seat) is genuinely new information and must stay visible.
+ */
+function isRedundantNotRegisteredText(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length > 90) return false;
+  return NEGATIVE_STATUS_PATTERN.test(t);
 }
 
 // ── Structured text rendering ───────────────────────────────────────────────
@@ -210,16 +254,33 @@ function hasStructuredPatterns(text: string): boolean {
   return false;
 }
 
-/** Detects ERP notice/alert text that should be styled as a callout box. */
+/**
+ * Detects ERP notice/alert text that should be styled as a callout box —
+ * both explicit "Note:"-style prefixes and short closure/eligibility
+ * statements ("Registration closed", "...is not applicable to you") that
+ * otherwise render as an easy-to-miss line of plain paragraph text.
+ */
 function isNoticeText(text: string): boolean {
   if (!text) return false;
   const trimmed = text.trim();
   // Common notice patterns in ERP pages
-  return /^Note:/i.test(trimmed) ||
+  if (
+    /^Note:/i.test(trimmed) ||
     /^Please note:/i.test(trimmed) ||
     /^Important:/i.test(trimmed) ||
     /Students will be allowed to register for one facility/i.test(trimmed) ||
-    /Transport booking will be open/i.test(trimmed);
+    /Transport booking will be open/i.test(trimmed)
+  ) {
+    return true;
+  }
+  // Short registration-status statements: "Registration closed", "...is not
+  // applicable to you", "...not eligible...", etc. Kept short (<160 chars)
+  // so a long free-form paragraph that merely contains one of these words
+  // isn't forced into the callout treatment.
+  if (trimmed.length <= 160 && /closed|not applicable|not eligible|has been disabled|window is closed|not open/i.test(trimmed)) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -429,8 +490,15 @@ function RegistrationRowsTable({ rows }: { rows: TableRow[] }) {
                           Print
                         </a>
                       ) : (
-                        <span
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors hover:opacity-80"
+                        // No direct file URL came back from the ERP dump for this
+                        // row — send the click to the official portal instead of
+                        // rendering a button-shaped element that does nothing.
+                        <a
+                          href={OFFICIAL_ERP_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open the official ERP to print this document"
+                          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide no-underline transition-colors hover:opacity-80"
                           style={{
                             borderColor: "var(--comp-border)",
                             color: "var(--comp-text-primary)",
@@ -443,7 +511,7 @@ function RegistrationRowsTable({ rows }: { rows: TableRow[] }) {
                             <rect x="6" y="14" width="12" height="8" />
                           </svg>
                           {value || "Print"}
-                        </span>
+                        </a>
                       )
                     ) : (
                       value || "\u2014"
@@ -459,7 +527,12 @@ function RegistrationRowsTable({ rows }: { rows: TableRow[] }) {
   );
 }
 
-function PortalCta({ meta }: { meta: RegMeta }) {
+/**
+ * The one and only "do this on the official portal" message on the page.
+ * `description` overrides `meta.portalNote` for the empty/closed state, so a
+ * student never sees two boxes making the same point in different words.
+ */
+function PortalCta({ meta, description }: { meta: RegMeta; description?: string }) {
   return (
     <div
       className="flex items-start gap-4 rounded-xl p-5"
@@ -488,14 +561,11 @@ function PortalCta({ meta }: { meta: RegMeta }) {
         <h3 className="text-sm font-semibold" style={{ color: "var(--comp-text-primary)" }}>
           {meta.portalHeading}
         </h3>
-        <p
-          className="mt-1 text-sm leading-6"
-          style={{ color: "var(--comp-text-secondary)" }}
-        >
-          {meta.portalNote}
+        <p className="mt-1 text-sm leading-6" style={{ color: "var(--comp-text-secondary)" }}>
+          {description ?? meta.portalNote}
         </p>
         <a
-          href="https://erp.srmist.edu.in"
+          href={OFFICIAL_ERP_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary mt-4 gap-2 no-underline"
@@ -514,15 +584,7 @@ function PortalCta({ meta }: { meta: RegMeta }) {
 }
 
 function EmptyRegistration({ meta }: { meta: RegMeta }) {
-  return (
-    <div className="space-y-6">
-      <EmptyState
-        title="No registration data available"
-        description={meta.closedHint}
-      />
-      <PortalCta meta={meta} />
-    </div>
-  );
+  return <PortalCta meta={meta} description={meta.closedHint} />;
 }
 
 // ── Main component ──────────────────────────────────────────────────────────
@@ -598,7 +660,7 @@ export default function RegistrationErpPage({ blueprint, extraContent }: Props) 
       {!loading && !error && !hasContent && <EmptyRegistration meta={meta} />}
 
       {hasContent && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Status row */}
           {status && (
             <div className="flex items-center gap-3">
@@ -609,7 +671,8 @@ export default function RegistrationErpPage({ blueprint, extraContent }: Props) 
             </div>
           )}
 
-          {/* Data sections — rendered flat, no nested cards */}
+          {/* Data sections — rendered flat, no nested cards (matches the
+              equivalent block in CourseFeedbackAssistantPage). */}
           {sections.map((section, i) => (
             <div key={i} className="space-y-3">
               {section.title && !isTitleRedundant(section.title, blueprint.heading) && (
@@ -621,8 +684,11 @@ export default function RegistrationErpPage({ blueprint, extraContent }: Props) 
                 </h2>
               )}
 
-              {/* Text-only section: render as structured key-value cards */}
-              {section.text.trim() && section.tables.length === 0 && (
+              {/* Text-only section: render as structured key-value cards.
+                  Skipped when the badge above already says the same thing —
+                  "Not Registered" plus a "You are not registered…" paragraph
+                  reads as a glitch, not confirmation. */}
+              {section.text.trim() && section.tables.length === 0 && !(status === "not-registered" && isRedundantNotRegisteredText(section.text)) && (
                 (!section.title || isTitleRedundant(section.title, blueprint.heading) || !isTextRedundant(section.text, section.title)) ? (
                   <StructuredTextField text={section.text} title={section.title} />
                 ) : null

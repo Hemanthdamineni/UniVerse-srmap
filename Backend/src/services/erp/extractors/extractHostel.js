@@ -20,9 +20,12 @@ function extractHostel(html) {
       const blockName = cleanText($(cells[0]).text());
       const roomType = cleanText($(cells[1]).text());
       const floorPlan = cleanText($(cells[2]).text());
-      const capacity = parseInt(cleanText($(cells[3]).text()), 10) || 3;
-      const occupants = parseInt(cleanText($(cells[4]).text()), 10) || 1;
-      const rent = cleanText($(cells[5]).text()) || "N/A";
+      // Only surface numbers the page actually reports — no invented defaults.
+      const capacityRaw = parseInt(cleanText($(cells[3]).text()), 10);
+      const occupantsRaw = parseInt(cleanText($(cells[4]).text()), 10);
+      const capacity = Number.isFinite(capacityRaw) ? capacityRaw : null;
+      const occupants = Number.isFinite(occupantsRaw) ? occupantsRaw : null;
+      const rent = cleanText($(cells[5]).text());
 
       if (blockName) {
         hostels.push({
@@ -33,8 +36,10 @@ function extractHostel(html) {
           capacity,
           occupants,
           rent,
-          facilities: ["AC", "WiFi", "Bed", "Study Table"],
-          status: occupants >= capacity ? "occupied" : "available",
+          status:
+            capacity !== null && occupants !== null && occupants >= capacity
+              ? "occupied"
+              : "available",
         });
       }
     }

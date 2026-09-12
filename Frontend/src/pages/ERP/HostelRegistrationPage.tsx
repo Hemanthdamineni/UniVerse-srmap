@@ -3,9 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PageBlueprint } from "../../config/erpBlueprints";
 import { getErpBatch } from "../../lib/erp/index";
 import { erpKeys } from "../../lib/erp/queryKeys";
-import { SectionCard } from "../../components/erp/ErpPrimitives";
+import { SectionCard, StatusBanner } from "../../components/erp/ErpPrimitives";
+import { EmptyState } from "../../components/ui/Feedback";
 import { Button } from "../../components/button";
 import RegistrationErpPage from "./RegistrationErpPage";
+import RoomAssignmentSection from "./components/RoomAssignmentSection";
+import HostelBlocksSection from "./components/HostelBlocksSection";
 import {
   listHostelBuddyBlocks,
   listHostelBuddyMatches,
@@ -15,7 +18,10 @@ import {
   type HostelBuddyBlock,
   type HostelBuddyEntry,
 } from "../../lib/campus/campusApi";
-import { Search, Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, Plus, Trash2, UserSearch } from "lucide-react";
+
+const BUDDY_INPUT_CLASS =
+  "mt-1.5 min-h-11 w-full rounded-xl border border-[var(--comp-border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--comp-accent)]";
 
 interface Props {
   blueprint: PageBlueprint;
@@ -120,128 +126,126 @@ export default function HostelRegistrationPage({ blueprint }: Props) {
     <RegistrationErpPage
       blueprint={blueprint}
       extraContent={
-        <SectionCard title="Hostel Buddy Finder">
-          <div className="grid gap-6 md:grid-cols-[1fr_1.3fr]">
-            {/* Form panel */}
-            <div className="rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-5 space-y-4">
-              <h3 className="text-base font-semibold" style={{ color: "var(--comp-text-primary)" }}>
-                {me ? "My Room Details" : "Join Buddy Finder"}
-              </h3>
+        <>
+          <RoomAssignmentSection />
+          <HostelBlocksSection />
+          <SectionCard title="Hostel Buddy Finder">
+            <div className="grid gap-6 md:grid-cols-[1fr_1.3fr]">
+              {/* Form panel */}
+              <div className="space-y-4 rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] p-5">
+                <h3 className="text-base font-semibold" style={{ color: "var(--comp-text-primary)" }}>
+                  {me ? "My Room Details" : "Join Buddy Finder"}
+                </h3>
 
-              {error ? (
-                <div className="rounded-lg bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] p-3 border border-[color-mix(in_srgb,var(--danger)_30%,transparent)]">
-                  <p className="text-xs font-semibold text-[var(--danger)]">{error}</p>
-                </div>
-              ) : null}
+                {error ? <StatusBanner message={{ id: "buddy-error", tone: "error", text: error }} /> : null}
 
-              {me ? (
-                <div className="space-y-4">
-                  <div className="rounded-lg bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-3 border border-[color-mix(in_srgb,var(--success)_30%,transparent)] flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-[var(--success)] mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-[var(--success)]">Your details are visible to other roommates.</p>
+                {me ? (
+                  <div className="space-y-4">
+                    <StatusBanner
+                      message={{ id: "buddy-visible", tone: "success", text: "Your details are visible to other roommates." }}
+                    />
+                    <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                      <div>
+                        <span className="text-xs text-[var(--comp-text-muted)]">Room No.</span>
+                        <p className="font-semibold">{me.roomNo}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-[var(--comp-text-muted)]">Hostel Block</span>
+                        <p className="font-semibold">{me.blockLabel}</p>
+                      </div>
                     </div>
+                    <Button variant="outline" size="sm" className="w-full" onClick={handleRemoveDetails}>
+                      <Trash2 className="mr-1 h-3.5 w-3.5" /> Remove Details
+                    </Button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-xs text-[var(--comp-text-muted)]">Room No.</span>
-                      <p className="font-semibold">{me.roomNo}</p>
+                ) : (
+                  <form onSubmit={handleAddDetails} className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: "var(--comp-text-secondary)" }}>Room Code</label>
+                        <input
+                          required
+                          className={BUDDY_INPUT_CLASS}
+                          value={roomInput}
+                          onChange={(e) => setRoomInput(e.target.value)}
+                          placeholder="e.g. 101"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium" style={{ color: "var(--comp-text-secondary)" }}>Block name</label>
+                        <select
+                          className={BUDDY_INPUT_CLASS}
+                          value={blockInput}
+                          onChange={(e) => setBlockInput(e.target.value)}
+                          disabled={blocksQuery.isLoading}
+                        >
+                          {(blocksQuery.data || []).map((block) => (
+                            <option key={block.id} value={block.id}>{block.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                     <div>
-                      <span className="text-xs text-[var(--comp-text-muted)]">Hostel Block</span>
-                      <p className="font-semibold">{me.blockLabel}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full" onClick={handleRemoveDetails}>
-                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove Details
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleAddDetails} className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Room Code</label>
+                      <label className="text-sm font-medium" style={{ color: "var(--comp-text-secondary)" }}>Contact Info</label>
                       <input
-                        required
-                        className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
-                        value={roomInput}
-                        onChange={(e) => setRoomInput(e.target.value)}
-                        placeholder="e.g. 101"
+                        className={BUDDY_INPUT_CLASS}
+                        value={contactInput}
+                        onChange={(e) => setContactInput(e.target.value)}
+                        placeholder="Mobile or email"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Block name</label>
-                      <select
-                        className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
-                        value={blockInput}
-                        onChange={(e) => setBlockInput(e.target.value)}
-                        disabled={blocksQuery.isLoading}
+                    <Button type="submit" size="sm" className="w-full" disabled={!blockInput}>
+                      <Plus className="mr-1 h-4 w-4" /> Log Room Details
+                    </Button>
+                  </form>
+                )}
+              </div>
+
+              {/* Matched roommates list */}
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold" style={{ color: "var(--comp-text-primary)" }}>
+                  Room Matches
+                </h3>
+
+                {!me ? (
+                  <EmptyState
+                    title="Log room details to find roomies"
+                    description="Submit your assigned room number on the left to see other students who match your room and block."
+                    icon={<Search size={48} strokeWidth={1.5} />}
+                  />
+                ) : matchingBuddies.length === 0 ? (
+                  <EmptyState
+                    title="No matches yet"
+                    description={`Sharing room ${me.roomNo} in ${me.blockLabel}? Roommates will appear here once they log their details too.`}
+                    icon={<UserSearch size={48} strokeWidth={1.5} />}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {matchingBuddies.map((buddy) => (
+                      <div
+                        key={buddy.userId}
+                        className="flex items-center justify-between rounded-xl border border-[var(--comp-border)] p-4"
+                        style={{ background: "color-mix(in srgb, var(--comp-accent) 4%, transparent)" }}
                       >
-                        {(blocksQuery.data || []).map((block) => (
-                          <option key={block.id} value={block.id}>{block.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold" style={{ color: "var(--comp-text-secondary)" }}>Contact Info</label>
-                    <input
-                      className="mt-1 min-h-11 w-full rounded-lg border border-[var(--comp-border)] bg-[var(--background)] p-2 text-sm outline-none focus:border-[var(--comp-accent)]"
-                      value={contactInput}
-                      onChange={(e) => setContactInput(e.target.value)}
-                      placeholder="Mobile or email"
-                    />
-                  </div>
-                  <Button type="submit" size="sm" className="w-full" disabled={!blockInput}>
-                    <Plus className="h-4 w-4 mr-1" /> Log Room Details
-                  </Button>
-                </form>
-              )}
-            </div>
-
-            {/* Matched roommates list */}
-            <div className="space-y-3">
-              <h3 className="text-base font-semibold" style={{ color: "var(--comp-text-primary)" }}>
-                Room Matches
-              </h3>
-
-              {!me ? (
-                <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-[var(--comp-border)] text-center">
-                  <Search className="h-10 w-10 text-[var(--comp-text-muted)] mb-3" />
-                  <p className="text-sm font-semibold text-[var(--comp-text-primary)]">Log room details to find roomies</p>
-                  <p className="text-xs text-[var(--comp-text-muted)] max-w-xs mt-1">Submit your assigned room number on the left to see other students who match your room and block.</p>
-                </div>
-              ) : matchingBuddies.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-[var(--comp-border)] text-center">
-                  <AlertCircle className="h-8 w-8 text-[var(--comp-text-muted)] mb-3" />
-                  <p className="text-sm font-semibold text-[var(--comp-text-primary)]">No matches yet</p>
-                  <p className="text-xs text-[var(--comp-text-muted)] max-w-xs mt-1">Sharing room {me.roomNo} in {me.blockLabel}? Roommates will appear here once they log their details too.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {matchingBuddies.map((buddy) => (
-                    <div
-                      key={buddy.userId}
-                      className="rounded-xl border border-[var(--comp-border)] p-4 flex justify-between items-center bg-[color-mix(in_srgb,var(--comp-accent)_4%,transparent)]"
-                    >
-                      <div>
-                        <p className="font-semibold text-sm text-[var(--comp-text-primary)]">{buddy.name}</p>
-                        {buddy.department ? (
-                          <p className="text-xs text-[var(--comp-text-muted)] mt-0.5">{buddy.department}</p>
-                        ) : null}
-                        <p className="text-xs font-semibold text-[var(--comp-accent)] mt-1">Room {buddy.roomNo} &middot; {buddy.blockLabel}</p>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--comp-text-primary)]">{buddy.name}</p>
+                          {buddy.department ? (
+                            <p className="mt-0.5 text-xs text-[var(--comp-text-muted)]">{buddy.department}</p>
+                          ) : null}
+                          <p className="mt-1 text-xs font-semibold text-[var(--comp-accent)]">Room {buddy.roomNo} &middot; {buddy.blockLabel}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--comp-text-muted)]">Contact Info</span>
+                          <span className="mt-1 block text-sm font-medium">{buddy.contactInfo || "Not shared"}</span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider block text-[var(--comp-text-muted)]">Contact Info</span>
-                        <span className="text-sm font-medium mt-1 block">{buddy.contactInfo || "Not shared"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </SectionCard>
+          </SectionCard>
+        </>
       }
     />
   );

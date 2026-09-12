@@ -24,7 +24,6 @@ const AdminSystemControlsPage = lazy(() => import("../pages/Admin/AdminSystemCon
 const AcademicHubPage = lazy(() => import("../pages/AcademicTracker/AcademicHubPage"));
 const AlumniConnect = lazy(() => import("../pages/CareerPortal/AlumniConnect"));
 const HostelRegistrationPage = lazy(() => import("../pages/ERP/HostelRegistrationPage"));
-const HostelBookingPage = lazy(() => import("../pages/ERP/HostelBookingPage"));
 const ApplicationTrackerPage = lazy(() => import("../pages/CareerPortal/ApplicationTrackerPage"));
 const BookmarksPage = lazy(() => import("../pages/CareerPortal/BookmarksPage"));
 const CareerHomePage = lazy(() => import("../pages/CareerPortal/CareerHomePage"));
@@ -46,7 +45,6 @@ const FeePaidPage = lazy(() => import("../pages/ERP/FeePaidPage"));
 const RefundChangePage = lazy(() => import("../pages/ERP/RefundChangePage"));
 const ResultsCurrentPage = lazy(() => import("../pages/ERP/ResultsCurrentPage"));
 const ResultsEarlierPage = lazy(() => import("../pages/ERP/ResultsEarlierPage"));
-const RoomDetailsPage = lazy(() => import("../pages/ERP/RoomDetailsPage"));
 const SapScholarshipsPage = lazy(() => import("../pages/ERP/SapScholarshipsPage"));
 const TimetablePage = lazy(() => import("../pages/ERP/TimetablePage"));
 const EventsFeedback = lazy(() => import("../pages/Feedback/EventsFeedback"));
@@ -80,21 +78,6 @@ export const DOMAIN_PAGE_MAP: Record<string, React.ReactNode> = {
   "/career": <CareerHomePage />,
   "/career/opportunities": <OpportunitiesPage />,
   "/career/opportunities/:id": <OpportunityDetailPage />,
-  "/transport-hostel/hostel-booking": (
-    <HostelBookingPage
-      blueprint={
-        {
-          route: "/transport-hostel/hostel-booking",
-          heading: "Hostel Booking",
-          fetchKeys: ["hostel/hostel-booking-for-full-year"],
-          renderer: "generic",
-          domain: "campus",
-          sourceMode: "erp",
-          integrationState: "native",
-        } as PageBlueprint
-      }
-    />
-  ),
   "/career/me/bookmarks": <BookmarksPage />,
   "/career/me/profile": <ProfessionalProfilePage />,
   "/career/me/resume": <ResumeBuilder />,
@@ -161,8 +144,6 @@ export const erpRoutes = Object.values(PAGE_BLUEPRINTS)
       component = <FeePaidPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "bank-details") {
       component = <BankDetailsPage blueprint={blueprint} />;
-    } else if (blueprint.renderer === "room-details") {
-      component = <RoomDetailsPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "sap-scholarships") {
       component = <SapScholarshipsPage blueprint={blueprint} />;
     } else if (blueprint.renderer === "faqs") {
