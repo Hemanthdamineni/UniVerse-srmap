@@ -11,17 +11,41 @@ host-nginx path (`infra/scripts/setup-tls.sh`) has been removed.
   single source of truth for the backend + Redis services.
 - **Ingress override** (`infra/docker/compose.ingress.yml`) adds the
   nginx reverse proxy in front of the backend on the same network.
+  It publishes no host ports — see "Network model" below.
+- **Tunnel override** (`infra/docker/compose.tunnel.yml`) adds
+  Cloudflare Tunnel (`cloudflared`) as the only path for public
+  traffic to reach the ingress container.
 - **Monitoring override** (`infra/docker/compose.monitoring.yml`)
   adds Prometheus, Grafana, Loki, Promtail, and Alertmanager.
 - **Bundle ordering:** backend + Redis first, then ingress, then
-  monitoring. The root compose uses `depends_on: service_healthy` to
-  enforce the ordering on startup.
+  tunnel, then monitoring. The root compose uses
+  `depends_on: service_healthy` to enforce the ordering on startup.
+
+## Network model (zero public-facing ports)
+
+The VM has no inbound ports open to the public internet at all, on
+either the host firewall or the cloud VCN security list:
+
+- **Cloudflare Tunnel** (`compose.tunnel.yml`) makes an outbound-only
+  connection from `cloudflared` to Cloudflare's edge, and reaches the
+  `ingress` service internally over the compose network. This is why
+  `compose.ingress.yml` no longer publishes `80`/`443` on the host.
+- **Tailscale** (`infra/scripts/setup-tailscale.sh`, host-level) is
+  the only path for operator SSH. Host port 22 is closed publicly and
+  reachable only on the `tailscale0` interface, enforced by
+  `infra/scripts/setup-vm-firewall.sh`.
+
+Full details, including quick-tunnel vs. named-tunnel mode and VM
+provisioning order, are in
+`infra/runbooks/cloudflare-tunnel-tailscale.md`.
 
 ## Layout
 
 - `docker/`
   - `compose.ingress.yml` — nginx reverse proxy in front of the root
     compose's `backend` service
+  - `compose.tunnel.yml` — Cloudflare Tunnel (`cloudflared`), the only
+    path for public traffic into the ingress container
   - `compose.monitoring.yml` — Prometheus + Grafana + Loki + Promtail +
     Alertmanager stack
 - `nginx/`
@@ -43,10 +67,15 @@ host-nginx path (`infra/scripts/setup-tls.sh`) has been removed.
   - `redis-failover.md` — Redis failover
   - `deploy-canary.md` — canary deployment
   - `companion-platform-production-readiness.md` — overall readiness
+  - `cloudflare-tunnel-tailscale.md` — Cloudflare Tunnel + Tailscale
+    network model, modes, and VM provisioning order
 - `scripts/`
   - `setup-backups.sh` — daily backup cron
   - `postdeploy-smoke.sh` — T+0 / T+24h smoke
   - `redis-backup-check.sh` — Redis RDB snapshot helper
+  - `setup-tailscale.sh` — installs Tailscale, brings up `tailscale0`
+  - `setup-vm-firewall.sh` — locks the host firewall to the
+    zero-public-port model (SSH only on `tailscale0`, no 80/443 rule)
 
 ## Start order (Gate 9 P1)
 
@@ -59,13 +88,20 @@ host-nginx path (`infra/scripts/setup-tls.sh`) has been removed.
    docker compose -f docker-compose.yml \
                   -f infra/docker/compose.ingress.yml up -d
    ```
-3. Monitoring (Prometheus + Grafana + Loki + Promtail +
+3. Tunnel (Cloudflare Tunnel — the only path for public traffic in;
+   see `infra/runbooks/cloudflare-tunnel-tailscale.md`):
+   ```
+   docker compose -f docker-compose.yml \
+                  -f infra/docker/compose.ingress.yml \
+                  -f infra/docker/compose.tunnel.yml up -d
+   ```
+4. Monitoring (Prometheus + Grafana + Loki + Promtail +
    Alertmanager):
    ```
    docker compose -f docker-compose.yml \
                   -f infra/docker/compose.monitoring.yml up -d
    ```
-4. (optional) Frontend static build for the ingress to serve:
+5. (optional) Frontend static build for the ingress to serve:
    ```
    cd Frontend && npm run build
    ```

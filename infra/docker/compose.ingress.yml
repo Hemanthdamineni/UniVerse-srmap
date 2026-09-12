@@ -4,9 +4,10 @@ services:
       context: ./infra
       dockerfile: docker/ingress.Dockerfile
     image: university-erp-ingress:local
-    ports:
-      - "80:80"
-      - "443:443"
+    # No host ports are published. The Cloudflare Tunnel override
+    # (compose.tunnel.yml) reaches this service over the internal
+    # compose network by its service name (`ingress`); nothing here
+    # is ever exposed directly on the host's public interface.
     volumes:
       # Compose resolves every relative bind against the first compose file
       # (`docker-compose.yml` at the repository root), not this override.

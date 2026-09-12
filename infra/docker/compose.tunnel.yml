@@ -1,0 +1,30 @@
+# Cloudflare Tunnel — use as an override alongside the ingress bundle:
+#   docker compose -f docker-compose.yml \
+#                  -f infra/docker/compose.ingress.yml \
+#                  -f infra/docker/compose.tunnel.yml up -d
+#
+# No domain is required. In the default "quick tunnel" mode, cloudflared
+# mints a random *.trycloudflare.com hostname on every container start and
+# prints it to its own logs (`docker compose logs -f cloudflared`) — there
+# is no stable URL, and no Cloudflare account credentials are needed.
+#
+# To move to a stable hostname on a domain you own later, add a
+# `TUNNEL_TOKEN` (from a named tunnel created in the Cloudflare Zero Trust
+# dashboard) to .env and swap the `command` below for:
+#   command: tunnel run --token ${TUNNEL_TOKEN}
+#
+# The ingress container terminates TLS with a self-signed certificate
+# whenever no real Let's Encrypt cert is mounted (see
+# infra/nginx/bootstrap-tls.sh), so cloudflared is pointed at it with
+# --no-tls-verify rather than requiring a real chain.
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --no-tls-verify --url https://ingress:443
+    restart: unless-stopped
+    depends_on:
+      ingress:
+        condition: service_started
+    networks:
+      - default
