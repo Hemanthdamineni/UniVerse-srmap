@@ -1,5 +1,5 @@
 import type { LmsGuideSection } from "../../lib/lms/index";
-import { Markdown } from "../markdown";
+import { LazyMarkdown as Markdown } from "../markdown";
 
 export default function GuideSection({
   section,

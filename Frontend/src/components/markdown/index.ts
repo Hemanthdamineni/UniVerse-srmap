@@ -1,4 +1,3 @@
-export { Markdown, type MarkdownProps } from "./Markdown";
 export { LazyMarkdown } from "./LazyMarkdown";
 export { MarkdownCode, markdownCodeText } from "./MarkdownCode";
 export { MarkdownLink, type MarkdownLinkProps } from "./MarkdownLink";

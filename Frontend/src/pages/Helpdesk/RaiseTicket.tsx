@@ -6,7 +6,7 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
 import { FormField } from "../../components/forms/FormField";
 import { SkeletonCard } from "../../components/ui";
 import { createHelpdeskTicket, listHelpdeskTickets } from "../../lib/campus/campusApi";

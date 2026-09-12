@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ProgressBar } from "../ui/Progress";
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft } from "lucide-react";
-import { Markdown } from "../markdown";
+import { LazyMarkdown as Markdown } from "../markdown";
 
 type Question = {
   id?: string;

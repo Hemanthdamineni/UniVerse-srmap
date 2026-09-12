@@ -6,7 +6,7 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
 import { ConfirmDialog } from "../../components/dialog";
 import { FormField } from "../../components/forms/FormField";
 import { useAdminAccess } from "../../hooks/useAdminAccess";

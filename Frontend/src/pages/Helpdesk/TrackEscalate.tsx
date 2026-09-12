@@ -7,7 +7,7 @@ import {
   SectionCard,
   StatusBanner,
 } from "../../components/erp/ErpPrimitives";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
 import { useAdminAccess } from "../../hooks/useAdminAccess";
 import { helpdeskKeys } from "../../lib/helpdesk/queryKeys";
 import {

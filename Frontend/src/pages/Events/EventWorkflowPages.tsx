@@ -9,7 +9,7 @@ import { ToastContainer, useToasts } from "../../components/ui/Feedback";
 import { StatusBadge } from "../../components/ui/Badges";
 import { CompetitionPageShell, CompetitionCard, CompetitionEmptyPanel } from "../../components/competition/CompetitionChrome";
 import { useEvent } from "../../contexts/EventContext";
-import { Markdown } from "../../components/markdown";
+import { LazyMarkdown as Markdown } from "../../components/markdown";
 import { track } from "../../lib/core/analytics";
 import { Users, Search, CalendarClock, Award, Plus, X } from "lucide-react";
 import {
