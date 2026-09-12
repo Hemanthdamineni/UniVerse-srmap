@@ -9,8 +9,12 @@
     <title>UniVerse — SRMAP Edition</title>
     <link rel="dns-prefetch" href="/api" />
     <link rel="preload" href="/fonts/dmsans-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <script>
-      (function () {
+    <script type="module">
+      // Dark mode is still in development — production never applies it here,
+      // regardless of a stale stored choice from before this was locked down.
+      // (Runtime/system-preference resolution is also forced to light in
+      // production; see src/lib/core/theme.ts.)
+      if (!import.meta.env.PROD) {
         try {
           if (localStorage.getItem("theme") === "dark") {
             document.documentElement.classList.add("dark");
@@ -19,7 +23,7 @@
         } catch (e) {
           /* storage unavailable — default light */
         }
-      })();
+      }
     </script>
   </head>
   <body>
