@@ -39,9 +39,26 @@ start() {
   export EXTERNAL_DB_PATH="$DATA/external-pages.sqlite"
   export EVENTS_DB_PATH="$DATA/events.sqlite"
   export EVENTS_DATA_DIR="$DATA/events"
+  export LMS_DB_PATH="$DATA/lms.sqlite"
+  export LMS_TRACKER_DB_PATH="$DATA/lms-tracker.sqlite"
+  export UNIFIED_PROFILE_DB_PATH="$DATA/unified-profile.sqlite"
+  export COMPANION_ANALYTICS_DB_PATH="$DATA/companion-analytics.sqlite"
+  export HOSTEL_BUDDY_DB_PATH="$DATA/hostel-buddy.sqlite"
+  export USER_DIRECTORY_DB_PATH="$DATA/user-directory.sqlite"
+  export HELPDESK_DB_PATH="$DATA/helpdesk.sqlite"
+  export CAMPUS_FEEDBACK_DB_PATH="$DATA/campus-feedback.sqlite"
+  export CAREER_DB_PATH="$DATA/career.sqlite"
+  export ERP_ATTENDANCE_SNAPSHOTS_DB_PATH="$DATA/erp-attendance-snapshots.sqlite"
+  export ERP_ACADEMIC_SNAPSHOTS_DB_PATH="$DATA/erp-academic-snapshots.sqlite"
+  export VACANT_ROOMS_DB_PATH="$DATA/vacant-rooms.sqlite"
+  export PERSISTENT_TEAMS_DB_PATH="$DATA/persistent-teams.sqlite"
+  export GOOGLE_TOKENS_DB_PATH="$DATA/google-tokens.sqlite"
+  export UPLOADS_DIR="$DATA/uploads"
+  export LMS_FILES_DIR="$DATA/lms-files"
   export SESSION_STORE_DRIVER=memory
   export ERP_CACHE_DRIVER=memory
   export NODE_ENV=development
+  export ENABLE_DEMO_LOGIN=1
   export REDIS_URL=""
   export ADMIN_CONTENT_PASSWORD=e2e-admin
   export LOG_DIR="$DATA/logs"
@@ -62,9 +79,9 @@ start() {
   echo "http://127.0.0.1:$PORT" >"$URL_FILE"
   echo "$DATA" >"$DATA_FILE"
 
-  # Wait for /api/live
+  # Wait for dependency readiness, not process liveness.
   for _ in $(seq 1 30); do
-    if curl -fsS "http://127.0.0.1:$PORT/api/live" >/dev/null 2>&1; then
+    if curl -fsS "http://127.0.0.1:$PORT/api/ready" >/dev/null 2>&1; then
       echo "==> backend up (pid=$pid, port=$PORT, data=$DATA)"
       return 0
     fi

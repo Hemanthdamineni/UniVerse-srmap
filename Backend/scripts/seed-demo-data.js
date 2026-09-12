@@ -1,5 +1,8 @@
 const API_BASE = process.env.API_BASE || "http://127.0.0.1:5000/api";
 const DEMO_REG_NO = process.env.DEMO_REG_NO || "AP23110010419";
+// Demo events are created by a separate student so the primary demo account's
+// "Verified Achievements" is not pre-filled with fabricated "Organized …" records.
+const DEMO_ORGANIZER_REG_NO = process.env.DEMO_ORGANIZER_REG_NO || "AP23110010002";
 
 const state = {
   sessionId: "",
@@ -40,13 +43,28 @@ async function request(path, options = {}) {
   return payload;
 }
 
-async function login() {
+async function loginAs(username) {
   const response = await request("/dev/login", {
     method: "POST",
-    body: JSON.stringify({ username: DEMO_REG_NO }),
+    body: JSON.stringify({ username }),
   });
-  state.sessionId = response.sessionId;
-  return response;
+  return response.sessionId;
+}
+
+async function login() {
+  state.sessionId = await loginAs(DEMO_REG_NO);
+  return { sessionId: state.sessionId };
+}
+
+/** Run `fn` with `state.sessionId` swapped to `sessionId`, then restore. */
+async function withSession(sessionId, fn) {
+  const previous = state.sessionId;
+  state.sessionId = sessionId;
+  try {
+    return await fn();
+  } finally {
+    state.sessionId = previous;
+  }
 }
 
 function iso(offsetDays, hour = 10, minute = 0) {
@@ -56,10 +74,21 @@ function iso(offsetDays, hour = 10, minute = 0) {
 }
 
 async function cleanupDemoData() {
-  // Clean up events
-  const events = await request("/events");
-  for (const event of events) {
-    await request(`/events/${encodeURIComponent(event.id)}`, { method: "DELETE" }).catch((error) => {
+  // Clean up events — created by the demo organizer, so delete under that session.
+  const organizerSession = await loginAs(DEMO_ORGANIZER_REG_NO);
+  await withSession(organizerSession, async () => {
+    const events = await request("/events");
+    for (const event of events) {
+      await request(`/events/${encodeURIComponent(event.id)}`, { method: "DELETE" }).catch((error) => {
+        console.warn(error.message);
+      });
+    }
+  });
+
+  // Clean up demo alumni (all seeded rows use the @demo.alumni email domain).
+  const alumni = await request("/career/alumni").catch(() => ({ items: [] }));
+  for (const person of (alumni.items || []).filter((a) => String(a.email || "").endsWith("@demo.alumni"))) {
+    await request(`/career/alumni/${encodeURIComponent(person.id)}`, { method: "DELETE" }).catch((error) => {
       console.warn(error.message);
     });
   }
@@ -314,14 +343,28 @@ async function seedEvents() {
     }
   ];
 
-  const created = [];
-  for (const payload of payloads) {
-    const result = await request("/events", {
+  const organizerSession = await loginAs(DEMO_ORGANIZER_REG_NO);
+  const created = await withSession(organizerSession, async () => {
+    const out = [];
+    for (const payload of payloads) {
+      const result = await request("/events", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      out.push(...(Array.isArray(result) ? result : [result]));
+    }
+    return out;
+  });
+
+  // Register the primary demo student for two events so the "Participated in …"
+  // achievement path has real data to show (without fabricating "Organized …").
+  for (const event of created.slice(0, 2)) {
+    await request(`/events/${encodeURIComponent(event.id)}/register`, {
       method: "POST",
-      body: JSON.stringify(payload),
-    });
-    created.push(...(Array.isArray(result) ? result : [result]));
+      body: JSON.stringify({}),
+    }).catch((error) => console.warn(error.message));
   }
+
   return created;
 }
 
@@ -585,6 +628,81 @@ async function seedLms() {
   return { resources, guide, roadmap, requestBoardItem, collection };
 }
 
+async function seedAlumni() {
+  const people = [
+    {
+      name: "Ananya Rao", email: "ananya.rao@demo.alumni", batch: "2021",
+      degree: "B.Tech Computer Science and Engineering", company: "Google",
+      role: "Software Engineer II", location: "Bengaluru",
+      expertise: ["Distributed Systems", "Go", "Kubernetes"],
+      bio: "Backend engineer on Search infrastructure. Happy to review resumes and do mock system-design rounds.",
+      openToConnect: true,
+    },
+    {
+      name: "Rohit Menon", email: "rohit.menon@demo.alumni", batch: "2020",
+      degree: "B.Tech Electronics and Communication Engineering", company: "Qualcomm",
+      role: "Hardware Design Engineer", location: "Hyderabad",
+      expertise: ["VLSI", "Verilog", "Embedded Systems"],
+      bio: "Silicon design for modem SoCs. Can talk about core-EC placements and higher studies abroad.",
+      openToConnect: true,
+    },
+    {
+      name: "Priya Nair", email: "priya.nair@demo.alumni", batch: "2019",
+      degree: "B.Tech Computer Science and Engineering", company: "Razorpay",
+      role: "Engineering Manager", location: "Bengaluru",
+      expertise: ["Payments", "System Design", "Leadership"],
+      bio: "Grew from SDE-1 to EM in 5 years. Mentoring students on early-career growth and switching teams.",
+      openToConnect: true,
+    },
+    {
+      name: "Karthik Iyer", email: "karthik.iyer@demo.alumni", batch: "2022",
+      degree: "B.Tech Computer Science and Engineering", company: "Atlassian",
+      role: "Data Scientist", location: "Remote",
+      expertise: ["Machine Learning", "Python", "Data Analysis"],
+      bio: "ML for developer productivity analytics. Ask me about the ML interview loop and Kaggle.",
+      openToConnect: true,
+    },
+    {
+      name: "Sneha Reddy", email: "sneha.reddy@demo.alumni", batch: "2018",
+      degree: "B.Tech Mechanical Engineering", company: "Ather Energy",
+      role: "Product Manager", location: "Bengaluru",
+      expertise: ["Product Management", "Hardware", "Go-to-Market"],
+      bio: "Non-CS to PM path. Can help with product-sense prep and portfolio building.",
+      openToConnect: false,
+    },
+    {
+      name: "Aditya Kulkarni", email: "aditya.kulkarni@demo.alumni", batch: "2021",
+      degree: "B.Tech Computer Science and Engineering", company: "Stripe",
+      role: "Frontend Engineer", location: "Remote",
+      expertise: ["React", "TypeScript", "Design Systems"],
+      bio: "Design-systems team. Open to portfolio reviews for frontend / full-stack roles.",
+      openToConnect: true,
+    },
+  ];
+
+  const created = [];
+  for (const person of people) {
+    const row = await request("/career/alumni", {
+      method: "POST",
+      body: JSON.stringify(person),
+    }).catch((error) => {
+      console.warn(error.message);
+      return null;
+    });
+    if (row) created.push(row);
+  }
+
+  // One sample pending connection request from the demo student.
+  if (created[0]?.id) {
+    await request(`/career/alumni/${encodeURIComponent(created[0].id)}/requests`, {
+      method: "POST",
+      body: JSON.stringify({ message: "Interested in a mock system-design round." }),
+    }).catch((error) => console.warn(error.message));
+  }
+
+  return created;
+}
+
 async function main() {
   const mode = process.argv.includes("--clean") ? "clean" : "seed";
   const auth = await login();
@@ -596,12 +714,14 @@ async function main() {
   }
 
   const events = await seedEvents();
+  const alumni = await seedAlumni();
   const lms = await seedLms();
   console.log(
     JSON.stringify(
       {
         sessionId: auth.sessionId,
         events: events.map((event) => ({ id: event.id, title: event.title })),
+        alumni: alumni.map((person) => ({ id: person.id, name: person.name })),
         lms: {
           resources: lms.resources.map((resource) => ({ id: resource.id, title: resource.title })),
           guide: { id: lms.guide.id, title: lms.guide.title },
