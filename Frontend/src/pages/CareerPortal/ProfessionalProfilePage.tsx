@@ -14,36 +14,25 @@ import { Input } from "../../components/input";
 import {
   getProfile,
   updateProfile,
-  createResumeVersion,
+  uploadResumeFile,
+  deleteResumeVersion,
   mergeResumeToProfile,
   listResumeVersions,
   type CareerProfile,
   type ResumeVersion,
 } from "../../lib/career/careerApi";
-import { getUnifiedProfile, syncProfileAchievements, type UnifiedProfile } from "../../lib/career/profileApi";
-import { useSession } from "../../hooks/useSession";
+import { getUnifiedProfile, type UnifiedProfile } from "../../lib/career/profileApi";
+import { readStoredProfileData } from "../../lib/core/session";
+import { transformProfileData } from "../../lib/erp/profileTransformers";
 import { track } from "../../lib/core/analytics";
-import { Award, Briefcase, ChevronRight, DollarSign, MapPin, Plus, X } from "lucide-react";
+import { Briefcase, ChevronRight, DollarSign, MapPin, Plus, X } from "lucide-react";
 import { SkeletonCard } from "../../components/ui/Skeletons";
 import ProfileSharingPanels from "./ProfileSharingPanels";
 import ResumeProofPanel, { type ResumeUploadState } from "./ResumeProofPanel";
 
 const PREFERRED_TYPES = ["Job", "Internship", "Hackathon", "Competition"];
 
-// `File.text()` is not present in every runtime (older jsdom, some test envs);
-// fall back to FileReader so resume parsing works everywhere.
-function readResumeFileText(file: File): Promise<string> {
-  if (typeof file.text === "function") return file.text();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsText(file);
-  });
-}
-
 export default function ProfessionalProfilePage() {
-  const { profile: erpProfile } = useSession();
   const [profile, setProfile] = useState<CareerProfile | null>(null);
   const [unified, setUnified] = useState<UnifiedProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +40,7 @@ export default function ProfessionalProfilePage() {
   const [saving, setSaving] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [resume, setResume] = useState<ResumeUploadState>({ file: null, uploading: false, version: null, merged: false });
-  const [syncingAchievements, setSyncingAchievements] = useState(false);
+  const [removingResume, setRemovingResume] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -116,8 +105,7 @@ export default function ProfessionalProfilePage() {
   const handleResumeUpload = async (file: File) => {
     setResume((prev) => ({ ...prev, uploading: true }));
     try {
-      const text = await readResumeFileText(file);
-      const result = await createResumeVersion({ fileName: file.name, mimeType: file.type || "text/plain", extractedText: text });
+      const result = await uploadResumeFile(file);
       setResume((prev) => ({ ...prev, file, uploading: false, version: result, merged: false }));
       track("resume_analyzed", {
         qualityScore: result.qualityScore,
@@ -125,9 +113,30 @@ export default function ProfessionalProfilePage() {
         mimeType: result.mimeType,
       });
       setMessage({ type: "success", text: `Resume analysed. Quality score: ${result.qualityScore}/100.` });
-    } catch {
+    } catch (err) {
       setResume((prev) => ({ ...prev, uploading: false }));
-      setMessage({ type: "error", text: `Couldn't read "${file.name}". Try a different resume file.` });
+      const serverMessage = err instanceof Error ? err.message : "";
+      setMessage({
+        type: "error",
+        text: serverMessage || `Couldn't read "${file.name}". Try a different resume file.`,
+      });
+    }
+  };
+
+  const handleRemoveResume = async () => {
+    if (!resume.version || removingResume) return;
+    setRemovingResume(true);
+    try {
+      const res = await deleteResumeVersion(resume.version.id);
+      setResume({ file: null, uploading: false, version: res.latest ?? null, merged: false });
+      setMessage({
+        type: "success",
+        text: res.latest ? "Resume removed. Showing your previous version." : "Resume removed.",
+      });
+    } catch {
+      setMessage({ type: "error", text: "Couldn't remove the resume. Please try again." });
+    } finally {
+      setRemovingResume(false);
     }
   };
 
@@ -153,20 +162,6 @@ export default function ProfessionalProfilePage() {
     }
   };
 
-  const handleSyncAchievements = async () => {
-    setSyncingAchievements(true);
-    try {
-      await syncProfileAchievements();
-      const refreshed = await getUnifiedProfile();
-      setUnified(refreshed);
-      setMessage({ type: "success", text: "Achievements synchronised." });
-    } catch {
-      setMessage({ type: "error", text: "Couldn't sync achievements right now. Please try again." });
-    } finally {
-      setSyncingAchievements(false);
-    }
-  };
-
   if (loading)
     return (
       <PageContainer>
@@ -186,6 +181,7 @@ export default function ProfessionalProfilePage() {
     );
 
   const completeness = profile ? computeCompleteness(profile) : 0;
+  const identity = resolveIdentity(unified);
 
   return (
     <PageContainer>
@@ -201,14 +197,16 @@ export default function ProfessionalProfilePage() {
         )}
 
         {/* Identity */}
-        <SectionCard title="Identity" description="Auto-populated from your academic profile and editable as needed.">
+        <SectionCard title="Identity" description="Pulled from your university academic record. The links and bio below are yours to edit.">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Name" value={erpProfile?.name || profile?.name || "—"} />
-            <Field label="Register No" value={erpProfile?.regNo || profile?.name || "—"} />
-            <Field label="Email" value={profile?.email || "—"} />
-            <Field label="Department" value={unified?.user?.department || "—"} />
-            <Field label="Branch" value={unified?.user?.branch || "—"} />
-            <Field label="Year" value={unified?.user?.year ? `Year ${unified.user.year}` : "—"} />
+            <Field label="Name" value={identity.name} />
+            <Field label="Register No" value={identity.registerNo} />
+            <Field label="Email" value={identity.email} />
+            <Field label="Programme" value={identity.programme} />
+            <Field label="Branch" value={identity.branch} />
+            <Field label="Specialization" value={identity.specialization} />
+            <Field label="Year" value={identity.year} />
+            <Field label="Section" value={identity.section} />
             <div className="md:col-span-2">
               <label htmlFor="pp-bio" className="text-xs font-medium" style={{ color: "var(--comp-text-secondary)" }}>
                 Bio
@@ -228,7 +226,25 @@ export default function ProfessionalProfilePage() {
               <LabeledInput label="Portfolio URL" value={profile?.portfolioUrl || ""} onChange={(v) => patch({ portfolioUrl: v })} placeholder="https://portfolio.dev/..." />
             </div>
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="w-full max-w-xs">
+              <div className="mb-1 flex justify-between text-xs font-medium">
+                <span style={{ color: "var(--comp-text-secondary)" }}>Profile completeness</span>
+                <span
+                  style={{
+                    color:
+                      completeness >= 80
+                        ? "var(--success)"
+                        : completeness >= 50
+                          ? "var(--warning)"
+                          : "var(--error)",
+                  }}
+                >
+                  {completeness}%
+                </span>
+              </div>
+              <ProgressBar value={completeness} max={100} />
+            </div>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
             </Button>
@@ -276,6 +292,15 @@ export default function ProfessionalProfilePage() {
               </div>
             </div>
           )}
+          <div className="mt-4">
+            <Link
+              to="/career/me/skill-gap"
+              className="inline-flex items-center gap-1 text-sm font-medium text-[var(--comp-accent)] no-underline hover:underline"
+            >
+              See which skills unlock the most opportunities
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </SectionCard>
 
         {/* Career Preferences — feeds the opportunity fit scorer */}
@@ -352,65 +377,69 @@ export default function ProfessionalProfilePage() {
         </SectionCard>
 
         {/* Proof (Resume) */}
-        <ResumeProofPanel resume={resume} onUpload={handleResumeUpload} onMerge={handleMergeResume} />
-
-        {/* Readiness Scorecard */}
-        <SectionCard title="Readiness Scorecard" description="Your career profile completeness and placement readiness.">
-          <div className="space-y-4">
-            <div>
-              <div className="mb-1 flex justify-between">
-                <span className="text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
-                  Profile Completeness
-                </span>
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: completeness >= 80 ? "var(--success)" : completeness >= 50 ? "var(--warning)" : "var(--error)" }}
-                >
-                  {completeness}%
-                </span>
-              </div>
-              <ProgressBar value={completeness} max={100} />
-            </div>
-
-            {unified?.career?.skillGaps && unified.career.skillGaps.length > 0 && (
-              <div>
-                <p className="mb-2 text-sm font-medium" style={{ color: "var(--comp-text-primary)" }}>
-                  Skill Gaps ({unified.career.skillGaps.length})
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {unified.career.skillGaps.slice(0, 8).map((g, i) => (
-                    <span
-                      key={i}
-                      className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_8%,transparent)] px-2.5 py-1 text-xs"
-                      style={{ color: "var(--warning)" }}
-                    >
-                      {g.skill} <span className="opacity-60">({g.opportunityCount})</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" disabled={syncingAchievements} onClick={handleSyncAchievements}>
-                <Award className="mr-1.5 h-4 w-4" />
-                {syncingAchievements ? "Syncing..." : "Sync Achievements"}
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/career/me/skill-gap">
-                  <ChevronRight className="mr-1.5 h-4 w-4" />
-                  Full skill-gap analysis
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </SectionCard>
+        <ResumeProofPanel
+          resume={resume}
+          onUpload={handleResumeUpload}
+          onMerge={handleMergeResume}
+          onRemove={handleRemoveResume}
+          removing={removingResume}
+        />
 
         {/* Sharing: public portfolio + verified achievements (merged from CareerProfilePage) */}
         <ProfileSharingPanels userId={profile?.userId} onMessage={setMessage} />
       </div>
     </PageContainer>
   );
+}
+
+const DASH = "—";
+
+/**
+ * The Identity card is read-only academic-record data. The unified profile
+ * (server-parsed from the ERP) is the source of truth; when it isn't available
+ * (offline / first paint) fall back to the locally stored ERP profile blob so
+ * the card still shows the student's own name rather than a row of dashes.
+ */
+function resolveIdentity(unified: UnifiedProfile | null) {
+  const u = unified?.user;
+  if (u && (u.name || u.email)) {
+    return {
+      name: u.name || DASH,
+      registerNo: u.userId || DASH,
+      email: u.email || DASH,
+      programme: u.programme || DASH,
+      branch: u.branch || DASH,
+      specialization: u.specialization || DASH,
+      year: u.year ? `Year ${u.year}` : DASH,
+      section: u.section || DASH,
+    };
+  }
+
+  const stored = readStoredProfileData() as { TableContent?: Record<string, unknown> } | null;
+  if (!stored?.TableContent) {
+    return {
+      name: DASH,
+      registerNo: DASH,
+      email: DASH,
+      programme: DASH,
+      branch: DASH,
+      specialization: DASH,
+      year: DASH,
+      section: DASH,
+    };
+  }
+  const s = transformProfileData(stored.TableContent);
+  const sem = parseInt(String(s.currentSemester).replace(/[^0-9]/g, ""), 10);
+  return {
+    name: s.studentName !== "N/A" ? s.studentName : DASH,
+    registerNo: s.registerNo !== "N/A" ? s.registerNo : DASH,
+    email: s.email !== "N/A" ? s.email : DASH,
+    programme: s.program !== "N/A" ? s.program : DASH,
+    branch: s.specialization !== "N/A" ? s.specialization : DASH,
+    specialization: s.specialization !== "N/A" ? s.specialization : DASH,
+    year: Number.isFinite(sem) && sem > 0 ? `Year ${Math.ceil(sem / 2)}` : DASH,
+    section: s.section !== "N/A" ? s.section : DASH,
+  };
 }
 
 function Field({ label, value }: { label: string; value: string }) {

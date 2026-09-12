@@ -57,6 +57,9 @@ export type UnifiedProfile = {
     role?: string;
     department?: string;
     branch?: string;
+    programme?: string;
+    specialization?: string;
+    section?: string;
     year?: number | null;
   };
   privacy: Record<string, ProfileVisibility>;
@@ -118,6 +121,8 @@ export type PublicCareerProfile = {
     name: string;
     department?: string;
     branch?: string;
+    programme?: string;
+    specialization?: string;
     year?: number | null;
   };
   headline: string;
@@ -143,8 +148,11 @@ const STATIC_PROFILE: UnifiedProfile = {
     userId: "AP23110010001",
     name: "Static Student",
     role: "student",
-    department: "CSE",
-    branch: "Computer Science",
+    department: "School of Engineering and Sciences",
+    branch: "Computer Science and Engineering",
+    programme: "B.Tech",
+    specialization: "Artificial Intelligence and Machine Learning",
+    section: "A",
     year: 3,
   },
   privacy: {

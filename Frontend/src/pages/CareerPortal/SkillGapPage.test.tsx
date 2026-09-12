@@ -82,7 +82,7 @@ describe("SkillGapPage", () => {
   it("starts a learning plan from a gap (T4.3.2)", async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.click(await screen.findByRole("button", { name: "Close this gap" }));
+    await user.click(await screen.findByRole("button", { name: "Track this skill" }));
     await waitFor(() => expect(createLearningPlan).toHaveBeenCalledWith("kubernetes"));
   });
 
@@ -97,7 +97,7 @@ describe("SkillGapPage", () => {
     } as never);
 
     renderPage();
-    await waitFor(() => expect(screen.getByText("gaps closed")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("acquired")).toBeInTheDocument());
     expect(screen.getByText(/now on your profile/)).toBeInTheDocument();
 
     await user.click(screen.getAllByRole("button", { name: /Mark done/i })[0]);

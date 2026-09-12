@@ -100,11 +100,16 @@ test("matchSavedSearchAlerts counts new matching opportunities and advances last
 
 test("runCareerNotificationCycle emits one saved-search notification per hit, idempotent per day", () => {
   const store = makeStore();
-  store.createSavedSearch(USER, {
+  const saved = store.createSavedSearch(USER, {
     name: "React",
     filters: { query: "react" },
     alertsEnabled: true,
   });
+  // Backdate createdAt so the opportunity's postedAt is unambiguously newer
+  // (see the note on the matchSavedSearchAlerts test above).
+  store.db
+    .prepare("UPDATE career_saved_searches SET createdAt = ? WHERE id = ?")
+    .run(new Date(Date.now() - 60_000).toISOString(), saved.id);
   insertOpp(store, "m1", { title: "Senior React Intern" });
 
   const pushed = [];

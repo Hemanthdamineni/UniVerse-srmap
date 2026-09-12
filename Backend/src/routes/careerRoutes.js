@@ -1,10 +1,17 @@
 const express = require("express");
+const path = require("path");
+const multer = require("multer");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { resolveSessionId } = require("../utils/cookies");
 const { createCareerCache } = require("../services/career/careerServices");
 const { rankOpportunities, studentSliceFromGraph } = require("../services/career/opportunityFit");
 const electiveGuidance = require("../services/career/electiveGuidance");
+const { canonicalizeSkills } = require("../utils/skillNames");
+const { extractResumeText } = require("../services/career/resumeText");
+
+const RESUME_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+const RESUME_ACCEPTED_EXTENSIONS = new Set([".pdf", ".docx", ".txt", ".md"]);
 
 function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lmsTrackerService = null, studentGraphService = null, redisClient = null, scraperSupervisorStatus = null, scraperTriggerOnce = null }) {
   const router = express.Router();
@@ -13,6 +20,35 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
   // no-op pass-through when Redis is unavailable.
   const careerCache = createCareerCache(redisClient);
   router.use(userContext);
+
+  // Résumé uploads: held in memory, text extracted server-side (see resumeText.js).
+  const resumeUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: RESUME_UPLOAD_MAX_BYTES },
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || "").toLowerCase();
+      if (!RESUME_ACCEPTED_EXTENSIONS.has(ext)) {
+        const error = new Error(`Unsupported résumé file type${ext ? ` (${ext})` : ""}.`);
+        error.status = 400;
+        error.code = "RESUME_INVALID_FILE";
+        return cb(error);
+      }
+      return cb(null, true);
+    },
+  });
+
+  function receiveResumeUpload(req, res, next) {
+    resumeUpload.single("file")(req, res, (error) => {
+      if (!error) return next();
+      if (error.code === "LIMIT_FILE_SIZE") {
+        error.status = 413;
+        error.message = "Résumé must be 5 MB or smaller.";
+      } else if (!error.status) {
+        error.status = 400;
+      }
+      return sendApiError(res, req, error);
+    });
+  }
 
   function ensureAuthenticated(req, res, next) {
     if (!req.userContext || !req.userContext.isAuthenticated) {
@@ -67,15 +103,13 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
 
   function normalizeSkills(skills) {
     if (!Array.isArray(skills)) return [];
-    return skills
-      .map((skill) => {
-        if (typeof skill === "string") return skill.trim();
-        if (skill && typeof skill === "object") {
-          return String(skill.name || "").trim();
-        }
-        return "";
-      })
-      .filter(Boolean);
+    const raw = skills.map((skill) => {
+      if (typeof skill === "string") return skill.trim();
+      if (skill && typeof skill === "object") return String(skill.name || "").trim();
+      return "";
+    });
+    // Canonical display form + case-insensitive de-dupe (AWS, Node.js, C, ...).
+    return canonicalizeSkills(raw);
   }
 
   function normalizeProfilePayload(data = {}) {
@@ -332,8 +366,30 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     items: careerStore.listResumeVersions(req.userContext),
   })));
 
-  router.post("/career/resumes", wrap((req) =>
-    careerStore.createResumeVersion(req.userContext, req.body || {})
+  // Accepts either a multipart file upload (`file`) — text is extracted from the
+  // bytes here — or a JSON body carrying `extractedText` directly (text paste,
+  // static-prototype, tests).
+  router.post(
+    "/career/resumes",
+    receiveResumeUpload,
+    wrapAsync(async (req) => {
+      if (req.file) {
+        const { text } = await extractResumeText(req.file.buffer, {
+          mimeType: req.file.mimetype,
+          fileName: req.file.originalname,
+        });
+        return careerStore.createResumeVersion(req.userContext, {
+          fileName: req.file.originalname,
+          mimeType: req.file.mimetype,
+          extractedText: text,
+        });
+      }
+      return careerStore.createResumeVersion(req.userContext, req.body || {});
+    }),
+  );
+
+  router.delete("/career/resumes/:resumeVersionId", wrap((req) =>
+    careerStore.deleteResumeVersion(req.userContext, req.params.resumeVersionId)
   ));
 
   router.get("/career/resumes/:resumeVersionId/analysis", wrap((req) =>
@@ -544,21 +600,56 @@ function createCareerRoutes({ careerStore, sessionStore, adminPassword = "", lms
     }),
   })));
 
-  router.post("/career/alumni", wrap((req) =>
-    careerStore.createAlumni(req.body || {}, req.userContext)
-  ));
+  router.post("/career/alumni", wrap((req) => {
+    ensureCareerAdmin(req);
+    return careerStore.createAlumni(req.body || {}, req.userContext);
+  }));
 
-  router.put("/career/alumni/:alumniId", wrap((req) =>
-    careerStore.updateAlumni(req.params.alumniId, req.body || {}, req.userContext)
-  ));
+  router.put("/career/alumni/:alumniId", wrap((req) => {
+    ensureCareerAdmin(req);
+    return careerStore.updateAlumni(req.params.alumniId, req.body || {}, req.userContext);
+  }));
 
-  router.delete("/career/alumni/:alumniId", wrap((req) =>
-    careerStore.deleteAlumni(req.params.alumniId, req.userContext)
-  ));
+  router.delete("/career/alumni/:alumniId", wrap((req) => {
+    ensureCareerAdmin(req);
+    return careerStore.deleteAlumni(req.params.alumniId, req.userContext);
+  }));
 
   router.post("/career/alumni/:alumniId/requests", wrap((req) =>
     careerStore.requestAlumniConnection(req.params.alumniId, req.body || {}, req.userContext)
   ));
+
+  router.get("/career/alumni/requests/sent", wrap((req) => ({
+    items: careerStore.listSentAlumniRequests(req.userContext),
+  })));
+
+  router.get("/career/alumni/requests/pending", wrap((req) => {
+    ensureCareerAdmin(req);
+    return { items: careerStore.getPendingAlumniConnectionRequests() };
+  }));
+
+  router.patch("/career/alumni/requests/:requestId", wrap((req) => {
+    ensureCareerAdmin(req);
+    return careerStore.reviewAlumniConnectionRequest(req.params.requestId, req.body || {}, req.userContext);
+  }));
+
+  router.post("/career/alumni/nominations", wrap((req) =>
+    careerStore.nominateAlumnus(req.body || {}, req.userContext)
+  ));
+
+  router.get("/career/alumni/nominations/mine", wrap((req) => ({
+    items: careerStore.listMyAlumniNominations(req.userContext),
+  })));
+
+  router.get("/career/alumni/nominations/pending", wrap((req) => {
+    ensureCareerAdmin(req);
+    return { items: careerStore.getPendingAlumniNominations() };
+  }));
+
+  router.patch("/career/alumni/nominations/:nominationId", wrap((req) => {
+    ensureCareerAdmin(req);
+    return careerStore.reviewAlumniNomination(req.params.nominationId, req.body || {}, req.userContext);
+  }));
 
   return router;
 }

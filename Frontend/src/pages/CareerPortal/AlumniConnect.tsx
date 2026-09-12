@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Globe, Instagram, Linkedin, SearchX, Users } from "lucide-react";
 import {
   EmptyStateCard,
   ErpPageShell,
@@ -17,6 +18,24 @@ import {
   type AlumniProfile,
   updateAlumniProfile,
 } from "../../lib/career/careerApi";
+import AlumniNominationForm from "./AlumniNominationForm";
+import AlumniModerationQueues from "./AlumniModerationQueues";
+
+const FORM_INIT = {
+  name: "",
+  email: "",
+  batch: "",
+  degree: "",
+  company: "",
+  role: "",
+  location: "",
+  linkedinUrl: "",
+  instagramUrl: "",
+  portfolioUrl: "",
+  expertise: "",
+  bio: "",
+  openToConnect: true,
+};
 
 export default function AlumniConnect({ adminMode = false }: { adminMode?: boolean }) {
   const admin = useAdminAccess();
@@ -26,17 +45,13 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
   const [batchFilter, setBatchFilter] = useState<string>("All");
   const [editingId, setEditingId] = useState("");
   const [banner, setBanner] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    batch: "",
-    degree: "",
-    company: "",
-    role: "",
-    location: "",
-    expertise: "",
-    bio: "",
-    openToConnect: true,
-  });
+  const [form, setForm] = useState(FORM_INIT);
+  const [nominationFormOpen, setNominationFormOpen] = useState(false);
+
+  function focusNominationForm() {
+    setNominationFormOpen(true);
+    document.getElementById("alumni-nomination-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   const isAdminView = adminMode && admin.unlocked;
   const adminHeaders = isAdminView ? admin.adminHeaders : undefined;
@@ -77,9 +92,17 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
     return ["All", ...unique];
   }, [alumni]);
 
+  const hasActiveFilters = Boolean(search.trim()) || batchFilter !== "All";
+
   return (
     <ErpPageShell title="Alumni Connect" source="Internal API">
       {banner ? <StatusBanner message={{ id: "alumni-banner", tone: banner.tone, text: banner.text }} /> : null}
+
+      {adminMode && admin.unlocked ? (
+        <AlumniModerationQueues adminHeaders={admin.adminHeaders} />
+      ) : adminMode ? null : (
+        <AlumniNominationForm open={nominationFormOpen} onOpenChange={setNominationFormOpen} />
+      )}
 
       {adminMode && admin.unlocked ? (
         <SectionCard title={editingId ? "Edit Alumni Profile" : "Add Alumni Profile"}>
@@ -88,11 +111,15 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
               event.preventDefault();
               const payload = {
                 name: form.name.trim(),
+                email: form.email.trim(),
                 batch: form.batch.trim(),
                 degree: form.degree.trim(),
                 company: form.company.trim(),
                 role: form.role.trim(),
                 location: form.location.trim(),
+                linkedinUrl: form.linkedinUrl.trim(),
+                instagramUrl: form.instagramUrl.trim(),
+                portfolioUrl: form.portfolioUrl.trim(),
                 expertise: form.expertise
                   .split(",")
                   .map((item) => item.trim())
@@ -112,17 +139,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 );
               }
               setEditingId("");
-              setForm({
-                name: "",
-                batch: "",
-                degree: "",
-                company: "",
-                role: "",
-                location: "",
-                expertise: "",
-                bio: "",
-                openToConnect: true,
-              });
+              setForm(FORM_INIT);
             }}
             className="grid gap-3 md:grid-cols-2"
           >
@@ -132,6 +149,15 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                 required
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
@@ -181,6 +207,36 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">LinkedIn</label>
+              <input
+                type="url"
+                value={form.linkedinUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, linkedinUrl: event.target.value }))}
+                placeholder="https://linkedin.com/in/..."
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Instagram</label>
+              <input
+                type="url"
+                value={form.instagramUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, instagramUrl: event.target.value }))}
+                placeholder="https://instagram.com/..."
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Portfolio / other link</label>
+              <input
+                type="url"
+                value={form.portfolioUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, portfolioUrl: event.target.value }))}
+                placeholder="https://..."
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-[var(--comp-accent)]"
+              />
+            </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Expertise</label>
               <input
@@ -223,17 +279,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                   type="button"
                   onClick={() => {
                     setEditingId("");
-                    setForm({
-                      name: "",
-                      batch: "",
-                      degree: "",
-                      company: "",
-                      role: "",
-                      location: "",
-                      expertise: "",
-                      bio: "",
-                      openToConnect: true,
-                    });
+                    setForm(FORM_INIT);
                   }}
                   className="rounded-full border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--comp-accent)] hover:text-[var(--comp-text-primary)]"
                 >
@@ -273,7 +319,46 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
       </SectionCard>
 
       {alumni.length === 0 ? (
-        <EmptyStateCard message="No alumni profiles match the current search." />
+        hasActiveFilters ? (
+          <EmptyStateCard
+            title="No alumni match your search"
+            message="Try a different name, company, role, or skill — or clear your filters to see the full directory."
+            icon={<SearchX size={48} strokeWidth={1.5} />}
+            action={
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setBatchFilter("All");
+                }}
+                className="comp-btn-primary rounded-lg px-4 py-2 text-sm font-semibold"
+              >
+                Clear filters
+              </button>
+            }
+          />
+        ) : (
+          <EmptyStateCard
+            title="No alumni in the directory yet"
+            icon={<Users size={48} strokeWidth={1.5} />}
+            message={
+              adminMode
+                ? "Add the first profile using the form above."
+                : "Be the first to suggest one — an admin will review it and add it to the directory."
+            }
+            action={
+              adminMode ? undefined : (
+                <button
+                  type="button"
+                  onClick={focusNominationForm}
+                  className="comp-btn-primary rounded-lg px-4 py-2 text-sm font-semibold"
+                >
+                  Suggest an alumnus
+                </button>
+              )
+            }
+          />
+        )
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {alumni.map((item) => (
@@ -300,6 +385,7 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                   <span className="font-medium text-[var(--comp-text-primary)]">{item.role}</span> at {item.company}
                 </div>
                 <div className="text-xs text-[var(--text-secondary)]">{item.location}</div>
+                <ContactLinks item={item} />
                 {item.bio ? (
                   <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{item.bio}</p>
                 ) : null}
@@ -350,11 +436,15 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
                         setEditingId(item.id);
                         setForm({
                           name: item.name,
+                          email: item.email || "",
                           batch: item.batch,
                           degree: item.degree,
                           company: item.company,
                           role: item.role,
                           location: item.location,
+                          linkedinUrl: item.linkedinUrl || "",
+                          instagramUrl: item.instagramUrl || "",
+                          portfolioUrl: item.portfolioUrl || "",
                           expertise: item.expertise.join(", "),
                           bio: item.bio || "",
                           openToConnect: item.openToConnect,
@@ -384,5 +474,46 @@ export default function AlumniConnect({ adminMode = false }: { adminMode?: boole
         </div>
       )}
     </ErpPageShell>
+  );
+}
+
+function ContactLinks({ item }: { item: AlumniProfile }) {
+  if (!item.linkedinUrl && !item.instagramUrl && !item.portfolioUrl) return null;
+  return (
+    <div className="mt-2 flex items-center gap-2.5">
+      {item.linkedinUrl ? (
+        <a
+          href={item.linkedinUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label={`${item.name} on LinkedIn`}
+          className="text-[var(--comp-text-muted)] transition hover:text-[var(--comp-accent)]"
+        >
+          <Linkedin className="h-4 w-4" />
+        </a>
+      ) : null}
+      {item.instagramUrl ? (
+        <a
+          href={item.instagramUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label={`${item.name} on Instagram`}
+          className="text-[var(--comp-text-muted)] transition hover:text-[var(--comp-accent)]"
+        >
+          <Instagram className="h-4 w-4" />
+        </a>
+      ) : null}
+      {item.portfolioUrl ? (
+        <a
+          href={item.portfolioUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label={`${item.name}'s portfolio`}
+          className="text-[var(--comp-text-muted)] transition hover:text-[var(--comp-accent)]"
+        >
+          <Globe className="h-4 w-4" />
+        </a>
+      ) : null}
+    </div>
   );
 }

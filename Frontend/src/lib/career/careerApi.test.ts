@@ -319,4 +319,85 @@ describe("careerApi", () => {
     await careerApi.getCareerStats();
     expect(fetch).toHaveBeenCalled();
   });
+
+  it("uploadResumeFile POSTs the file as multipart form data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => jsonResponse({ success: true, data: { id: "rv1", qualityScore: 70 } }))
+    );
+    const file = new File(["résumé text"], "cv.pdf", { type: "application/pdf" });
+    await careerApi.uploadResumeFile(file);
+    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(url)).toBe("/api/career/resumes");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get("file")).toBeInstanceOf(File);
+  });
+
+  it("deleteResumeVersion issues a DELETE", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => jsonResponse({ success: true, data: { deleted: true, latest: null } }))
+    );
+    await careerApi.deleteResumeVersion("rv1");
+    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(url)).toContain("/api/career/resumes/rv1");
+    expect(init.method).toBe("DELETE");
+  });
+
+  it("nominateAlumnus POSTs the suggestion", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => jsonResponse({ success: true, data: { id: "n1", status: "pending" } }))
+    );
+    await careerApi.nominateAlumnus({ name: "Priya Menon", email: "priya@demo.alumni" });
+    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(url)).toBe("/api/career/alumni/nominations");
+    expect(init.method).toBe("POST");
+    expect(init.body).toContain("Priya Menon");
+  });
+
+  it("listMyAlumniNominations and listPendingAlumniNominations hit their routes", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => jsonResponse({ success: true, data: { items: [] } })));
+    await careerApi.listMyAlumniNominations();
+    expect(fetch).toHaveBeenCalledWith("/api/career/alumni/nominations/mine", expect.anything());
+
+    vi.stubGlobal("fetch", vi.fn(() => jsonResponse({ success: true, data: { items: [] } })));
+    await careerApi.listPendingAlumniNominations();
+    expect(fetch).toHaveBeenCalledWith("/api/career/alumni/nominations/pending", expect.anything());
+  });
+
+  it("reviewAlumniNomination PATCHes the decision", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => jsonResponse({ success: true, data: { id: "n1", status: "approved" } }))
+    );
+    await careerApi.reviewAlumniNomination("n1", { decision: "approve", reason: "Verified via LinkedIn" });
+    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(url)).toBe("/api/career/alumni/nominations/n1");
+    expect(init.method).toBe("PATCH");
+    expect(init.body).toContain("approve");
+  });
+
+  it("listSentAlumniRequests and listPendingAlumniConnectionRequests hit their routes", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => jsonResponse({ success: true, data: { items: [] } })));
+    await careerApi.listSentAlumniRequests();
+    expect(fetch).toHaveBeenCalledWith("/api/career/alumni/requests/sent", expect.anything());
+
+    vi.stubGlobal("fetch", vi.fn(() => jsonResponse({ success: true, data: { items: [] } })));
+    await careerApi.listPendingAlumniConnectionRequests();
+    expect(fetch).toHaveBeenCalledWith("/api/career/alumni/requests/pending", expect.anything());
+  });
+
+  it("reviewAlumniConnectionRequest PATCHes the decision", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => jsonResponse({ success: true, data: { id: "req1", status: "accepted" } }))
+    );
+    await careerApi.reviewAlumniConnectionRequest("req1", { decision: "accept", note: "Introduced over email" });
+    const [url, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(url)).toBe("/api/career/alumni/requests/req1");
+    expect(init.method).toBe("PATCH");
+    expect(init.body).toContain("accept");
+  });
 });

@@ -7,6 +7,10 @@ export const careerKeys = {
     (filters ? (["career", "interview-bookings", filters] as const) : (["career", "interview-bookings"] as const)),
   alumni: (filters?: Record<string, string>) =>
     (filters ? (["career", "alumni", filters] as const) : (["career", "alumni"] as const)),
+  alumniNominationsMine: ["career", "alumni-nominations", "mine"] as const,
+  alumniNominationsPending: ["career", "alumni-nominations", "pending"] as const,
+  alumniRequestsSent: ["career", "alumni-requests", "sent"] as const,
+  alumniRequestsPending: ["career", "alumni-requests", "pending"] as const,
   opportunities: (filters?: Record<string, string>) =>
     (filters ? (["career", "opportunities", filters] as const) : (["career", "opportunities"] as const)),
   applications: ["career", "applications"] as const,

@@ -6,7 +6,7 @@ import ProfessionalProfilePage from "./ProfessionalProfilePage";
 import {
   getProfile,
   updateProfile,
-  createResumeVersion,
+  uploadResumeFile,
   mergeResumeToProfile,
   listResumeVersions,
 } from "../../lib/career/careerApi";
@@ -24,7 +24,7 @@ import { downloadPublicCareerProfileMarkdown } from "../../lib/career/publicProf
 vi.mock("../../lib/career/careerApi", () => ({
   getProfile: vi.fn(),
   updateProfile: vi.fn(() => Promise.resolve({ updated: true })),
-  createResumeVersion: vi.fn(),
+  uploadResumeFile: vi.fn(),
   mergeResumeToProfile: vi.fn(),
   listResumeVersions: vi.fn(() => Promise.resolve({ items: [] })),
 }));
@@ -60,20 +60,29 @@ const RESUME_VERSION = {
   mimeType: "text/plain",
   extractedText: "React TypeScript project",
   parsedJson: {
+    name: "CV Owner",
+    email: "cv@example.com",
     skills: ["React", "TypeScript"],
     links: [],
     quantifiedImpacts: ["300 students"],
-    projects: ["React dashboard"],
-    experience: [],
+    education: [{ degree: "B.Tech CSE", institution: "SRM University AP", year: "2026", gpa: "9.0" }],
+    projects: [{ title: "React dashboard", bulletCount: 2 }],
+    experience: [{ title: "Frontend Intern", org: "Acme", dateRange: "2025", bulletCount: 3 }],
     certifications: [],
+    sections: ["education", "experience", "projects", "skills"],
     wordCount: 120,
+    layoutWarning: "",
     hasGithub: false,
     hasLinkedin: false,
     hasPortfolio: false,
   },
   qualityScore: 74,
   createdAt: "2026-01-01",
-  analysis: { score: 74, rubric: [], suggestions: ["Add measurable outcomes."] },
+  analysis: {
+    score: 74,
+    rubric: [],
+    suggestions: [{ tip: "Add measurable outcomes.", priority: "high", category: "impact" }],
+  },
 };
 
 const PUBLIC_PREVIEW = {
@@ -120,7 +129,7 @@ describe("ProfessionalProfilePage", () => {
       updatedAt: "2026-01-01",
     });
     (listResumeVersions as any).mockResolvedValue({ items: [] });
-    (createResumeVersion as any).mockResolvedValue(RESUME_VERSION);
+    (uploadResumeFile as any).mockResolvedValue(RESUME_VERSION);
     (mergeResumeToProfile as any).mockResolvedValue({
       updated: true,
       profile: {
@@ -138,7 +147,17 @@ describe("ProfessionalProfilePage", () => {
     });
 
     (getUnifiedProfile as any).mockResolvedValue({
-      user: { department: "Computer Science", branch: "B.Tech CSE", year: 3 },
+      user: {
+        userId: "REG123",
+        name: "Test User",
+        email: "test@example.com",
+        department: "School of Engineering and Sciences",
+        branch: "Computer Science and Engineering",
+        programme: "B.Tech",
+        specialization: "Artificial Intelligence and Machine Learning",
+        section: "J",
+        year: 3,
+      },
       career: { skillGaps: [] },
       skills: [{ skill: "JavaScript", source: "From courses" }],
     });
@@ -170,8 +189,11 @@ describe("ProfessionalProfilePage", () => {
       expect(screen.getByText("Test User")).toBeInTheDocument();
       expect(screen.getByText("REG123")).toBeInTheDocument();
       expect(screen.getByText("test@example.com")).toBeInTheDocument();
-      expect(screen.getByText("Computer Science")).toBeInTheDocument();
+      expect(screen.getByText("Computer Science and Engineering")).toBeInTheDocument();
     });
+
+    expect(screen.getByText("Artificial Intelligence and Machine Learning")).toBeInTheDocument();
+    expect(screen.getByText("Year 3")).toBeInTheDocument();
 
     expect(screen.getByText("React")).toBeInTheDocument();
     expect(screen.getByText("TypeScript")).toBeInTheDocument();
@@ -181,7 +203,6 @@ describe("ProfessionalProfilePage", () => {
     expect(screen.getByText("Competencies")).toBeInTheDocument();
     expect(screen.getByText("Career Preferences")).toBeInTheDocument();
     expect(screen.getByText("Proof")).toBeInTheDocument();
-    expect(screen.getByText("Readiness Scorecard")).toBeInTheDocument();
     expect(screen.getByText("Public Portfolio")).toBeInTheDocument();
     expect(screen.getByText("Verified Achievements")).toBeInTheDocument();
   });
@@ -218,20 +239,16 @@ describe("ProfessionalProfilePage", () => {
     renderPage();
     await waitFor(() => expect(screen.getByText("Proof")).toBeInTheDocument());
 
-    const input = screen.getByLabelText(/Upload Resume/i) as HTMLInputElement;
-    const file = new File(["React TypeScript project"], "cv.txt", { type: "text/plain" });
+    const input = screen.getByLabelText(/Upload résumé/i) as HTMLInputElement;
+    const file = new File(["React TypeScript project"], "cv.pdf", { type: "application/pdf" });
     await user.upload(input, file);
 
-    await waitFor(() =>
-      expect(createResumeVersion).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fileName: "cv.txt",
-          mimeType: "text/plain",
-          extractedText: "React TypeScript project",
-        }),
-      ),
-    );
-    expect(await screen.findByText("Quality score: 74/100")).toBeInTheDocument();
+    await waitFor(() => expect(uploadResumeFile).toHaveBeenCalledTimes(1));
+    expect((uploadResumeFile as any).mock.calls[0][0]).toBeInstanceOf(File);
+    expect((uploadResumeFile as any).mock.calls[0][0].name).toBe("cv.pdf");
+    expect(await screen.findByText("Score: 74/100")).toBeInTheDocument();
+    expect(await screen.findByText(/Add measurable outcomes/)).toBeInTheDocument();
+    expect(screen.getByText(/B\.Tech CSE, SRM University AP/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Merge to Profile/i }));
     await waitFor(() => expect(mergeResumeToProfile).toHaveBeenCalledWith("r1"));

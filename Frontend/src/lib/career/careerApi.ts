@@ -1,4 +1,4 @@
-import { requestData } from "../core/apiClient";
+import { requestData, requestMultipart } from "../core/apiClient";
 import { isStaticPrototype } from "../core/prototype";
 
 export type CareerOpportunityType =
@@ -90,6 +90,41 @@ export type CareerProfile = {
   updatedAt: string;
 };
 
+export type ResumeEntry = {
+  title: string;
+  org?: string;
+  subtitle?: string;
+  dateRange?: string;
+  bulletCount?: number;
+};
+
+export type ResumeEducation = {
+  degree?: string;
+  institution?: string;
+  year?: string;
+  gpa?: string;
+};
+
+export type ResumeParsed = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  headline?: string;
+  education?: ResumeEducation[];
+  skills?: string[];
+  links?: string[];
+  quantifiedImpacts?: string[];
+  projects?: ResumeEntry[];
+  experience?: ResumeEntry[];
+  certifications?: string[];
+  sections?: string[];
+  wordCount?: number;
+  layoutWarning?: string;
+  hasGithub?: boolean;
+  hasLinkedin?: boolean;
+  hasPortfolio?: boolean;
+};
+
 export type ResumeVersion = {
   id: string;
   userId: string;
@@ -97,27 +132,22 @@ export type ResumeVersion = {
   filePath: string;
   mimeType?: string;
   extractedText?: string;
-  parsedJson: {
-    skills?: string[];
-    links?: string[];
-    quantifiedImpacts?: string[];
-    projects?: string[];
-    experience?: string[];
-    certifications?: string[];
-    wordCount?: number;
-    hasGithub?: boolean;
-    hasLinkedin?: boolean;
-    hasPortfolio?: boolean;
-  };
+  parsedJson: ResumeParsed;
   qualityScore: number;
   createdAt: string;
   analysis?: ResumeAnalysis;
 };
 
+export type ResumeSuggestion = {
+  tip: string;
+  priority: "high" | "medium";
+  category: string;
+};
+
 export type ResumeAnalysis = {
   score: number;
   rubric: Array<{ key: string; label: string; score: number; max: number; reason: string }>;
-  suggestions: string[];
+  suggestions: Array<ResumeSuggestion | string>;
 };
 
 export type OpportunityFit = {
@@ -351,6 +381,8 @@ export type AlumniProfile = {
   role: string;
   location: string;
   linkedinUrl?: string;
+  instagramUrl?: string;
+  portfolioUrl?: string;
   bio?: string;
   skills: string[];
   expertise: string[];
@@ -359,6 +391,54 @@ export type AlumniProfile = {
   openToConnect: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type AlumniNomination = {
+  id: string;
+  submittedBy: string;
+  submitterName: string;
+  status: "pending" | "approved" | "rejected";
+  name: string;
+  email?: string;
+  batch?: string;
+  degree?: string;
+  company?: string;
+  role?: string;
+  location?: string;
+  linkedinUrl?: string;
+  instagramUrl?: string;
+  portfolioUrl?: string;
+  expertise: string[];
+  relation?: string;
+  note?: string;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  reviewReason?: string | null;
+  publishedAlumniId?: string | null;
+  createdAt: string;
+};
+
+export type AlumniConnectionRequestAdmin = {
+  id: string;
+  alumniId: string;
+  alumniName: string;
+  alumniCompany: string;
+  userId: string;
+  requesterName: string;
+  message: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: string;
+};
+
+export type AlumniConnectionRequestSent = {
+  id: string;
+  alumniId: string;
+  alumniName: string;
+  alumniCompany: string;
+  message: string;
+  status: "pending" | "accepted" | "declined";
+  reviewNote?: string | null;
+  createdAt: string;
 };
 
 export type InterviewSlot = {
@@ -511,13 +591,24 @@ export async function createResumeVersion(payload: {
       mimeType: payload.mimeType || "text/plain",
       extractedText: payload.extractedText,
       parsedJson: {
+        name: "Static Student",
+        email: "static.student@example.edu",
+        phone: "+91 90000 00000",
+        headline: "Final-year CS student focused on frontend and applied ML.",
+        education: [
+          { degree: "B.Tech Computer Science", institution: "SRM University AP", year: "2026", gpa: "9.0" },
+        ],
         skills: ["React", "TypeScript"],
         links: ["https://github.com/student"],
         quantifiedImpacts: ["500 students"],
-        projects: ["Built React dashboards"],
-        experience: [],
+        projects: [{ title: "Campus Dashboard", subtitle: "React + TypeScript", bulletCount: 3 }],
+        experience: [
+          { title: "Frontend Intern", org: "Acme Corp", dateRange: "Jun 2025 – Aug 2025", bulletCount: 3 },
+        ],
         certifications: [],
+        sections: ["education", "experience", "projects", "skills"],
         wordCount: 140,
+        layoutWarning: "",
         hasGithub: true,
         hasLinkedin: false,
         hasPortfolio: false,
@@ -530,7 +621,9 @@ export async function createResumeVersion(payload: {
           { key: "skills", label: "Skill coverage", score: 16, max: 20, reason: "4 skill signals detected." },
           { key: "projects", label: "Project evidence", score: 10, max: 15, reason: "Project evidence is present." },
         ],
-        suggestions: ["Quantify more outcomes with numbers."],
+        suggestions: [
+          { tip: "Back up bullets with numbers — %, users served, latency.", priority: "high", category: "impact" },
+        ],
       },
     } satisfies ResumeVersion;
   }
@@ -538,6 +631,24 @@ export async function createResumeVersion(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * Upload the résumé file itself. Text extraction (PDF / DOCX / TXT / MD) and the
+ * "is this actually readable" check run on the server; a 422 comes back for a
+ * scanned/image PDF or an unsupported type.
+ */
+export async function uploadResumeFile(file: File): Promise<ResumeVersion> {
+  if (isStaticPrototype()) {
+    return createResumeVersion({
+      fileName: file.name,
+      mimeType: file.type || "application/pdf",
+      extractedText: "React TypeScript project with measurable impact for 500 students",
+    });
+  }
+  const form = new FormData();
+  form.append("file", file);
+  return requestMultipart<ResumeVersion>("/api/career/resumes", form);
 }
 
 export async function listResumeVersions() {
@@ -550,6 +661,15 @@ export async function listResumeVersions() {
 export async function getResumeAnalysis(resumeVersionId: string) {
   return requestData<ResumeAnalysis & { resume: ResumeVersion }>(
     `/api/career/resumes/${encodeURIComponent(resumeVersionId)}/analysis`
+  );
+}
+
+/** Deletes one résumé version. `latest` is whatever version now stands, or null. */
+export async function deleteResumeVersion(resumeVersionId: string) {
+  if (isStaticPrototype()) return { deleted: true, latest: null as ResumeVersion | null };
+  return requestData<{ deleted: boolean; latest: ResumeVersion | null }>(
+    `/api/career/resumes/${encodeURIComponent(resumeVersionId)}`,
+    { method: "DELETE" }
   );
 }
 
@@ -895,6 +1015,53 @@ export async function requestAlumniConnection(alumniId: string, message?: string
   return requestData<{ requested: boolean }>(`/api/career/alumni/${encodeURIComponent(alumniId)}/requests`, {
     method: "POST",
     body: JSON.stringify({ message: normalizedMessage }),
+  });
+}
+
+export async function listSentAlumniRequests() {
+  return requestData<{ items: AlumniConnectionRequestSent[] }>("/api/career/alumni/requests/sent");
+}
+
+export async function listPendingAlumniConnectionRequests(headers?: HeadersInit) {
+  return requestData<{ items: AlumniConnectionRequestAdmin[] }>("/api/career/alumni/requests/pending", { headers });
+}
+
+export async function reviewAlumniConnectionRequest(
+  requestId: string,
+  payload: { decision: "accept" | "decline"; note?: string },
+  headers?: HeadersInit
+) {
+  return requestData<AlumniConnectionRequestAdmin>(`/api/career/alumni/requests/${encodeURIComponent(requestId)}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function nominateAlumnus(data: Partial<AlumniNomination>) {
+  return requestData<AlumniNomination>("/api/career/alumni/nominations", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function listMyAlumniNominations() {
+  return requestData<{ items: AlumniNomination[] }>("/api/career/alumni/nominations/mine");
+}
+
+export async function listPendingAlumniNominations(headers?: HeadersInit) {
+  return requestData<{ items: AlumniNomination[] }>("/api/career/alumni/nominations/pending", { headers });
+}
+
+export async function reviewAlumniNomination(
+  nominationId: string,
+  payload: { decision: "approve" | "reject"; reason: string },
+  headers?: HeadersInit
+) {
+  return requestData<AlumniNomination>(`/api/career/alumni/nominations/${encodeURIComponent(nominationId)}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(payload),
   });
 }
 

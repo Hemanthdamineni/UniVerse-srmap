@@ -64,7 +64,7 @@ const SkillGapPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer className="max-w-4xl space-y-4">
+      <PageContainer className="space-y-4">
         <SkeletonCard className="h-20" />
         <SkeletonCard className="h-72" />
       </PageContainer>
@@ -73,7 +73,7 @@ const SkillGapPage: React.FC = () => {
 
   if (error) {
     return (
-      <PageContainer className="max-w-4xl space-y-4">
+      <PageContainer className="space-y-4">
         <PageHeader
           title="Skill gap analysis"
           subtitle="Identify technical skills that unlock the most opportunities for you"
@@ -87,7 +87,7 @@ const SkillGapPage: React.FC = () => {
   const closedPlans = plans.filter((p) => p.status === "closed").slice(0, 6);
 
   return (
-    <PageContainer className="max-w-4xl space-y-6">
+    <PageContainer className="space-y-6">
       <PageHeader
         title="Skill gap analysis"
         subtitle="Identify technical skills that unlock the most opportunities for you"
@@ -110,7 +110,7 @@ const SkillGapPage: React.FC = () => {
                   <div key={gap.skill} className="flex flex-col gap-3 py-4">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-1">
-                        <p className="card-title font-semibold capitalize">{gap.skill}</p>
+                        <p className="card-title font-semibold">{gap.skill}</p>
                         <p className="body-text flex items-center gap-1 text-sm">
                           <Search className="h-3 w-3" /> Required in {gap.opportunityCount} active opportunities
                         </p>
@@ -125,7 +125,7 @@ const SkillGapPage: React.FC = () => {
                         </button>
                       ) : plan?.status === "closed" ? (
                         <span className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--success)]">
-                          <Check className="h-3.5 w-3.5" /> Closed
+                          <Check className="h-3.5 w-3.5" /> Acquired
                         </span>
                       ) : (
                         <button
@@ -134,7 +134,7 @@ const SkillGapPage: React.FC = () => {
                           onClick={() => startPlan.mutate(gap.skill)}
                           className="btn-primary inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs disabled:opacity-50"
                         >
-                          Close this gap
+                          Track this skill
                         </button>
                       )}
                     </div>
@@ -174,21 +174,27 @@ const SkillGapPage: React.FC = () => {
             title="Your progress"
             className="border-[var(--comp-accent)] bg-[color-mix(in_srgb,var(--comp-accent)_8%,var(--comp-surface))]"
           >
-            <div className="flex gap-4">
-              <div>
-                <p className="text-2xl font-bold text-[var(--comp-text-primary)]">{stats.closed}</p>
-                <p className="body-text text-xs">gaps closed</p>
+            {plans.length === 0 ? (
+              <p className="body-text text-sm text-[var(--comp-text-secondary)]">
+                Not tracking any skills yet.
+              </p>
+            ) : (
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-2xl font-bold text-[var(--comp-text-primary)]">{stats.closed}</p>
+                  <p className="body-text text-xs">acquired</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[var(--comp-text-primary)]">{stats.active}</p>
+                  <p className="body-text text-xs">in progress</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--comp-text-primary)]">{stats.active}</p>
-                <p className="body-text text-xs">in progress</p>
-              </div>
-            </div>
+            )}
             {activePlans.length > 0 && (
               <ul className="mt-3 space-y-1.5">
                 {activePlans.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="capitalize text-[var(--comp-text-primary)]">{p.skill}</span>
+                    <span className="text-[var(--comp-text-primary)]">{p.skill}</span>
                     <button
                       type="button"
                       onClick={() => setStatus.mutate({ id: p.id, status: "closed" })}
@@ -206,7 +212,7 @@ const SkillGapPage: React.FC = () => {
                   <li key={p.id} className="flex items-center justify-between gap-2 text-xs text-[var(--comp-text-secondary)]">
                     <span className="inline-flex items-center gap-1">
                       <Check className="h-3 w-3 text-[var(--success)]" />
-                      <span className="capitalize">{p.skill}</span>
+                      <span>{p.skill}</span>
                       {p.closedReason === "acquired" ? " · now on your profile" : ""}
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -233,8 +239,8 @@ const SkillGapPage: React.FC = () => {
             )}
             {plans.length === 0 && (
               <p className="body-text mt-3 text-xs">
-                Pick a gap and hit <strong>Close this gap</strong> to start tracking it. It ticks off
-                automatically once the skill lands on your profile.
+                Hit <strong>Track this skill</strong> on any gap to start following it. It moves to
+                "acquired" automatically once the skill lands on your profile.
               </p>
             )}
           </SectionCard>

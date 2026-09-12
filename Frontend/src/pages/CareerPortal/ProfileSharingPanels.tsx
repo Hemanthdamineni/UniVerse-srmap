@@ -277,9 +277,14 @@ export default function ProfileSharingPanels({
           <div className="rounded-lg border border-dashed border-[var(--comp-border)] p-6 text-center">
             <Trophy className="mx-auto h-6 w-6 text-[var(--comp-text-muted)]" />
             <p className="mt-3 text-sm font-medium text-[var(--comp-text-primary)]">No verified achievements yet</p>
-            <p className="mt-1 text-xs text-[var(--comp-text-muted)]">
-              Sync after event participation, volunteering, or competition results are published.
+            <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--comp-text-muted)]">
+              These are built automatically from your own event participation and published
+              competition results — nothing here is placeholder. Register for an event, then sync.
             </p>
+            <Button type="button" size="sm" className="mt-3" onClick={handleSync} disabled={syncing}>
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing…" : "Sync now"}
+            </Button>
           </div>
         )}
       </SectionCard>

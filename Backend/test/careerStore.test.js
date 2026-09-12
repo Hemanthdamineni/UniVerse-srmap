@@ -352,20 +352,58 @@ test("resume versions parse skills, score quality, merge to profile, and fit opp
 
     const resume = store.createResumeVersion(user, {
       fileName: "resume.txt",
-      extractedText: `
-        Student One
-        https://github.com/student/project
-        https://linkedin.com/in/student
-        Built React dashboards and Node.js APIs for 500 students.
-        Implemented SQL reporting project with 20+ features.
-      `,
+      extractedText: [
+        "Student One",
+        "student@example.com | GH: studentone | LN: in/student-one",
+        "",
+        "Education",
+        "SRM University AP — B.Tech CSE, 2023–2027, GPA 9.1/10",
+        "",
+        "Work Experience",
+        "Frontend Engineering Intern | Acme Corp | Jun 2025 – Aug 2025",
+        "• Built React and TypeScript dashboards used by 500 students.",
+        "• Cut API latency from 300ms to 90ms with query batching.",
+        "Data Intern | Globex | May 2024 – Jul 2024",
+        "• Shipped 4 reporting pipelines with PostgreSQL and Python.",
+        "",
+        "Projects",
+        "Campus Planner | Node.js + SQL scheduling tool   GitHub",
+        "• Implemented recurring-event logic and a REST API with 20+ endpoints.",
+        "Notes App | Offline-first PWA   GitHub",
+        "• Built with React, IndexedDB, and a service worker.",
+        "",
+        "Technical Skills",
+        "Languages Python, JavaScript, TypeScript, SQL, C/C++",
+        "Web & Systems React, Node.js, Express.js, PostgreSQL, Redis, Docker, Git",
+        "",
+        "Certifications",
+        "• Certification: AWS Certified Cloud Practitioner",
+      ].join("\n"),
     });
 
     assert.equal(resume.fileName, "resume.txt");
-    assert.ok(resume.parsedJson.skills.includes("React"));
-    assert.ok(resume.parsedJson.skills.includes("Node.js"));
-    assert.ok(resume.qualityScore > 50);
-    assert.ok(resume.analysis.suggestions.length >= 0);
+    const pj = resume.parsedJson;
+    assert.equal(pj.name, "Student One");
+    assert.equal(pj.email, "student@example.com");
+    assert.ok(pj.skills.includes("React") && pj.skills.includes("Node.js") && pj.skills.includes("TypeScript"));
+    assert.ok(pj.skills.length >= 8);
+    assert.equal(pj.education.length, 1);
+    assert.match(pj.education[0].degree, /B\.?\s?Tech/i);
+    assert.equal(pj.education[0].gpa, "9.1");
+    assert.equal(pj.projects.length, 2);
+    assert.equal(pj.projects[0].title, "Campus Planner");
+    assert.equal(pj.experience.length, 2);
+    assert.equal(pj.experience[0].org, "Acme Corp");
+    assert.ok(pj.experience[0].bulletCount >= 2);
+    assert.equal(pj.certifications.length, 1);
+    assert.ok(pj.sections.includes("skills") && pj.sections.includes("projects"));
+    assert.equal(pj.hasGithub, true);
+    assert.equal(pj.hasLinkedin, true);
+    assert.ok(resume.qualityScore >= 70 && resume.qualityScore <= 100);
+    assert.ok(Array.isArray(resume.analysis.suggestions));
+    resume.analysis.suggestions.forEach((s) => {
+      assert.ok(typeof s.tip === "string" && ["high", "medium"].includes(s.priority));
+    });
 
     const fit = store.getOpportunityFit(user, "fit-frontend", { resumeVersionId: resume.id });
     assert.ok(fit.fitScore >= 75);
@@ -432,6 +470,296 @@ test("getOpportunities list performance stays within a modest budget for small d
     }
     const ms = Date.now() - t0;
     assert.ok(ms < 2000, `expected <2s for 40 filtered pages, got ${ms}ms`);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("alumni: FE field names map to storage, requested flips after a connection request", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const admin = makeUser({ userId: "alum-admin", role: "admin" });
+    const student = makeUser({ userId: "student-9" });
+
+    const created = store.createAlumni(
+      {
+        name: "Ananya Rao",
+        email: "ananya@demo.alumni",
+        batch: "2021",
+        degree: "B.Tech Computer Science and Engineering",
+        role: "Software Engineer",
+        location: "Bengaluru",
+        expertise: ["aws", "node.js", "AWS"],
+        openToConnect: true,
+      },
+      admin,
+    );
+
+    // Stored under DB names, echoed under both.
+    assert.equal(created.branch, "B.Tech Computer Science and Engineering");
+    assert.equal(created.degree, created.branch);
+    assert.equal(created.position, "Software Engineer");
+    assert.equal(created.role, created.position);
+    assert.deepEqual(created.expertise, ["AWS", "Node.js"]); // canonical + de-duped
+    assert.deepEqual(created.skills, created.expertise);
+    assert.equal(created.openToConnect, true);
+    assert.equal(created.isAvailableForMentoring, true);
+    assert.equal(created.requested, false);
+
+    let listed = store.listAlumni({ user: student, query: "node" }); // matches on skills
+    assert.equal(listed.length, 1);
+    assert.equal(listed[0].requested, false);
+
+    store.requestAlumniConnection(created.id, { message: "Hi" }, student);
+    // Idempotent — a second request does not error or duplicate.
+    store.requestAlumniConnection(created.id, { message: "Hi again" }, student);
+
+    listed = store.listAlumni({ user: student });
+    assert.equal(listed[0].requested, true);
+    assert.equal(store.listSentAlumniRequests(student).length, 1);
+
+    assert.throws(() => store.requestAlumniConnection("missing-id", {}, student), { status: 404 });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("alumni: student nomination approval publishes a directory entry with all contact fields", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const admin = makeUser({ userId: "alum-admin-2", role: "admin" });
+    const student = makeUser({ userId: "student-nominator" });
+
+    const nomination = store.nominateAlumnus(
+      {
+        name: "Priya Menon",
+        email: "priya@demo.alumni",
+        batch: "2019",
+        degree: "M.Tech Data Science",
+        company: "Globex",
+        role: "ML Engineer",
+        location: "Hyderabad",
+        linkedinUrl: "https://linkedin.com/in/priya",
+        instagramUrl: "https://instagram.com/priya",
+        portfolioUrl: "https://priya.dev",
+        expertise: ["pytorch", "aws"],
+        relation: "Mentored me in a hackathon",
+      },
+      student,
+    );
+    assert.equal(nomination.status, "pending");
+    assert.equal(nomination.submitterName, "Test Student");
+
+    let mine = store.listMyAlumniNominations(student);
+    assert.equal(mine.length, 1);
+    assert.equal(mine[0].status, "pending");
+
+    const pending = store.getPendingAlumniNominations();
+    assert.equal(pending.length, 1);
+
+    // Reviewer must give a reason, same as opportunity-submission review.
+    assert.throws(() => store.reviewAlumniNomination(nomination.id, { decision: "approve" }, admin), {
+      status: 400,
+    });
+    // The submitter cannot review their own nomination.
+    assert.throws(
+      () => store.reviewAlumniNomination(nomination.id, { decision: "approve", reason: "ok looks good" }, student),
+      { status: 403 },
+    );
+
+    const reviewed = store.reviewAlumniNomination(
+      nomination.id,
+      { decision: "approve", reason: "Verified via LinkedIn" },
+      admin,
+    );
+    assert.equal(reviewed.status, "approved");
+    assert.ok(reviewed.publishedAlumniId);
+
+    const directory = store.listAlumni({ user: student });
+    const published = directory.find((a) => a.id === reviewed.publishedAlumniId);
+    assert.ok(published, "approved nomination should appear in the live directory");
+    assert.equal(published.name, "Priya Menon");
+    assert.equal(published.linkedinUrl, "https://linkedin.com/in/priya");
+    assert.equal(published.instagramUrl, "https://instagram.com/priya");
+    assert.equal(published.portfolioUrl, "https://priya.dev");
+    assert.deepEqual(published.expertise, ["PyTorch", "AWS"]);
+
+    // A reviewed nomination cannot be reviewed again.
+    assert.throws(
+      () => store.reviewAlumniNomination(nomination.id, { decision: "reject", reason: "changed my mind" }, admin),
+      { status: 400 },
+    );
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("alumni: nomination rejection requires a reason and never touches the directory", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const admin = makeUser({ userId: "alum-admin-3", role: "admin" });
+    const student = makeUser({ userId: "student-nominator-2" });
+
+    const nomination = store.nominateAlumnus(
+      { name: "Rahul Iyer", email: "rahul@demo.alumni", batch: "2018" },
+      student,
+    );
+
+    assert.throws(() => store.reviewAlumniNomination(nomination.id, { decision: "reject" }, admin), {
+      status: 400,
+    });
+
+    const reviewed = store.reviewAlumniNomination(
+      nomination.id,
+      { decision: "reject", reason: "Could not verify identity" },
+      admin,
+    );
+    assert.equal(reviewed.status, "rejected");
+    assert.equal(reviewed.publishedAlumniId, null);
+    assert.equal(store.listAlumni({ user: student }).length, 0);
+
+    const mine = store.listMyAlumniNominations(student);
+    assert.equal(mine[0].reviewReason, "Could not verify identity");
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("alumni: nomination requires an email or LinkedIn URL to identify the alumnus", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const student = makeUser({ userId: "student-nominator-3" });
+    assert.throws(() => store.nominateAlumnus({ name: "No Contact" }, student), { status: 400 });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("alumni: admin can accept/decline a connection request and the requester sees the outcome", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const admin = makeUser({ userId: "alum-admin-4", role: "admin" });
+    const student = makeUser({ userId: "student-requester", name: "Asha Rao" });
+
+    const alumnus = store.createAlumni(
+      { name: "Vikram Shah", batch: "2017", degree: "B.Tech ECE", company: "Initech", role: "SRE", openToConnect: true },
+      admin,
+    );
+
+    store.requestAlumniConnection(alumnus.id, { message: "Would love to connect" }, student);
+
+    const pendingRequests = store.getPendingAlumniConnectionRequests();
+    assert.equal(pendingRequests.length, 1);
+    assert.equal(pendingRequests[0].requesterName, "Asha Rao");
+    assert.equal(pendingRequests[0].alumniName, "Vikram Shah");
+
+    assert.throws(
+      () => store.reviewAlumniConnectionRequest(pendingRequests[0].id, { decision: "bogus" }, admin),
+      { status: 400 },
+    );
+
+    const reviewed = store.reviewAlumniConnectionRequest(
+      pendingRequests[0].id,
+      { decision: "accept", note: "Introduced over email" },
+      admin,
+    );
+    assert.equal(reviewed.status, "accepted");
+    assert.equal(reviewed.reviewedBy, "alum-admin-4");
+
+    const sent = store.listSentAlumniRequests(student);
+    assert.equal(sent[0].status, "accepted");
+
+    // Already-reviewed requests cannot be reviewed again.
+    assert.throws(
+      () => store.reviewAlumniConnectionRequest(pendingRequests[0].id, { decision: "decline" }, admin),
+      { status: 400 },
+    );
+    assert.equal(store.getPendingAlumniConnectionRequests().length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("deleteResumeVersion removes a version and repoints the profile résumé", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const user = makeUser({ userId: "resume-del" });
+    const first = store.createResumeVersion(user, {
+      fileName: "old.txt",
+      extractedText: "Built React and Node.js dashboards used by 500 students. SQL Python AWS Docker Git.",
+    });
+    const second = store.createResumeVersion(user, {
+      fileName: "new.txt",
+      extractedText: "Shipped TypeScript and Kubernetes platform. React Node.js AWS Terraform CI/CD Git.",
+    });
+
+    assert.equal(store.listResumeVersions(user).length, 2);
+    assert.equal(store.getProfile(user).resumeFileName, "new.txt");
+
+    // Delete the current (newest) — profile falls back to the older one.
+    let res = store.deleteResumeVersion(user, second.id);
+    assert.equal(res.deleted, true);
+    assert.equal(res.latest.id, first.id);
+    assert.equal(store.listResumeVersions(user).length, 1);
+    assert.equal(store.getProfile(user).resumeFileName, "old.txt");
+
+    // Delete the last one — profile résumé is cleared.
+    res = store.deleteResumeVersion(user, first.id);
+    assert.equal(res.latest, null);
+    assert.equal(store.listResumeVersions(user).length, 0);
+    assert.equal(store.getProfile(user).resumeFileName, "");
+
+    assert.throws(() => store.deleteResumeVersion(user, "nope"), { status: 404 });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("résumé analysis surfaces a career-fit skill-gap suggestion", () => {
+  const { store, tempDir } = makeStore();
+  try {
+    const user = makeUser({ userId: "cf-student" });
+    store.updateProfile(user, {
+      skills: ["Python", "React"],
+      preferredTypes: ["Internship"],
+      preferredLocations: [],
+      bio: "",
+      linkedinUrl: "",
+      githubUrl: "",
+      portfolioUrl: "",
+      minStipend: "",
+      cgpa: 8,
+    });
+    // Active opportunity needs Kubernetes + Go — neither on the profile nor the résumé.
+    store.db
+      .prepare(
+        `INSERT INTO career_opportunities (id,type,title,company,description,shortDescription,skills,tags,source,sourceUrl,applyUrl,scrapedAt,updatedAt,isActive,moderationState)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,0)`,
+      )
+      .run(
+        "cf-opp", "internship", "Platform Intern", "Acme", "x", "x",
+        JSON.stringify(["Kubernetes", "Go", "React"]), "[]", "manual", "u", "u",
+        new Date().toISOString(), new Date().toISOString(),
+      );
+    store._recomputeSkillGaps(user.userId, ["Python", "React"]);
+
+    const resume = store.createResumeVersion(user, {
+      fileName: "r.txt",
+      extractedText: [
+        "Sam Lee",
+        "sam@example.com",
+        "Skills",
+        "Python, React, Flask, PostgreSQL",
+        "Experience",
+        "Intern | Foo | Jan 2024 – Jun 2024",
+        "• Built a Flask API.",
+      ].join("\n"),
+    });
+
+    const gapTip = resume.analysis.suggestions.find((s) => s.category === "career-fit" && /missing/i.test(s.tip));
+    assert.ok(gapTip, "expected a skill-gap suggestion");
+    assert.match(gapTip.tip, /Kubernetes|Go/);
+    assert.equal(gapTip.priority, "high");
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

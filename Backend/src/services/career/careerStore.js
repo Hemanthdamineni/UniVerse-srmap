@@ -2,6 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const { DatabaseSync } = require("node:sqlite");
 const { randomUUID } = require("crypto");
+const {
+  canonicalizeSkill,
+  canonicalizeSkills,
+  isKnownSkill,
+  CANONICAL_SKILLS,
+} = require("../../utils/skillNames");
+const { parseResume } = require("./resumeParse");
 
 // --- utils.js (utility) ---
 function nowIso() {
@@ -91,117 +98,411 @@ function createOpportunityFingerprint({ title, company, organizer, applyUrl }) {
 }
 
 // --- alumni.js ---
+
+// The Alumni Connect UI uses `degree` / `role` / `expertise` / `openToConnect`;
+// the table columns are `branch` / `position` / `skills` /
+// `isAvailableForMentoring`. Translate at this boundary and echo BOTH names on
+// the way out so the client can read whichever it expects.
+function readAlumniInput(data = {}) {
+  const pick = (...vals) => vals.find((v) => v !== undefined);
+  const skillsRaw = pick(data.expertise, data.skills);
+  return {
+    name: data.name,
+    email: data.email,
+    batch: data.batch,
+    branch: pick(data.branch, data.degree),
+    company: data.company,
+    position: pick(data.position, data.role),
+    location: data.location,
+    linkedinUrl: data.linkedinUrl,
+    instagramUrl: data.instagramUrl,
+    portfolioUrl: data.portfolioUrl,
+    bio: data.bio,
+    skills: Array.isArray(skillsRaw) ? canonicalizeSkills(skillsRaw) : undefined,
+    isAvailableForMentoring: pick(data.isAvailableForMentoring, data.openToConnect),
+  };
+}
+
+function alumniRowToApi(row, { requested = false } = {}) {
+  const skills = (() => {
+    try {
+      return JSON.parse(row.skills || "[]");
+    } catch {
+      return [];
+    }
+  })();
+  const open = Boolean(row.isAvailableForMentoring);
+  return {
+    id: row.id,
+    userId: row.userId,
+    name: row.name || "",
+    email: row.email || "",
+    batch: row.batch || "",
+    branch: row.branch || "",
+    degree: row.branch || "",
+    company: row.company || "",
+    position: row.position || "",
+    role: row.position || "",
+    location: row.location || "",
+    linkedinUrl: row.linkedinUrl || "",
+    instagramUrl: row.instagramUrl || "",
+    portfolioUrl: row.portfolioUrl || "",
+    bio: row.bio || "",
+    skills,
+    expertise: skills,
+    isAvailableForMentoring: open,
+    openToConnect: open,
+    requested: Boolean(requested),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 const alumniMethods = {
   listAlumni({ user, query = "", batch = "" }) {
     this._ensureAuthenticatedUser(user);
     let sql = `
-      SELECT * FROM career_alumni 
+      SELECT a.*,
+             (SELECT 1 FROM career_alumni_requests r
+                WHERE r.alumniId = a.id AND r.userId = ? AND r.status = 'pending') AS requested
+      FROM career_alumni a
       WHERE 1=1
     `;
-    const params = [];
+    const params = [user.userId];
 
     if (query) {
-      sql += " AND (name LIKE ? OR company LIKE ? OR position LIKE ?)";
-      const likeQuery = `%${query}%`;
-      params.push(likeQuery, likeQuery, likeQuery);
+      sql += " AND (a.name LIKE ? OR a.company LIKE ? OR a.position LIKE ? OR a.branch LIKE ? OR a.skills LIKE ?)";
+      const like = `%${query}%`;
+      params.push(like, like, like, like, like);
     }
-
     if (batch) {
-      sql += " AND batch = ?";
+      sql += " AND a.batch = ?";
       params.push(batch);
     }
+    sql += " ORDER BY a.name";
 
-    sql += " ORDER BY name";
-
-    const rows = this.db.prepare(sql).all(...params);
-    return rows.map(row => ({
-      ...row,
-      skills: JSON.parse(row.skills || "[]"),
-    }));
+    return this.db
+      .prepare(sql)
+      .all(...params)
+      .map((row) => alumniRowToApi(row, { requested: row.requested === 1 }));
   },
 
   createAlumni(data, user) {
     this._ensureAuthenticatedUser(user);
     const id = randomUUID();
     const now = nowIso();
-    
-    this.db.prepare(`
-      INSERT INTO career_alumni (
-        id, userId, name, email, batch, branch, company, position, location,
-        linkedinUrl, bio, skills, isAvailableForMentoring, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      user.userId,
-      data.name || "",
-      data.email || "",
-      data.batch || "",
-      data.branch || "",
-      data.company || "",
-      data.position || "",
-      data.location || "",
-      data.linkedinUrl || "",
-      data.bio || "",
-      JSON.stringify(data.skills || []),
-      data.isAvailableForMentoring ? 1 : 0,
-      now,
-      now
-    );
+    const input = readAlumniInput(data);
 
-    return { id, ...data, createdAt: now, updatedAt: now };
+    this.db
+      .prepare(
+        `INSERT INTO career_alumni (
+          id, userId, name, email, batch, branch, company, position, location,
+          linkedinUrl, instagramUrl, portfolioUrl, bio, skills, isAvailableForMentoring,
+          createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        user.userId,
+        input.name || "",
+        input.email || "",
+        input.batch || "",
+        input.branch || "",
+        input.company || "",
+        input.position || "",
+        input.location || "",
+        input.linkedinUrl || "",
+        input.instagramUrl || "",
+        input.portfolioUrl || "",
+        input.bio || "",
+        JSON.stringify(input.skills || []),
+        input.isAvailableForMentoring ? 1 : 0,
+        now,
+        now,
+      );
+
+    return alumniRowToApi(this.db.prepare("SELECT * FROM career_alumni WHERE id = ?").get(id));
   },
 
   updateAlumni(id, data, user) {
     this._ensureAuthenticatedUser(user);
     const now = nowIso();
-    
-    this.db.prepare(`
-      UPDATE career_alumni SET
-        name = COALESCE(?, name),
-        email = COALESCE(?, email),
-        batch = COALESCE(?, batch),
-        branch = COALESCE(?, branch),
-        company = COALESCE(?, company),
-        position = COALESCE(?, position),
-        location = COALESCE(?, location),
-        linkedinUrl = COALESCE(?, linkedinUrl),
-        bio = COALESCE(?, bio),
-        skills = COALESCE(?, skills),
-        isAvailableForMentoring = COALESCE(?, isAvailableForMentoring),
-        updatedAt = ?
-      WHERE id = ? AND userId = ?
-    `).run(
-      data.name,
-      data.email,
-      data.batch,
-      data.branch,
-      data.company,
-      data.position,
-      data.location,
-      data.linkedinUrl,
-      data.bio,
-      data.skills ? JSON.stringify(data.skills) : null,
-      data.isAvailableForMentoring !== undefined ? (data.isAvailableForMentoring ? 1 : 0) : null,
-      now,
-      id,
-      user.userId
-    );
+    const input = readAlumniInput(data);
 
-    return { updated: true };
+    this.db
+      .prepare(
+        `UPDATE career_alumni SET
+          name = COALESCE(?, name),
+          email = COALESCE(?, email),
+          batch = COALESCE(?, batch),
+          branch = COALESCE(?, branch),
+          company = COALESCE(?, company),
+          position = COALESCE(?, position),
+          location = COALESCE(?, location),
+          linkedinUrl = COALESCE(?, linkedinUrl),
+          instagramUrl = COALESCE(?, instagramUrl),
+          portfolioUrl = COALESCE(?, portfolioUrl),
+          bio = COALESCE(?, bio),
+          skills = COALESCE(?, skills),
+          isAvailableForMentoring = COALESCE(?, isAvailableForMentoring),
+          updatedAt = ?
+        WHERE id = ? AND userId = ?`,
+      )
+      .run(
+        input.name ?? null,
+        input.email ?? null,
+        input.batch ?? null,
+        input.branch ?? null,
+        input.company ?? null,
+        input.position ?? null,
+        input.location ?? null,
+        input.linkedinUrl ?? null,
+        input.instagramUrl ?? null,
+        input.portfolioUrl ?? null,
+        input.bio ?? null,
+        input.skills ? JSON.stringify(input.skills) : null,
+        input.isAvailableForMentoring === undefined
+          ? null
+          : input.isAvailableForMentoring
+            ? 1
+            : 0,
+        now,
+        id,
+        user.userId,
+      );
+
+    const row = this.db.prepare("SELECT * FROM career_alumni WHERE id = ?").get(id);
+    return row ? alumniRowToApi(row) : { updated: true };
   },
 
   deleteAlumni(id, user) {
     this._ensureAuthenticatedUser(user);
     this.db.prepare("DELETE FROM career_alumni WHERE id = ? AND userId = ?").run(id, user.userId);
+    this.db.prepare("DELETE FROM career_alumni_requests WHERE alumniId = ?").run(id);
     return { deleted: true };
   },
 
   requestAlumniConnection(alumniId, data, user) {
     this._ensureAuthenticatedUser(user);
-    // For now, just return success. In a real implementation, this would send a notification
-    // or create a connection request record
+    const alumni = this.db.prepare("SELECT id FROM career_alumni WHERE id = ?").get(alumniId);
+    if (!alumni) {
+      const error = new Error("Alumni profile not found");
+      error.status = 404;
+      throw error;
+    }
+    this.db
+      .prepare(
+        `INSERT INTO career_alumni_requests (id, alumniId, userId, requesterName, message, status, createdAt)
+         VALUES (?, ?, ?, ?, ?, 'pending', ?)
+         ON CONFLICT(alumniId, userId) DO NOTHING`,
+      )
+      .run(
+        randomUUID(),
+        alumniId,
+        user.userId,
+        toSafeString(user.name),
+        String(data?.message || "").slice(0, 500),
+        nowIso(),
+      );
     return { requested: true };
-  }
+  },
+
+  listSentAlumniRequests(user) {
+    this._ensureAuthenticatedUser(user);
+    return this.db
+      .prepare(
+        `SELECT r.id, r.alumniId, r.message, r.status, r.reviewNote, r.createdAt,
+                a.name AS alumniName, a.company AS alumniCompany
+         FROM career_alumni_requests r
+         JOIN career_alumni a ON a.id = r.alumniId
+         WHERE r.userId = ?
+         ORDER BY r.createdAt DESC`,
+      )
+      .all(user.userId);
+  },
+
+  getPendingAlumniConnectionRequests() {
+    return this.db
+      .prepare(
+        `SELECT r.id, r.alumniId, r.userId, r.requesterName, r.message, r.status, r.createdAt,
+                a.name AS alumniName, a.company AS alumniCompany
+         FROM career_alumni_requests r
+         JOIN career_alumni a ON a.id = r.alumniId
+         WHERE r.status = 'pending'
+         ORDER BY r.createdAt DESC`,
+      )
+      .all();
+  },
+
+  reviewAlumniConnectionRequest(requestId, payload = {}, moderatorContext = {}) {
+    this._ensureAuthenticatedUser(moderatorContext);
+    const request = this.db.prepare("SELECT * FROM career_alumni_requests WHERE id = ?").get(requestId);
+    if (!request) {
+      const error = new Error("Connection request not found");
+      error.status = 404;
+      throw error;
+    }
+    if (request.status !== "pending") {
+      const error = new Error("Connection request is not pending review");
+      error.status = 400;
+      throw error;
+    }
+    const decision = toSafeString(payload.decision).toLowerCase();
+    if (!["accept", "accepted", "decline", "declined"].includes(decision)) {
+      const error = new Error("Invalid review decision");
+      error.status = 400;
+      throw error;
+    }
+    const nextStatus = decision.startsWith("accept") ? "accepted" : "declined";
+    const note = toSafeString(payload.note || payload.reviewNote).slice(0, 500);
+    const reviewedBy = toSafeString(moderatorContext.userId) || "admin";
+    const now = nowIso();
+    this.db
+      .prepare(
+        `UPDATE career_alumni_requests
+         SET status = ?, reviewedAt = ?, reviewedBy = ?, reviewNote = ?
+         WHERE id = ?`,
+      )
+      .run(nextStatus, now, reviewedBy, note, requestId);
+    return { ...request, status: nextStatus, reviewedAt: now, reviewedBy, reviewNote: note };
+  },
+
+  nominateAlumnus(data = {}, user) {
+    this._ensureAuthenticatedUser(user);
+    const name = toSafeString(data.name);
+    if (name.length < 2) {
+      const error = new Error("Name is required");
+      error.status = 400;
+      throw error;
+    }
+    const email = toSafeString(data.email);
+    const linkedinUrl = toSafeString(data.linkedinUrl);
+    if (!email && !linkedinUrl) {
+      const error = new Error("Provide an email or LinkedIn URL so the admin can verify this alumnus");
+      error.status = 400;
+      throw error;
+    }
+    const skillsRaw = data.expertise || data.skills;
+    const expertise = Array.isArray(skillsRaw) ? canonicalizeSkills(skillsRaw) : [];
+    const id = randomUUID();
+    const now = nowIso();
+    this.db
+      .prepare(
+        `INSERT INTO career_alumni_nominations (
+          id, submittedBy, submitterName, status, name, email, batch, degree, company, role,
+          location, linkedinUrl, instagramUrl, portfolioUrl, expertise, relation, note, createdAt
+        ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        user.userId,
+        toSafeString(user.name),
+        name,
+        email,
+        toSafeString(data.batch),
+        toSafeString(data.degree),
+        toSafeString(data.company),
+        toSafeString(data.role),
+        toSafeString(data.location),
+        linkedinUrl,
+        toSafeString(data.instagramUrl),
+        toSafeString(data.portfolioUrl),
+        JSON.stringify(expertise),
+        toSafeString(data.relation),
+        toSafeString(data.note),
+        now,
+      );
+    return this.db.prepare("SELECT * FROM career_alumni_nominations WHERE id = ?").get(id);
+  },
+
+  listMyAlumniNominations(user) {
+    this._ensureAuthenticatedUser(user);
+    return this.db
+      .prepare("SELECT * FROM career_alumni_nominations WHERE submittedBy = ? ORDER BY createdAt DESC")
+      .all(user.userId);
+  },
+
+  getPendingAlumniNominations() {
+    return this.db
+      .prepare("SELECT * FROM career_alumni_nominations WHERE status = 'pending' ORDER BY createdAt DESC")
+      .all();
+  },
+
+  reviewAlumniNomination(nominationId, payload = {}, moderatorContext = {}) {
+    this._ensureAuthenticatedUser(moderatorContext);
+    const nomination = this.db
+      .prepare("SELECT * FROM career_alumni_nominations WHERE id = ?")
+      .get(nominationId);
+    if (!nomination) {
+      const error = new Error("Nomination not found");
+      error.status = 404;
+      throw error;
+    }
+    if (nomination.status !== "pending") {
+      const error = new Error("Nomination is not pending review");
+      error.status = 400;
+      throw error;
+    }
+    const reviewerId = toSafeString(moderatorContext.userId);
+    if (reviewerId && reviewerId === String(nomination.submittedBy)) {
+      const error = new Error("Reviewer cannot decide their own nomination");
+      error.status = 403;
+      throw error;
+    }
+    const decision = toSafeString(payload.decision || payload.status).toLowerCase();
+    if (!["approve", "approved", "reject", "rejected"].includes(decision)) {
+      const error = new Error("Invalid review decision");
+      error.status = 400;
+      throw error;
+    }
+    const reason = toSafeString(payload.reason || payload.reviewReason);
+    if (reason.length < 3) {
+      const error = new Error("Review reason is required");
+      error.status = 400;
+      throw error;
+    }
+
+    const nextStatus = decision.startsWith("approve") ? "approved" : "rejected";
+    let publishedAlumniId = null;
+    if (nextStatus === "approved") {
+      let expertise = [];
+      try {
+        expertise = JSON.parse(nomination.expertise || "[]");
+      } catch {
+        expertise = [];
+      }
+      const created = this.createAlumni(
+        {
+          name: nomination.name,
+          email: nomination.email,
+          batch: nomination.batch,
+          degree: nomination.degree,
+          company: nomination.company,
+          role: nomination.role,
+          location: nomination.location,
+          linkedinUrl: nomination.linkedinUrl,
+          instagramUrl: nomination.instagramUrl,
+          portfolioUrl: nomination.portfolioUrl,
+          expertise,
+          bio: nomination.note || "",
+          openToConnect: true,
+        },
+        moderatorContext,
+      );
+      publishedAlumniId = created.id;
+    }
+
+    const now = nowIso();
+    this.db
+      .prepare(
+        `UPDATE career_alumni_nominations
+         SET status = ?, reviewedAt = ?, reviewedBy = ?, reviewReason = ?,
+             publishedAlumniId = COALESCE(?, publishedAlumniId)
+         WHERE id = ?`,
+      )
+      .run(nextStatus, now, reviewerId || "admin", reason, publishedAlumniId, nominationId);
+    return this.db.prepare("SELECT * FROM career_alumni_nominations WHERE id = ?").get(nominationId);
+  },
 };
 
 // --- catalog.js ---
@@ -1300,20 +1601,21 @@ const profileMethods = {
   },
 
   _recomputeSkillGaps(userId, userSkills) {
-    const userSkillsSet = new Set(userSkills.map(s => s.toLowerCase()));
     const now = nowIso();
-    
-    // Get all skills required by active opportunities
+    // Compare and store canonical skill names so "aws" / "AWS" / "Amazon Web
+    // Services" collapse to one gap displayed as "AWS".
+    const haveSet = new Set(canonicalizeSkills(userSkills).map((s) => s.toLowerCase()));
+
     const opps = this.db.prepare("SELECT skills FROM career_opportunities WHERE isActive = 1").all();
-    const gapMap = new Map();
+    const gapMap = new Map(); // canonical-lowercase -> { skill, count }
 
     for (const opp of opps) {
-      const skills = JSON.parse(opp.skills || "[]");
-      for (const skill of skills) {
-        const skillLower = skill.toLowerCase();
-        if (!userSkillsSet.has(skillLower)) {
-          gapMap.set(skillLower, (gapMap.get(skillLower) || 0) + 1);
-        }
+      for (const skill of canonicalizeSkills(JSON.parse(opp.skills || "[]"))) {
+        const key = skill.toLowerCase();
+        if (haveSet.has(key)) continue;
+        const entry = gapMap.get(key) || { skill, count: 0 };
+        entry.count += 1;
+        gapMap.set(key, entry);
       }
     }
 
@@ -1324,14 +1626,14 @@ const profileMethods = {
       VALUES (?, ?, ?, ?, 'missing')
     `);
 
-    const sortedGaps = Array.from(gapMap.entries())
-      .sort((a, b) => b[1] - a[1])
+    const sortedGaps = Array.from(gapMap.values())
+      .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
     this.db.exec("BEGIN IMMEDIATE");
     try {
       clearStmt.run(userId);
-      for (const [skill, count] of sortedGaps) {
+      for (const { skill, count } of sortedGaps) {
         insert.run(userId, skill, count, now);
       }
       this.db.exec("COMMIT");
@@ -1398,14 +1700,9 @@ function normalizedSet(values) {
   return new Set(ensureArray(values).map((value) => String(value).toLowerCase().trim()).filter(Boolean));
 }
 
-function textIncludesSkill(textLower, skill) {
-  const escaped = String(skill).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|[^a-z0-9+#.])${escaped}([^a-z0-9+#.]|$)`, "i").test(textLower);
-}
-
 const resumeMethods = {
   _resumeSkillLexicon() {
-    const skills = [...COMMON_SKILLS];
+    const skills = [...CANONICAL_SKILLS, ...COMMON_SKILLS];
     try {
       const rows = this.db.prepare("SELECT skills FROM career_opportunities WHERE isActive = 1").all();
       for (const row of rows) {
@@ -1417,84 +1714,170 @@ const resumeMethods = {
     return uniqueStrings(skills);
   },
 
+  /**
+   * Structured résumé parse — thin adapter over `resumeParse.parseResume`,
+   * feeding it the live opportunity-skill lexicon so skills required by active
+   * listings are matched even when only mentioned in a bullet.
+   */
   _parseResumeText(text) {
-    const extractedText = toSafeString(text).slice(0, 200000);
-    const lower = extractedText.toLowerCase();
-    const skills = this._resumeSkillLexicon().filter((skill) => textIncludesSkill(lower, skill));
-    const links = Array.from(extractedText.matchAll(/https?:\/\/[^\s)]+/gi)).map((match) => match[0]);
-    const emails = Array.from(extractedText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)).map((match) => match[0]);
-    const quantifiedImpacts = Array.from(extractedText.matchAll(/(?:\b\d+(?:\.\d+)?%|\b\d+\+?\s+(?:users|students|requests|projects|events|teams|participants|apis|features)\b)/gi)).map((match) => match[0]);
-    const lines = extractedText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    const projectLines = lines.filter((line) => /project|built|developed|created|implemented|designed/i.test(line)).slice(0, 8);
-    const experienceLines = lines.filter((line) => /intern|experience|worked|volunteer|lead|organizer|coordinator/i.test(line)).slice(0, 8);
-    const certifications = lines.filter((line) => /certification|certified|coursera|nptel|udemy|aws|azure|google/i.test(line)).slice(0, 8);
-
-    return {
-      skills,
-      links: uniqueStrings(links),
-      emails: uniqueStrings(emails),
-      quantifiedImpacts: uniqueStrings(quantifiedImpacts),
-      projects: projectLines,
-      experience: experienceLines,
-      certifications,
-      wordCount: extractedText ? extractedText.split(/\s+/).filter(Boolean).length : 0,
-      hasGithub: /github\.com/i.test(extractedText),
-      hasLinkedin: /linkedin\.com/i.test(extractedText),
-      hasPortfolio: /https?:\/\/(?!.*(?:github|linkedin))/i.test(extractedText),
-    };
+    return parseResume(text, { lexicon: this._resumeSkillLexicon() });
   },
 
-  _scoreResume(parsed, profile = {}) {
+  /**
+   * @param parsed  output of `_parseResumeText`
+   * @param ctx     { profileSkills[], skillGaps[{skill,opportunityCount}], preferredTypes[] }
+   * Returns { score, rubric, suggestions } where suggestions is an ordered list
+   * of { tip, priority, category } — first item is the single biggest win.
+   */
+  _scoreResume(parsed, ctx = {}) {
+    const profileSkills = ensureArray(ctx.profileSkills).map((s) => String(s).toLowerCase());
+    const skillGaps = ensureArray(ctx.skillGaps);
+    const preferredTypes = ensureArray(ctx.preferredTypes).map((t) => String(t).toLowerCase());
+
+    const sectionCount = ensureArray(parsed.sections).length;
+    const skillCount = ensureArray(parsed.skills).length;
+    const projectCount = ensureArray(parsed.projects).length;
+    const impactCount = ensureArray(parsed.quantifiedImpacts).length;
+    const experienceCount = ensureArray(parsed.experience).length;
+    const thinEntries = [...ensureArray(parsed.projects), ...ensureArray(parsed.experience)].filter(
+      (e) => (e.bulletCount || 0) < 2,
+    ).length;
+    const resumeSkillsLower = new Set(ensureArray(parsed.skills).map((s) => String(s).toLowerCase()));
+    const overlap = profileSkills.filter((s) => resumeSkillsLower.has(s)).length;
+    const overlapRatio = profileSkills.length ? overlap / profileSkills.length : 0;
+    const missingLinks = [
+      parsed.hasGithub ? null : "GitHub",
+      parsed.hasLinkedin ? null : "LinkedIn",
+      parsed.hasPortfolio ? null : "a portfolio",
+    ].filter(Boolean);
+
     const rubric = [
       {
         key: "structure",
         label: "Resume structure",
-        score: parsed.wordCount >= 120 ? 20 : parsed.wordCount >= 60 ? 12 : 4,
+        score:
+          sectionCount >= 4 && parsed.wordCount >= 150 ? 20
+            : sectionCount >= 3 || parsed.wordCount >= 120 ? 13
+              : parsed.wordCount >= 60 ? 7
+                : 3,
         max: 20,
-        reason: parsed.wordCount >= 120 ? "Enough content for evaluation." : "Resume text is short or missing sections.",
+        reason:
+          sectionCount >= 4
+            ? `Clear structure — ${sectionCount} standard sections detected.`
+            : `Only ${sectionCount} standard section${sectionCount === 1 ? "" : "s"} detected.`,
+        tip: "Add clearly labelled sections: Experience, Projects, Skills, Education.",
       },
       {
         key: "skills",
         label: "Skill coverage",
-        score: Math.min(20, parsed.skills.length * 4),
+        score: skillCount >= 12 ? 20 : skillCount >= 6 ? 15 : skillCount >= 1 ? 8 : 0,
         max: 20,
-        reason: parsed.skills.length ? `${parsed.skills.length} skill signals detected.` : "No recognizable skill signals detected.",
+        reason: skillCount ? `${skillCount} distinct skills detected.` : "No recognizable skills detected.",
+        tip:
+          skillCount >= 6
+            ? "Group skills under headings (Languages, Frameworks, Tools) for readability."
+            : "Add a Technical Skills section listing languages, frameworks and tools.",
       },
       {
         key: "projects",
         label: "Project evidence",
-        score: Math.min(15, parsed.projects.length * 5),
+        score: projectCount >= 3 ? 15 : projectCount === 2 ? 11 : projectCount === 1 ? 6 : 0,
         max: 15,
-        reason: parsed.projects.length ? "Project or build evidence is present." : "Add concrete project bullets.",
+        reason: projectCount
+          ? `${projectCount} project${projectCount === 1 ? "" : "s"} detected.`
+          : "No projects detected.",
+        tip: "Add a Projects section with 2-3 concrete builds and their impact.",
+      },
+      {
+        key: "detail",
+        label: "Entry detail",
+        score: (() => {
+          const entries = projectCount + experienceCount;
+          if (!entries) return 0;
+          return Math.round(10 * (1 - thinEntries / entries));
+        })(),
+        max: 10,
+        reason: thinEntries
+          ? `${thinEntries} project/role${thinEntries === 1 ? "" : "s"} have fewer than 2 bullet points.`
+          : "Every project and role has supporting bullets.",
+        tip: "Give each project and role at least 2-3 result-oriented bullet points.",
       },
       {
         key: "impact",
         label: "Quantified impact",
-        score: Math.min(15, parsed.quantifiedImpacts.length * 5),
+        score: Math.min(15, impactCount * 4),
         max: 15,
-        reason: parsed.quantifiedImpacts.length ? "Impact metrics are visible." : "Quantify outcomes with numbers.",
+        reason: impactCount
+          ? `${impactCount} quantified outcome${impactCount === 1 ? "" : "s"}.`
+          : "No quantified outcomes.",
+        tip: "Back up bullets with numbers — %, users served, latency, revenue.",
       },
       {
         key: "links",
         label: "Portfolio links",
-        score: Math.min(15, (parsed.hasGithub ? 5 : 0) + (parsed.hasLinkedin ? 5 : 0) + (parsed.hasPortfolio ? 5 : 0)),
+        score: Math.min(15, (parsed.hasGithub ? 6 : 0) + (parsed.hasLinkedin ? 6 : 0) + (parsed.hasPortfolio ? 3 : 0)),
         max: 15,
-        reason: parsed.links.length ? "Profile or portfolio links are present." : "Add GitHub, LinkedIn, or portfolio links.",
+        reason: missingLinks.length
+          ? `Missing ${missingLinks.join(", ")} link${missingLinks.length === 1 ? "" : "s"}.`
+          : "GitHub, LinkedIn and portfolio links are present.",
+        tip: "Add GitHub, LinkedIn and portfolio links to your header.",
       },
       {
         key: "target",
         label: "Profile alignment",
-        score: ensureArray(profile.skills).some((skill) => parsed.skills.map((s) => s.toLowerCase()).includes(String(skill).toLowerCase())) ? 15 : 5,
+        score: profileSkills.length === 0 ? 10 : overlapRatio >= 0.5 ? 15 : overlapRatio >= 0.25 ? 10 : 5,
         max: 15,
-        reason: "Compares resume skills with Career profile skills.",
+        reason:
+          profileSkills.length === 0
+            ? "Add skills to your Career profile so we can compare."
+            : `${overlap} of your ${profileSkills.length} profile skills appear on the résumé.`,
+        tip: "Merge the résumé skills into your Career profile so opportunity matching improves.",
       },
     ];
-    const score = rubric.reduce((sum, item) => sum + item.score, 0);
+
+    // Normalise to /100 (rubric maxes sum to 110 after adding "detail").
+    const rawScore = rubric.reduce((sum, item) => sum + item.score, 0);
+    const rawMax = rubric.reduce((sum, item) => sum + item.max, 0);
+    const score = Math.round((rawScore / rawMax) * 100);
+
+    // Ordered suggestions: rubric gaps by (missed points), then career-fit items.
     const suggestions = rubric
       .filter((item) => item.score < item.max * 0.7)
-      .map((item) => item.reason)
-      .slice(0, 6);
-    return { score, rubric, suggestions };
+      .sort((a, b) => b.max - b.score - (a.max - a.score))
+      .map((item) => ({
+        tip: item.tip,
+        category: item.key,
+        priority: item.max - item.score >= item.max * 0.6 ? "high" : "medium",
+      }));
+
+    const gapMissing = skillGaps
+      .map((g) => String(g.skill || ""))
+      .filter((s) => s && isKnownSkill(s) && !resumeSkillsLower.has(s.toLowerCase()))
+      .map((s) => canonicalizeSkill(s))
+      .slice(0, 5);
+    if (gapMissing.length) {
+      suggestions.unshift({
+        tip: `Add ${gapMissing.length} in-demand skill${gapMissing.length === 1 ? "" : "s"} your résumé is missing: ${gapMissing.join(", ")}.`,
+        category: "career-fit",
+        priority: "high",
+      });
+    }
+    if (experienceCount === 0 && preferredTypes.some((t) => /job|intern/.test(t))) {
+      suggestions.push({
+        tip: "You're targeting jobs/internships — add a Work Experience section, even for projects, freelance or open-source work.",
+        category: "career-fit",
+        priority: "medium",
+      });
+    }
+    if (profileSkills.length && skillCount && overlapRatio < 0.3) {
+      suggestions.push({
+        tip: "Your résumé and Career profile skills barely overlap — use “Merge to Profile” to align them.",
+        category: "career-fit",
+        priority: "medium",
+      });
+    }
+
+    return { score, rubric, suggestions: suggestions.slice(0, 6) };
   },
 
   _mapResumeVersion(row) {
@@ -1517,7 +1900,7 @@ const resumeMethods = {
     const mimeType = toSafeString(payload.mimeType) || "text/plain";
     const profile = this.getProfile(user);
     const parsed = this._parseResumeText(extractedText);
-    const quality = this._scoreResume(parsed, profile);
+    const quality = this._scoreResume(parsed, this._resumeScoreContext(user, profile));
     const id = randomUUID();
 
     this.db
@@ -1564,11 +1947,42 @@ const resumeMethods = {
     return this._mapResumeVersion(row);
   },
 
+  deleteResumeVersion(user, resumeVersionId) {
+    this._ensureAuthenticatedUser(user);
+    const row = this.db
+      .prepare("SELECT id FROM resume_versions WHERE id = ? AND userId = ?")
+      .get(resumeVersionId, user.userId);
+    if (!row) {
+      const error = new Error("Resume version not found");
+      error.status = 404;
+      throw error;
+    }
+    this.db.prepare("DELETE FROM resume_versions WHERE id = ? AND userId = ?").run(resumeVersionId, user.userId);
+    // Re-point the profile's résumé pointer at whatever is now newest (or clear it).
+    const latest = this.getLatestResumeVersion(user);
+    this.updateResume(user.userId, latest?.filePath || "", latest?.fileName || "");
+    return { deleted: true, latest: latest || null };
+  },
+
   analyzeResumeVersion(user, resumeVersionId) {
     const resume = this.getResumeVersion(user, resumeVersionId);
     const profile = this.getProfile(user);
-    const analysis = this._scoreResume(resume.parsedJson || {}, profile);
+    const analysis = this._scoreResume(resume.parsedJson || {}, this._resumeScoreContext(user, profile));
     return { resume, ...analysis };
+  },
+
+  _resumeScoreContext(user, profile) {
+    let skillGaps = [];
+    try {
+      skillGaps = this.getSkillGaps(user);
+    } catch {
+      /* gaps are optional context */
+    }
+    return {
+      profileSkills: ensureArray(profile && profile.skills),
+      preferredTypes: ensureArray(profile && profile.preferredTypes),
+      skillGaps,
+    };
   },
 
   mergeResumeToProfile(user, resumeVersionId) {
@@ -2104,12 +2518,38 @@ const schemaMethods = {
     }
   },
 
+  _migrateAlumniContactLinks() {
+    for (const statement of [
+      "ALTER TABLE career_alumni ADD COLUMN instagramUrl TEXT",
+      "ALTER TABLE career_alumni ADD COLUMN portfolioUrl TEXT",
+    ]) {
+      try {
+        this.db.exec(statement);
+      } catch {}
+    }
+  },
+
+  _migrateAlumniRequestsGovernance() {
+    for (const statement of [
+      "ALTER TABLE career_alumni_requests ADD COLUMN requesterName TEXT DEFAULT ''",
+      "ALTER TABLE career_alumni_requests ADD COLUMN reviewedAt TEXT",
+      "ALTER TABLE career_alumni_requests ADD COLUMN reviewedBy TEXT",
+      "ALTER TABLE career_alumni_requests ADD COLUMN reviewNote TEXT",
+    ]) {
+      try {
+        this.db.exec(statement);
+      } catch {}
+    }
+  },
+
   _ensureSchema() {
     this._migrateFtsToRowidModel();
     this._migrateCareerOpportunitiesLifecycle();
     this._migrateCareerStipendRange();
     this._migrateSkillGapsGapLevel();
     this._migrateCareerSubmissionGovernance();
+    this._migrateAlumniContactLinks();
+    this._migrateAlumniRequestsGovernance();
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS career_opportunities (
         id              TEXT PRIMARY KEY,
@@ -2339,12 +2779,59 @@ const schemaMethods = {
         position            TEXT,
         location            TEXT,
         linkedinUrl         TEXT,
+        instagramUrl        TEXT,
+        portfolioUrl        TEXT,
         bio                 TEXT,
         skills              TEXT DEFAULT '[]',
         isAvailableForMentoring INTEGER DEFAULT 0,
         createdAt           TEXT NOT NULL,
         updatedAt           TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS career_alumni_requests (
+        id                  TEXT PRIMARY KEY,
+        alumniId            TEXT NOT NULL,
+        userId              TEXT NOT NULL,
+        requesterName       TEXT DEFAULT '',
+        message             TEXT DEFAULT '',
+        status              TEXT NOT NULL DEFAULT 'pending',
+        reviewedAt          TEXT,
+        reviewedBy          TEXT,
+        reviewNote          TEXT,
+        createdAt           TEXT NOT NULL,
+        UNIQUE(alumniId, userId)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_alumni_requests_user
+        ON career_alumni_requests(userId, createdAt DESC);
+
+      CREATE TABLE IF NOT EXISTS career_alumni_nominations (
+        id                  TEXT PRIMARY KEY,
+        submittedBy         TEXT NOT NULL,
+        submitterName       TEXT DEFAULT '',
+        status              TEXT NOT NULL DEFAULT 'pending',
+        name                TEXT NOT NULL,
+        email               TEXT,
+        batch               TEXT,
+        degree              TEXT,
+        company             TEXT,
+        role                TEXT,
+        location            TEXT,
+        linkedinUrl         TEXT,
+        instagramUrl        TEXT,
+        portfolioUrl        TEXT,
+        expertise           TEXT DEFAULT '[]',
+        relation            TEXT,
+        note                TEXT,
+        reviewedAt          TEXT,
+        reviewedBy          TEXT,
+        reviewReason        TEXT,
+        publishedAlumniId   TEXT,
+        createdAt           TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_alumni_nominations_status
+        ON career_alumni_nominations(status, createdAt DESC);
 
       CREATE TABLE IF NOT EXISTS career_interview_slots (
         id                  TEXT PRIMARY KEY,
@@ -2439,6 +2926,45 @@ const schemaMethods = {
         VALUES (new.rowid, new.title, new.description, new.skills, new.tags, new.company, new.organizer);
       END;
     `);
+
+    this._migrateCanonicalSkillNames();
+  },
+
+  /**
+   * Rewrite stored skill strings to their canonical display form. Idempotent —
+   * `canonicalizeSkill` is a fixed point — so it is safe to run every startup.
+   * Repairs rows written before skill canonicalisation existed (e.g. lowercase
+   * "aws", "node.js" that the UI then mangled to "Aws" / "Node.Js").
+   */
+  _migrateCanonicalSkillNames() {
+    try {
+      const gapRows = this.db.prepare("SELECT rowid, skill FROM career_skill_gaps").all();
+      const updateGap = this.db.prepare("UPDATE career_skill_gaps SET skill = ? WHERE rowid = ?");
+      for (const row of gapRows) {
+        const canonical = canonicalizeSkill(row.skill);
+        if (canonical && canonical !== row.skill) updateGap.run(canonical, row.rowid);
+      }
+    } catch {
+      /* table may not exist yet on a fresh DB */
+    }
+    try {
+      const profileRows = this.db.prepare("SELECT userId, skills FROM career_profiles").all();
+      const updateProfile = this.db.prepare("UPDATE career_profiles SET skills = ? WHERE userId = ?");
+      for (const row of profileRows) {
+        let parsed;
+        try {
+          parsed = JSON.parse(row.skills || "[]");
+        } catch {
+          parsed = [];
+        }
+        const canonical = canonicalizeSkills(parsed);
+        if (JSON.stringify(canonical) !== JSON.stringify(parsed)) {
+          updateProfile.run(JSON.stringify(canonical), row.userId);
+        }
+      }
+    } catch {
+      /* best effort */
+    }
   },
 
   _seedDefaultsIfNeeded() {

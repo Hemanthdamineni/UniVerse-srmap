@@ -18,6 +18,9 @@ export async function requestData<T>(url: string, init?: RequestInit): Promise<T
 
 export async function requestMultipart<T>(url: string, formData: FormData, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
+    // A FormData body is never valid on the default GET; callers may still
+    // override with PUT/PATCH via `init`.
+    method: "POST",
     credentials: "include",
     ...init,
     body: formData,
