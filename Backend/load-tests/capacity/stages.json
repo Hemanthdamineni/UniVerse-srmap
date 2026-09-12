@@ -1,0 +1,15 @@
+{
+  "comment": "Shared by capacity-ramp.js (k6) and scripts/capacity/report.mjs. Edit here, both read this file — do not duplicate the numbers.",
+  "startVUs": 20,
+  "stages": [
+    { "duration": "45s", "target": 50 },
+    { "duration": "45s", "target": 100 },
+    { "duration": "45s", "target": 200 },
+    { "duration": "45s", "target": 350 },
+    { "duration": "45s", "target": 500 },
+    { "duration": "45s", "target": 750 },
+    { "duration": "45s", "target": 1000 },
+    { "duration": "45s", "target": 1500 },
+    { "duration": "30s", "target": 0 }
+  ]
+}

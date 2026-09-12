@@ -1,0 +1,65 @@
+name: university-erp-capacity
+
+# Override for docker-compose.yml that shrinks the containers down to
+# (roughly) what a single Oracle Always-Free VM.Standard.A1.Flex actually
+# gives the app once Caddy and the OS get their share.
+#
+# Target shape per docs/17-DEPLOYMENT-GUIDE.md §3: 2 OCPU / 12 GB total.
+# Split here: backend 1.6 OCPU / 9 GB, redis 0.3 OCPU / 512 MB, leaving
+# ~0.1 OCPU / 2.5 GB unsimulated headroom for Caddy + the OS (§3 notes
+# that headroom exists but doesn't quantify what Caddy alone costs — this
+# split is a deliberately conservative estimate, not a measured one).
+#
+# Usage: see Backend/scripts/capacity/run.sh — do not run this file by
+# hand, it depends on REDIS_PASSWORD and the base compose file.
+services:
+  backend:
+    # Remapped off 5000: local dev often already has a backend bound there,
+    # and docker refuses to start silently-ish (a networking error easy to
+    # miss in `up -d` output) if the host port is taken.
+    ports: !override
+      - "127.0.0.1:15000:5000"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.6"
+          memory: 9G
+        reservations:
+          memory: 512M
+    environment:
+      - CAREER_SCRAPER_ENABLED=0
+      # Dummy local-only key so the backend boots under NODE_ENV=production
+      # without a real Google OAuth integration configured. NOT for prod —
+      # generate a real one with `openssl rand -hex 32` for the actual VM,
+      # and put it in the real .env, not here.
+      - GOOGLE_TOKEN_ENC_KEY=0813832b08899966a3453617e40471cd4e907640663af11aa50bdace462eb110
+      # /api/v2/erp/page/* requires an authenticated session. NODE_ENV=development
+      # + ENABLE_DEMO_LOGIN=1 turns on /api/auth/dev-login (see authRoutes.js),
+      # the same demo-auth path Backend/scripts/e2e-stack/start.sh uses for e2e
+      # tests, so capacity-ramp.js's setup() can log in once and reuse the
+      # session cookie across all VUs — same as a real logged-in student.
+      # This is a resource-testing shortcut, not a claim that dev-mode process
+      # behavior is byte-identical to prod; see the README's caveats.
+      - NODE_ENV=development
+      - ENABLE_DEMO_LOGIN=1
+      # The app's global per-IP rate limiter (see rateLimit.js) defaults to
+      # 400 req/min/IP. Real students come from many different IPs, but
+      # every k6 VU in this test shares one source IP, so without raising
+      # this the ramp hits the rate limiter at ~7 req/s total (a handful of
+      # VUs) and reports THAT as the ceiling instead of actual CPU/memory
+      # saturation. This override exists only to separate those two
+      # questions — see the README's "Rate limiting" section for why the
+      # production default (400) is a deliberate guardrail, not a bug.
+      - RATE_LIMIT_MAX=1000000
+
+  redis:
+    # Same remap reasoning as backend above — 6379 is often already taken.
+    ports: !override
+      - "127.0.0.1:16379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
+        reservations:
+          memory: 64M
