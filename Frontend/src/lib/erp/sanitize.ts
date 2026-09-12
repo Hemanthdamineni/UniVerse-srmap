@@ -63,6 +63,58 @@ function looksLikeCode(text: string): boolean {
   return hits >= 1 && braces >= 4 && braces / text.length > 0.0125;
 }
 
+/**
+ * Splits leaked-code text on statement/block boundaries (`{`, `}`, `;`) and
+ * drops every chunk that looks like a code fragment, keeping only the
+ * human-readable prose scraped alongside it.
+ *
+ * ERP pages routinely inline a `<script>`/`<style>` block with no separator
+ * before or after the real notice text (e.g. SAP Process ships
+ * `function redirectSapRegistration() { funLoadDetails(44); } Note: Students
+ * will be allowed to register one time... redirectSapRegistration();` as one
+ * string) — chunking on statement punctuation isolates the sentence from the
+ * script around it far more reliably than trying to regex out every JS shape
+ * in one pass.
+ */
+function isCodeChunk(chunk: string): boolean {
+  const c = chunk.trim();
+  if (!c) return true;
+  if (!/[a-zA-Z]/.test(c)) return true; // pure punctuation left over from a split
+  if (/\bfunction\b/i.test(c)) return true;
+  if (/\$\(/.test(c)) return true;
+  if (/\.\w+\(/.test(c)) return true; // method call: $(".x").hide(
+  if (/\b(?:var|const|let)\s+\w+\s*=/.test(c)) return true;
+  if (/\b(?:ajax|jqxhr|xmlhttp|onreadystatechange|superalert|confirm|alert|console\.log)\s*\(/i.test(c)) return true;
+  if (/^if\s*\(|^else\b/.test(c)) return true;
+  if (/^return\s+(?:false|true)\s*;?\s*$/i.test(c)) return true;
+  if (/[=!]==|&&|\|\|/.test(c)) return true;
+  if (/:\s*['"]/.test(c)) return true; // object-literal key: 'value'
+  if (/^[.#]?[\w-]+$/.test(c)) return true; // bare CSS selector, e.g. ".alert-danger"
+  if (/^[.#]?[\w-]+\s*:\s*[\w#%.-]+$/i.test(c)) return true; // CSS declaration: color: red
+  if (/^[\w.$#'"]+\s*\([^)]*\)\s*$/.test(c)) return true; // bare call: funLoadDetails(44)
+  return false;
+}
+
+function stripLeakedCodeFragments(text: string): string {
+  const survivors = text
+    .split(/[{};]/)
+    .filter((chunk) => !isCodeChunk(chunk))
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+  return survivors
+    .join(" ")
+    .replace(/\b[a-zA-Z_]\w*\s*\(\s*\)\s*;?/g, " ") // stray zero-arg call: redirectX ();
+    .replace(/Loading\.{2,}/gi, " ") // client-side "Loading........." placeholder, not real content
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Punctuation-heavy leftovers (unbalanced JS fragments) read as noise, not prose. */
+function looksLikeResidualCode(text: string): boolean {
+  const punct = (text.match(/[(){}$;=]/g) || []).length;
+  return text.length > 0 && punct / text.length > 0.04;
+}
+
 function isTableDump(text: string, title: string): boolean {
   if (!text) return false;
 
@@ -204,9 +256,24 @@ export function extractSections(
       }
     }
 
-    // Suppress text that is just a dump of the table content
-    const baseText = isTableDump(rawText, title) ? "" : rawText;
-    const text = [baseText, ...tableText].filter(Boolean).join("\n");
+    // Suppress text that is just a dump of the table content — but first try
+    // to salvage any real sentence buried inside leaked script/style noise
+    // rather than discarding the whole blob (see stripLeakedCodeFragments).
+    const baseText = (() => {
+      if (!rawText || !isTableDump(rawText, title)) return rawText;
+      const salvaged = stripLeakedCodeFragments(rawText);
+      // Re-check for genuine leftover code/noise only — not the raw-text-only
+      // gates (redirect-call / "Loading....." stubs) in isTableDump, which
+      // stripLeakedCodeFragments has already scrubbed above and would
+      // otherwise wholesale-reject a perfectly good salvaged sentence that
+      // merely used to sit next to one of those artifacts.
+      if (!salvaged || looksLikeResidualCode(salvaged) || looksLikeCode(salvaged)) return "";
+      return salvaged;
+    })();
+    // The upstream ERP frequently repeats the same notice in both `text` and a
+    // degenerate echo row (or across duplicate rows) — dedupe exact-match lines
+    // so "Registration closed" doesn't render twice back to back.
+    const text = Array.from(new Set([baseText, ...tableText].filter(Boolean))).join("\n");
 
     if (title || text || tables.length > 0) {
       raw.push({ title, text, tables });
