@@ -45,7 +45,14 @@ class GoogleTokenStore {
         updated_at TEXT NOT NULL,
         PRIMARY KEY (user_id, erp_key)
       );
-      CREATE TABLE IF NOT EXISTS google_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS google_oauth_states (
+        nonce_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_google_oauth_states_expiry ON google_oauth_states(expires_at);
     `);
     this._key = this._resolveKey();
   }
@@ -53,11 +60,12 @@ class GoogleTokenStore {
   _resolveKey() {
     const fromEnv = process.env.GOOGLE_TOKEN_ENC_KEY;
     if (fromEnv && /^[0-9a-f]{64}$/i.test(fromEnv)) return Buffer.from(fromEnv, "hex");
-    const row = this.db.prepare("SELECT value FROM google_meta WHERE key = 'enc_key'").get();
-    if (row?.value) return Buffer.from(row.value, "hex");
-    const key = randomBytes(32);
-    this.db.prepare("INSERT OR REPLACE INTO google_meta (key, value) VALUES ('enc_key', ?)").run(key.toString("hex"));
-    return key;
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("GOOGLE_TOKEN_ENC_KEY must be a 32-byte hex secret in production");
+    }
+    // Development tokens are intentionally invalidated by restart. Storing a
+    // generated key beside ciphertext is not encryption at rest.
+    return randomBytes(32);
   }
 
   _encrypt(plain) {
@@ -146,6 +154,29 @@ class GoogleTokenStore {
   delete(userId) {
     this.db.prepare("DELETE FROM google_tokens WHERE user_id = ?").run(String(userId));
     this.db.prepare("DELETE FROM google_synced_items WHERE user_id = ?").run(String(userId));
+  }
+
+  createOAuthState({ nonceHash, userId, sessionId, expiresAt }) {
+    if (!nonceHash || !userId || !sessionId || !Number.isFinite(expiresAt)) {
+      throw new Error("OAuth state requires nonce, user, session, and expiry");
+    }
+    this.db.prepare("DELETE FROM google_oauth_states WHERE expires_at <= ?").run(Date.now());
+    this.db.prepare(
+      `INSERT INTO google_oauth_states (nonce_hash, user_id, session_id, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    ).run(String(nonceHash), String(userId), String(sessionId), Number(expiresAt), nowIso());
+  }
+
+  consumeOAuthState(nonceHash) {
+    const row = this.db.prepare(
+      "SELECT nonce_hash, user_id, session_id, expires_at FROM google_oauth_states WHERE nonce_hash = ?"
+    ).get(String(nonceHash));
+    if (!row) return null;
+    // Delete before validating return values so concurrent callbacks cannot
+    // replay a nonce after the first read.
+    this.db.prepare("DELETE FROM google_oauth_states WHERE nonce_hash = ?").run(String(nonceHash));
+    if (Number(row.expires_at) <= Date.now()) return null;
+    return { userId: row.user_id, sessionId: row.session_id, expiresAt: Number(row.expires_at) };
   }
 
   listConnectedUserIds() {

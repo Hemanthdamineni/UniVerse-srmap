@@ -1,6 +1,7 @@
 const express = require("express");
 const { createUserContextMiddleware } = require("../utils/eventsAuth");
 const { sendApiError, sendApiSuccess } = require("../utils/apiResponse");
+const { resolveSessionId } = require("../utils/cookies");
 
 /**
  * Google Calendar sync (Batch B10 / Story 6.3).
@@ -22,12 +23,16 @@ function createGoogleCalendarRoutes({
 }) {
   const router = express.Router();
 
-  // Callback is hit by Google, not the SPA — no session cookie, the signed
-  // `state` carries + authorises the user id.
+  // Google follows a top-level redirect, so the SameSite=Lax app cookie is
+  // available. State is also one-time and session-bound as defense in depth.
   router.get("/integrations/google/callback", async (req, res) => {
     const redirectBase = appBaseUrl || "";
     try {
-      await calendarSyncService.handleCallback({ code: String(req.query.code || ""), state: String(req.query.state || "") });
+      await calendarSyncService.handleCallback({
+        code: String(req.query.code || ""),
+        state: String(req.query.state || ""),
+        sessionId: resolveSessionId(req),
+      });
       res.redirect(`${redirectBase}/settings?google=connected`);
     } catch (error) {
       res.redirect(`${redirectBase}/settings?google=error`);
@@ -54,7 +59,9 @@ function createGoogleCalendarRoutes({
 
   router.get("/integrations/google/connect", (req, res) => {
     try {
-      return sendApiSuccess(res, req, { url: calendarSyncService.buildAuthUrl(req.userContext.userId) });
+      return sendApiSuccess(res, req, {
+        url: calendarSyncService.buildAuthUrl(req.userContext.userId, { sessionId: resolveSessionId(req) }),
+      });
     } catch (error) {
       return sendApiError(res, req, error);
     }

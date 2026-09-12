@@ -7,6 +7,8 @@ const path = require("path");
 process.env.GOOGLE_CLIENT_ID = "test-client-id";
 process.env.GOOGLE_CLIENT_SECRET = "test-secret";
 process.env.GOOGLE_OAUTH_REDIRECT = "https://erp.test/api/integrations/google/callback";
+process.env.GOOGLE_TOKEN_ENC_KEY = "a".repeat(64);
+process.env.GOOGLE_OAUTH_STATE_KEY = "calendar-state-test-key-with-at-least-thirty-two-bytes";
 process.env.ADMIN_REGISTER_NUMBERS = "AP23110010419";
 
 const oauth = require("../src/config/googleOAuth");
@@ -134,11 +136,14 @@ test("synced-item bookkeeping", () => {
 
 /* ---------- sync service ---------- */
 
-test("OAuth state is signed and tamper-evident", () => {
+test("OAuth state is signed, one-time, expiring, and session-bound", () => {
   const svc = new CalendarSyncService({ tokenStore: freshTokenStore() });
-  const url = svc.buildAuthUrl("AP23110010001");
+  const url = svc.buildAuthUrl("AP23110010001", { sessionId: "session-a" });
   const state = new URL(url).searchParams.get("state");
-  assert.equal(svc._verifyState(state), "AP23110010001");
+  assert.equal(svc._verifyState(state, "session-a"), "AP23110010001");
+  assert.equal(svc._verifyState(state, "session-a"), null, "the consumed nonce cannot replay");
+  const second = new URL(svc.buildAuthUrl("AP23110010001", { sessionId: "session-a" })).searchParams.get("state");
+  assert.equal(svc._verifyState(second, "wrong-session"), null);
   assert.equal(svc._verifyState(state.slice(0, -2) + "xx"), null);
   assert.equal(svc._verifyState("garbage"), null);
 });
@@ -147,9 +152,9 @@ test("handleCallback exchanges the code, stores tokens, and creates the ERP cale
   const store = freshTokenStore();
   const { fetchImpl, calls } = mockGoogle();
   const svc = new CalendarSyncService({ tokenStore: store, fetchImpl });
-  const state = new URL(svc.buildAuthUrl("u1")).searchParams.get("state");
+  const state = new URL(svc.buildAuthUrl("u1", { sessionId: "session-u1" })).searchParams.get("state");
 
-  const res = await svc.handleCallback({ code: "code-1", state });
+  const res = await svc.handleCallback({ code: "code-1", state, sessionId: "session-u1" });
   assert.equal(res.connected, true);
   assert.equal(store.get("u1").calendarId, "cal-erp-1");
   assert.ok(calls.some((c) => c.method === "POST" && c.url.endsWith("/calendars")));
@@ -159,8 +164,8 @@ test("syncTimetable creates events, is idempotent, and prunes removed periods", 
   const store = freshTokenStore();
   const { fetchImpl, calls } = mockGoogle();
   const svc = new CalendarSyncService({ tokenStore: store, fetchImpl });
-  const state = new URL(svc.buildAuthUrl("u1")).searchParams.get("state");
-  await svc.handleCallback({ code: "c", state });
+  const state = new URL(svc.buildAuthUrl("u1", { sessionId: "session-u1" })).searchParams.get("state");
+  await svc.handleCallback({ code: "c", state, sessionId: "session-u1" });
   calls.length = 0;
 
   const first = await svc.syncTimetable("u1", TIMETABLE);
@@ -184,8 +189,8 @@ test("syncDeadlines creates one-off events with reminders", async () => {
   const store = freshTokenStore();
   const { fetchImpl, calls } = mockGoogle();
   const svc = new CalendarSyncService({ tokenStore: store, fetchImpl });
-  const state = new URL(svc.buildAuthUrl("u1")).searchParams.get("state");
-  await svc.handleCallback({ code: "c", state });
+  const state = new URL(svc.buildAuthUrl("u1", { sessionId: "session-u1" })).searchParams.get("state");
+  await svc.handleCallback({ code: "c", state, sessionId: "session-u1" });
   calls.length = 0;
 
   const r = await svc.syncDeadlines("u1", [
@@ -201,8 +206,8 @@ test("disconnect deletes our calendar, revokes, and clears the store", async () 
   const store = freshTokenStore();
   const { fetchImpl, calls } = mockGoogle();
   const svc = new CalendarSyncService({ tokenStore: store, fetchImpl });
-  const state = new URL(svc.buildAuthUrl("u1")).searchParams.get("state");
-  await svc.handleCallback({ code: "c", state });
+  const state = new URL(svc.buildAuthUrl("u1", { sessionId: "session-u1" })).searchParams.get("state");
+  await svc.handleCallback({ code: "c", state, sessionId: "session-u1" });
   await svc.syncTimetable("u1", TIMETABLE);
   calls.length = 0;
 
@@ -299,7 +304,10 @@ test("routes: status, connect, callback redirect, disconnect", async () => {
   assert.match(connect.body.url, /accounts\.google\.com/);
   const state = new URL(connect.body.url).searchParams.get("state");
 
-  const cb = await invokeRouter(router, { url: `/integrations/google/callback?code=c&state=${encodeURIComponent(state)}` });
+  const cb = await invokeRouter(router, {
+    url: `/integrations/google/callback?code=c&state=${encodeURIComponent(state)}`,
+    headers: auth,
+  });
   assert.equal(cb.status, 302);
   assert.match(cb.location, /settings\?google=connected/);
   assert.equal(store.isConnected("AP1"), true);

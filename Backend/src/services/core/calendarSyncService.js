@@ -22,6 +22,7 @@ const { validAccessToken } = require("./googleTokenAccess");
 const CAL_API = "https://www.googleapis.com/calendar/v3";
 const TZ = "Asia/Kolkata";
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
 function nowIso() {
   return new Date().toISOString();
@@ -48,39 +49,49 @@ class CalendarSyncService {
   /* ---------- OAuth state (signed) ---------- */
 
   _stateSecret() {
-    // Reuse the token store's meta table for a stable per-deployment secret.
-    const db = this.tokenStore.db;
-    const row = db.prepare("SELECT value FROM google_meta WHERE key = 'state_secret'").get();
-    if (row?.value) return row.value;
-    const s = crypto.randomBytes(24).toString("hex");
-    db.prepare("INSERT OR REPLACE INTO google_meta (key, value) VALUES ('state_secret', ?)").run(s);
-    return s;
+    const secret = String(process.env.GOOGLE_OAUTH_STATE_KEY || "");
+    if (secret.length >= 32) return secret;
+    if (process.env.NODE_ENV === "production") {
+      throw Object.assign(new Error("GOOGLE_OAUTH_STATE_KEY must be configured in production"), { status: 503 });
+    }
+    if (!this._developmentStateSecret) this._developmentStateSecret = crypto.randomBytes(32).toString("hex");
+    return this._developmentStateSecret;
   }
 
-  buildAuthUrl(userId) {
+  buildAuthUrl(userId, { sessionId } = {}) {
     if (!this.available()) throw Object.assign(new Error("Google Calendar is not configured"), { status: 503 });
-    const nonce = crypto.randomBytes(8).toString("hex");
-    const payload = `${userId}.${nonce}`;
-    const sig = crypto.createHmac("sha256", this._stateSecret()).update(payload).digest("hex").slice(0, 32);
+    if (!sessionId) throw Object.assign(new Error("Authenticated session required for Google connection"), { status: 401 });
+    const nonce = crypto.randomBytes(32).toString("base64url");
+    const nonceHash = crypto.createHash("sha256").update(nonce).digest("hex");
+    const expiresAt = Date.now() + OAUTH_STATE_TTL_MS;
+    this.tokenStore.createOAuthState({ nonceHash, userId, sessionId, expiresAt });
+    const payload = `${nonce}.${expiresAt}`;
+    const sig = crypto.createHmac("sha256", this._stateSecret()).update(payload).digest("base64url");
     return oauth.buildAuthUrl(`${payload}.${sig}`);
   }
 
-  _verifyState(state) {
+  _verifyState(state, sessionId) {
     const parts = String(state || "").split(".");
     if (parts.length !== 3) return null;
-    const [userId, nonce, sig] = parts;
+    const [nonce, expiresAtRaw, sig] = parts;
+    const expiresAt = Number(expiresAtRaw);
+    if (!Number.isSafeInteger(expiresAt) || expiresAt <= Date.now()) return null;
     const expected = crypto
       .createHmac("sha256", this._stateSecret())
-      .update(`${userId}.${nonce}`)
-      .digest("hex")
-      .slice(0, 32);
-    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? userId : null;
+      .update(`${nonce}.${expiresAt}`)
+      .digest("base64url");
+    const signature = Buffer.from(sig);
+    const expectedSignature = Buffer.from(expected);
+    if (signature.length !== expectedSignature.length || !crypto.timingSafeEqual(signature, expectedSignature)) return null;
+    const record = this.tokenStore.consumeOAuthState(crypto.createHash("sha256").update(nonce).digest("hex"));
+    if (!record || record.expiresAt !== expiresAt || record.sessionId !== String(sessionId || "")) return null;
+    return record.userId;
   }
 
   /* ---------- connect / disconnect ---------- */
 
-  async handleCallback({ code, state }) {
-    const userId = this._verifyState(state);
+  async handleCallback({ code, state, sessionId }) {
+    const userId = this._verifyState(state, sessionId);
     if (!userId) throw Object.assign(new Error("Invalid OAuth state"), { status: 400 });
 
     const tokens = await oauth.exchangeCode(code, { fetchImpl: this.fetch });
