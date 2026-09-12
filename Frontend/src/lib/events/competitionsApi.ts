@@ -843,8 +843,6 @@ export async function inviteToPersistentTeam(
 
 export async function getMyPersistentTeamInvitations(): Promise<PersistentTeamInvitation[]> {
   if (isStaticPrototype()) {
-    const { getPrototypeTeamInvitations } = await import('./prototypeEventState');
-    const { getCurrentRegNo } = await import('../core/identity');
     const regNo = getCurrentRegNo();
     return regNo ? getPrototypeTeamInvitations(regNo) : [];
   }
@@ -881,8 +879,6 @@ export async function respondToPersistentTeamInvitation(
   accept: boolean
 ): Promise<void> {
   if (isStaticPrototype()) {
-    const { updatePrototypeTeamInvitationStatus, getPrototypeTeamInvitations, getPrototypePersistentTeam, savePrototypePersistentTeam } = await import('./prototypeEventState');
-    const { getCurrentRegNo } = await import('../core/identity');
     const regNo = getCurrentRegNo();
     if (!regNo) return;
     const invitations = getPrototypeTeamInvitations(regNo);
@@ -892,7 +888,6 @@ export async function respondToPersistentTeamInvitation(
 
     // If accepted, add to team members
     if (accept) {
-      const { getPrototypePersistentTeam, savePrototypePersistentTeam } = await import('./prototypeEventState');
       const team = getPrototypePersistentTeam(invitation.teamId);
       if (team) {
         const memberExists = team.members.some(m => m.regNo === regNo);
@@ -918,8 +913,6 @@ export async function cancelPersistentTeamInvitation(
   inviteeRegNo: string
 ): Promise<void> {
   if (isStaticPrototype()) {
-    const { deletePrototypeTeamInvitation } = await import('./prototypeEventState');
-    const { getCurrentRegNo } = await import('../core/identity');
     const regNo = getCurrentRegNo();
     if (!regNo) return;
     deletePrototypeTeamInvitation(inviteeRegNo, teamId);

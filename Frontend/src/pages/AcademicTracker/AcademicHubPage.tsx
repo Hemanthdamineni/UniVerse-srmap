@@ -30,7 +30,6 @@ import { PlannerTab } from "./hub/PlannerTab";
 import { RisksTab } from "./hub/RisksTab";
 import { ActionTab } from "./hub/ActionTab";
 import { useStudentGraph } from "../../hooks/useStudentGraph";
-import { DeadlineTimeline } from "./hub/DeadlineTimeline";
 
 export default function AcademicHubPage() {
   const navigate = useNavigate();
@@ -189,10 +188,6 @@ export default function AcademicHubPage() {
               ),
             }))}
           />
-
-          {/* Merged deadline timeline (Batch B12) — visible on every tab; it
-              renders nothing when there's nothing coming up. */}
-          <DeadlineTimeline />
 
           {activeTab === "overview" && (
             <OverviewTab
