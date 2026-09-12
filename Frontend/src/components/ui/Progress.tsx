@@ -67,6 +67,24 @@ const sizeMap = {
 
 export function StarRating({ value, max = 5, onChange, size = "md", className }: StarRatingProps) {
   const interactive = !!onChange;
+  const selectedIndex = Math.min(Math.max(value - 1, 0), max - 1);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>, index: number) => {
+    if (!onChange) return;
+    let next: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowUp") next = Math.min(max, index + 2);
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") next = Math.max(1, index);
+    if (event.key === "Home") next = 1;
+    if (event.key === "End") next = max;
+    if (event.key === " " || event.key === "Enter") next = index + 1;
+    if (next === null) return;
+    event.preventDefault();
+    onChange(next);
+    const group = event.currentTarget.parentElement;
+    requestAnimationFrame(() => {
+      group?.querySelector<HTMLElement>(`[data-star-rating-value="${next}"]`)?.focus();
+    });
+  };
 
   return (
     <span className={cn("inline-flex items-center gap-0.5", className)} role={interactive ? "radiogroup" : "img"} aria-label={`${value} out of ${max} stars`}>
@@ -81,12 +99,13 @@ export function StarRating({ value, max = 5, onChange, size = "md", className }:
               // though the glyph itself stays small.
               interactive && "size-11 cursor-pointer"
             )}
-            onClick={interactive ? () => onChange(i + 1) : undefined}
-            onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(i + 1); } } : undefined}
+            onClick={interactive ? () => onChange?.(i + 1) : undefined}
+            onKeyDown={interactive ? (event) => handleKeyDown(event, i) : undefined}
             role={interactive ? "radio" : undefined}
-            aria-checked={interactive ? filled : undefined}
+            aria-checked={interactive ? i + 1 === value : undefined}
             aria-label={interactive ? `${i + 1} star` : undefined}
-            tabIndex={interactive ? 0 : undefined}
+            tabIndex={interactive ? (i === selectedIndex ? 0 : -1) : undefined}
+            data-star-rating-value={interactive ? i + 1 : undefined}
           >
             <Star
               className={cn(
@@ -141,4 +160,3 @@ export function StatCard({ className, label, value, icon: Icon, delta }: StatCar
     </div>
   );
 }
-

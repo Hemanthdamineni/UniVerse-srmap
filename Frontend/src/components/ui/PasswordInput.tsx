@@ -21,9 +21,8 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 /**
- * Password field with a built-in show/hide toggle. The toggle is excluded
- * from tab order via tabIndex={-1} so keyboard users tab field → submit;
- * the field's own type stays password unless toggled.
+ * Password field with a keyboard-reachable show/hide toggle. The field's own
+ * type stays password unless the user explicitly toggles it.
  */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, containerClassName, ...props }, ref) => {
@@ -36,16 +35,16 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ref={ref}
           type={show ? "text" : "password"}
           className={cn(
-            "w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--comp-accent)]",
+            "w-full rounded-lg border border-[var(--comp-border)] bg-[var(--comp-surface)] px-3 py-2 text-sm outline-none focus-visible:border-[var(--comp-accent)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--comp-accent)_45%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--comp-surface)]",
             className
           )}
         />
         <button
           type="button"
-          tabIndex={-1}
           onClick={() => setShow((value) => !value)}
           aria-label={show ? "Hide password" : "Show password"}
-          className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center border-0 bg-transparent p-0.5 text-[var(--comp-text-secondary)] transition-colors hover:text-[var(--comp-accent)]"
+          aria-pressed={show}
+          className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center rounded p-1 text-[var(--comp-text-secondary)] transition-colors hover:text-[var(--comp-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--comp-accent)]"
         >
           <EyeIcon open={show} />
         </button>

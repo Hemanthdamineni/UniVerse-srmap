@@ -161,14 +161,12 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveClass("disabled:opacity-50");
   });
 
-  // -- Loading state (not built-in, so we test the pattern) ----------------
-  it("supports an externally-managed loading pattern via disabled + children", () => {
-    // The component has no built-in loading prop, but the common pattern
-    // is to disable the button and swap children to show a spinner.
+  // -- Loading state --------------------------------------------------------
+  it("treats loading as an accessible disabled state without leaking a DOM prop", () => {
     const { rerender } = render(<Button loading>Submitting…</Button>);
-    // loading is not a recognized HTML attribute — React drops it, so the
-    // button remains enabled. Users must pass disabled explicitly.
-    expect(screen.getByRole("button")).toBeEnabled();
+    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button")).not.toHaveAttribute("loading");
 
     rerender(
       <Button disabled aria-busy="true">
