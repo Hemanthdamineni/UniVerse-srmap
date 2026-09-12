@@ -24,7 +24,8 @@ function isBypassedPath(req) {
 
 function memoryRateLimiter() {
   const buckets = new Map();
-  const SWEEP_THRESHOLD = 5000;
+  const MAX_BUCKETS = 10_000;
+  let nextSweepAt = 0;
 
   function sweep(windowStart) {
     for (const [key, entry] of buckets) {
@@ -44,13 +45,18 @@ function memoryRateLimiter() {
     const key = `${RATE_LIMIT_REDIS_PREFIX}:mem:${ip}`;
     const windowStart = now - RATE_LIMIT_WINDOW_MS;
 
-    if (buckets.size > SWEEP_THRESHOLD) {
+    if (now >= nextSweepAt) {
       sweep(windowStart);
+      nextSweepAt = now + Math.min(RATE_LIMIT_WINDOW_MS, 60_000);
+    }
+    if (!buckets.has(key) && buckets.size >= MAX_BUCKETS) {
+      buckets.delete(buckets.keys().next().value);
     }
 
     const entry = buckets.get(key) || [];
     const recent = entry.filter((timestamp) => timestamp >= windowStart);
     recent.push(now);
+    buckets.delete(key);
     buckets.set(key, recent);
 
     res.setHeader("x-ratelimit-limit", String(RATE_LIMIT_MAX));
@@ -132,13 +138,25 @@ function createLoginRateLimitMiddleware({ redisClient } = {}) {
   const max = LOGIN_RATE_LIMIT_MAX;
   const prefix = LOGIN_RATE_LIMIT_REDIS_PREFIX;
   const fallbackBuckets = new Map();
+  const maxFallbackBuckets = 10_000;
+  let nextFallbackSweepAt = 0;
 
   function fallback(req, res, next) {
     const now = Date.now();
     const ip = extractIp(req);
     const key = `${prefix}:fallback:${ip}`;
+    if (now >= nextFallbackSweepAt) {
+      for (const [bucketKey, timestamps] of fallbackBuckets) {
+        if (!timestamps.some((timestamp) => timestamp >= now - windowMs)) fallbackBuckets.delete(bucketKey);
+      }
+      nextFallbackSweepAt = now + Math.min(windowMs, 60_000);
+    }
+    if (!fallbackBuckets.has(key) && fallbackBuckets.size >= maxFallbackBuckets) {
+      fallbackBuckets.delete(fallbackBuckets.keys().next().value);
+    }
     const recent = (fallbackBuckets.get(key) || []).filter((timestamp) => timestamp >= now - windowMs);
     recent.push(now);
+    fallbackBuckets.delete(key);
     fallbackBuckets.set(key, recent);
     res.setHeader("x-ratelimit-limit", String(max));
     res.setHeader("x-ratelimit-remaining", String(Math.max(0, max - recent.length)));

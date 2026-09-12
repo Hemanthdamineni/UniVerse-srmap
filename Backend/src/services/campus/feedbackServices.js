@@ -633,10 +633,13 @@ const cacheStatsByPolicy = new Map();
 function normalizePath(path) {
   const raw = String(path || "").split("?")[0];
   if (!raw) return "unknown";
-
-  return raw
-    .replace(/\/[0-9a-fA-F-]{10,}/g, "/:id")
-    .replace(/\/[0-9]+/g, "/:n");
+  // HTTP metrics must be fed route templates (`/tickets/:id`), not request
+  // URLs. A raw URL can contain unbounded attacker-controlled segments and
+  // would create permanent Prometheus series. Retain only a tiny static
+  // allowlist for direct callers such as health probes.
+  if (raw.includes("/:")) return raw.slice(0, 240);
+  if (["/health", "/live", "/ready", "/metrics", "/telemetry"].includes(raw)) return raw;
+  return "unmatched";
 }
 
 function pageGroup(pageKey) {
@@ -749,4 +752,5 @@ module.exports = {
   setFinancePaidSourceRows,
   updateCacheHitRatio,
   recordFrontendTelemetry,
+  normalizePath,
 };

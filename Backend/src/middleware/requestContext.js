@@ -6,6 +6,13 @@ function getClientIp(req) {
   return req.ip || req.socket?.remoteAddress || undefined;
 }
 
+function metricRoute(req) {
+  const routePath = typeof req.route?.path === "string" ? req.route.path : "";
+  if (!routePath) return "unmatched";
+  const base = String(req.baseUrl || "").replace(/\/$/, "");
+  return `${base}${routePath}` || "unmatched";
+}
+
 function createRequestContextMiddleware() {
   return function requestContext(req, res, next) {
     const requestId = String(req.header("x-request-id") || "").trim() || randomUUID();
@@ -23,7 +30,8 @@ function createRequestContextMiddleware() {
 
       recordHttpRequest({
         method: req.method,
-        path,
+        // Use the Express template, never attacker-controlled originalUrl.
+        path: metricRoute(req),
         statusCode: res.statusCode,
         durationMs,
       });
