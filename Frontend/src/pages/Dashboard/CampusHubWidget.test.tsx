@@ -203,6 +203,29 @@ describe("CampusHubWidget", () => {
     expect(screen.getByText("Matches your skills: Python")).toBeInTheDocument();
   });
 
+  it("auto-switches to the Career tab when there are no events but opportunities exist", async () => {
+    vi.mocked(listEvents).mockResolvedValue([]);
+    mockListOpportunities.mockResolvedValue({ items: mockOpportunities });
+    mockListApplications.mockResolvedValue({ items: [] });
+    renderWidget();
+
+    await waitFor(() => {
+      expect(screen.getByText("Frontend Developer Intern")).toBeInTheDocument();
+    });
+    expect(mockListOpportunities).toHaveBeenCalledWith(expect.objectContaining({ sort: "fit" }));
+  });
+
+  it("stays on the Events tab (empty state) when neither events nor opportunities exist", async () => {
+    vi.mocked(listEvents).mockResolvedValue([]);
+    mockListOpportunities.mockResolvedValue({ items: [] });
+    mockListApplications.mockResolvedValue({ items: [] });
+    renderWidget();
+
+    await waitFor(() => {
+      expect(screen.getByText("No upcoming events right now.")).toBeInTheDocument();
+    });
+  });
+
   it("navigates to an event on click", async () => {
     resolveHappyApis();
     renderWidget();

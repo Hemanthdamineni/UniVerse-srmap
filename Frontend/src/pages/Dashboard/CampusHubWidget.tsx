@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -89,8 +89,12 @@ export default function CampusHubWidget() {
     setCareerState("loading");
     setCareerError(null);
     try {
+      // sort=fit ranks by branch/year eligibility, skill match, and deadline
+      // urgency together (B7 / T4.2.1-3) — the same "closest match to the
+      // profile and closest deadline" ranking the career portal itself uses.
+      // Falls back to a plain relevance sort when the graph service isn't wired.
       const [ops, apps] = await Promise.all([
-        listOpportunities({ type: "all", deadlineSoon: "true", limit: "3" }),
+        listOpportunities({ sort: "fit", limit: "3" }),
         listApplications(),
       ]);
       setOpportunities(ops.items || []);
@@ -106,6 +110,20 @@ export default function CampusHubWidget() {
     fetchEvents();
     fetchCareer();
   }, []);
+
+  // Events take priority once loaded, but if there are none, auto-switch to
+  // whichever opportunities are available instead of leaving the widget on
+  // an empty events tab. Only fires once, on initial load — a manual tab
+  // switch afterwards is never overridden.
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (autoSelectedRef.current) return;
+    if (eventsState === "loading" || careerState === "loading") return;
+    autoSelectedRef.current = true;
+    if (eventsState !== "data" && careerState === "data") {
+      setActiveTab("career");
+    }
+  }, [eventsState, careerState]);
 
   const eventsBadge =
     eventsState === "data" && events.length > 0
