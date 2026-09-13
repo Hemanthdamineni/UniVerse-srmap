@@ -28,7 +28,7 @@
 │                       nginx (in-container, compose.ingress.yml)            │
 │   - TLS termination                                                        │
 │   - /api/*    → proxy to backend:5000                                      │
-│   - /files/*  → static alias of /app/data (uploads/certificates/etc)       │
+│   - /files/*  → static alias of /Backend/data (uploads/certificates/etc)   │
 │   - /*        → static alias of /usr/share/nginx/html (Frontend dist)     │
 └────────────────┬─────────────────────────────────────────────────────────────┘
                  │

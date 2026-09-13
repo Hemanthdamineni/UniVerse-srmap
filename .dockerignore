@@ -1,0 +1,31 @@
+# Backend build context is now the repo root (needed to ship Scraper/
+# alongside Backend/ — see Backend/Dockerfile). Keep the context small and
+# never leak local runtime state or secrets into a build.
+
+.git
+**/node_modules
+**/__pycache__
+**/*.pyc
+
+.env
+.env.*
+!.env.*.example
+
+Frontend/dist
+Frontend/android-ci
+Frontend/android
+
+Scraper/venv
+Scraper/logs
+Scraper/.scraper.lock
+Scraper/.run-now
+
+# NOTE: Backend/data is intentionally NOT ignored — Backend/Dockerfile
+# copies it explicitly (it is overlaid by the ./Backend/data bind mount
+# at runtime, but must exist at build time for that COPY to succeed).
+Backend/load-tests
+Backend/scripts/capacity/results
+
+infra/certs
+infra/oracle
+docs

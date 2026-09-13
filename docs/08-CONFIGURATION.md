@@ -205,10 +205,10 @@ services:
       FEATURE_ERP_V2_API: 1
       FEATURE_ERP_CACHED_FIRST: 1
       FEATURE_AUTH_COOKIE_MODE: 1
-      CONTENT_DB_PATH: /app/data/content.sqlite
-      EXTERNAL_DB_PATH: /app/data/external-pages.sqlite
-      EVENTS_DB_PATH: /app/data/events.sqlite
-    volumes: ["./Backend/data:/app/data"]
+      CONTENT_DB_PATH: /Backend/data/content.sqlite
+      EXTERNAL_DB_PATH: /Backend/data/external-pages.sqlite
+      EVENTS_DB_PATH: /Backend/data/events.sqlite
+    volumes: ["./Backend/data:/Backend/data"]
     depends_on: [redis]
 
   redis:

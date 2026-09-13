@@ -17,8 +17,10 @@ x-deploy-resources: &deploy-resources
 services:
   backend:
     build:
-      context: ./Backend
-      dockerfile: Dockerfile
+      # Repo root, not ./Backend: the image also ships the sibling
+      # Scraper/ directory (see Backend/Dockerfile).
+      context: .
+      dockerfile: Backend/Dockerfile
     container_name: universe-srmap-backend
     ports:
       - "127.0.0.1:5000:5000"
@@ -31,18 +33,19 @@ services:
       - FEATURE_ERP_V2_API=1
       - FEATURE_ERP_CACHED_FIRST=1
       - FEATURE_AUTH_COOKIE_MODE=1
-      - CONTENT_DB_PATH=/app/data/content.sqlite
-      - EXTERNAL_DB_PATH=/app/data/external-pages.sqlite
-      - EVENTS_DB_PATH=/app/data/events.sqlite
-      - EVENTS_DATA_DIR=/app/data/events
-      # Scraper disabled in container: Scraper/venv is not shipped in the image.
-      # The supervisor reflects this via /api/career/health ("unavailable" state).
-      # Set CAREER_SCRAPER_ENABLED=1 and ship Scraper/venv to enable.
+      - CONTENT_DB_PATH=/Backend/data/content.sqlite
+      - EXTERNAL_DB_PATH=/Backend/data/external-pages.sqlite
+      - EVENTS_DB_PATH=/Backend/data/events.sqlite
+      - EVENTS_DATA_DIR=/Backend/data/events
+      # The image ships its own Scraper/venv (see Backend/Dockerfile), but the
+      # scraper still defaults to off — set CAREER_SCRAPER_ENABLED=1 in .env
+      # to enable it. The supervisor reflects the disabled state via
+      # /api/career/health ("disabled").
       - CAREER_SCRAPER_ENABLED=${CAREER_SCRAPER_ENABLED:-0}
       - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-}
       - ADMIN_CONTENT_PASSWORD=${ADMIN_CONTENT_PASSWORD:-}
     volumes:
-      - ./Backend/data:/app/data
+      - ./Backend/data:/Backend/data
     depends_on:
       redis:
         condition: service_healthy

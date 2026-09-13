@@ -109,7 +109,7 @@ location /api/ {
 
 # Static file serving (from backend data directory)
 location /files/ {
-    alias /app/data/;
+    alias /Backend/data/;
     autoindex off;
     expires 7d;
 }
