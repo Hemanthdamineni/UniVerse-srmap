@@ -212,6 +212,32 @@ describe("Schedule", () => {
     expect(completedBadges.length).toBeGreaterThan(0);
   });
 
+  it("hides Free Period rows on mobile but keeps each visible row's own time label, even with a single class", () => {
+    const data = makeTimetableData({
+      days: [
+        {
+          day: "Monday",
+          slots: [
+            { classDetails: "" },
+            { classDetails: "CS102" },
+            { classDetails: "" },
+          ],
+        },
+      ],
+    });
+    mockExecutePipeline.mockReturnValue({ isValid: true, data });
+    const { container } = renderSchedule({}, MONDAY);
+
+    const rows = container.querySelectorAll('div[class*="basis-0"]');
+    expect(rows.length).toBe(3);
+    expect(rows[0].className).toContain("max-md:hidden");
+    expect(rows[1].className).not.toContain("max-md:hidden");
+    expect(rows[2].className).toContain("max-md:hidden");
+
+    // The lone visible class keeps its own slot's time (10:00 am), not slot 1's (9:00 am).
+    expect(screen.getByText("10:00 am")).toBeInTheDocument();
+  });
+
   it("handles new format with em dash: 'CODE(ROOM) — Full Subject Name'", () => {
     const data = makeTimetableData({
       days: [

@@ -175,6 +175,8 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
     };
   });
 
+  const hasAnyClass = scheduleEntries.some((entry) => !entry.isEmpty);
+
   const entryRefs = useRef<Array<HTMLDivElement | null>>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
   const hasAutoScrolledRef = useRef(false);
@@ -227,13 +229,24 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
           fixed blank footer and the floating search/shortcuts overlay
           always sits on empty card surface, never on a row. */}
       <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+        {/* Mobile only: a plain "no periods" message instead of a stack of
+            Free Period rows for every empty slot. md+ keeps the full grid
+            (equal-height rows, free periods included) unchanged. */}
+        {!hasAnyClass ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-1 py-8 text-center md:hidden">
+            <p className="body-text text-sm italic">No classes scheduled today</p>
+          </div>
+        ) : null}
+
         {scheduleEntries.map((entry, index) => (
           <div
             key={index}
             ref={(el) => {
               entryRefs.current[index] = el;
             }}
-            className="flex min-h-[70px] grow basis-0 items-stretch gap-2"
+            className={`flex min-h-[70px] grow basis-0 items-stretch gap-2 ${
+              entry.isEmpty ? "max-md:hidden" : ""
+            }`}
           >
             <div className="flex w-12 shrink-0 flex-col items-start pt-2.5 min-[480px]:w-14">
               <p className="label-text leading-tight">
@@ -297,7 +310,12 @@ function Schedule({ scheduleData, selectedDate }: { scheduleData?: unknown; sele
         ))}
 
         {/* Closing boundary of the teaching day */}
-        <p className="text-xs" style={{ color: 'var(--comp-text-muted)' }}>{closingTimeLabel}</p>
+        <p
+          className={`text-xs ${!hasAnyClass ? "max-md:hidden" : ""}`}
+          style={{ color: 'var(--comp-text-muted)' }}
+        >
+          {closingTimeLabel}
+        </p>
       </div>
     </div>
   );
