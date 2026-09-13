@@ -235,7 +235,15 @@ export default function OnboardingFlow() {
   return (
     <Dialog open onOpenChange={(o) => !o && save.mutate(false)}>
       <DialogContent className="max-w-lg">
-        <div className="mb-4 flex items-center gap-1.5">
+        {/* DialogContent ships p-0 by design (callers that use
+            DialogHeader/DialogFooter get px-6/pt-6/pb-6 from those). This
+            flow renders raw children instead, so it needs its own padded
+            wrapper — without it every element here sits flush against the
+            dialog's edges. */}
+        <div className="p-6 max-md:p-4">
+        {/* pr-8: clears the close button, which is absolutely positioned
+            over DialogContent's own corner, not this wrapper's padding. */}
+        <div className="mb-4 flex items-center gap-1.5 pr-8">
           {STEPS.map((label, i) => (
             <div
               key={label}
@@ -362,6 +370,7 @@ export default function OnboardingFlow() {
               {isLast ? "Finish" : "Next"} {isLast ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
           </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>
