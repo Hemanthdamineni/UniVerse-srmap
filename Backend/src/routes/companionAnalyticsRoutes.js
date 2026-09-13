@@ -15,7 +15,10 @@ function createCompanionAnalyticsRoutes({ analyticsStore, sessionStore, adminPas
     }
   }
 
-  router.post("/analytics/events", (req, res) => {
+  // Path deliberately avoids "analytics"/"events"/"beacon"/"track" — those
+  // segments trigger EasyPrivacy/uBlock Origin's request-blocking heuristics
+  // for sendBeacon-originated POSTs, silently dropping every telemetry call.
+  router.post("/telemetry/collect", (req, res) => {
     try {
       if (!req.userContext?.isAuthenticated) {
         const error = new Error("Authentication required");

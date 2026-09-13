@@ -37,9 +37,10 @@ export default function AppProviders({ children }: { children: ReactNode }) {
         persistOptions={{
           persister,
           maxAge: QUERY_PERSIST_MAX_AGE,
-          // Bump when the query-shape changes so a stale snapshot can't hydrate
-          // into a newer client.
-          buster: import.meta.env.VITE_APP_VERSION || "1",
+          // __APP_BUILD_ID__ changes every build (see vite.config.ts), so a
+          // deploy always invalidates the last localStorage snapshot instead
+          // of silently hydrating a possibly stale/mismatched-shape cache.
+          buster: __APP_BUILD_ID__,
         }}
       >
         {children}

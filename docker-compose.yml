@@ -14,6 +14,18 @@ x-deploy-resources: &deploy-resources
       reservations:
         memory: 128M
 
+# backend runs two independent headless-Chromium installs (Node/Playwright
+# for ERP scraping, Python/Playwright for the career scraper) that can run
+# concurrently — it was sharing this same 512M ceiling with redis, which has
+# no such memory pressure. Give it its own, larger limit instead.
+x-deploy-resources-backend: &deploy-resources-backend
+  deploy:
+    resources:
+      limits:
+        memory: 1024M
+      reservations:
+        memory: 128M
+
 services:
   backend:
     build:
@@ -57,7 +69,7 @@ services:
     healthcheck:
       <<: *healthcheck
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/api/ready"]
-    <<: *deploy-resources
+    <<: *deploy-resources-backend
 
   redis:
     image: redis:7-alpine

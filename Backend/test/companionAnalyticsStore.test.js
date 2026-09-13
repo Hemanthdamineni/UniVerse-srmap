@@ -181,7 +181,7 @@ test("Companion analytics routes collect events and protect reports behind admin
 
   const collected = await invokeRouter(router, {
     method: "POST",
-    url: "/analytics/events",
+    url: "/telemetry/collect",
     headers: { cookie: "erp_session=session-1" },
     body: {
       event: "lms_exam_prep_recommendations_viewed",

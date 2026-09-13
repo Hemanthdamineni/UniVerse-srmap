@@ -169,14 +169,6 @@ export default function CampusHubWidget() {
         ]}
       />
 
-      {activeTab === "career" && applicationCount > 0 && (
-        <div className="mb-2 flex shrink-0 justify-end">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-2 py-1 text-xs font-medium text-[var(--status-success-text)]">
-            {applicationCount} application{applicationCount !== 1 ? "s" : ""}
-          </span>
-        </div>
-      )}
-
       {activeTab === "events" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
           {eventsState === "loading" && (

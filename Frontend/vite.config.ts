@@ -93,6 +93,16 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    // Fed into PersistQueryClientProvider's `buster` (see AppProviders.tsx) so
+    // a build change invalidates any stale localStorage-persisted query cache.
+    // Falls back to a wall-clock stamp when neither is set, so even a local
+    // `npm run build` still gets a fresh buster instead of a constant that
+    // never changes across deploys.
+    __APP_BUILD_ID__: JSON.stringify(
+      process.env.VITE_APP_VERSION || process.env.GITHUB_SHA || String(Date.now())
+    ),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

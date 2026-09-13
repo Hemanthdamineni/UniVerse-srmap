@@ -75,7 +75,7 @@ describe("analytics", () => {
 
       expect(sendBeacon).toHaveBeenCalledTimes(1);
       expect(sendBeacon).toHaveBeenCalledWith(
-        "/api/analytics/events",
+        "/api/telemetry/collect",
         expect.any(SniffableBlob),
       );
 
@@ -112,7 +112,7 @@ describe("analytics", () => {
   // -----------------------------------------------------------------------
 
   describe("fetch fallback path", () => {
-    const fetchUrl = "/api/analytics/events" as const;
+    const fetchUrl = "/api/telemetry/collect" as const;
 
     it("uses fetch when sendBeacon is undefined", async () => {
       setSendBeacon(undefined);

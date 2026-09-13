@@ -52,9 +52,13 @@ export function track(event: TrackEvent, properties?: Record<string, unknown>): 
   };
   const body = JSON.stringify(payload);
 
+  // Path deliberately avoids "analytics"/"events"/"beacon"/"track" — EasyList/
+  // EasyPrivacy match on those segments (plus the beacon initiator type) and
+  // silently drop the request, which is why these calls were disappearing
+  // under uBlock Origin.
   if (navigator.sendBeacon) {
     const sent = navigator.sendBeacon(
-      "/api/analytics/events",
+      "/api/telemetry/collect",
       new Blob([body], { type: "application/json" })
     );
     if (sent) {
@@ -62,7 +66,7 @@ export function track(event: TrackEvent, properties?: Record<string, unknown>): 
     }
   }
 
-  void fetch("/api/analytics/events", {
+  void fetch("/api/telemetry/collect", {
     method: "POST",
     credentials: "include",
     keepalive: true,
