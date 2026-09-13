@@ -224,16 +224,8 @@ const OpportunityDetailPage: React.FC = () => {
     opp.eligibleYears.length === 0 ||
     (studentYear !== null && opp.eligibleYears.includes(studentYear));
 
-  // Determine layout density
-  const contentDensity = 
-    (opp.description?.length || 0) + 
-    (opp.requirements?.length || 0) + 
-    (opp.skills.length * 50);
-  const isSparse = contentDensity < 1200;
-  const containerMaxWidth = isSparse ? "max-w-5xl" : "";
-
   return (
-    <PageContainer className={`space-y-6 ${containerMaxWidth}`}>
+    <PageContainer className="space-y-6">
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
