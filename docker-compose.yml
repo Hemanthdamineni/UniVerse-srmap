@@ -18,9 +18,13 @@ services:
   backend:
     build:
       # Repo root, not ./Backend: the image also ships the sibling
-      # Scraper/ directory (see Backend/Dockerfile).
+      # Scraper/ directory (see Backend/Dockerfile). CI builds and pushes
+      # this image on every push to main (.github/workflows/build-images.yml)
+      # so a deploy is normally just `docker compose pull` — this `build:`
+      # stays only so `docker compose build` still works for local iteration.
       context: .
       dockerfile: Backend/Dockerfile
+    image: ${BACKEND_IMAGE:-ghcr.io/hemanthdamineni/universe-erp-backend:latest}
     container_name: universe-srmap-backend
     ports:
       - "127.0.0.1:5000:5000"
