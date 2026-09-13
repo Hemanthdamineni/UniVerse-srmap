@@ -214,6 +214,11 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
     else setSidebarClosed(true);
   };
 
+  // The mobile drawer is an overlay, not a permanent rail — there's no width
+  // to reclaim by collapsing it, so it always renders expanded regardless of
+  // the desktop rail's collapse state.
+  const effectiveClosed = sidebarClosed && !mobileDrawerOpen;
+
   return (
     <>
       {mobileDrawerOpen ? (
@@ -228,10 +233,10 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
       <div
         ref={sidebarRef}
         className={`sidebar h-full flex-col border-r transition-[width] duration-300 ${
-          sidebarClosed ? "w-16" : "w-64"
+          effectiveClosed ? "w-16" : "w-64"
         } ${
           mobileDrawerOpen
-            ? "fixed inset-y-0 left-0 z-30 flex w-64 shadow-2xl"
+            ? "fixed inset-y-0 left-0 z-30 flex shadow-2xl"
             : // Below md the bottom tab bar is the navigation; the unlabelled
               // icon rail would otherwise eat a third of a 390px viewport.
               "hidden md:relative md:flex"
@@ -243,34 +248,36 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
         }}
       >
       <div className="flex items-center justify-center gap-2 border-b px-4 py-2" style={{ borderColor: "var(--border)" }}>
-        {!sidebarClosed ? (
+        {!effectiveClosed ? (
           <BrandLogo height={52} className="shrink-0" />
         ) : null}
-        <button
-          type="button"
-          onClick={() => {
-            setSidebarClosed((prev) => !prev);
-            setOpenGroup(null);
-          }}
-          aria-label={sidebarClosed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!sidebarClosed}
-          className="absolute -right-3 top-7 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition-shadow hover:shadow-md"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface)" }}
-        >
-          {sidebarClosed ? (
-            <ChevronRightIcon className="h-4 w-4 text-[var(--text-primary)]" />
-          ) : (
-            <ChevronLeftIcon className="h-4 w-4 text-[var(--text-primary)]" />
-          )}
-        </button>
+        {!mobileDrawerOpen ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSidebarClosed((prev) => !prev);
+              setOpenGroup(null);
+            }}
+            aria-label={sidebarClosed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!sidebarClosed}
+            className="absolute -right-3 top-7 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition-shadow hover:shadow-md"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface)" }}
+          >
+            {sidebarClosed ? (
+              <ChevronRightIcon className="h-4 w-4 text-[var(--text-primary)]" />
+            ) : (
+              <ChevronLeftIcon className="h-4 w-4 text-[var(--text-primary)]" />
+            )}
+          </button>
+        ) : null}
       </div>
 
       <div className="sidebar-scroll-area flex-1 overflow-y-auto pt-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/25">
-        <nav className={`${sidebarClosed ? "px-2" : "px-4"} space-y-4`}>
+        <nav className={`${effectiveClosed ? "px-2" : "px-4"} space-y-4`}>
           {navSections.map((section) => (
             <div key={section.section} className="space-y-3">
               <div className="flex items-center gap-2 px-2 text-[0.68rem] uppercase tracking-[0.24em]">
-                {!sidebarClosed ? (
+                {!effectiveClosed ? (
                   <SidebarContrastText text={section.section} className="sidebar-item-muted" />
                 ) : (
                   <span className="sr-only">{section.section}</span>
@@ -286,11 +293,11 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                         to={item.route}
                         aria-label={item.label}
                         className={`sidebar-item sidebar-item-hover flex w-full items-center gap-3 rounded-lg px-2 py-2 font-semibold transition ${
-                          sidebarClosed ? "justify-center" : ""
+                          effectiveClosed ? "justify-center" : ""
                         } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
                       >
                         <SidebarNavIcon icon={item.icon} />
-                        {!sidebarClosed && <SidebarContrastText text={item.label} />}
+                        {!effectiveClosed && <SidebarContrastText text={item.label} />}
                       </Link>
                     );
                   }
@@ -298,9 +305,9 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                   const groupKey = `${section.section}:${item.label}`;
                   const isOpen = openGroup === groupKey;
                   const visibleChildren = item.children.filter((child) => showAdvanced || child.access === "B");
-                  
+
                   if (visibleChildren.length === 0) return null;
-                  
+
                   const activeChild = visibleChildren.some((child) => isActiveRoute(child.route));
 
                   return (
@@ -317,12 +324,12 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                         }`}
                         onClick={() => {
                           setOpenGroup((prev) => (prev === groupKey ? null : groupKey));
-                          if (sidebarClosed) setSidebarClosed(false);
+                          if (effectiveClosed) setSidebarClosed(false);
                         }}
                       >
                         <SidebarNavIcon icon={item.icon} />
-                        {!sidebarClosed ? <SidebarContrastText text={item.label} /> : null}
-                        {!sidebarClosed ? (
+                        {!effectiveClosed ? <SidebarContrastText text={item.label} /> : null}
+                        {!effectiveClosed ? (
                           <ChevronDownIcon
                             className={`sidebar-item-muted ml-auto h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                           />
@@ -334,7 +341,7 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                         role="region"
                         aria-labelledby={`${groupKey}-header`}
                         className={`ml-8 mt-1 overflow-hidden transition-all duration-300 ${
-                          isOpen && !sidebarClosed ? "visible max-h-[520px] opacity-100" : "invisible max-h-0 opacity-0"
+                          isOpen && !effectiveClosed ? "visible max-h-[520px] opacity-100" : "invisible max-h-0 opacity-0"
                         }`}
                       >
                         <div className="space-y-1">
@@ -362,10 +369,10 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
 
         <div className="mx-6 my-6 border-t" style={{ borderColor: "var(--border)" }} />
 
-        <nav className={`${sidebarClosed ? "px-2" : "px-4"} space-y-1`}>
+        <nav className={`${effectiveClosed ? "px-2" : "px-4"} space-y-1`}>
           {SHOW_MENU_MODE_TOGGLE ? (
             <div data-page-contrast="true" className="sidebar-segment-shell rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
-              {!sidebarClosed ? (
+              {!effectiveClosed ? (
                 <div className="sidebar-segment-track flex w-full overflow-hidden rounded-md">
                   <button
                     type="button"
@@ -405,11 +412,11 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                 aria-label={item.label}
                 onClick={handleLogout}
                 className={`sidebar-item sidebar-item-hover flex w-full items-center gap-3 rounded-lg px-2 py-2 font-medium transition ${
-                  sidebarClosed ? "justify-center" : ""
+                  effectiveClosed ? "justify-center" : ""
                 } ${isActiveRoute(item.route) ? "sidebar-item-active" : ""}`}
               >
                 <SidebarNavIcon icon={item.icon} />
-                {!sidebarClosed && <SidebarContrastText text={item.label} />}
+                {!effectiveClosed && <SidebarContrastText text={item.label} />}
               </button>
             ) : (
               <Link
@@ -418,24 +425,24 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
                 data-page-contrast="true"
                 aria-label={item.label}
                 className={`sidebar-item sidebar-item-hover flex w-full items-center gap-3 rounded-lg px-2 py-2 font-medium transition ${
-                  sidebarClosed ? "justify-center" : ""
+                  effectiveClosed ? "justify-center" : ""
                 }`}
               >
                 <SidebarNavIcon icon={item.icon} />
-                {!sidebarClosed && <SidebarContrastText text={item.label} />}
+                {!effectiveClosed && <SidebarContrastText text={item.label} />}
               </Link>
             )
           )}
         </nav>
 
-        {!sidebarClosed ? (
+        {!effectiveClosed ? (
           <div className="mt-auto px-6 pt-6 pb-2 text-[0.65rem] text-[var(--sidebar-item-muted)]">
             <div>© {new Date().getFullYear()} UniVerse, SRMAP Edition</div>
           </div>
         ) : null}
       </div>
 
-      <div className={`border-t p-2 flex ${sidebarClosed ? "flex-col items-center gap-2" : "items-center justify-between"}`} style={{ borderColor: "var(--border)" }}>
+      <div className={`border-t p-2 flex ${effectiveClosed ? "flex-col items-center gap-2" : "items-center justify-between"}`} style={{ borderColor: "var(--border)" }}>
         <Link
           to="/profile"
           data-page-contrast="true"
@@ -448,7 +455,7 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
             loading="lazy"
             onError={() => setPhotoFailed(true)}
           />
-          {!sidebarClosed ? (
+          {!effectiveClosed ? (
             <div className="flex-1 min-w-0 overflow-hidden">
               <p className="sidebar-item-muted text-xs truncate">
                 <SidebarContrastText text="Welcome back 👋" />
@@ -465,7 +472,7 @@ export default function Sidebar({ mobileNavOpen, onMobileNavClose }: SidebarProp
           ) : null}
         </Link>
       </div>
-      {!sidebarClosed && admin.potentialAdmin ? (
+      {!effectiveClosed && admin.potentialAdmin ? (
         <div className="px-3 pb-2">
           {admin.isAdmin ? (
             <div className="rounded-lg border border-[var(--status-open-border)] bg-[var(--status-open-bg)] px-3 py-2 text-xs font-semibold text-[var(--status-open-text)]">
