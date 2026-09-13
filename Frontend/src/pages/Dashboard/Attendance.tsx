@@ -64,12 +64,15 @@ export default function Attendance({ attendanceData }: { attendanceData?: any })
     <div className="flex h-full flex-col p-4">
       <h2 className="card-title mb-2 font-semibold shrink-0">Attendance</h2>
 
-      {/* Headline average + secondary stat tiles */}
-      <div className="mb-2 shrink-0 rounded border border-[var(--comp-border)] p-2 flex items-baseline justify-between gap-2">
+      {/* Headline average + secondary stat tiles. Hidden on mobile — the
+          dashboard's mobile card is graph-only so the chart isn't squeezed
+          under a KPI stack; md+ (the standalone Attendance page's card size)
+          keeps them. */}
+      <div className="mb-2 hidden shrink-0 rounded border border-[var(--comp-border)] p-2 md:flex items-baseline justify-between gap-2">
         <span className="text-xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{avgPct.toFixed(0)}%</span>
         <span className="label-text">Avg</span>
       </div>
-      <div className="mb-1.5 grid shrink-0 grid-cols-3 gap-2">
+      <div className="mb-1.5 hidden shrink-0 grid-cols-3 gap-2 md:grid">
         {secondaryStats.map(({ key, caption, value, color, tinted }) => (
           <div
             key={key}
