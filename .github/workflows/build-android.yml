@@ -91,7 +91,7 @@ jobs:
           else
             sed -i 's/<application/<application android:allowBackup="false"/' "$MANIFEST"
           fi
-          grep -o '<application[^>]*android:allowBackup="[^"]*"' "$MANIFEST"
+          grep 'android:allowBackup' "$MANIFEST"
 
       - name: Generate app icons from brand assets
         run: npx capacitor-assets generate --android
