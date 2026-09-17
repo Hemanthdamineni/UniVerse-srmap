@@ -23,7 +23,8 @@
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "cap:doctor": "npx cap doctor"
+    "cap:doctor": "npx cap doctor",
+    "apk:fetch": "gh release download android-latest --repo Hemanthdamineni/UniVerse-srmap -p UniVerse.apk -D ../android-builds --clobber"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.2",

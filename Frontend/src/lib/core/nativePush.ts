@@ -26,27 +26,34 @@ export async function initNativePush(): Promise<void> {
   }
   if (!cap.Capacitor?.isNativePlatform?.()) return;
 
-  const { PushNotifications } = await import("@capacitor/push-notifications");
-  const platform = cap.Capacitor.getPlatform();
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    const platform = cap.Capacitor.getPlatform();
 
-  const perm = await PushNotifications.checkPermissions();
-  const granted =
-    perm.receive === "granted" ? true : (await PushNotifications.requestPermissions()).receive === "granted";
-  if (!granted) return;
+    const perm = await PushNotifications.checkPermissions();
+    const granted =
+      perm.receive === "granted" ? true : (await PushNotifications.requestPermissions()).receive === "granted";
+    if (!granted) return;
 
-  PushNotifications.addListener("registration", (token) => {
-    if (!hasSessionAuth()) return;
-    void requestData("/api/notifications/native/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: token.value, platform }),
-    }).catch(() => undefined);
-  });
+    PushNotifications.addListener("registration", (token) => {
+      if (!hasSessionAuth()) return;
+      void requestData("/api/notifications/native/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token.value, platform }),
+      }).catch(() => undefined);
+    });
 
-  PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-    const url = action.notification?.data?.url;
-    if (typeof url === "string" && url.startsWith("/")) window.location.assign(url);
-  });
+    PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+      const url = action.notification?.data?.url;
+      if (typeof url === "string" && url.startsWith("/")) window.location.assign(url);
+    });
 
-  await PushNotifications.register();
+    await PushNotifications.register();
+  } catch {
+    // The native FCM SDK throws if Firebase hasn't been initialized (no
+    // google-services.json/plugin wired into the Android project yet — see
+    // docs/24-NATIVE-SHELL.md). Push is a best-effort enhancement; failing to
+    // register for it must never crash the app shell around it.
+  }
 }

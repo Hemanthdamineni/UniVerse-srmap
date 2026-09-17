@@ -108,6 +108,11 @@ and publishes to the `android-latest` release tag (a fixed tag so the
 download URL never changes); the release's own tag/body still records which
 commit and version each build came from.
 
+To pull the latest built APK down locally (e.g. to sideload it yourself),
+run `npm run apk:fetch` from `Frontend/` — it downloads the `android-latest`
+release asset into `android-builds/` at the repo root. That folder is
+gitignored; the APK is a generated binary, not something to commit.
+
 ## Remaining (needs accounts, or deferred)
 
 - **T7.1.4** iOS: no sideload path exists without an Apple Developer account

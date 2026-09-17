@@ -21,6 +21,11 @@ Frontend/dist/
 StaticHost/dist/
 .vite/
 
+# Local copy of the signed Android release APK (fetched from the
+# `android-latest` GitHub Release via `npm run apk:fetch` in Frontend/,
+# see docs/24-NATIVE-SHELL.md) — generated, not committed.
+android-builds/
+
 # ===========================
 # Test outputs
 # ===========================
