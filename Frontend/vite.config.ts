@@ -21,7 +21,7 @@ export default defineConfig({
           VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
-            includeAssets: ['CircularSrmLogo.png'],
+            includeAssets: ['favicon.png'],
             manifest: {
               name: 'UniVerse — SRMAP Edition',
               short_name: 'UniVerse',

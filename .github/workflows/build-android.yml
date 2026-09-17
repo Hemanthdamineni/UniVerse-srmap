@@ -77,6 +77,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Generate app icons from brand assets
+        run: npx capacitor-assets generate --android
+
       - name: Decode signing keystore
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
