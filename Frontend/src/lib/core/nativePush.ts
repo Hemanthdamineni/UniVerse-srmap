@@ -5,17 +5,30 @@
  * check mean `@capacitor/push-notifications` is only touched inside the native
  * shell. On native it requests permission, registers, and POSTs the device
  * token to the same notification layer the web-push channel uses.
+ *
+ * PUSH_CONFIGURED must stay `false` until a real Firebase project's
+ * `google-services.json` + the `com.google.gms.google-services` Gradle plugin
+ * are wired into the Android project (see docs/24-NATIVE-SHELL.md) and
+ * `FCM_SERVER_KEY` is set on the backend. Without that, the Android plugin's
+ * `register()` calls `FirebaseMessaging.getInstance()` natively, which throws
+ * because no default FirebaseApp exists — and Capacitor's bridge rethrows
+ * plugin-method exceptions as an uncaught RuntimeException on the handler
+ * thread (Bridge.java's `callPluginMethod`), which crashes the whole app
+ * before the failure ever reaches JS. A try/catch here cannot prevent that;
+ * the only fix is not making the native call at all.
  */
 
 import { requestData } from "./apiClient";
 import { hasSessionAuth } from "./session";
+
+const PUSH_CONFIGURED = false;
 
 type CapModule = { Capacitor: { isNativePlatform: () => boolean; getPlatform: () => string } };
 
 let started = false;
 
 export async function initNativePush(): Promise<void> {
-  if (started || typeof window === "undefined") return;
+  if (started || typeof window === "undefined" || !PUSH_CONFIGURED) return;
   started = true;
 
   let cap: CapModule;
@@ -51,9 +64,9 @@ export async function initNativePush(): Promise<void> {
 
     await PushNotifications.register();
   } catch {
-    // The native FCM SDK throws if Firebase hasn't been initialized (no
-    // google-services.json/plugin wired into the Android project yet — see
-    // docs/24-NATIVE-SHELL.md). Push is a best-effort enhancement; failing to
-    // register for it must never crash the app shell around it.
+    // Push is a best-effort enhancement — any failure here (permission
+    // plumbing, listener setup, etc.) must never take the app shell down
+    // with it. This does NOT protect against a misconfigured Firebase
+    // project; see the PUSH_CONFIGURED note above for why.
   }
 }
