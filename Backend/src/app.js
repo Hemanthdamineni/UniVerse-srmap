@@ -140,6 +140,19 @@ function createApp({
     ],
     createLoginRateLimitMiddleware({ redisClient })
   );
+  // Every /api/* response is dynamic (session-scoped ERP data, one-shot
+  // captchas, etc.) and must never be served from a cache. Express sets no
+  // Cache-Control by default, which leaves responses open to heuristic
+  // caching by any HTTP cache in the path — including the Android WebView's
+  // own disk cache, which (unlike a regular mobile browser tab, a separate
+  // cache store) can silently replay a stale GET and desync the native app
+  // from a regular browser hitting the same origin.
+  app.use("/api", (req, res, next) => {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    next();
+  });
   app.use("/api", express.json({ limit: "2mb" }));
 
   app.use(

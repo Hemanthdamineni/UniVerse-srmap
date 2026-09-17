@@ -178,8 +178,21 @@ export default function LoginPage() {
   ) => {
     setCaptchaLoading(true);
     try {
-      const r = await axios.get("/api/captcha", { timeout: CAPTCHA_FETCH_TIMEOUT_MS });
-      setCaptchaBase64(normalizeCaptchaImageSource(r.data?.captchaBase64));
+      const r = await axios.get("/api/captcha", {
+        timeout: CAPTCHA_FETCH_TIMEOUT_MS,
+        // A WebView (or any proxy sitting in front of the tunnel) can cache a
+        // GET by URL alone; the captcha payload must never be served stale.
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+        params: { _: Date.now() },
+      });
+      const normalizedCaptcha = normalizeCaptchaImageSource(r.data?.captchaBase64);
+      if (!normalizedCaptcha) {
+        // The request succeeded but the image field is missing/empty — treat
+        // this the same as a failure instead of silently showing "No captcha"
+        // next to a message that claims success.
+        throw new Error("EMPTY_CAPTCHA_PAYLOAD");
+      }
+      setCaptchaBase64(normalizedCaptcha);
       setSessionId(String(r.data?.sessionId || ""));
       const expiresInMs = Math.max(0, Number(r.data?.expiresInMs) || 0);
       setCaptchaTotalMs(expiresInMs);
@@ -189,11 +202,14 @@ export default function LoginPage() {
       if (opts.focusCaptcha) captchaInputRef.current?.focus();
     } catch (e: unknown) {
       const p = axios.isAxiosError(e) ? e.response?.data : null;
+      setCaptchaBase64("");
       setStatusTone("error");
       setStatusMessage(
-        axios.isAxiosError(e) && !p
-          ? "Couldn't reach the ERP to load a captcha. Check your connection, then tap Refresh."
-          : extractApiErrorMessage(p, "Failed to load captcha.")
+        e instanceof Error && e.message === "EMPTY_CAPTCHA_PAYLOAD"
+          ? "The ERP didn't return a captcha image. Tap Refresh to try again."
+          : axios.isAxiosError(e) && !p
+            ? "Couldn't reach the ERP to load a captcha. Check your connection, then tap Refresh."
+            : extractApiErrorMessage(p, "Failed to load captcha.")
       );
     } finally {
       setCaptchaLoading(false);
