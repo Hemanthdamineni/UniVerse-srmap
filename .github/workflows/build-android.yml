@@ -55,6 +55,14 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default `packages` input includes the legacy
+          # monolithic "tools" package, which Google removed from the SDK
+          # repository — sdkmanager now 404s on it. Gradle resolves
+          # build-tools/platforms itself via the Android Gradle Plugin, so
+          # platform-tools (adb etc.) is the only package actually needed
+          # here.
+          packages: "platform-tools"
 
       - name: Install frontend dependencies
         run: npm ci
