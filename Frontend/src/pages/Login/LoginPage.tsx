@@ -204,13 +204,17 @@ export default function LoginPage() {
       const p = axios.isAxiosError(e) ? e.response?.data : null;
       setCaptchaBase64("");
       setStatusTone("error");
-      setStatusMessage(
+      // TEMPORARY DIAGNOSTIC (remove once the native-only captcha bug is
+      // confirmed fixed): surface exactly what happened instead of a generic
+      // message, since the failure only reproduces on-device and there is no
+      // other way to see it without USB/remote debugging.
+      const diagnostic =
         e instanceof Error && e.message === "EMPTY_CAPTCHA_PAYLOAD"
-          ? "The ERP didn't return a captcha image. Tap Refresh to try again."
-          : axios.isAxiosError(e) && !p
-            ? "Couldn't reach the ERP to load a captcha. Check your connection, then tap Refresh."
-            : extractApiErrorMessage(p, "Failed to load captcha.")
-      );
+          ? `Debug: got HTTP ${axios.isAxiosError(e) ? e.response?.status : "?"} but captchaBase64 was empty. Keys: ${Object.keys((axios.isAxiosError(e) ? e.response?.data : undefined) || {}).join(",") || "none"}`
+          : axios.isAxiosError(e)
+            ? `Debug: ${e.code || "no-code"} — ${e.message}${e.response ? ` (HTTP ${e.response.status})` : " (no response received)"}`
+            : `Debug: ${e instanceof Error ? e.message : String(e)}`;
+      setStatusMessage(diagnostic);
     } finally {
       setCaptchaLoading(false);
     }
@@ -494,6 +498,12 @@ export default function LoginPage() {
             </div>
 
           </form>
+          {/* TEMPORARY: build-id marker to confirm which APK/bundle is
+              actually running on-device while diagnosing the native-only
+              captcha bug. Remove once resolved. */}
+          <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: "0.62rem", opacity: 0.45 }}>
+            build {__APP_BUILD_ID__}
+          </p>
         </div>
 
       </div>

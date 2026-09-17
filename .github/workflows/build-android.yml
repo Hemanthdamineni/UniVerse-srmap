@@ -77,6 +77,22 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Disable Android auto-backup of app data
+        # Default Capacitor manifest allows backup, and Android auto-backs up
+        # app-private storage (incl. the WebView's Service Worker cache /
+        # IndexedDB) to Google Drive. On reinstall, Android silently restores
+        # that backup — so even a full uninstall+reinstall can keep serving a
+        # stale cached app shell from the very first install. Disable it so a
+        # reinstall is actually a clean slate.
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if grep -q 'android:allowBackup' "$MANIFEST"; then
+            sed -i 's/android:allowBackup="[^"]*"/android:allowBackup="false"/' "$MANIFEST"
+          else
+            sed -i 's/<application/<application android:allowBackup="false"/' "$MANIFEST"
+          fi
+          grep -o '<application[^>]*android:allowBackup="[^"]*"' "$MANIFEST"
+
       - name: Generate app icons from brand assets
         run: npx capacitor-assets generate --android
 
