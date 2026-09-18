@@ -9,7 +9,13 @@ function Footer() {
         © {year} UniVerse, SRMAP Edition. All rights reserved.
       </div>
       <div className="flex items-center gap-4 text-left opacity-85 sm:text-right">
-        <Link to="/download-app" className="underline-offset-4 hover:underline" style={{ color: "var(--footer-fg)" }}>
+        {/* min-h-11 (44px) meets the WCAG 2.5.5 tap-target minimum — the link's
+            own text/line-height renders well under that on its own. */}
+        <Link
+          to="/download-app"
+          className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+          style={{ color: "var(--footer-fg)" }}
+        >
           Get the app
         </Link>
         <span>SRM AP student companion</span>

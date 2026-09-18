@@ -169,8 +169,15 @@ export default function CampusHubWidget() {
         ]}
       />
 
+      {/* max-h caps the widget's own natural content size regardless of item
+          count. Without it, an unbounded flex-1 list (a grid row with no
+          explicit height only stretches items *after* track-sizing off their
+          natural size) made a populated list grow taller than the empty
+          state, and items-stretch then dragged QuickLinks/Attendance and the
+          whole dashboard row up to match — the "filled tab is taller than
+          empty" the user reported. */}
       {activeTab === "events" ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 max-h-[160px] flex-1 overflow-y-auto">
           {eventsState === "loading" && (
             <div className="space-y-1.5">
               {[1, 2, 3].map((i) => (
@@ -264,7 +271,7 @@ export default function CampusHubWidget() {
           )}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 max-h-[160px] flex-1 overflow-y-auto">
           {careerState === "loading" && (
             <div className="space-y-1.5">
               <div className="skeleton-shimmer h-16 rounded-lg" />
