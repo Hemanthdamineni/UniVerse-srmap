@@ -27,6 +27,7 @@ permissions:
 
 env:
   NODE_VERSION: "22"
+  CAP_SERVER_URL: ${{ vars.CAP_SERVER_URL }}
 
 jobs:
   build-android:
@@ -73,9 +74,25 @@ jobs:
         run: npm run build
 
       - name: Add + sync the Android platform
+        env:
+          CAP_SERVER_URL: ${{ vars.CAP_SERVER_URL }}
         run: |
           npx cap add android
           npx cap sync android
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const config = JSON.parse(readFileSync("android/app/src/main/assets/capacitor.config.json", "utf8"));
+            const configuredUrl = config.server?.url;
+            if (!configuredUrl || configuredUrl !== process.env.CAP_SERVER_URL) {
+              console.error(`Capacitor server.url mismatch: expected ${process.env.CAP_SERVER_URL || "<unset>"}, got ${configuredUrl || "<unset>"}`);
+              process.exit(1);
+            }
+            if (new URL(configuredUrl).protocol !== "https:") {
+              console.error(`CAP_SERVER_URL must use HTTPS: ${configuredUrl}`);
+              process.exit(1);
+            }
+            console.log(`Verified Capacitor server.url: ${configuredUrl}`);
+          '
 
       - name: Disable Android auto-backup of app data
         # Default Capacitor manifest allows backup, and Android auto-backs up

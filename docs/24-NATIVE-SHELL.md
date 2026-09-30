@@ -49,6 +49,16 @@ registers, and web deploys are picked up without an app-store release.
 CAP_SERVER_URL=https://erp.srmap.edu.in npm run cap:sync
 ```
 
+> **CI guard (2026-09-30):** the Android workflow passes `CAP_SERVER_URL` to
+> *both* the web-assets build *and* the `cap add`/`cap sync` steps, then
+> verifies that `android/app/src/main/assets/capacitor.config.json` was
+> generated with `server.url` matching `CAP_SERVER_URL` (and rejects any
+> non-HTTPS value). This prevents the failure where the frontend was built with
+> the env var but the Android shell was generated without it, leaving the APK
+> pointing at `/api/*` on the WebView's own origin instead of the deployed
+> origin — which makes every request 401 / fail because the session cookie is
+> never sent.
+
 Alternative (fully bundled offline shell): drop `server.url`, move auth to a
 bearer token in `@capacitor/preferences`, and route API calls through
 `CapacitorHttp` to bypass the WebView cookie jar. Heavier; only worth it if the
