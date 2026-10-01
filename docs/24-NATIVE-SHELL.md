@@ -58,6 +58,13 @@ CAP_SERVER_URL=https://erp.srmap.edu.in npm run cap:sync
 > pointing at `/api/*` on the WebView's own origin instead of the deployed
 > origin — which makes every request 401 / fail because the session cookie is
 > never sent.
+>
+> In addition, if `google-services.json` is absent, the workflow safely strips
+> `@capacitor/push-notifications` from `capacitor.plugins.json` so the native
+> bridge never loads `PushNotificationsPlugin`. This guarantees that if remote
+> web content or a stale bundle calls `PushNotifications.register()`, it cleanly
+> rejects in JS rather than crashing the native Android JVM with an uncaught
+> Firebase `IllegalStateException`.
 
 Alternative (fully bundled offline shell): drop `server.url`, move auth to a
 bearer token in `@capacitor/preferences`, and route API calls through

@@ -93,6 +93,10 @@ jobs:
             }
             console.log(`Verified Capacitor server.url: ${configuredUrl}`);
           '
+          if [ ! -f "android/app/google-services.json" ]; then
+            node scripts/strip-unconfigured-push.mjs
+            node scripts/strip-unconfigured-push.mjs --check
+          fi
 
       - name: Disable Android auto-backup of app data
         # Default Capacitor manifest allows backup, and Android auto-backs up
