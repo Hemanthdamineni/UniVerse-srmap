@@ -34,6 +34,10 @@ const babelAliasPlugin = [
 export default defineConfig({
   define: {
     "process.env.NODE_ENV": JSON.stringify("test"),
+    // vite.config.ts injects this at build time; Vitest does not inherit Vite's
+    // `define`, so without it any module reading __APP_BUILD_ID__ (LoginPage,
+    // AppProviders' query-cache buster) throws "is not defined" in tests.
+    __APP_BUILD_ID__: JSON.stringify("test"),
   },
   plugins: [
     react({

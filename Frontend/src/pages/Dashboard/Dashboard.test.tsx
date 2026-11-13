@@ -23,6 +23,10 @@ vi.mock("./CampusHubWidget", () => ({
   default: () => <div data-testid="campus-hub-widget">Campus Hub Widget</div>,
 }));
 
+vi.mock("./IntranetFeedWidget", () => ({
+  default: () => <div data-testid="intranet-feed-widget">Intranet Feed Widget</div>,
+}));
+
 vi.mock("../../hooks/usePageContrast", () => ({
   usePageContrast: vi.fn(),
 }));

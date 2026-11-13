@@ -375,6 +375,8 @@ function ensureDiagnosticsDir() {
   fs.mkdirSync(LOGIN_DIAGNOSTICS_DIR, { recursive: true });
 }
 
+let artifactSeq = 0;
+
 function rotateArtifacts() {
   try {
     ensureDiagnosticsDir();
@@ -386,7 +388,7 @@ function rotateArtifacts() {
         return { name, filePath, mtimeMs: stats.mtimeMs, isFile: stats.isFile() };
       })
       .filter((entry) => entry.isFile)
-      .sort((left, right) => right.mtimeMs - left.mtimeMs);
+      .sort((left, right) => (right.mtimeMs - left.mtimeMs) || right.name.localeCompare(left.name));
 
     for (const stale of files.slice(Math.max(0, LOGIN_DIAGNOSTICS_MAX_ARTIFACTS))) {
       fs.unlinkSync(stale.filePath);
@@ -400,8 +402,10 @@ function writeLoginAttemptArtifact({ loginAttemptId, stage, classifier, payload,
   try {
     ensureDiagnosticsDir();
     rotateArtifacts();
+    artifactSeq = (artifactSeq + 1) % 1_000_000;
+    const seqStr = String(artifactSeq).padStart(6, "0");
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const fileName = `${timestamp}-${loginAttemptId}-${stage}.json`;
+    const fileName = `${timestamp}-${seqStr}-${loginAttemptId}-${stage}.json`;
     const filePath = path.join(LOGIN_DIAGNOSTICS_DIR, fileName);
     const sanitized = sanitizeArtifactPayload(
       {

@@ -22,6 +22,7 @@ const {
   HELPDESK_DB_PATH,
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
+  INTRANET_DB_PATH,
   ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
   ERP_ACADEMIC_SNAPSHOTS_DB_PATH,
   GOOGLE_TOKENS_DB_PATH,
@@ -71,6 +72,8 @@ const { CareerStore } = require("./services/career/careerStore");
 const {
   createCareerScraperSupervisor,
 } = require("./services/career/careerScraperSupervisor");
+const { IntranetStore } = require("./services/intranet/intranetStore");
+const { createIntranetScraperSupervisor } = require("./services/intranet/intranetScraperSupervisor");
 const { LmsTrackerService } = require("./services/lms/lmsTrackerService");
 const { LmsTrackerStore } = require("./services/lms/lmsTrackerStore");
 const { LmsStore } = require("./services/lms/lmsStore");
@@ -230,6 +233,8 @@ async function startServer() {
     dbPath: CAREER_DB_PATH,
   });
   const careerScraperSupervisor = createCareerScraperSupervisor();
+  const intranetStore = new IntranetStore(INTRANET_DB_PATH);
+  const intranetScraperSupervisor = createIntranetScraperSupervisor();
   const lmsModerationService = new LmsModerationService();
   const lmsRevisionScheduler = new LmsRevisionScheduler({ academicCalendar });
   const lmsStore = new LmsStore({
@@ -355,6 +360,9 @@ async function startServer() {
     careerStore,
     scraperSupervisorStatus: () => careerScraperSupervisor.getStatus(),
     scraperTriggerOnce: () => careerScraperSupervisor.triggerOnce(),
+    intranetStore,
+    intranetScraperSupervisorStatus: () => intranetScraperSupervisor.getStatus(),
+    intranetScraperTriggerOnce: () => intranetScraperSupervisor.triggerOnce(),
     competitionStore,
     persistentTeamStore,
     unifiedProfileStore,
@@ -551,6 +559,10 @@ async function startServer() {
     log({
       msg: `Career scraper: ${scraperStatus.state}${scraperStatus.pid ? ` (pid ${scraperStatus.pid})` : ""}`,
     });
+    const intranetScraperStatus = intranetScraperSupervisor.start();
+    log({
+      msg: `Intranet scraper: ${intranetScraperStatus.state}${intranetScraperStatus.pid ? ` (pid ${intranetScraperStatus.pid})` : ""}`,
+    });
   });
 
   server.on("error", (error) => {
@@ -577,6 +589,7 @@ async function startServer() {
     log({ level: "info", msg: "HTTP server closed" });
     clearInterval(reminderTicker);
     careerScraperSupervisor.stop();
+    intranetScraperSupervisor.stop();
     lmsInteractionQueue.stop();
     // Release the in-memory cache sweep timer (no-op if cache is Redis-backed).
     if (typeof erpCacheStore?.close === "function") {

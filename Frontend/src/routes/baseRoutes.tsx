@@ -12,6 +12,7 @@ function RootRedirect() {
 const LoginPage = lazy(() => import("../pages/Login/LoginPage"));
 const ForgotPasswordPage = lazy(() => import("../pages/Login/ForgotPasswordPage"));
 const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard"));
+const IntranetPage = lazy(() => import("../pages/Intranet/IntranetPage"));
 const ProfilePage = lazy(() => import("../pages/Profile/ProfilePage"));
 const PublicCareerProfilePage = lazy(() => import("../pages/CareerPortal/PublicCareerProfilePage"));
 const DownloadAppPage = lazy(() => import("../pages/DownloadApp/DownloadAppPage"));
@@ -24,5 +25,7 @@ export const baseRoutes = [
   { path: "/career/public/:userId", element: <PageLayout><SuspenseWrapper><PublicCareerProfilePage /></SuspenseWrapper></PageLayout> },
   { path: "/download-app", element: <PageLayout><SuspenseWrapper><DownloadAppPage /></SuspenseWrapper></PageLayout> },
   { path: "/dashboard", element: <ProtectedPage><SuspenseWrapper><Dashboard /></SuspenseWrapper></ProtectedPage> },
+  { path: "/intranet", element: <ProtectedPage><SuspenseWrapper><IntranetPage /></SuspenseWrapper></ProtectedPage> },
+  { path: "/intranet/:id", element: <ProtectedPage><SuspenseWrapper><IntranetPage /></SuspenseWrapper></ProtectedPage> },
   { path: "/profile", element: <ProtectedPage><SuspenseWrapper><ProfilePage /></SuspenseWrapper></ProtectedPage> },
 ];

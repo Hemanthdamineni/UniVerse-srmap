@@ -16,6 +16,7 @@ const { createEventsRoutes } = require("./routes/eventsRoutes");
 const { createHelpdeskRoutes } = require("./routes/helpdeskRoutes");
 const { createCampusFeedbackRoutes } = require("./routes/campusFeedbackRoutes");
 const { createCareerRoutes } = require("./routes/careerRoutes");
+const { createIntranetRoutes } = require("./routes/intranetRoutes");
 const { createCompetitionRoutes } = require("./routes/competitionRoutes");
 const { createLmsRoutes } = require("./routes/lmsRoutes");
 const { createProfileRoutes } = require("./routes/profileRoutes");
@@ -55,6 +56,9 @@ function createApp({
   careerStore,
   scraperSupervisorStatus,
   scraperTriggerOnce,
+  intranetStore,
+  intranetScraperSupervisorStatus = null,
+  intranetScraperTriggerOnce = null,
   competitionStore,
   persistentTeamStore,
   unifiedProfileStore,
@@ -279,6 +283,18 @@ function createApp({
         sessionStore,
         userDirectory: userDirectoryStore,
         adminPassword: contentAdminPassword,
+      })
+    );
+  }
+  if (intranetStore) {
+    app.use(
+      "/api",
+      createIntranetRoutes({
+        intranetStore,
+        sessionStore,
+        adminPassword: contentAdminPassword,
+        intranetScraperSupervisorStatus,
+        intranetScraperTriggerOnce,
       })
     );
   }

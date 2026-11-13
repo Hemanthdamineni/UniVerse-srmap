@@ -498,12 +498,6 @@ export default function LoginPage() {
             </div>
 
           </form>
-          {/* TEMPORARY: build-id marker to confirm which APK/bundle is
-              actually running on-device while diagnosing the native-only
-              captcha bug. Remove once resolved. */}
-          <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: "0.62rem", opacity: 0.45 }}>
-            build {__APP_BUILD_ID__}
-          </p>
         </div>
 
       </div>

@@ -15,6 +15,7 @@ import WelcomeCard from "./WelcomeCard";
 // The component (and its tests) stay intact in ./FirstRunGuide.tsx for future reuse.
 // import FirstRunGuide from "./FirstRunGuide";
 import CampusHubWidget from "./CampusHubWidget";
+import IntranetFeedWidget from "./IntranetFeedWidget";
 import { usePageContrast } from "../../hooks/usePageContrast";
 import { fetchSessionProfile, hasSessionAuth, readStoredProfileData } from "../../lib/core/session";
 import { sessionKeys } from "../../lib/core/queryKeys";
@@ -223,6 +224,13 @@ function Dashboard() {
 
         <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-4">
           <Schedule scheduleData={data} selectedDate={selectedDate} />
+        </SectionCard>
+
+        {/* Intranet announcements/news/events scraped from the official
+            SRMAP intranet. Shared content only; personalized intranet
+            content is never surfaced here. */}
+        <SectionCard interactive fill className="overflow-hidden p-0 max-md:order-4">
+          <IntranetFeedWidget limit={5} />
         </SectionCard>
       </div>
     </div>

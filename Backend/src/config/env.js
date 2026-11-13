@@ -124,6 +124,8 @@ const CAMPUS_FEEDBACK_DB_PATH =
   process.env.CAMPUS_FEEDBACK_DB_PATH || path.join(__dirname, "../../data/campus-feedback.sqlite");
 const CAREER_DB_PATH =
   process.env.CAREER_DB_PATH || path.join(__dirname, "../../data/career.sqlite");
+const INTRANET_DB_PATH =
+  process.env.INTRANET_DB_PATH || path.join(__dirname, "../../data/intranet.sqlite");
 const ERP_ATTENDANCE_SNAPSHOTS_DB_PATH =
   process.env.ERP_ATTENDANCE_SNAPSHOTS_DB_PATH ||
   path.join(__dirname, "../../data/erp-attendance-snapshots.sqlite");
@@ -260,6 +262,7 @@ module.exports = {
   HELPDESK_DB_PATH,
   CAMPUS_FEEDBACK_DB_PATH,
   CAREER_DB_PATH,
+  INTRANET_DB_PATH,
   ERP_ATTENDANCE_SNAPSHOTS_DB_PATH,
   ERP_ACADEMIC_SNAPSHOTS_DB_PATH,
   GOOGLE_TOKENS_DB_PATH,
