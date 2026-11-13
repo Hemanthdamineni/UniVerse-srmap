@@ -64,13 +64,15 @@ describe("VacantRoomsPage", () => {
     await screen.findByText("AB-301");
     expect(getVacantRooms).toHaveBeenCalledTimes(1);
 
-    await user.selectOptions(screen.getByLabelText("Day"), "Friday");
+    const currentDay = (screen.getByLabelText("Day") as HTMLSelectElement).value;
+    const targetDay = currentDay === "Friday" ? "Tuesday" : "Friday";
+    await user.selectOptions(screen.getByLabelText("Day"), targetDay);
 
     await waitFor(
       () => expect(getVacantRooms).toHaveBeenCalledTimes(2),
       { timeout: 3000 }
     );
-    expect(getVacantRooms).toHaveBeenLastCalledWith("Friday", expect.any(Number));
+    expect(getVacantRooms).toHaveBeenLastCalledWith(targetDay, expect.any(Number));
   });
 
   it("shows a coverage empty state when no timetable data exists", async () => {
