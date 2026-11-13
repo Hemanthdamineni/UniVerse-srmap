@@ -34,6 +34,13 @@ const babelAliasPlugin = [
 export default defineConfig({
   define: {
     "process.env.NODE_ENV": JSON.stringify("test"),
+    // Mirror vite.config.ts so the test environment resolves __APP_BUILD_ID__
+    // (used by LoginPage and AppProviders' query cache buster). Without this,
+    // tests render against an undefined global and crash with
+    // "ReferenceError: __APP_BUILD_ID__ is not defined".
+    __APP_BUILD_ID__: JSON.stringify(
+      process.env.VITE_APP_VERSION || process.env.GITHUB_SHA || "test"
+    ),
   },
   plugins: [
     react({
