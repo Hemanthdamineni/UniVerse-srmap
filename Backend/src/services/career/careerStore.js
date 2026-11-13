@@ -5,10 +5,12 @@ const { randomUUID } = require("crypto");
 const {
   canonicalizeSkill,
   canonicalizeSkills,
-  isKnownSkill,
   CANONICAL_SKILLS,
 } = require("../../utils/skillNames");
 const { parseResume } = require("./resumeParse");
+const { computeSkillGaps } = require("./helpers/skillGaps");
+const { scoreResume } = require("./helpers/resumeScore");
+const { computeOpportunityFit } = require("./helpers/opportunityFitScore");
 
 // --- utils.js (utility) ---
 function nowIso() {
@@ -1602,22 +1604,11 @@ const profileMethods = {
 
   _recomputeSkillGaps(userId, userSkills) {
     const now = nowIso();
-    // Compare and store canonical skill names so "aws" / "AWS" / "Amazon Web
-    // Services" collapse to one gap displayed as "AWS".
-    const haveSet = new Set(canonicalizeSkills(userSkills).map((s) => s.toLowerCase()));
-
+    // Compute the ranked missing-skill list in `helpers/skillGaps.js`, which
+    // canonicalizes names so "aws" / "AWS" / "Amazon Web Services" collapse to
+    // one gap displayed as "AWS".
     const opps = this.db.prepare("SELECT skills FROM career_opportunities WHERE isActive = 1").all();
-    const gapMap = new Map(); // canonical-lowercase -> { skill, count }
-
-    for (const opp of opps) {
-      for (const skill of canonicalizeSkills(JSON.parse(opp.skills || "[]"))) {
-        const key = skill.toLowerCase();
-        if (haveSet.has(key)) continue;
-        const entry = gapMap.get(key) || { skill, count: 0 };
-        entry.count += 1;
-        gapMap.set(key, entry);
-      }
-    }
+    const sortedGaps = computeSkillGaps(userSkills, opps);
 
     // Clear old gaps and insert new ones in a single transaction
     const clearStmt = this.db.prepare("DELETE FROM career_skill_gaps WHERE userId = ?");
@@ -1625,10 +1616,6 @@ const profileMethods = {
       INSERT INTO career_skill_gaps (userId, skill, opportunityCount, updatedAt, gapLevel)
       VALUES (?, ?, ?, ?, 'missing')
     `);
-
-    const sortedGaps = Array.from(gapMap.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
 
     this.db.exec("BEGIN IMMEDIATE");
     try {
@@ -1696,10 +1683,6 @@ function uniqueStrings(values) {
   return out;
 }
 
-function normalizedSet(values) {
-  return new Set(ensureArray(values).map((value) => String(value).toLowerCase().trim()).filter(Boolean));
-}
-
 const resumeMethods = {
   _resumeSkillLexicon() {
     const skills = [...CANONICAL_SKILLS, ...COMMON_SKILLS];
@@ -1730,154 +1713,9 @@ const resumeMethods = {
    * of { tip, priority, category } — first item is the single biggest win.
    */
   _scoreResume(parsed, ctx = {}) {
-    const profileSkills = ensureArray(ctx.profileSkills).map((s) => String(s).toLowerCase());
-    const skillGaps = ensureArray(ctx.skillGaps);
-    const preferredTypes = ensureArray(ctx.preferredTypes).map((t) => String(t).toLowerCase());
-
-    const sectionCount = ensureArray(parsed.sections).length;
-    const skillCount = ensureArray(parsed.skills).length;
-    const projectCount = ensureArray(parsed.projects).length;
-    const impactCount = ensureArray(parsed.quantifiedImpacts).length;
-    const experienceCount = ensureArray(parsed.experience).length;
-    const thinEntries = [...ensureArray(parsed.projects), ...ensureArray(parsed.experience)].filter(
-      (e) => (e.bulletCount || 0) < 2,
-    ).length;
-    const resumeSkillsLower = new Set(ensureArray(parsed.skills).map((s) => String(s).toLowerCase()));
-    const overlap = profileSkills.filter((s) => resumeSkillsLower.has(s)).length;
-    const overlapRatio = profileSkills.length ? overlap / profileSkills.length : 0;
-    const missingLinks = [
-      parsed.hasGithub ? null : "GitHub",
-      parsed.hasLinkedin ? null : "LinkedIn",
-      parsed.hasPortfolio ? null : "a portfolio",
-    ].filter(Boolean);
-
-    const rubric = [
-      {
-        key: "structure",
-        label: "Resume structure",
-        score:
-          sectionCount >= 4 && parsed.wordCount >= 150 ? 20
-            : sectionCount >= 3 || parsed.wordCount >= 120 ? 13
-              : parsed.wordCount >= 60 ? 7
-                : 3,
-        max: 20,
-        reason:
-          sectionCount >= 4
-            ? `Clear structure — ${sectionCount} standard sections detected.`
-            : `Only ${sectionCount} standard section${sectionCount === 1 ? "" : "s"} detected.`,
-        tip: "Add clearly labelled sections: Experience, Projects, Skills, Education.",
-      },
-      {
-        key: "skills",
-        label: "Skill coverage",
-        score: skillCount >= 12 ? 20 : skillCount >= 6 ? 15 : skillCount >= 1 ? 8 : 0,
-        max: 20,
-        reason: skillCount ? `${skillCount} distinct skills detected.` : "No recognizable skills detected.",
-        tip:
-          skillCount >= 6
-            ? "Group skills under headings (Languages, Frameworks, Tools) for readability."
-            : "Add a Technical Skills section listing languages, frameworks and tools.",
-      },
-      {
-        key: "projects",
-        label: "Project evidence",
-        score: projectCount >= 3 ? 15 : projectCount === 2 ? 11 : projectCount === 1 ? 6 : 0,
-        max: 15,
-        reason: projectCount
-          ? `${projectCount} project${projectCount === 1 ? "" : "s"} detected.`
-          : "No projects detected.",
-        tip: "Add a Projects section with 2-3 concrete builds and their impact.",
-      },
-      {
-        key: "detail",
-        label: "Entry detail",
-        score: (() => {
-          const entries = projectCount + experienceCount;
-          if (!entries) return 0;
-          return Math.round(10 * (1 - thinEntries / entries));
-        })(),
-        max: 10,
-        reason: thinEntries
-          ? `${thinEntries} project/role${thinEntries === 1 ? "" : "s"} have fewer than 2 bullet points.`
-          : "Every project and role has supporting bullets.",
-        tip: "Give each project and role at least 2-3 result-oriented bullet points.",
-      },
-      {
-        key: "impact",
-        label: "Quantified impact",
-        score: Math.min(15, impactCount * 4),
-        max: 15,
-        reason: impactCount
-          ? `${impactCount} quantified outcome${impactCount === 1 ? "" : "s"}.`
-          : "No quantified outcomes.",
-        tip: "Back up bullets with numbers — %, users served, latency, revenue.",
-      },
-      {
-        key: "links",
-        label: "Portfolio links",
-        score: Math.min(15, (parsed.hasGithub ? 6 : 0) + (parsed.hasLinkedin ? 6 : 0) + (parsed.hasPortfolio ? 3 : 0)),
-        max: 15,
-        reason: missingLinks.length
-          ? `Missing ${missingLinks.join(", ")} link${missingLinks.length === 1 ? "" : "s"}.`
-          : "GitHub, LinkedIn and portfolio links are present.",
-        tip: "Add GitHub, LinkedIn and portfolio links to your header.",
-      },
-      {
-        key: "target",
-        label: "Profile alignment",
-        score: profileSkills.length === 0 ? 10 : overlapRatio >= 0.5 ? 15 : overlapRatio >= 0.25 ? 10 : 5,
-        max: 15,
-        reason:
-          profileSkills.length === 0
-            ? "Add skills to your Career profile so we can compare."
-            : `${overlap} of your ${profileSkills.length} profile skills appear on the résumé.`,
-        tip: "Merge the résumé skills into your Career profile so opportunity matching improves.",
-      },
-    ];
-
-    // Normalise to /100 (rubric maxes sum to 110 after adding "detail").
-    const rawScore = rubric.reduce((sum, item) => sum + item.score, 0);
-    const rawMax = rubric.reduce((sum, item) => sum + item.max, 0);
-    const score = Math.round((rawScore / rawMax) * 100);
-
-    // Ordered suggestions: rubric gaps by (missed points), then career-fit items.
-    const suggestions = rubric
-      .filter((item) => item.score < item.max * 0.7)
-      .sort((a, b) => b.max - b.score - (a.max - a.score))
-      .map((item) => ({
-        tip: item.tip,
-        category: item.key,
-        priority: item.max - item.score >= item.max * 0.6 ? "high" : "medium",
-      }));
-
-    const gapMissing = skillGaps
-      .map((g) => String(g.skill || ""))
-      .filter((s) => s && isKnownSkill(s) && !resumeSkillsLower.has(s.toLowerCase()))
-      .map((s) => canonicalizeSkill(s))
-      .slice(0, 5);
-    if (gapMissing.length) {
-      suggestions.unshift({
-        tip: `Add ${gapMissing.length} in-demand skill${gapMissing.length === 1 ? "" : "s"} your résumé is missing: ${gapMissing.join(", ")}.`,
-        category: "career-fit",
-        priority: "high",
-      });
-    }
-    if (experienceCount === 0 && preferredTypes.some((t) => /job|intern/.test(t))) {
-      suggestions.push({
-        tip: "You're targeting jobs/internships — add a Work Experience section, even for projects, freelance or open-source work.",
-        category: "career-fit",
-        priority: "medium",
-      });
-    }
-    if (profileSkills.length && skillCount && overlapRatio < 0.3) {
-      suggestions.push({
-        tip: "Your résumé and Career profile skills barely overlap — use “Merge to Profile” to align them.",
-        category: "career-fit",
-        priority: "medium",
-      });
-    }
-
-    return { score, rubric, suggestions: suggestions.slice(0, 6) };
+    // Delegate the rubric/scoring computation to `helpers/resumeScore.js` so
+    // the calculation stays isolated and unit-testable.
+    return scoreResume(parsed, ctx);
   },
 
   _mapResumeVersion(row) {
@@ -2013,84 +1851,8 @@ const resumeMethods = {
 
     const profile = this.getProfile(user);
     const resume = resumeVersionId ? this.getResumeVersion(user, resumeVersionId) : this.getLatestResumeVersion(user);
-    const profileSkills = normalizedSet(profile.skills);
-    const resumeSkills = normalizedSet(resume?.parsedJson?.skills || []);
-    const combinedSkills = new Set([...profileSkills, ...resumeSkills]);
-    const requiredSkills = ensureArray(opportunity.skills).map((skill) => toSafeString(skill)).filter(Boolean);
-    const matchedSkills = requiredSkills.filter((skill) => combinedSkills.has(skill.toLowerCase()));
-    const missingSkills = requiredSkills.filter((skill) => !combinedSkills.has(skill.toLowerCase()));
-
-    const branch = toSafeString(user.branch).toLowerCase();
-    const eligibleBranches = ensureArray(opportunity.eligibleBranches).map((item) => String(item).toLowerCase());
-    const branchEligible =
-      eligibleBranches.length === 0 ||
-      eligibleBranches.some((item) => item === "all" || item === "any" || item === branch || branch.includes(item) || item.includes(branch));
-    const eligibleYears = ensureArray(opportunity.eligibleYears).map((item) => Number.parseInt(String(item), 10)).filter(Number.isFinite);
-    const userYear = Number.parseInt(String(user.year || ""), 10);
-    const yearEligible = eligibleYears.length === 0 || (Number.isFinite(userYear) && eligibleYears.includes(userYear));
-    const eligibilityScore = branchEligible && yearEligible ? 1 : branchEligible || yearEligible ? 0.45 : 0;
-    const skillMatchScore = requiredSkills.length ? matchedSkills.length / requiredSkills.length : 0.5;
-    const resumeQualityScore = resume ? Math.min(1, Number(resume.qualityScore || 0) / 100) : 0;
-    const projectEvidence = Math.min(1, ensureArray(resume?.parsedJson?.projects).length / 2);
-    const experienceEvidence = Math.min(1, ensureArray(resume?.parsedJson?.experience).length / 2);
-    const interestAlignment = ensureArray(profile.preferredTypes).includes(opportunity.type) ? 1 : 0.35;
-    const locationModeFit =
-      !profile.preferredLocations?.length ||
-      ensureArray(profile.preferredLocations).some((location) => {
-        const value = String(location).toLowerCase();
-        return value === String(opportunity.mode || "").toLowerCase() || String(opportunity.location || "").toLowerCase().includes(value);
-      })
-        ? 1
-        : 0.45;
-    const deadlineUrgency = opportunity.deadline && Date.parse(opportunity.deadline) > Date.now() ? 1 : 0.5;
-
-    const score =
-      0.25 * eligibilityScore +
-      0.25 * skillMatchScore +
-      0.15 * resumeQualityScore +
-      0.1 * projectEvidence +
-      0.08 * experienceEvidence +
-      0.07 * interestAlignment +
-      0.05 * locationModeFit +
-      0.05 * deadlineUrgency;
-    const fitScore = Math.round(score * 100);
-    const reasons = [
-      branchEligible && yearEligible ? "Meets listed branch/year eligibility." : "Eligibility needs review.",
-      matchedSkills.length ? `Matches ${matchedSkills.length} required skill${matchedSkills.length === 1 ? "" : "s"}.` : "No required skills matched yet.",
-      resume ? `Uses resume version ${resume.fileName}.` : "No resume version uploaded yet.",
-      projectEvidence > 0 ? "Project evidence is present." : "Add project evidence to improve fit.",
-    ];
-    const recommendations = [
-      ...(missingSkills.length ? [`Close skill gaps: ${missingSkills.slice(0, 4).join(", ")}.`] : []),
-      ...(resume ? [] : ["Upload a resume version for stronger fit scoring."]),
-      ...(projectEvidence > 0 ? [] : ["Add project bullets with measurable outcomes."]),
-      ...(resumeQualityScore >= 0.7 ? [] : ["Improve resume structure, links, and quantified impact."]),
-    ];
-
-    const feedback = {
-      fitScore,
-      breakdown: {
-        eligibilityScore,
-        skillMatchScore,
-        resumeQualityScore,
-        projectEvidence,
-        experienceEvidence,
-        interestAlignment,
-        locationModeFit,
-        deadlineUrgency,
-      },
-      matchedSkills,
-      missingSkills,
-      eligibility: {
-        eligible: branchEligible && yearEligible,
-        branchEligible,
-        yearEligible,
-      },
-      reasons,
-      recommendations,
-      resumeVersionId: resume?.id || null,
-      opportunityId,
-    };
+    // Delegate the fit-scoring computation to `helpers/opportunityFitScore.js`.
+    const feedback = computeOpportunityFit({ opportunity, profile, resume, user });
 
     if (resume) {
       this.db
@@ -2099,7 +1861,7 @@ const resumeMethods = {
             id, resumeVersionId, targetType, targetRefId, score, feedbackJson, createdAt
           ) VALUES (?, ?, ?, ?, ?, ?, ?)`
         )
-        .run(randomUUID(), resume.id, "opportunity", opportunityId, fitScore, JSON.stringify(feedback), nowIso());
+        .run(randomUUID(), resume.id, "opportunity", opportunityId, feedback.fitScore, JSON.stringify(feedback), nowIso());
     }
 
     return feedback;
