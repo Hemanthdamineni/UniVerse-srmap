@@ -78,15 +78,15 @@ All known incomplete routes now clearly present as unavailable instead of lookin
 ## 🟡 Known Issues (not blocking release)
 
 ### Security (Medium)
-- Backend `adminContext.js` `isElevated = potentialAdmin || Boolean(session.adminElevated)` auto-elevates admin register numbers. Needs password verification.
-- `x-user-role` / `x-user-id` header spoofing in `eventsAuth.js` — client-trusted headers override session identity.
+- Backend `adminContext.js` `isElevated = potentialAdmin && Boolean(session.adminElevated)` verified: requires explicit elevation via unlock route with password verification.
+- `x-user-role` / `x-user-id` header spoofing in `eventsAuth.js` — client-trusted headers removed in favor of session identity.
 - No CSRF protection on auth endpoints.
-- `adminPassword` accepted via URL query param in `adminAccess.js` — leaks to logs.
+- [x] `adminPassword` query parameter removed from `adminAccess.js` — credentials accepted only via `x-admin-password` header or request body.
 
 ### Deployment (Medium)
 - No staging/production environment separation — single `.env` for all.
-- No Alertmanager — alert rules fire into a vacuum.
-- No automated backup cron job — script exists (`infra/scripts/setup-backups.sh`) but not scheduled.
+- [x] Alertmanager configured in `infra/docker/compose.monitoring.yml` and `infra/monitoring/alertmanager/alertmanager.yml`.
+- [x] Automated backup cron configured in `infra/cron/backup.cron` (daily 02:00 rotation).
 - Monitoring data (Prometheus, Grafana, Loki) not in backup strategy.
 - No container restart policies on monitoring stack.
 - Missing alert rules: disk space, memory, CPU, container down, certificate expiry.
