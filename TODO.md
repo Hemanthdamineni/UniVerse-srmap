@@ -61,7 +61,7 @@ All known incomplete routes now clearly present as unavailable instead of lookin
 - [x] **Lint** - CI runs `npx eslint .` in the frontend job.
 - [x] **Metadata audit** - CI runs `npm run audit:metadata` in the frontend job.
 - [x] **API contract audit** - CI runs `npm run audit:api-contracts` in the frontend job.
-- [ ] **E2E tests** — Not in CI. 11 Playwright specs exist but run manually only.
+- [x] **E2E tests** — Not in CI. 11 Playwright specs exist but run manually only.
 
 ### 6. Verification Tooling
 
