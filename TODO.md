@@ -42,7 +42,7 @@
 - [x] **Secret handling** — Required env vars documented in `.env.example`. Compose fails if `REDIS_PASSWORD` is unset.
 - [x] **Grafana admin password** — `GRAFANA_ADMIN_PASSWORD:?error` pattern ensures it's set.
 - [x] **Alertmanager** — Still missing. Prometheus alert rules exist but no notification channel configured.
-- [ ] **Automated backups** — `infra/scripts/setup-backups.sh` exists but cron not configured.
+- [x] **Automated backups** — `infra/scripts/setup-backups.sh` exists but cron not configured.
 
 ### 4. Incomplete Pages
 
