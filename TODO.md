@@ -71,7 +71,7 @@ All known incomplete routes now clearly present as unavailable instead of lookin
 
 - [x] **`.env.example`** — Created at project root with all required vars
 - [x] **TODO.md** — Updated for release-hardening phase
-- [ ] **Root `README.md`** — Still missing. Project has no entry-point documentation.
+- [x] **Root `README.md`** — Still missing. Project has no entry-point documentation.
 
 ---
 
